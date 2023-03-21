@@ -82,35 +82,11 @@ const PanelBarNavContainer = (props: any) => {
     };
   });
 
-  // useEffect(() => {
-  //   const handleTabClose = (event: BeforeUnloadEvent) => {
-  //     event.preventDefault();
-  //     fetchToLog({
-  //       work_type: "OPEN",
-  //       form_id: previousRoute,
-  //       form_name: "",
-  //       form_login_key: formKey,
-  //       t: "2",
-  //     });
-
-  //     //return (event.returnValue = "true");
-  //   };
-
-  //   window.addEventListener("beforeunload", handleTabClose);
-
-  //   return () => {
-  //     window.removeEventListener("beforeunload", handleTabClose);
-  //   };
-  // }, []);
-
   useEffect(() => {
     if (token && menus === null) fetchMenus();
   }, [menus]);
 
   useEffect(() => {
-    // console.log("caches" in window);
-    // console.log(window.caches);
-
     checkPwExpInfo();
   }, []);
 
@@ -386,6 +362,15 @@ const PanelBarNavContainer = (props: any) => {
       isFavorite: false,
     });
     panelBars.push({
+      path: "/MinutesView",
+      menuName: "회의록 열람",
+      index: "",
+      menuId: "",
+      parentMenuId: "",
+      menuCategory: "",
+      isFavorite: false,
+    });
+    panelBars.push({
       path: "/GANTT",
       menuName: "GANTT",
       index: "",
@@ -435,7 +420,7 @@ const PanelBarNavContainer = (props: any) => {
   }
 
   // Parent 그룹 없는 메뉴 Array
-  const singleMenus = ["/Home", "/GANTT", "/WORD_EDITOR"];
+  const singleMenus = ["/Home", "/GANTT", "/WORD_EDITOR", "/MinutesView"];
 
   let prgMenus: null | { id: string; text: string }[] = null;
   if (menus) {
@@ -465,7 +450,7 @@ const PanelBarNavContainer = (props: any) => {
         <Gnv isMobileMenuOpend={isMobileMenuOpend}>
           <AppName onClick={() => setIsMenuOpend(false)}>
             <Logo size="32px" />
-            GST ERP
+            GST SPM
           </AppName>
           {prgMenus && (
             <MenuSearchBox>

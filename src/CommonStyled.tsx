@@ -317,7 +317,7 @@ export const GridContainer = styled.div<TGridContainer>`
 
   .k-grid,
   .k-scheduler {
-    margin: 5px 0;
+    /* margin: 5px 0; */
   }
   .k-grid .k-command-cell {
     text-align: center;

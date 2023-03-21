@@ -69,6 +69,7 @@ import CHAT_A0001W from "./routes/CHAT_A0001W";
 import CHAT_A0002W from "./routes/CHAT_A0002W";
 import CHAT_TEST_TRAVEL_BOT from "./routes/CHAT_TEST_TRAVEL_BOT";
 import WORD_EDITOR from "./routes/WORD_EDITOR";
+import MinutesView from "./routes/MinutesView";
 import GANTT from "./routes/GANTT";
 import SY_A0100W from "./routes/SY_A0100W";
 import { isMobileMenuOpendState } from "./store/atoms";
@@ -282,6 +283,7 @@ const AppInner: React.FC = () => {
             />
             {/* 연구개발 */}
             <AuthRoute path="/WORD_EDITOR" component={WORD_EDITOR} exact />
+            <AuthRoute path="/MinutesView" component={MinutesView} exact />
             <AuthRoute path="/GANTT" component={GANTT} exact />
           </PanelBarNavContainer>
         </Switch>
