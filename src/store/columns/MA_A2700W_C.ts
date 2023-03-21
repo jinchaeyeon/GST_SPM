@@ -1,0 +1,206 @@
+import { TGrid } from "../types";
+
+export const gridList: Array<TGrid> = [
+  {
+    gridName: "grdList",
+    columns: [
+      {
+        id: "col_recdt",
+        field: "recdt",
+        caption: "입고일자",
+        width: 150,
+      },
+      {
+        id: "col_recnum",
+        field: "recnum",
+        caption: "입고번호",
+        width: 200,
+      },
+      {
+        id: "col_custcd",
+        field: "custcd",
+        caption: "업체코드",
+        width: 200,
+      },
+      {
+        id: "col_custnm",
+        field: "custnm",
+        caption: "업체명",
+        width: 250,
+      },
+      {
+        id: "col_inuse",
+        field: "inuse",
+        caption: "입고용도",
+        width: 150,
+      },
+      {
+        id: "col_person",
+        field: "person",
+        caption: "담당자",
+        width: 150,
+      },
+      {
+        id: "col_doexdiv",
+        field: "doexdiv",
+        caption: "내수구분",
+        width: 150,
+      },
+      {
+        id: "col_taxdiv",
+        field: "taxdiv",
+        caption: "과세구분",
+        width: 150,
+      },
+      {
+        id: "col_qty",
+        field: "qty",
+        caption: "수량",
+        width: 120,
+      },
+      {
+        id: "col_wonamt",
+        field: "wonamt",
+        caption: "원화금액",
+        width: 120,
+      },
+      {
+        id: "col_taxamt",
+        field: "taxamt",
+        caption: "세액",
+        width: 120,
+      },
+      {
+        id: "col_totamt",
+        field: "totamt",
+        caption: "합계금액",
+        width: 120,
+      },
+      {
+        id: "col_remark",
+        field: "remark",
+        caption: "비고",
+        width: 300,
+      },
+    ],
+  },
+  {
+    gridName: "grdList2",
+    columns: [
+      {
+        id: "col_pac",
+        field: "pac",
+        caption: "도/사급",
+        width: 150,
+      },
+      {
+        id: "col_itemcd",
+        field: "itemcd",
+        caption: "품목코드",
+        width: 200,
+      },
+      {
+        id: "col_itemnm",
+        field: "itemnm",
+        caption: "품목명",
+        width: 250,
+      },
+      {
+        id: "col_itemlvl1",
+        field: "itemlvl1",
+        caption: "대분류",
+        width: 150,
+      }, 
+      {
+        id: "col_itemacnt",
+        field: "itemacnt",
+        caption: "품목계정",
+        width: 200,
+      },
+      {
+        id: "col_insiz",
+        field: "insiz",
+        caption: "규격",
+        width: 200,
+      }, 
+      {
+        id: "col_lotnum",
+        field: "lotnum",
+        caption: "LOT NO",
+        width: 200,
+      },
+      {
+        id: "col_heatno",
+        field: "heatno",
+        caption: "HEAT NO",
+        width: 200,
+      },
+      {
+        id: "col_qty2",
+        field: "qty",
+        caption: "수량",
+        width: 120,
+      },
+      {
+        id: "col_qtyunit",
+        field: "qtyunit",
+        caption: "단위",
+        width: 150,
+      },
+      {
+        id: "col_unp",
+        field: "unp",
+        caption: "단가",
+        width: 120,
+      },
+      {
+        id: "col_wonamt2",
+        field: "wonamt",
+        caption: "원화금액",
+        width: 120,
+      },
+      {
+        id: "col_taxamt2",
+        field: "taxamt",
+        caption: "세액",
+        width: 120,
+      },
+      {
+        id: "col_remark2",
+        field: "remark",
+        caption: "비고",
+        width: 300,
+      },
+      {
+        id: "col_totwgt",
+        field: "totwgt",
+        caption: "전체중량",
+        width: 150,
+      },
+      {
+        id: "col_len",
+        field: "len",
+        caption: "길이",
+        width: 150,
+      },
+      {
+        id: "col_enddt",
+        field: "enddt",
+        caption: "소비기한",
+        width: 150,
+      },
+      {
+        id: "col_itemthick",
+        field: "itemthick",
+        caption: "두께",
+        width: 150,
+      },
+      {
+        id: "col_width",
+        field: "width",
+        caption: "폭",
+        width: 150,
+      },
+    ],
+  },
+];
