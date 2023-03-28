@@ -25,10 +25,20 @@ import { useApi } from "../hooks/api";
 import { Iparameters } from "../store/types";
 import {
   convertDateToStrWithTime2,
+  handleKeyPressSearch,
   UseGetValueFromSessionItem,
   UseParaPc,
 } from "../components/CommonFunction";
-import { Title, TitleContainer } from "../CommonStyled";
+import {
+  ButtonContainer,
+  FilterBox,
+  FilterBoxWrap,
+  Title,
+  TitleContainer,
+} from "../CommonStyled";
+import { DatePicker } from "@progress/kendo-react-dateinputs";
+import { Input } from "@progress/kendo-react-inputs";
+import { Button } from "@progress/kendo-react-buttons";
 
 type TSavedPara = {
   work_type: "N" | "U" | "D";
@@ -290,15 +300,57 @@ function App() {
       console.log(data);
     }
   };
+
+  const search = () => {};
   return (
     <>
       <TitleContainer>
-        <Title>GANTT</Title>
+        <Title>프로젝트 일정계획</Title>{" "}
+        <ButtonContainer>
+          <Button onClick={search} icon="search" themeColor={"primary"}>
+            조회
+          </Button>
+        </ButtonContainer>
       </TitleContainer>
+      <FilterBoxWrap>
+        <FilterBox onKeyPress={(e) => handleKeyPressSearch(e, search)}>
+          <tbody>
+            <tr>
+              <th>프로젝트 번호</th>
+              <td>
+                <Input
+                  name="user_name"
+                  type="text"
+                  // value={filters.user_group_name}
+                  // onChange={filterInputChange}
+                />
+              </td>
+              <th>프로젝트 명</th>
+              <td>
+                <Input
+                  name="user_name"
+                  type="text"
+                  // value={filters.user_group_name}
+                  // onChange={filterInputChange}
+                />
+              </td>
+              <th>표시형식</th>
+              <td>
+                <Input
+                  name="user_name"
+                  type="text"
+                  // value={filters.user_group_name}
+                  // onChange={filterInputChange}
+                />
+              </td>
+            </tr>
+          </tbody>
+        </FilterBox>
+      </FilterBoxWrap>
       <Gantt
         taskListWidth={500}
         scaleType="weeks"
-        height={"90vh"}
+        height={"85vh"}
         onDependencyInserted={onDependencyInserted}
         onDependencyDeleted={onDependencyDeleted}
         onTaskInserted={onTaskInserted}
@@ -331,7 +383,7 @@ function App() {
         <Column dataField="end" caption="End Date" />
 
         <Validation autoUpdateParentTasks />
-        <Editing enabled />
+        {/* <Editing enabled /> */}
       </Gantt>
     </>
   );

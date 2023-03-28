@@ -1,5 +1,5 @@
 {
-  "name": "gst_project_frontend",
+  "name": "spm_project_frontend",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -48,6 +48,9 @@
     "byte-base64": "^1.1.0",
     "cachios": "^4.0.0",
     "calculate-size": "^1.1.1",
+    "cldr-core": "^42.0.0",
+    "cldr-dates-full": "^42.0.0",
+    "cldr-numbers-full": "^42.0.0",
     "crypto-random-string": "^5.0.0",
     "detect-browser": "^5.3.0",
     "devextreme": "^22.2.3",

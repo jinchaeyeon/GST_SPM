@@ -101,6 +101,7 @@ const PanelBarNavContainer = (props: any) => {
   };
 
   const fetchMenus = useCallback(async () => {
+    return false;
     try {
       let menuPara = {
         para: "menus?userId=" + userId + "&category=WEB",
@@ -353,9 +354,27 @@ const PanelBarNavContainer = (props: any) => {
   ];
   if (companyCode !== "2207C612") {
     panelBars.push({
-      path: "/WORD_EDITOR",
-      menuName: "EDITOR",
-      index: "",
+      path: "/Home",
+      menuName: "Home",
+      index: ".0",
+      menuId: "",
+      parentMenuId: "",
+      menuCategory: "",
+      isFavorite: false,
+    });
+    panelBars.push({
+      path: "/Notice",
+      menuName: "공지사항",
+      index: ".1",
+      menuId: "",
+      parentMenuId: "",
+      menuCategory: "",
+      isFavorite: false,
+    });
+    panelBars.push({
+      path: "/QnA",
+      menuName: "QnA",
+      index: ".2",
       menuId: "",
       parentMenuId: "",
       menuCategory: "",
@@ -364,16 +383,16 @@ const PanelBarNavContainer = (props: any) => {
     panelBars.push({
       path: "/MinutesView",
       menuName: "회의록 열람",
-      index: "",
+      index: ".3",
       menuId: "",
       parentMenuId: "",
       menuCategory: "",
       isFavorite: false,
     });
     panelBars.push({
-      path: "/GANTT",
-      menuName: "GANTT",
-      index: "",
+      path: "/ProjectPlan",
+      menuName: "프로젝트 일정계획",
+      index: ".4",
       menuId: "",
       parentMenuId: "",
       menuCategory: "",
@@ -420,7 +439,15 @@ const PanelBarNavContainer = (props: any) => {
   }
 
   // Parent 그룹 없는 메뉴 Array
-  const singleMenus = ["/Home", "/GANTT", "/WORD_EDITOR", "/MinutesView"];
+  const singleMenus = [
+    "/Home",
+    "/GANTT",
+    "/WORD_EDITOR",
+    "/MinutesView",
+    "/QnA",
+    "/Notice",
+    "/ProjectPlan",
+  ];
 
   let prgMenus: null | { id: string; text: string }[] = null;
   if (menus) {
@@ -554,7 +581,7 @@ const PanelBarNavContainer = (props: any) => {
             >
               Chatbot
             </Button>
-            {isAdmin && (
+            {/* {isAdmin && (
               <Button
                 onClick={() => setUserOptionsWindowVisible(true)}
                 fillMode={"flat"}
@@ -562,7 +589,7 @@ const PanelBarNavContainer = (props: any) => {
               >
                 사용자 옵션
               </Button>
-            )}
+            )} */}
             <Button
               onClick={logout}
               icon={"logout"}
