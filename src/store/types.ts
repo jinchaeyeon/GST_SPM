@@ -464,3 +464,12 @@ export type TSysCaptionKey =
   | "DeployFunction"
   | "ExcelMailMergeConfig"
   | "ExcelMailMergePrintout";
+
+export type TInsertImageFiles = {
+  view: any;
+  files: any;
+  nodeType: any;
+  position: any;
+  attrs?: any;
+  event?: any;
+};

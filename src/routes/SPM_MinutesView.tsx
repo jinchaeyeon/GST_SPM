@@ -1,7 +1,10 @@
 import { DataResult, getter, process, State } from "@progress/kendo-data-query";
 import { Button } from "@progress/kendo-react-buttons";
-import { DatePicker } from "@progress/kendo-react-dateinputs";
-import { Editor } from "@progress/kendo-react-editor";
+import {
+  DatePicker,
+  DatePickerChangeEvent,
+} from "@progress/kendo-react-dateinputs";
+import { Editor, EditorUtils } from "@progress/kendo-react-editor";
 import {
   getSelectedState,
   Grid,
@@ -10,8 +13,10 @@ import {
   GridEvent,
   GridSelectionChangeEvent,
 } from "@progress/kendo-react-grid";
-import { Input } from "@progress/kendo-react-inputs";
-import React, { useState, CSSProperties } from "react";
+import { Input, InputChangeEvent } from "@progress/kendo-react-inputs";
+import { bytesToBase64 } from "byte-base64";
+import React, { useState, CSSProperties, useRef, useEffect } from "react";
+import { useSetRecoilState } from "recoil";
 import {
   ButtonContainer,
   FilterBox,
@@ -25,10 +30,17 @@ import {
 } from "../CommonStyled";
 import {
   chkScrollHandler,
+  convertDateToStr,
+  dateformat2,
   handleKeyPressSearch,
+  UseGetValueFromSessionItem,
+  UseParaPc,
 } from "../components/CommonFunction";
-import { GAP, PAGE_SIZE, SELECTED_FIELD } from "../components/CommonString";
-
+import { GAP, SELECTED_FIELD } from "../components/CommonString";
+import RichEditor from "../components/RichEditor";
+import { useApi } from "../hooks/api";
+import { isLoading } from "../store/atoms";
+const PAGE_SIZE = 100;
 const styles: { [key: string]: CSSProperties } = {
   table: {
     borderCollapse: "collapse",
@@ -57,8 +69,29 @@ const styles: { [key: string]: CSSProperties } = {
   },
 };
 
+type TChildComponentHandle = {
+  getContent: () => string;
+  setHtml: (html: string) => string;
+};
 const App = () => {
-  const download = () => {
+  const processApi = useApi();
+  const setLoading = useSetRecoilState(isLoading);
+  const [pc, setPc] = useState("");
+  const [meetingnum, setMeetingnum] = useState("");
+  UseParaPc(setPc);
+  const userId = UseGetValueFromSessionItem("user_id");
+
+  //조회조건 Input Change 함수 => 사용자가 Input에 입력한 값을 조회 파라미터로 세팅
+  const filterInputChange = (e: DatePickerChangeEvent | InputChangeEvent) => {
+    const { value, name = "" } = e.target;
+
+    setFilters((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const downloadWordDoc = () => {
     const htmlElement = document.getElementById("htmlContent");
     if (htmlElement) {
       const html = htmlElement.innerHTML;
@@ -79,9 +112,12 @@ const App = () => {
     }
   };
 
-  const search = () => {};
+  const search = () => {
+    setMainDataResult(process([], mainDataState));
+    setFilters((prev) => ({ ...prev, page: 1, isFetch: true }));
+  };
 
-  const DATA_ITEM_KEY = "";
+  const DATA_ITEM_KEY = "meetingnum";
   const idGetter = getter(DATA_ITEM_KEY);
 
   const [mainPgNum, setMainPgNum] = useState(1);
@@ -91,6 +127,11 @@ const App = () => {
   const [mainDataResult, setMainDataResult] = useState<DataResult>(
     process([], mainDataState)
   );
+  const [detailDataResult, setDetailDataResult] = useState<{
+    document: string;
+    result: [];
+  }>({ document: "", result: [] });
+
   const [selectedState, setSelectedState] = useState<{
     [id: string]: boolean | number[];
   }>({});
@@ -99,7 +140,7 @@ const App = () => {
     setMainDataState(event.dataState);
   };
 
-  //메인 그리드 선택 이벤트 => 디테일 그리드 조회
+  //메인 그리드 선택 이벤트 => 디테일 조회
   const onSelectionChange = (event: GridSelectionChangeEvent) => {
     const newSelectedState = getSelectedState({
       event,
@@ -111,11 +152,7 @@ const App = () => {
     const selectedIdx = event.startRowIndex;
     const selectedRowData = event.dataItems[selectedIdx];
 
-    // setDetailFilters((prev) => ({
-    //   ...prev,
-    //   purnum: selectedRowData.purnum,
-    //   purseq: selectedRowData.purseq,
-    // }));
+    setMeetingnum(selectedRowData[DATA_ITEM_KEY]);
   };
 
   const onMainScrollHandler = (event: GridEvent) => {
@@ -124,6 +161,174 @@ const App = () => {
   };
   const onMainSortChange = (e: any) => {
     setMainDataState((prev) => ({ ...prev, sort: e.sort }));
+  };
+
+  const editorRef = useRef<TChildComponentHandle>(null);
+
+  const saveMeeting = () => {
+    if (editorRef.current) {
+      const editorContent = editorRef.current.getContent();
+
+      // 여기서 원하는 작업 수행 (예: 서버에 저장)
+      fetchToSave(editorContent);
+    }
+  };
+
+  const [filters, setFilters] = useState({
+    isFetch: true,
+    pageSize: PAGE_SIZE,
+    page: 1,
+    fromDate: new Date(),
+    toDate: new Date(),
+    custnm: "",
+    contents: "",
+    findRowValue: "",
+  });
+
+  useEffect(() => {
+    if (filters.isFetch) {
+      fetchGrid();
+      setFilters((prev) => ({ ...prev, isFetch: false }));
+    }
+  }, [filters]);
+
+  useEffect(() => {
+    if (meetingnum !== "") {
+      fetchDetail();
+    }
+  }, [meetingnum]);
+
+  const fetchGrid = async () => {
+    let data: any;
+    setLoading(true);
+
+    const para = {
+      para: `list?fromDate=${convertDateToStr(
+        filters.fromDate
+      )}&toDate=${convertDateToStr(filters.toDate)}&custnm=${
+        filters.custnm
+      }&contents=${filters.contents}&findRowValue=${
+        filters.findRowValue
+      }&page=${filters.page}&pageSize=${filters.pageSize}`,
+    };
+
+    try {
+      data = await processApi<any>("meeting-list", para);
+    } catch (error) {
+      data = null;
+    }
+
+    if (data.isSuccess === true) {
+      const totalRowCnt = data.tables[0].RowCount;
+      const rows = data.tables[0].Rows;
+
+      if (totalRowCnt > 0)
+        setMainDataResult((prev) => {
+          return {
+            data: [...prev.data, ...rows],
+            total: totalRowCnt,
+          };
+        });
+
+      // 첫번째 행 선택
+      if (filters.page === 1) {
+        const firstRowData = rows[0];
+        setSelectedState({ [firstRowData[DATA_ITEM_KEY]]: true });
+      }
+    } else {
+      console.log("[에러발생]");
+      console.log(data);
+    }
+    setLoading(false);
+  };
+
+  const fetchDetail = async () => {
+    let data: any;
+    setLoading(true);
+
+    const para = {
+      para: meetingnum,
+    };
+
+    try {
+      data = await processApi<any>("meeting-detail", para);
+    } catch (error) {
+      data = null;
+    }
+
+    if (data.result.isSuccess === true) {
+      const document = data.document;
+      const rows = data.result.tables[0].Rows;
+
+      // Edior에 HTML & CSS 세팅
+      if (editorRef.current) {
+        editorRef.current.setHtml(document);
+      }
+    } else {
+      console.log("[에러발생]");
+      console.log(data);
+    }
+    setLoading(false);
+  };
+
+  const fetchToSave = async (editorContent: string) => {
+    let data: any;
+    setLoading(true);
+
+    const bytes = require("utf8-bytes");
+    const convertedEditorContent = bytesToBase64(bytes(editorContent));
+
+    const parameters = {
+      fileBytes: convertedEditorContent,
+      procedureName: "pw6_sav_meeting",
+      pageNumber: 0,
+      pageSize: 0,
+      parameters: {
+        "@p_work_type": "N",
+        "@p_orgdiv": "",
+        "@p_meetingnum": "",
+        "@p_custcd": "10192",
+        "@p_recdt": "20230406",
+        "@p_meetingid": "",
+        "@p_meetingnm": "",
+        "@p_place": "",
+        "@p_title": "WEB 테스트",
+        "@p_remark": "비고",
+        "@p_attdatnum": "",
+        "@p_attdatnum_private": "",
+        "@p_unshared": "",
+        "@p_devmngnum": "",
+        "@p_meetingseq": "0|0",
+        "@p_sort_seq": "1|2",
+        "@p_contents": "내용A|내용B",
+        "@p_value_code3": "|",
+        "@p_cust_browserable": "Y|Y",
+        "@p_reqdt": "|",
+        "@p_finexpdt": "|",
+        "@p_is_request": "N|N",
+        "@p_client_name": "|",
+        "@p_client_finexpdt": "|",
+        "@p_id": "1096",
+        "@p_pc": "125.141.105.80",
+      },
+    };
+
+    try {
+      data = await processApi<any>("meeting-save", parameters);
+    } catch (error) {
+      data = null;
+    }
+
+    if (data.isSuccess === true) {
+      search();
+    } else {
+      console.log("[에러발생]");
+      console.log(data);
+      if (data.hasOwnProperty("resultMessage")) {
+        alert(data["resultMessage"]);
+      }
+    }
+    setLoading(false);
   };
 
   return (
@@ -136,7 +341,7 @@ const App = () => {
           </Button>
           <Button
             icon={"file-word"}
-            onClick={download}
+            onClick={downloadWordDoc}
             themeColor={"primary"}
             fillMode={"outline"}
           >
@@ -152,18 +357,18 @@ const App = () => {
               <td>
                 <div className="filter-item-wrap">
                   <DatePicker
-                    name="frdt"
-                    // value={filters.frdt}
+                    name="fromDate"
+                    value={filters.fromDate}
                     format="yyyy-MM-dd"
-                    // onChange={filterInputChange}
+                    onChange={filterInputChange}
                     placeholder=""
                   />
                   ~
                   <DatePicker
-                    name="todt"
-                    // value={filters.todt}
+                    name="toDate"
+                    value={filters.toDate}
                     format="yyyy-MM-dd"
-                    // onChange={filterInputChange}
+                    onChange={filterInputChange}
                     placeholder=""
                   />
                 </div>
@@ -171,10 +376,10 @@ const App = () => {
               <th>제목 및 내용</th>
               <td>
                 <Input
-                  name="user_name"
+                  name="contents"
                   type="text"
-                  // value={filters.user_group_name}
-                  // onChange={filterInputChange}
+                  value={filters.contents}
+                  onChange={filterInputChange}
                 />
               </td>
             </tr>
@@ -185,12 +390,13 @@ const App = () => {
         <GridContainer width={`30%`}>
           <GridTitleContainer>
             <GridTitle>회의록 리스트</GridTitle>
-          </GridTitleContainer>{" "}
+          </GridTitleContainer>
           <Grid
             style={{ height: `100%` }}
             data={process(
               mainDataResult.data.map((row) => ({
                 ...row,
+                recdt: dateformat2(row.recdt),
                 [SELECTED_FIELD]: selectedState[idGetter(row)],
               })),
               mainDataState
@@ -217,9 +423,9 @@ const App = () => {
             //컬럼너비조정
             resizable={true}
           >
-            <GridColumn field="" title="업체" />
-            <GridColumn field="" title="회의일" />
-            <GridColumn field="" title="제목" />
+            <GridColumn field="custnm" title="업체" />
+            <GridColumn field="recdt" title="회의일" />
+            <GridColumn field="title" title="제목" />
           </Grid>
         </GridContainer>
         <GridContainer width={`calc(50% - ${GAP}px)`}>
@@ -298,15 +504,9 @@ const App = () => {
         <GridContainer width={`calc(40% - ${GAP}px)`}>
           <GridTitleContainer>
             <GridTitle>참고자료</GridTitle>
+            <Button onClick={saveMeeting}>저장</Button>
           </GridTitleContainer>
-          <Editor
-            contentStyle={{ height: 160 }}
-            value=""
-            style={{ height: "100%" }}
-            // defaultContent={"<p>editor sample html</p>"}
-            // ref={editor}
-            // onChange={onChangeHandle}
-          />
+          <RichEditor ref={editorRef} editable />
         </GridContainer>
       </GridContainerWrap>
     </>

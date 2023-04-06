@@ -6,6 +6,9 @@ import { resetLocalStorage } from "../components/CommonFunction";
 let BASE_URL = process.env.REACT_APP_API_URL;
 const cachios = require("cachios");
 const domain: any = {
+  "meeting-list": { action: "get", url: "api/spm/meeting/:para" },
+  "meeting-detail": { action: "get", url: "api/spm/meeting/:para" },
+  "meeting-save": { action: "post", url: "api/spm/meeting" },
   query: { action: "post", url: "api/data/sql-query" },
   procedure: { action: "post", url: "api/data/sql-procedure" },
   "platform-query": { action: "post", url: "api/data/sql-query" },
