@@ -15,7 +15,13 @@ import {
 } from "@progress/kendo-react-grid";
 import { Input, InputChangeEvent } from "@progress/kendo-react-inputs";
 import { bytesToBase64 } from "byte-base64";
-import React, { useState, CSSProperties, useRef, useEffect } from "react";
+import React, {
+  useState,
+  CSSProperties,
+  useRef,
+  useEffect,
+  useCallback,
+} from "react";
 import { useSetRecoilState } from "recoil";
 import {
   ButtonContainer,
@@ -174,29 +180,23 @@ const App = () => {
     }
   };
 
+  const currentDate = new Date();
+  const fromDate = new Date(
+    currentDate.getFullYear(),
+    currentDate.getMonth() - 3,
+    currentDate.getDate()
+  );
+
   const [filters, setFilters] = useState({
     isFetch: true,
     pageSize: PAGE_SIZE,
     page: 1,
-    fromDate: new Date(),
+    fromDate: fromDate,
     toDate: new Date(),
     custnm: "",
     contents: "",
     findRowValue: "",
   });
-
-  useEffect(() => {
-    if (filters.isFetch) {
-      fetchGrid();
-      setFilters((prev) => ({ ...prev, isFetch: false }));
-    }
-  }, [filters]);
-
-  useEffect(() => {
-    if (meetingnum !== "") {
-      fetchDetail();
-    }
-  }, [meetingnum]);
 
   const fetchGrid = async () => {
     let data: any;
@@ -218,6 +218,8 @@ const App = () => {
       data = null;
     }
 
+    setLoading(false);
+
     if (data.isSuccess === true) {
       const totalRowCnt = data.tables[0].RowCount;
       const rows = data.tables[0].Rows;
@@ -234,12 +236,12 @@ const App = () => {
       if (filters.page === 1) {
         const firstRowData = rows[0];
         setSelectedState({ [firstRowData[DATA_ITEM_KEY]]: true });
+        setMeetingnum(firstRowData[DATA_ITEM_KEY]);
       }
     } else {
       console.log("[에러발생]");
       console.log(data);
     }
-    setLoading(false);
   };
 
   const fetchDetail = async () => {
@@ -330,6 +332,19 @@ const App = () => {
     }
     setLoading(false);
   };
+
+  useEffect(() => {
+    if (filters.isFetch) {
+      fetchGrid();
+      setFilters((prev) => ({ ...prev, isFetch: false }));
+    }
+  }, [filters]);
+
+  useEffect(() => {
+    if (meetingnum !== "") {
+      fetchDetail();
+    }
+  }, [meetingnum]);
 
   return (
     <>

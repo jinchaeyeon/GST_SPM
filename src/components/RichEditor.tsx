@@ -127,7 +127,7 @@ const RichEditor = React.forwardRef(({ editable }: TRichEditor, ref) => {
     }
   };
 
-  // 받아온 HTML 문자열을 Editor에 세팅
+  // 받아온 HTML 문자열을 Editor에 세팅하고, iframe head style 세팅
   const setHtml = (html: string) => {
     if (editor.current) {
       const view = editor.current.view;
@@ -136,10 +136,23 @@ const RichEditor = React.forwardRef(({ editable }: TRichEditor, ref) => {
         EditorUtils.setHtml(view, htmlContent);
       }
     }
+    // HTML 문자열에서 style 태그 내용 추출
     styles = extractStyleTagContents(html);
 
     if (styles) {
       const iframeDocument = document.querySelector("iframe")!.contentDocument;
+
+      // 기존에 생성된 iframe head style 제거
+      if (iframeDocument) {
+        const styleTags = iframeDocument.head.getElementsByTagName("style");
+        // 기본 style 2개
+        if (styleTags.length > 2) {
+          const lastStyleTag = styleTags[styleTags.length - 1];
+          if (lastStyleTag.parentNode)
+            lastStyleTag.parentNode.removeChild(lastStyleTag);
+        }
+      }
+
       const style = iframeDocument!.createElement("style");
       style.appendChild(iframeDocument!.createTextNode(styles));
 
@@ -147,73 +160,101 @@ const RichEditor = React.forwardRef(({ editable }: TRichEditor, ref) => {
     }
   };
 
+  // style tag가 있으면 css 추가하고, 없으면 style tag 생성 후 css 추가
+  const addCssToStyleTag = (htmlDoc: Document, css: string) => {
+    const styleTag = htmlDoc.querySelector("style");
+    if (styleTag) {
+      if (styleTag.textContent && !styleTag.textContent.includes(css)) {
+        styleTag.textContent += css;
+      }
+    } else {
+      const newStyleTag = htmlDoc.createElement("style");
+      newStyleTag.textContent = css;
+      htmlDoc.head.appendChild(newStyleTag);
+    }
+  };
+
   // HTML 스트링을 받아서 color, background-color에 대한 스타일을 추가하여서 반환하는 함수
   const addClassToColorStyledElementsInHtmlString = (
     htmlString: string
   ): string => {
-    // HTML 문자열을 가상의 DOM 요소로 변환합니다.
+    // HTML 문자열을 가상의 DOM 요소로 변환
     const parser = new DOMParser();
     const htmlDoc = parser.parseFromString(htmlString, "text/html");
 
-    // 모든 요소를 선택합니다.
+    // 모든 요소를 선
     const allElements = htmlDoc.getElementsByTagName("*");
-    const styledElements: {
-      element: Element;
-      color?: string;
-      backgroundColor?: string;
-    }[] = [];
 
-    // 선택한 요소들을 순회하며 style 속성에 color와 background-color가 있는지 확인하고, 있다면 스타일 정보를 저장합니다.
+    // 선택한 요소들을 순회
     for (const element of allElements) {
-      const elementStyle = element.getAttribute("style");
+      // table 요소에 속성 설정
+      if (element.nodeName === "TABLE") {
+        if (!element.getAttribute("border")) {
+          element.setAttribute("border", "0");
+        }
+        if (!element.getAttribute("cellspacing")) {
+          element.setAttribute("cellspacing", "0");
+        }
+        if (!element.getAttribute("cellpadding")) {
+          element.setAttribute("cellpadding", "0");
+        }
+      }
+
+      // css 기본 설정
+      const css = `
+        p, span{
+          font-family: Arial, sans-serif; 
+        }
+        table {
+          margin: 0;
+          border-collapse: collapse;
+          table-layout: fixed;
+          width: 100%;
+          overflow: hidden;
+        }
+        table td {          
+          padding: 0pt 5.4pt 0pt 5.4pt;
+          border: 1pt #000000 solid;
+        }
+        table td p {            
+          margin: 0;
+          padding: 0;
+        }`;
+      addCssToStyleTag(htmlDoc, css);
+
+      // 기존 HTML의 styles 포함
+      if (styles) addCssToStyleTag(htmlDoc, styles);
+
+      // style 속성에 rgba 값이 있는지 확인하고, 있다면 hex 값으로 변환
+      let elementStyle = element.getAttribute("style");
       if (elementStyle) {
-        const colorMatch = elementStyle.match(
-          /(?<!background-)color:\s*([^;]+)/
-        );
-        const backgroundColorMatch = elementStyle.match(
-          /background-color:\s*([^;]+)/
+        const rgbaRegex =
+          /rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*(\d+(?:\.\d+)?))?\)/g;
+        const updatedElementStyle = elementStyle.replace(
+          rgbaRegex,
+          (_, r, g, b, a) => rgbaToHex(`rgba(${r}, ${g}, ${b}, ${a || "1"})`)
         );
 
-        if (colorMatch || backgroundColorMatch) {
-          const color = colorMatch ? colorMatch[1] : undefined;
-          const backgroundColor = backgroundColorMatch
-            ? backgroundColorMatch[1]
-            : undefined;
-          styledElements.push({ element, color, backgroundColor });
-        }
+        element.setAttribute("style", updatedElementStyle);
       }
     }
 
-    // 스타일 정보를 기반으로 CSS 문자열을 생성하고, 각 요소에 클래스를 추가합니다.
-    const cssString = styledElements
-      .map((styledElement, index) => {
-        let css = "";
-        if (styledElement.color) {
-          const className = `color-${index}`;
-          styledElement.element.classList.add(className);
-          css += `.${className} { color: ${styledElement.color}; }`;
-        }
-        if (styledElement.backgroundColor) {
-          const className = `bgColor-${index}`;
-          styledElement.element.classList.add(className);
-          css += `.${className} { background-color: ${styledElement.backgroundColor}; }`;
-        }
-        return css;
-      })
-      .join(" ");
-
-    // 생성된 CSS 문자열을 HTML 문서의 <head> 안에 <style> 태그로 삽입합니다.
-    const styleTag = htmlDoc.createElement("style");
-    styleTag.textContent = cssString + (styles ?? ""); // 기존 스타일도 포함
-    htmlDoc.head.appendChild(styleTag);
-
-    // 수정된 HTML 문자열을 반환합니다.
     return htmlDoc.documentElement.outerHTML;
-    // .replace("<html>", "")
-    // .replace("</html>", "")
-    // .replace("<head>", "")
-    // .replace("</head>", "");
   };
+
+  // 컬러코드 변환 (rgba -> hex 6자리)
+  const rgbaToHex = (rgba: string): string => {
+    const match = rgba.match(
+      /^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*\d+(?:\.\d+)?)?\)$/
+    );
+    if (!match) return rgba;
+
+    const [, r, g, b] = match;
+    const hex = (Number(r) << 16) + (Number(g) << 8) + Number(b);
+
+    return `#${hex.toString(16).padStart(6, "0")}`;
+  };
+
   return (
     <Editor
       style={{ height: "100%" }}
@@ -229,8 +270,8 @@ const RichEditor = React.forwardRef(({ editable }: TRichEditor, ref) => {
               [Indent, Outdent],
               [OrderedList, UnorderedList],
               FontSize,
-              FontName,
-              FormatBlock,
+              // FontName,
+              // FormatBlock,
               [Undo, Redo],
               [Link, Unlink, InsertImage, ViewHtml],
               [InsertTable],
