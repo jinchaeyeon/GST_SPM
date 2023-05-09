@@ -25,9 +25,6 @@ const Login: React.FC = () => {
   const setLoginResult = useSetRecoilState(loginResultState);
   const setPwExpInfo = useSetRecoilState(passwordExpirationInfoState);
   const setLoading = useSetRecoilState(isLoading);
-  const [ifShowCompanyList, setIfShowCompanyList] = useState(false);
-  const [ip, setIp] = useState("");
-  UseGetIp(setIp);
 
   const handleSubmit = (data: { [name: string]: any }) => {
     processLogin(data);
@@ -41,8 +38,8 @@ const Login: React.FC = () => {
         let para: IFormData = Object.assign(
           {},
           {
-            langCode: formData.langCode,
-            companyCode: formData.companyCode,
+            langCode: "ko-KR",
+            companyCode: "SPM",
             userId: formData.userId,
             password: formData.password,
           }
@@ -51,13 +48,6 @@ const Login: React.FC = () => {
         if (typeof para.companyCode !== "string") {
           para.companyCode = para.companyCode.company_code;
         }
-
-        // const md5 = require("md5");
-        // para.password = sha256(md5(para.password));
-        // const response = await processApi<any>(
-        //   para.companyCode === "2207C612" ? "login-old" : "login",
-        //   para
-        // );
 
         const response = await processApi<any>("login", para);
 
@@ -111,12 +101,6 @@ const Login: React.FC = () => {
     []
   );
 
-  const companyCodeKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (e.ctrlKey && e.key === "'") {
-      setIfShowCompanyList((prev) => !prev);
-    }
-  };
-
   return (
     <LoginBox>
       <Form
@@ -128,53 +112,6 @@ const Login: React.FC = () => {
               GST SPM
             </LoginAppName>
             <fieldset className={"k-form-fieldset"}>
-              <Field
-                name={"langCode"}
-                label={"언어설정"}
-                component={FormInput}
-              />
-              {ifShowCompanyList ? (
-                <Field
-                  name={"companyCode"}
-                  label={"업체코드"}
-                  component={FormComboBox}
-                  ifGetCompanyCode={true}
-                  valueField="company_code"
-                  textField="name"
-                  onKeyDown={companyCodeKeyDown}
-                  columns={[
-                    {
-                      sortOrder: 0,
-                      fieldName: "company_code",
-                      caption: "회사코드",
-                      columnWidth: 100,
-                      dataAlignment: "center",
-                    },
-                    {
-                      sortOrder: 0,
-                      fieldName: "name",
-                      caption: "업체명",
-                      columnWidth: 100,
-                      dataAlignment: "center",
-                    },
-                    {
-                      sortOrder: 0,
-                      fieldName: "service_name",
-                      caption: "서비스명",
-                      columnWidth: 100,
-                      dataAlignment: "center",
-                    },
-                  ]}
-                />
-              ) : (
-                <Field
-                  name={"companyCode"}
-                  label={"업체코드"}
-                  component={FormInput}
-                  onKeyDown={companyCodeKeyDown}
-                />
-              )}
-
               <Field name={"userId"} label={"ID"} component={FormInput} />
               <Field
                 name={"password"}
