@@ -6,9 +6,17 @@ import { resetLocalStorage } from "../components/CommonFunction";
 let BASE_URL = process.env.REACT_APP_API_URL;
 const cachios = require("cachios");
 const domain: any = {
+  //QnA
+  "qna-list": { action: "get", url: "api/spm/qna/:para" },
+  "qna-detail": { action: "get", url: "api/spm/qna/:id" },
+  "qna-save": { action: "post", url: "api/spm/:password" },
+  "qna-delete": { action: "delete", url: "api/spm/qna/:id" },
+
+  //회의록
   "meeting-list": { action: "get", url: "api/spm/meeting/:para" },
   "meeting-detail": { action: "get", url: "api/spm/meeting/:para" },
   "meeting-save": { action: "post", url: "api/spm/meeting" },
+  //
   query: { action: "post", url: "api/data/sql-query" },
   procedure: { action: "post", url: "api/data/sql-procedure" },
   "platform-query": { action: "post", url: "api/data/sql-query" },

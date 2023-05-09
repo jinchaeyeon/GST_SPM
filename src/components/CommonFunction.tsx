@@ -39,11 +39,19 @@ export const toDate2 = (date_str: string) => {
   var hh = yyyyMMdd.substring(11, 13);
   var mm = yyyyMMdd.substring(14, 16);
   var dd = yyyyMMdd.substring(17, 19);
-  return new Date(Number(sYear), Number(sMonth) - 1, Number(sDate), Number(hh), Number(mm), Number(dd));
+  return new Date(
+    Number(sYear),
+    Number(sMonth) - 1,
+    Number(sDate),
+    Number(hh),
+    Number(mm),
+    Number(dd)
+  );
 };
 
 //String타입 Date로 반환
 export const toDate = (date_str: string) => {
+  if (!date_str) return null;
   var yyyyMMdd = String(date_str);
   var sYear = yyyyMMdd.substring(0, 4);
   var sMonth = yyyyMMdd.substring(4, 6);
@@ -51,7 +59,6 @@ export const toDate = (date_str: string) => {
 
   return new Date(Number(sYear), Number(sMonth) - 1, Number(sDate));
 };
-
 
 //Date 타입 인수를 8자리 YYYYMMDD string로 날짜 변환하여 반환 (ex. => 20220101)
 export const convertDateToStr = (date: Date | null) => {
@@ -115,8 +122,8 @@ export const convertDateToStrWithTime2 = (date: Date) => {
 
 //8자리 날짜 stirng에 구분자 추가
 export const dateformat = (str: string) => {
-  if (!str) return "";
   //구분자 -> '/'
+  if (!str) return "";
   const date_str =
     str.substring(0, 4) + "/" + str.substring(4, 6) + "/" + str.substring(6);
   return date_str;
@@ -124,6 +131,7 @@ export const dateformat = (str: string) => {
 
 export const dateformat2 = (str: string) => {
   //구분자 -> '-'
+  if (!str) return "";
   const date_str =
     str.substring(0, 4) + "-" + str.substring(4, 6) + "-" + str.substring(6);
   return date_str;
@@ -131,6 +139,7 @@ export const dateformat2 = (str: string) => {
 
 export const dateformat3 = (str: string) => {
   //구분자 -> '년 월 일'
+  if (!str) return "";
   const date_str =
     str.substring(0, 4) +
     "년 " +

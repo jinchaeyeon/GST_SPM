@@ -51,12 +51,14 @@ const {
 const { imageResizing } = EditorUtils;
 
 type TRichEditor = {
-  editable?: boolean;
+  id: string;
+  readonly?: boolean;
 };
 
-const RichEditor = React.forwardRef(({ editable }: TRichEditor, ref) => {
+const RichEditor = React.forwardRef(({ id, readonly }: TRichEditor, ref) => {
   const editor = React.createRef<Editor>();
-  let styles: null | string = null;
+  // let styles: null | string = null;
+  const [styles, setStyles] = React.useState<null | string>(null);
 
   const onMount = (event: EditorMountEvent) => {
     const state = event.viewProps.state;
@@ -64,6 +66,11 @@ const RichEditor = React.forwardRef(({ editable }: TRichEditor, ref) => {
       ...state.plugins,
       insertImagePlugin(onImageInsert),
       imageResizing(),
+      // new Plugin({
+      //     key: new PluginKey('readonly'),
+      //     props: { editable: () => editableRef.current },
+      //     filterTransaction: ((tr, _st) => editableRef.current || !tr.docChanged)
+      //   })
     ];
 
     return new ProseMirror.EditorView(
@@ -137,10 +144,13 @@ const RichEditor = React.forwardRef(({ editable }: TRichEditor, ref) => {
       }
     }
     // HTML 문자열에서 style 태그 내용 추출
-    styles = extractStyleTagContents(html);
+    const extractedStyles = extractStyleTagContents(html);
+    setStyles(extractedStyles);
 
-    if (styles) {
-      const iframeDocument = document.querySelector("iframe")!.contentDocument;
+    if (extractedStyles) {
+      const iframeDocument = document
+        .getElementById(id)!
+        .querySelector("iframe")!.contentDocument;
 
       // 기존에 생성된 iframe head style 제거
       if (iframeDocument) {
@@ -154,7 +164,7 @@ const RichEditor = React.forwardRef(({ editable }: TRichEditor, ref) => {
       }
 
       const style = iframeDocument!.createElement("style");
-      style.appendChild(iframeDocument!.createTextNode(styles));
+      style.appendChild(iframeDocument!.createTextNode(extractedStyles));
 
       iframeDocument!.head.appendChild(style);
     }
@@ -256,34 +266,36 @@ const RichEditor = React.forwardRef(({ editable }: TRichEditor, ref) => {
   };
 
   return (
-    <Editor
-      style={{ height: "100%" }}
-      contentStyle={{ height: "100%" }}
-      tools={
-        editable
-          ? [
-              [Bold, Italic, Underline, Strikethrough],
-              [Subscript, Superscript],
-              ForeColor,
-              BackColor,
-              [AlignLeft, AlignCenter, AlignRight, AlignJustify],
-              [Indent, Outdent],
-              [OrderedList, UnorderedList],
-              FontSize,
-              // FontName,
-              // FormatBlock,
-              [Undo, Redo],
-              [Link, Unlink, InsertImage, ViewHtml],
-              [InsertTable],
-              [AddRowBefore, AddRowAfter, AddColumnBefore, AddColumnAfter],
-              [DeleteRow, DeleteColumn, DeleteTable],
-              [MergeCells, SplitCell],
-            ]
-          : []
-      }
-      ref={editor}
-      onMount={onMount}
-    />
+    <div id={id} style={{ height: "100%" }}>
+      <Editor
+        style={{ height: "100%" }}
+        contentStyle={{ height: "100%" }}
+        tools={
+          readonly
+            ? []
+            : [
+                [Bold, Italic, Underline, Strikethrough],
+                [Subscript, Superscript],
+                ForeColor,
+                BackColor,
+                [AlignLeft, AlignCenter, AlignRight, AlignJustify],
+                [Indent, Outdent],
+                [OrderedList, UnorderedList],
+                FontSize,
+                // FontName,
+                // FormatBlock,
+                [Undo, Redo],
+                [Link, Unlink, InsertImage, ViewHtml],
+                [InsertTable],
+                [AddRowBefore, AddRowAfter, AddColumnBefore, AddColumnAfter],
+                [DeleteRow, DeleteColumn, DeleteTable],
+                [MergeCells, SplitCell],
+              ]
+        }
+        ref={editor}
+        onMount={onMount}
+      />
+    </div>
   );
 });
 

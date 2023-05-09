@@ -46,6 +46,7 @@ import { GAP, SELECTED_FIELD } from "../components/CommonString";
 import RichEditor from "../components/RichEditor";
 import { useApi } from "../hooks/api";
 import { isLoading } from "../store/atoms";
+import { TEditorHandle } from "../store/types";
 const PAGE_SIZE = 100;
 const styles: { [key: string]: CSSProperties } = {
   table: {
@@ -75,10 +76,6 @@ const styles: { [key: string]: CSSProperties } = {
   },
 };
 
-type TChildComponentHandle = {
-  getContent: () => string;
-  setHtml: (html: string) => string;
-};
 const App = () => {
   const processApi = useApi();
   const setLoading = useSetRecoilState(isLoading);
@@ -169,7 +166,7 @@ const App = () => {
     setMainDataState((prev) => ({ ...prev, sort: e.sort }));
   };
 
-  const editorRef = useRef<TChildComponentHandle>(null);
+  const editorRef = useRef<TEditorHandle>(null);
 
   const saveMeeting = () => {
     if (editorRef.current) {
@@ -521,7 +518,7 @@ const App = () => {
             <GridTitle>참고자료</GridTitle>
             <Button onClick={saveMeeting}>저장</Button>
           </GridTitleContainer>
-          <RichEditor ref={editorRef} editable />
+          <RichEditor id="editor" ref={editorRef} readonly />
         </GridContainer>
       </GridContainerWrap>
     </>

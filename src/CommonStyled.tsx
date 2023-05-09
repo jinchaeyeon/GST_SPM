@@ -1,6 +1,10 @@
 import styled from "styled-components";
 import { CLOSED_GNV_WIDTH, GNV_WIDTH } from "./components/CommonString";
 import logoSrc from "./img/logo.png";
+import checkedStsSrc from "./img/checked_16.png";
+import processStsSrc from "./img/process_16.png";
+import stopStsSrc from "./img/stop_16.png";
+import waitStsSrc from "./img/wait_16.png";
 
 export const TitleContainer = styled.div`
   display: flex;
@@ -201,7 +205,7 @@ export const FormBox = styled.table`
   tr th {
     /* background-color: #f5f5f8;
     border: solid 1px #d7d7d7; */
-    min-width: 120px;
+    min-width: 80px;
     color: #333333;
     font-weight: 400;
     font-size: 13px;
@@ -218,10 +222,14 @@ export const FormBox = styled.table`
     position: relative;
     vertical-align: middle;
   }
-  /* .filter-item-wrap {
+  .filter-item-wrap {
     display: flex;
     align-items: center;
-  } */
+  }
+  .filter-item-wrap > button {
+    position: absolute;
+    right: 5px;
+  }
   .k-radio-list.k-list-horizontal {
     justify-content: center;
     border: solid 1px rgba(0, 0, 0, 0.08);
@@ -255,6 +263,7 @@ export const GridContainerWrap = styled.div<TGridContainerWrap>`
   gap: ${(props) => (props.flexDirection === "column" ? "0" : "15px")};
   justify-content: space-between;
   flex-direction: ${(props) => props.flexDirection};
+  width: 100%;
   max-width: ${(props) =>
     typeof props.maxWidth === "number"
       ? props.maxWidth + "px"
@@ -295,6 +304,7 @@ export const FormFieldWrap = styled.div`
 `;
 
 export const GridContainer = styled.div<TGridContainer>`
+  display: flex;
   flex-direction: column;
   max-width: ${(props) => props.maxWidth};
   min-height: ${(props) => props.minHeight};
@@ -315,10 +325,6 @@ export const GridContainer = styled.div<TGridContainer>`
   margin-left: ${(props) => (props.margin ? props.margin.left ?? "" : "")};
   margin-right: ${(props) => (props.margin ? props.margin.right ?? "" : "")};
 
-  .k-grid,
-  .k-scheduler {
-    margin: 5px 0;
-  }
   .k-grid .k-command-cell {
     text-align: center;
   }
@@ -805,4 +811,55 @@ export const Logo = styled.div<TLogo>`
   width: ${(props) => props.size};
   height: ${(props) => props.size};
   background-position: center;
+`;
+
+type TStatusIcon = { status: string };
+
+export const StatusIcon = styled.span<TStatusIcon>`
+  background: url(${(props) =>
+    props.status === "N"
+      ? waitStsSrc
+      : props.status === "R"
+      ? processStsSrc
+      : props.status === "Y"
+      ? checkedStsSrc
+      : stopStsSrc});
+  background-size: contain;
+  background-repeat: no-repeat;
+  width: 15px;
+  height: 15px;
+  background-position: center;
+  display: inline-block;
+  margin-right: 5px;
+`;
+
+export const QnaPwBox = styled.div`
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border: solid 1px #ebebeb;
+
+  .inner {
+    display: flex;
+    min-width: 300px;
+    height: 400px;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .inner p {
+    margin-top: 20px;
+    font-size: 15px;
+  }
+  .inner input {
+    height: 40px;
+    margin-top: 40px;
+  }
+  .inner button {
+    width: 100%;
+    height: 40px;
+    margin-top: 20px;
+  }
 `;

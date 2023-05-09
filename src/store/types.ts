@@ -151,6 +151,11 @@ export type TLogParaVal = {
   form_login_key: string;
 };
 
+export type TEditorHandle = {
+  getContent: () => string;
+  setHtml: (html: string) => string;
+};
+
 export type TSysMessageKey =
   | "QuestionToDeleteAllDataInCodeWithFormat"
   | "RequiredFieldWithFormat"
