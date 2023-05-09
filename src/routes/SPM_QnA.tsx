@@ -9,11 +9,7 @@ import {
   GridEvent,
   GridSelectionChangeEvent,
 } from "@progress/kendo-react-grid";
-import {
-  Input,
-  RadioGroup,
-  RadioGroupChangeEvent,
-} from "@progress/kendo-react-inputs";
+import { Input, RadioGroup } from "@progress/kendo-react-inputs";
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import {
   ButtonContainer,
@@ -32,9 +28,7 @@ import {
 import {
   chkScrollHandler,
   convertDateToStr,
-  convertDateToStrWithTime2,
   dateformat2,
-  getCodeFromValue,
   handleKeyPressSearch,
   toDate,
 } from "../components/CommonFunction";
@@ -45,10 +39,6 @@ import { useApi } from "../hooks/api";
 import { TEditorHandle } from "../store/types";
 import RichEditor from "../components/RichEditor";
 import {
-  ComboBoxChangeEvent,
-  DropDownList,
-  DropDownListChangeEvent,
-  MultiColumnComboBox,
   MultiSelect,
   MultiSelectChangeEvent,
 } from "@progress/kendo-react-dropdowns";
@@ -125,7 +115,8 @@ const App = () => {
   const qEditorRef = useRef<TEditorHandle>(null);
   const aEditorRef = useRef<TEditorHandle>(null);
   const [isDataLocked, setIsDataLocked] = useState(false);
-  const [userPw, setUserPw] = useState("");
+
+  const pwInputRef: any = useRef(null);
 
   const isAdmin = loginResult.role === "ADMIN";
 
@@ -467,6 +458,12 @@ const App = () => {
       setDetailData((prev) => ({ ...prev, is_public: "Y" }));
     }
   }, [detailData]);
+
+  useEffect(() => {
+    if (isDataLocked && detailData.work_type !== "N" && pwInputRef.current) {
+      pwInputRef.current.focus();
+    }
+  }, [isDataLocked, detailData]);
 
   const addData = () => {
     setDetailData((prev) => ({
@@ -863,6 +860,7 @@ const App = () => {
                   type="password"
                   value={detailData.password}
                   onChange={detailDataInputChange}
+                  ref={pwInputRef}
                 />
                 <Button
                   themeColor={"primary"}
