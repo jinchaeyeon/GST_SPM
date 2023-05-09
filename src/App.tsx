@@ -6,6 +6,7 @@ import { createGlobalStyle } from "styled-components";
 import PanelBarNavContainer from "./components/PanelBarNavContainer";
 import AuthRoute from "./components/AuthRoute";
 import Login from "./routes/Login";
+import LoginAdmin from "./routes/LoginAdmin";
 import Main from "./routes/Main";
 import CHAT_A0001W from "./routes/CHAT_A0001W";
 import CHAT_A0002W from "./routes/CHAT_A0002W";
@@ -193,6 +194,7 @@ const AppInner: React.FC = () => {
       <Router>
         <Switch>
           <Route path="/" component={Login} exact />
+          <Route path="/login-admin" component={LoginAdmin} exact />
           <PanelBarNavContainer>
             {/* 메인 홈 */}
             <AuthRoute path="/Home" component={Main} exact />
