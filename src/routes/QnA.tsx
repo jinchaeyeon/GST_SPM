@@ -256,6 +256,8 @@ const App = () => {
           const firstRowData = rows[0];
           setSelectedState({ [firstRowData[DATA_ITEM_KEY]]: true });
         }
+      } else {
+        resetDetailData();
       }
     }
     setFilters((prev) => ({

@@ -8,13 +8,10 @@ import AuthRoute from "./components/AuthRoute";
 import Login from "./routes/Login";
 import LoginAdmin from "./routes/LoginAdmin";
 import Main from "./routes/Main";
-import CHAT_A0001W from "./routes/CHAT_A0001W";
-import CHAT_A0002W from "./routes/CHAT_A0002W";
-import CHAT_TEST_TRAVEL_BOT from "./routes/CHAT_TEST_TRAVEL_BOT";
-import MinutesView from "./routes/SPM_MinutesView";
-import QnA from "./routes/SPM_QnA";
-import Notice from "./routes/SPM_Notice";
-import ProjectPlan from "./routes/SPM_ProjectPlan";
+import MinutesView from "./routes/MinutesView";
+import QnA from "./routes/QnA";
+import Notice from "./routes/Notice";
+import ProjectPlan from "./routes/ProjectPlan";
 
 import { isMobileMenuOpendState } from "./store/atoms";
 import {
@@ -198,15 +195,8 @@ const AppInner: React.FC = () => {
           <PanelBarNavContainer>
             {/* 메인 홈 */}
             <AuthRoute path="/Home" component={Main} exact />
-            {/* CHAT BOT */}
-            <AuthRoute path="/CHAT_A0001W" component={CHAT_A0001W} exact />
-            <AuthRoute path="/CHAT_A0002W" component={CHAT_A0002W} exact />
-            <AuthRoute
-              path="/CHAT_TEST_TRAVEL_BOT"
-              component={CHAT_TEST_TRAVEL_BOT}
-              exact
-            />
-            {/* 연구개발 */}
+
+            {/* SPM */}
             <AuthRoute path="/MinutesView" component={MinutesView} exact />
             <AuthRoute path="/Qna" component={QnA} exact />
             <AuthRoute path="/Notice" component={Notice} exact />

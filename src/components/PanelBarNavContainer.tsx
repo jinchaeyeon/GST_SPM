@@ -416,26 +416,6 @@ const PanelBarNavContainer = (props: any) => {
       menuCategory: "WEB",
       isFavorite: false,
     });
-    paths.push({
-      path: "/",
-      menuName: "사용자 옵션",
-      index: "",
-      menuId: "custom-option",
-      parentMenuId: "setting",
-      menuCategory: "WEB",
-      isFavorite: false,
-    });
-    if (isAdmin) {
-      paths.push({
-        path: "/",
-        menuName: "시스템 옵션",
-        index: "",
-        menuId: "system-option",
-        parentMenuId: "setting",
-        menuCategory: "WEB",
-        isFavorite: false,
-      });
-    }
   }
 
   // Parent 그룹 없는 메뉴 Array
@@ -548,47 +528,10 @@ const PanelBarNavContainer = (props: any) => {
             </PanelBar>
           )}
 
-          {/* GST */}
-          {/* {companyCode === "2207C612" && (
-        <PanelBar
-          selected={selected}
-          expandMode={"single"}
-          onSelect={onSelect}
-        >
-          <PanelBarItem title={"Home"} route="/Home"></PanelBarItem>
-
-          <PanelBarItem title={"전사관리"}>
-            <PanelBarItem title={"Scheduler"} route="/CM_A1600W" />
-          </PanelBarItem>
-          <PanelBarItem title={"전자결재"}>
-            <PanelBarItem title={"결재관리"} route="/EA_A2000W" />
-          </PanelBarItem>
-        </PanelBar>
-      )} */}
-
           <ButtonContainer
             flexDirection={"column"}
             style={{ marginTop: "10px", gap: "5px" }}
           >
-            <Button
-              onClick={onClickChatbot}
-              icon={"hyperlink-open-sm"}
-              fillMode={"solid"}
-              themeColor={"secondary"}
-              rounded={"full"}
-              size="small"
-            >
-              Chatbot
-            </Button>
-            {/* {isAdmin && (
-              <Button
-                onClick={() => setUserOptionsWindowVisible(true)}
-                fillMode={"flat"}
-                themeColor={"secondary"}
-              >
-                사용자 옵션
-              </Button>
-            )} */}
             <Button
               onClick={logout}
               icon={"logout"}
