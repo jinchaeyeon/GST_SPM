@@ -8,7 +8,7 @@ import AuthRoute from "./components/AuthRoute";
 import Login from "./routes/Login";
 import LoginAdmin from "./routes/LoginAdmin";
 import Main from "./routes/Main";
-import MinutesView from "./routes/MinutesView";
+import MeetingView from "./routes/MeetingView";
 import QnA from "./routes/QnA";
 import Notice from "./routes/Notice";
 import ProjectPlan from "./routes/ProjectPlan";
@@ -197,7 +197,7 @@ const AppInner: React.FC = () => {
             <AuthRoute path="/Home" component={Main} exact />
 
             {/* SPM */}
-            <AuthRoute path="/MinutesView" component={MinutesView} exact />
+            <AuthRoute path="/MeetingView" component={MeetingView} exact />
             <AuthRoute path="/Qna" component={QnA} exact />
             <AuthRoute path="/Notice" component={Notice} exact />
             <AuthRoute path="/ProjectPlan" component={ProjectPlan} exact />

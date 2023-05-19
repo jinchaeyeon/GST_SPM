@@ -394,7 +394,7 @@ const PanelBarNavContainer = (props: any) => {
       isFavorite: false,
     });
     panelBars.push({
-      path: "/MinutesView",
+      path: "/MeetingView",
       menuName: "회의록 열람",
       index: ".3",
       menuId: "",
@@ -436,7 +436,7 @@ const PanelBarNavContainer = (props: any) => {
     "/Home",
     "/GANTT",
     "/WORD_EDITOR",
-    "/MinutesView",
+    "/MeetingView",
     "/QnA",
     "/Notice",
     "/ProjectPlan",
