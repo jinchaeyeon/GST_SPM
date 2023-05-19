@@ -75,7 +75,7 @@ const domain: any = {
   },
   "project-schedule-detail": {
     action: "get",
-    url: "api/spm/project-schedule/:para",
+    url: "api/spm/project-schedule/:id",
   },
 };
 let isTokenRefreshing = false;
