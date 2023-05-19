@@ -403,7 +403,7 @@ const PanelBarNavContainer = (props: any) => {
       isFavorite: false,
     });
     panelBars.push({
-      path: "/ProjectPlan",
+      path: "/ProjectSchedule",
       menuName: "프로젝트 일정계획",
       index: ".4",
       menuId: "",
@@ -439,7 +439,7 @@ const PanelBarNavContainer = (props: any) => {
     "/MeetingView",
     "/QnA",
     "/Notice",
-    "/ProjectPlan",
+    "/ProjectSchedule",
   ];
 
   let prgMenus: null | { id: string; text: string }[] = null;

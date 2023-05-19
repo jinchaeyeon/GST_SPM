@@ -11,7 +11,7 @@ import Main from "./routes/Main";
 import MeetingView from "./routes/MeetingView";
 import QnA from "./routes/QnA";
 import Notice from "./routes/Notice";
-import ProjectPlan from "./routes/ProjectPlan";
+import ProjectSchedule from "./routes/ProjectSchedule";
 
 import { isMobileMenuOpendState } from "./store/atoms";
 import {
@@ -200,7 +200,11 @@ const AppInner: React.FC = () => {
             <AuthRoute path="/MeetingView" component={MeetingView} exact />
             <AuthRoute path="/Qna" component={QnA} exact />
             <AuthRoute path="/Notice" component={Notice} exact />
-            <AuthRoute path="/ProjectPlan" component={ProjectPlan} exact />
+            <AuthRoute
+              path="/ProjectSchedule"
+              component={ProjectSchedule}
+              exact
+            />
           </PanelBarNavContainer>
         </Switch>
       </Router>

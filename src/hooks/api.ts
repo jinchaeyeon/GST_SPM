@@ -69,6 +69,14 @@ const domain: any = {
     action: "delete",
     url: "api/spm/:attached",
   }, // AttachmentNum 자체를 삭제
+  "project-schedule-list": {
+    action: "get",
+    url: "api/spm/project-schedule/projects",
+  },
+  "project-schedule-detail": {
+    action: "get",
+    url: "api/spm/project-schedule/:para",
+  },
 };
 let isTokenRefreshing = false;
 let refreshSubscribers: any[] = [];
