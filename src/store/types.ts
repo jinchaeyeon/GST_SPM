@@ -478,3 +478,13 @@ export type TInsertImageFiles = {
   attrs?: any;
   event?: any;
 };
+
+export type TAttachmentType =
+  | "notice"
+  | "question"
+  | "answer"
+  | "receipt"
+  | "record"
+  | "task"
+  | "meeting"
+  | "project";

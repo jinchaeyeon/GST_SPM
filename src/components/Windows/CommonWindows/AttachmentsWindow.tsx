@@ -17,16 +17,32 @@ import NumberCell from "../../Cells/NumberCell";
 import CenterCell from "../../Cells/CenterCell";
 import { convertDateToStrWithTime2 } from "../../CommonFunction";
 import { SELECTED_FIELD } from "../../CommonString";
+import { useLocation } from "react-router-dom";
+import { TAttachmentType } from "../../../store/types";
+
+type permission = {
+  upload: boolean;
+  download: boolean;
+  delete: boolean;
+};
 
 type IKendoWindow = {
+  type: TAttachmentType;
   setVisible(arg: boolean): void;
   setData?(data: object): void;
   para: string;
+  permission?: permission;
 };
 
-const DATA_ITEM_KEY = "saved_name";
+const DATA_ITEM_KEY = "savenm";
 
-const KendoWindow = ({ setVisible, setData, para = "" }: IKendoWindow) => {
+const KendoWindow = ({
+  type,
+  setVisible,
+  setData,
+  para = "",
+  permission,
+}: IKendoWindow) => {
   const [position, setPosition] = useState<IWindowPosition>({
     left: 300,
     top: 100,
@@ -35,6 +51,9 @@ const KendoWindow = ({ setVisible, setData, para = "" }: IKendoWindow) => {
   });
 
   const [attachmentNumber, setAttachmentNumber] = useState(para);
+
+  const location = useLocation();
+  const pathname = location.pathname.replace("/", "");
 
   const handleMove = (event: WindowMoveEvent) => {
     setPosition({ ...position, left: event.left, top: event.top });
@@ -66,8 +85,13 @@ const KendoWindow = ({ setVisible, setData, para = "" }: IKendoWindow) => {
 
     const filePara = {
       attached: attachmentNumber
-        ? "attached?attachmentNumber=" + attachmentNumber
-        : "attached",
+        ? "attachment?type=" +
+          type +
+          "&attachmentNumber=" +
+          attachmentNumber +
+          "&formId=%28web%29" +
+          pathname
+        : "attachment?type=" + type + "&formId=%28web%29" + pathname,
       files: files, //.FileList,
     };
 
@@ -92,7 +116,7 @@ const KendoWindow = ({ setVisible, setData, para = "" }: IKendoWindow) => {
 
     if (attachmentNumber === "") return false;
     const parameters = {
-      attached: "list?attachmentNumber=" + attachmentNumber,
+      attached: "list?type=" + type + "&attachmentNumber=" + attachmentNumber,
     };
 
     try {
@@ -122,7 +146,7 @@ const KendoWindow = ({ setVisible, setData, para = "" }: IKendoWindow) => {
 
         result = {
           attdatnum: rows[0].attdatnum,
-          original_name: rows[0].original_name,
+          original_name: rows[0].realnm,
           rowCount: totalRowCnt,
         };
       } else {
@@ -140,7 +164,6 @@ const KendoWindow = ({ setVisible, setData, para = "" }: IKendoWindow) => {
         };
       }
     }
-
     if (setData) {
       setData(result);
     }
@@ -165,10 +188,10 @@ const KendoWindow = ({ setVisible, setData, para = "" }: IKendoWindow) => {
     let response: any;
 
     parameters.forEach(async (parameter) => {
-      console.log(parameter);
       try {
         response = await processApi<any>("file-download", {
           attached: parameter,
+          type,
         });
       } catch (error) {
         response = null;
@@ -232,7 +255,10 @@ const KendoWindow = ({ setVisible, setData, para = "" }: IKendoWindow) => {
 
     parameters.forEach(async (parameter) => {
       try {
-        data = await processApi<any>("file-delete", { attached: parameter });
+        data = await processApi<any>("file-delete", {
+          type,
+          attached: parameter,
+        });
       } catch (error) {
         data = null;
       }
@@ -296,6 +322,13 @@ const KendoWindow = ({ setVisible, setData, para = "" }: IKendoWindow) => {
             themeColor={"primary"}
             fillMode={"outline"}
             icon={"upload"}
+            disabled={
+              permission != undefined
+                ? permission.upload == true
+                  ? false
+                  : true
+                : false
+            }
           >
             업로드
             <input
@@ -319,6 +352,13 @@ const KendoWindow = ({ setVisible, setData, para = "" }: IKendoWindow) => {
             themeColor={"primary"}
             fillMode={"outline"}
             icon={"download"}
+            disabled={
+              permission != undefined
+                ? permission.download == true
+                  ? false
+                  : true
+                : false
+            }
           >
             다운로드
           </Button>
@@ -327,6 +367,13 @@ const KendoWindow = ({ setVisible, setData, para = "" }: IKendoWindow) => {
             themeColor={"primary"}
             fillMode={"outline"}
             icon={"delete"}
+            disabled={
+              permission != undefined
+                ? permission.delete == true
+                  ? false
+                  : true
+                : false
+            }
           >
             삭제
           </Button>
@@ -397,9 +444,9 @@ const KendoWindow = ({ setVisible, setData, para = "" }: IKendoWindow) => {
             ) === -1
           }
         />
-        <GridColumn field="original_name" title="파일명" width="600" />
+        <GridColumn field="realnm" title="파일명" width="600" />
         <GridColumn
-          field="file_size"
+          field="filesize"
           title="파일SIZE (byte)"
           width="150"
           cell={NumberCell}

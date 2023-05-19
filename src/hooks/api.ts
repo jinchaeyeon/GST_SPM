@@ -58,13 +58,17 @@ const domain: any = {
   login: { action: "post", url: "api/auth/login" },
   "login-old": { action: "post", url: "api/auth/login-old" },
   "company-code": { action: "get", url: "api/auth/company-codes" },
-  "file-list": { action: "get", url: "api/files/attached/:attached" },
-  "file-upload": { action: "post", url: "api/files/:attached" },
+  "file-list": { action: "get", url: "api/spm/attachment/:attached" },
+  "file-upload": { action: "post", url: "api/spm/:attached" },
   "file-download": {
     action: "get",
-    url: "api/files/attached/:attached",
+    url: "api/spm/attachment/:attached",
   },
-  "file-delete": { action: "delete", url: "api/files/attached/:attached" },
+  "file-delete": { action: "delete", url: "api/spm/attachment/:attached" },
+  "attachment-delete": {
+    action: "delete",
+    url: "api/spm/:attached",
+  }, // AttachmentNum 자체를 삭제
 };
 let isTokenRefreshing = false;
 let refreshSubscribers: any[] = [];

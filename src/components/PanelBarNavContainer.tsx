@@ -13,6 +13,8 @@ import {
   passwordExpirationInfoState,
   loginResultState,
   isMenuOpendState,
+  deletedAttadatnumsState,
+  unsavedAttadatnumsState,
 } from "../store/atoms";
 import UserOptionsWindow from "./Windows/CommonWindows/UserOptionsWindow";
 import ChangePasswordWindow from "./Windows/CommonWindows/ChangePasswordWindow";
@@ -37,6 +39,7 @@ import {
   AutoComplete,
   AutoCompleteCloseEvent,
 } from "@progress/kendo-react-dropdowns";
+import { DEFAULT_ATTDATNUMS } from "./CommonString";
 
 const PanelBarNavContainer = (props: any) => {
   const processApi = useApi();
@@ -58,6 +61,16 @@ const PanelBarNavContainer = (props: any) => {
   const loginKey = loginResult ? loginResult.loginKey : "";
   const role = loginResult ? loginResult.role : "";
   const isAdmin = role === "ADMIN" || role === "DEVELOPER" ? true : false;
+
+  // 삭제할 첨부파일 리스트를 담는 함수
+  const [deletedAttadatnums, setDeletedAttadatnums] = useRecoilState(
+    deletedAttadatnumsState
+  );
+
+  // 서버 업로드는 되었으나 DB에는 저장안된 첨부파일 리스트
+  const [unsavedAttadatnums, setUnsavedAttadatnums] = useRecoilState(
+    unsavedAttadatnumsState
+  );
 
   const [previousRoute, setPreviousRoute] = useState("");
   const [formKey, setFormKey] = useState("");
@@ -224,87 +237,87 @@ const PanelBarNavContainer = (props: any) => {
     }
   };
 
-  useEffect(() => {
-    if (token && ip !== null) {
-      const pathname = location.pathname.replace("/", "");
+  // useEffect(() => {
+  //   if (token && ip !== null) {
+  //     const pathname = location.pathname.replace("/", "");
 
-      // 폼 로그 처리
-      if (previousRoute === "") {
-        const pathitem = paths.find(
-          (item) => item.path.replace("/", "") === pathname
-        );
+  //     // 폼 로그 처리
+  //     if (previousRoute === "") {
+  //       const pathitem = paths.find(
+  //         (item) => item.path.replace("/", "") === pathname
+  //       );
 
-        //최초 오픈
-        fetchToLog({
-          work_type: "OPEN",
-          form_id: pathname,
-          form_name: pathitem ? pathitem.menuName : "",
-          form_login_key: "",
-        });
-      } else if (pathname !== previousRoute) {
-        const pathitem = paths.find(
-          (item) => item.path.replace("/", "") === pathname
-        );
-        const previousPathitem = paths.find(
-          (item) => item.path.replace("/", "") === previousRoute
-        );
-        // 오픈, 클로즈
-        fetchToLog({
-          work_type: "CLOSE",
-          form_id: previousRoute,
-          form_name: previousPathitem ? previousPathitem.menuName : "",
-          form_login_key: formKey,
-        });
-        fetchToLog({
-          work_type: "OPEN",
-          form_id: pathname,
-          form_name: pathitem ? pathitem.menuName : "",
-          form_login_key: "",
-        });
-      }
+  //       //최초 오픈
+  //       fetchToLog({
+  //         work_type: "OPEN",
+  //         form_id: pathname,
+  //         form_name: pathitem ? pathitem.menuName : "",
+  //         form_login_key: "",
+  //       });
+  //     } else if (pathname !== previousRoute) {
+  //       const pathitem = paths.find(
+  //         (item) => item.path.replace("/", "") === pathname
+  //       );
+  //       const previousPathitem = paths.find(
+  //         (item) => item.path.replace("/", "") === previousRoute
+  //       );
+  //       // 오픈, 클로즈
+  //       fetchToLog({
+  //         work_type: "CLOSE",
+  //         form_id: previousRoute,
+  //         form_name: previousPathitem ? previousPathitem.menuName : "",
+  //         form_login_key: formKey,
+  //       });
+  //       fetchToLog({
+  //         work_type: "OPEN",
+  //         form_id: pathname,
+  //         form_name: pathitem ? pathitem.menuName : "",
+  //         form_login_key: "",
+  //       });
+  //     }
 
-      // 이전 루트 저장
-      setPreviousRoute(pathname);
-    }
-  }, [location, ip]);
+  //     // 이전 루트 저장
+  //     setPreviousRoute(pathname);
+  //   }
+  // }, [location, ip]);
 
-  const fetchToLog = async (logParaVal: TLogParaVal) => {
-    let data: any;
+  // const fetchToLog = async (logParaVal: TLogParaVal) => {
+  //   let data: any;
 
-    const logPara: Iparameters = {
-      procedureName: "sys_sav_form_access_log",
-      pageNumber: 0,
-      pageSize: 0,
-      parameters: {
-        "@p_work_type": logParaVal.work_type,
-        "@p_user_id": userId,
-        "@p_form_id": logParaVal.form_id,
-        "@p_form_name": logParaVal.form_name,
+  //   const logPara: Iparameters = {
+  //     procedureName: "sys_sav_form_access_log",
+  //     pageNumber: 0,
+  //     pageSize: 0,
+  //     parameters: {
+  //       "@p_work_type": logParaVal.work_type,
+  //       "@p_user_id": userId,
+  //       "@p_form_id": logParaVal.form_id,
+  //       "@p_form_name": logParaVal.form_name,
 
-        "@p_login_key": logParaVal.form_login_key,
-        "@p_parent_login_key": loginKey,
+  //       "@p_login_key": logParaVal.form_login_key,
+  //       "@p_parent_login_key": loginKey,
 
-        "@p_ip_address": ip,
-        "@p_pc": broswer,
-        "@p_mac_address": "",
-      },
-    };
+  //       "@p_ip_address": ip,
+  //       "@p_pc": broswer,
+  //       "@p_mac_address": "",
+  //     },
+  //   };
 
-    try {
-      data = await processApi<any>("procedure", logPara);
-    } catch (error) {
-      data = null;
-    }
-    if (data.isSuccess === true) {
-      if (logParaVal.work_type === "OPEN") {
-        const { form_login_key } = data.tables[0].Rows[0];
-        setFormKey(form_login_key);
-      }
-    } else {
-      console.log("[An error occured to log]");
-      console.log(data);
-    }
-  };
+  //   try {
+  //     data = await processApi<any>("procedure", logPara);
+  //   } catch (error) {
+  //     data = null;
+  //   }
+  //   if (data.isSuccess === true) {
+  //     if (logParaVal.work_type === "OPEN") {
+  //       const { form_login_key } = data.tables[0].Rows[0];
+  //       setFormKey(form_login_key);
+  //     }
+  //   } else {
+  //     console.log("[An error occured to log]");
+  //     console.log(data);
+  //   }
+  // };
 
   const setSelectedIndex = (pathName: any) => {
     let currentPath: any = paths
@@ -450,6 +463,74 @@ const PanelBarNavContainer = (props: any) => {
     }
   };
 
+  // 새로고침하거나 Path 변경 시
+  useEffect(() => {
+    const handleTabClose = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      return (event.returnValue = "true");
+    };
+
+    const handleUnload = () => {
+      // unsavedAttadatnums가 있으면 삭제처리
+      if (unsavedAttadatnums.attdatnums.length > 0) {
+        setDeletedAttadatnums(unsavedAttadatnums);
+      }
+    };
+
+    const unlisten = history.listen(() => {
+      handleUnload();
+    });
+
+    window.addEventListener("beforeunload", handleTabClose);
+    window.addEventListener("unload", handleUnload);
+
+    return () => {
+      unlisten();
+      window.removeEventListener("beforeunload", handleTabClose);
+      window.removeEventListener("unload", handleUnload);
+    };
+  }, [
+    unsavedAttadatnums,
+    setUnsavedAttadatnums,
+    history,
+    setDeletedAttadatnums,
+  ]);
+
+  const fetchToDeletedAttachment = useCallback(
+    async (type: string, attdatnums: string[]) => {
+      let data: any;
+
+      attdatnums.forEach(async (attdatnum) => {
+        try {
+          data = await processApi<any>("attachment-delete", {
+            attached: `attachment?type=${type}&attachmentNumber=${attdatnum}`,
+          });
+        } catch (error) {
+          data = null;
+        }
+
+        if (data === null) {
+          console.log("An error occured to delete a file of " + attdatnum);
+        }
+      });
+    },
+    []
+  );
+
+  // 첨부파일 삭제
+  useEffect(() => {
+    if (deletedAttadatnums.type && deletedAttadatnums.attdatnums.length > 0) {
+      fetchToDeletedAttachment(
+        deletedAttadatnums.type,
+        deletedAttadatnums.attdatnums
+      );
+
+      // 초기화
+      setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
+      setDeletedAttadatnums(DEFAULT_ATTDATNUMS);
+    }
+  }, [deletedAttadatnums]);
+
   return (
     <Wrapper isMobileMenuOpend={isMobileMenuOpend}>
       <Modal isMobileMenuOpend={isMobileMenuOpend} onClick={onMenuBtnClick} />
@@ -479,7 +560,7 @@ const PanelBarNavContainer = (props: any) => {
           )}
           {paths.length > 0 && (
             <PanelBar
-              selected={selected}
+              selected={String(selected)}
               expandMode={"single"}
               onSelect={onSelect}
             >

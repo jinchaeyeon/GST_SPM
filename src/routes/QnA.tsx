@@ -32,9 +32,18 @@ import {
   handleKeyPressSearch,
   toDate,
 } from "../components/CommonFunction";
-import { PAGE_SIZE, SELECTED_FIELD } from "../components/CommonString";
+import {
+  DEFAULT_ATTDATNUMS,
+  PAGE_SIZE,
+  SELECTED_FIELD,
+} from "../components/CommonString";
 import { useRecoilState, useSetRecoilState } from "recoil";
-import { isLoading, loginResultState } from "../store/atoms";
+import {
+  deletedAttadatnumsState,
+  isLoading,
+  loginResultState,
+  unsavedAttadatnumsState,
+} from "../store/atoms";
 import { useApi } from "../hooks/api";
 import { TEditorHandle } from "../store/types";
 import RichEditor from "../components/RichEditor";
@@ -46,6 +55,9 @@ import CenterCell from "../components/Cells/CenterCell";
 import QnaStateCell from "../components/Cells/QnaStateCell";
 import { bytesToBase64 } from "byte-base64";
 import { Icon } from "@progress/kendo-react-common";
+import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
+import { IAttachmentData } from "../hooks/interfaces";
+
 type TItem = {
   sub_code: string;
   code_name: string;
@@ -105,6 +117,10 @@ const defaultDetailData = {
   reception_date: "",
   status: { code_name: "", sub_code: "" },
   attdatnum: "",
+  files: "",
+  answer_attdatnum: "",
+  answer_document_id: "",
+  answer_files: "",
 };
 
 const App = () => {
@@ -118,7 +134,15 @@ const App = () => {
 
   const pwInputRef: any = useRef(null);
 
-  const isAdmin = loginResult.role === "ADMIN";
+  const isAdmin = loginResult && loginResult.role === "ADMIN";
+
+  // 삭제할 첨부파일 리스트를 담는 함수
+  const setDeletedAttadatnums = useSetRecoilState(deletedAttadatnumsState);
+
+  // 서버 업로드는 되었으나 DB에는 저장안된 첨부파일 리스트
+  const [unsavedAttadatnums, setUnsavedAttadatnums] = useRecoilState(
+    unsavedAttadatnumsState
+  );
 
   //조회조건 Input Change 함수 => 사용자가 Input에 입력한 값을 조회 파라미터로 세팅
   const filterInputChange = (e: any) => {
@@ -147,8 +171,11 @@ const App = () => {
     }));
   };
 
+  let fromDate = new Date();
+  fromDate.setMonth(fromDate.getMonth() - 1);
+
   const [filters, setFilters] = useState<TFilters>({
-    fromDate: new Date(),
+    fromDate: fromDate,
     toDate: new Date(),
     userName: "",
     contents: "",
@@ -180,6 +207,12 @@ const App = () => {
   const [selectedState, setSelectedState] = useState<{
     [id: string]: boolean | number[];
   }>({});
+
+  const [attachmentsWindowVisibleQ, setAttachmentsWindowVisibleQ] =
+    useState<boolean>(false);
+
+  const [attachmentsWindowVisibleA, setAttachmentsWindowVisibleA] =
+    useState<boolean>(false);
 
   const onMainDataStateChange = (event: GridDataStateChangeEvent) => {
     setMainDataState(event.dataState);
@@ -290,6 +323,10 @@ const App = () => {
       }
 
       if (data && data.result.isSuccess === true) {
+        // DB에 저장안된 첨부파일 서버에서 삭제
+        if (unsavedAttadatnums.attdatnums.length > 0)
+          setDeletedAttadatnums(unsavedAttadatnums);
+
         const questionDocument = data.questionDocument;
         const answerDocument = data.answerDocument;
         const rowCount = data.result.tables[0].RowCount;
@@ -381,6 +418,9 @@ const App = () => {
     }
 
     if (data && data.isSuccess === true) {
+      // 초기화
+      setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
+
       if (detailData.work_type === "N") {
         // 신규 데이터 저장 시 첫번째 행 선택
         search();
@@ -408,6 +448,7 @@ const App = () => {
       id: mainDataId,
       password: detailData.password,
     };
+    const deletedAttdatnum = detailData.attdatnum;
 
     try {
       data = await processApi<any>("qna-delete", para);
@@ -417,6 +458,12 @@ const App = () => {
     }
 
     if (data && data.isSuccess === true) {
+      // 첨부파일 삭제
+      setDeletedAttadatnums({
+        type: "question",
+        attdatnums: [deletedAttdatnum],
+      });
+      // 조회
       search();
     } else {
       console.log("[에러발생]");
@@ -448,7 +495,7 @@ const App = () => {
 
   useEffect(() => {
     const mainDataId = Object.getOwnPropertyNames(selectedState)[0];
-    console.log(mainDataId);
+
     if (mainDataId) {
       fetchDetail();
     }
@@ -489,6 +536,37 @@ const App = () => {
     if (e.key === "Enter") {
       fetchDetail(detailData.password);
     }
+  };
+
+  const getAttachmentsDataQ = (data: IAttachmentData) => {
+    if (!detailData.attdatnum) {
+      setUnsavedAttadatnums({
+        type: "question",
+        attdatnums: [data.attdatnum],
+      });
+    }
+    setDetailData((prev) => ({
+      ...prev,
+      attdatnum: data.attdatnum,
+      files:
+        data.original_name +
+        (data.rowCount > 1 ? " 등 " + String(data.rowCount) + "건" : ""),
+    }));
+  };
+  const getAttachmentsDataA = (data: IAttachmentData) => {
+    if (!detailData.answer_attdatnum) {
+      setUnsavedAttadatnums({
+        type: "answer",
+        attdatnums: [data.attdatnum],
+      });
+    }
+    setDetailData((prev) => ({
+      ...prev,
+      answer_attdatnum: data.attdatnum,
+      answer_files:
+        data.original_name +
+        (data.rowCount > 1 ? " 등 " + String(data.rowCount) + "건" : ""),
+    }));
   };
 
   return (
@@ -532,7 +610,11 @@ const App = () => {
             <GridTitle>요약정보</GridTitle>
           </GridTitleContainer>
           <FilterBoxWrap style={{ padding: "0 0 10px" }}>
-            <FilterBox onKeyPress={(e) => handleKeyPressSearch(e, search)}>
+            <FilterBox
+              onKeyPress={(e) => {
+                handleKeyPressSearch(e, search);
+              }}
+            >
               <tbody>
                 <tr>
                   <th>요청일자</th>
@@ -750,6 +832,7 @@ const App = () => {
                               : ""
                           }
                           readOnly={isAdmin}
+                          autoComplete={"false"}
                         />
                         <Button
                           icon={detailData.is_lock ? "lock" : "unlock"}
@@ -847,10 +930,63 @@ const App = () => {
               </FormBox>
             </FormBoxWrap>
             <RichEditor id="qEditor" ref={qEditorRef} readonly={isAdmin} />
+            <FormBoxWrap
+              border
+              style={{
+                margin: 0,
+                borderTop: 0,
+              }}
+            >
+              <FormBox>
+                <tbody>
+                  <tr>
+                    <th style={{ width: 0 }}>첨부파일</th>
+                    <td style={{ width: "auto" }}>
+                      <div className="filter-item-wrap">
+                        <Input name="attachment_q" value={detailData.files} />
+                        <Button
+                          icon="more-horizontal"
+                          fillMode={"flat"}
+                          onClick={() => setAttachmentsWindowVisibleQ(true)}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </FormBox>
+            </FormBoxWrap>
             <GridTitleContainer>
               <GridTitle>답변</GridTitle>
             </GridTitleContainer>
-            <RichEditor id="aEditor" ref={aEditorRef} readonly />
+            <RichEditor id="aEditor" ref={aEditorRef} readonly />{" "}
+            <FormBoxWrap
+              border
+              style={{
+                margin: 0,
+                borderTop: 0,
+              }}
+            >
+              <FormBox>
+                <tbody>
+                  <tr>
+                    <th style={{ width: 0 }}>첨부파일</th>
+                    <td style={{ width: "auto" }}>
+                      <div className="filter-item-wrap">
+                        <Input
+                          name="attachment_a"
+                          value={detailData.answer_files}
+                        />
+                        <Button
+                          icon="more-horizontal"
+                          fillMode={"flat"}
+                          onClick={() => setAttachmentsWindowVisibleA(true)}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </FormBox>
+            </FormBoxWrap>
           </GridContainer>
           {isDataLocked && detailData.work_type !== "N" && (
             <QnaPwBox onKeyPress={handleKeyPressSearchDetail}>
@@ -875,6 +1011,24 @@ const App = () => {
           )}
         </GridContainerWrap>
       </GridContainerWrap>
+      {attachmentsWindowVisibleQ && (
+        <AttachmentsWindow
+          type="question"
+          setVisible={setAttachmentsWindowVisibleQ}
+          setData={getAttachmentsDataQ}
+          para={detailData.attdatnum}
+          permission={{ upload: !isAdmin, download: true, delete: !isAdmin }}
+        />
+      )}
+      {attachmentsWindowVisibleA && (
+        <AttachmentsWindow
+          type="answer"
+          setVisible={setAttachmentsWindowVisibleA}
+          setData={getAttachmentsDataA}
+          para={detailData.answer_attdatnum}
+          permission={{ upload: false, download: true, delete: false }}
+        />
+      )}
     </>
   );
 };
