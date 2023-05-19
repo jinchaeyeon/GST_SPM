@@ -94,8 +94,27 @@ const App = () => {
     }));
   };
 
-  const downloadWordDoc = () => {
-    const htmlElement = document.getElementById("htmlContent");
+  const downloadWordDoc = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const name = e.currentTarget.name;
+
+    let reference = null;
+
+    // const htmlElement = document.getElementById("htmlContent");
+    var iframe = document.querySelector("iframe");
+
+    if (iframe && iframe.contentWindow) {
+      const iframeDocument =
+        iframe.contentDocument || iframe.contentWindow.document;
+
+      // iframe 내부의 요소에 접근
+      reference = iframeDocument.querySelector(".k-content.ProseMirror");
+    }
+
+    const isRef = name === "reference" && reference;
+    const htmlElement = isRef
+      ? reference
+      : document.getElementById("htmlContent");
+
     if (htmlElement) {
       const html = htmlElement.innerHTML;
       const file = new Blob(
@@ -110,7 +129,8 @@ const App = () => {
       );
       const link = document.createElement("a");
       link.href = URL.createObjectURL(file);
-      link.download = "converted.doc";
+      link.download =
+        detailDataResult[0].title + (isRef ? "_참고자료" : "") + ".doc";
       link.click();
     }
   };
@@ -130,10 +150,7 @@ const App = () => {
   const [mainDataResult, setMainDataResult] = useState<DataResult>(
     process([], mainDataState)
   );
-  const [detailDataResult, setDetailDataResult] = useState<{
-    document: string;
-    result: [];
-  }>({ document: "", result: [] });
+  const [detailDataResult, setDetailDataResult] = useState<any[]>([]);
 
   const [selectedState, setSelectedState] = useState<{
     [id: string]: boolean | number[];
@@ -247,6 +264,7 @@ const App = () => {
 
     const para = {
       para: meetingnum,
+      doc: false,
     };
 
     try {
@@ -255,17 +273,23 @@ const App = () => {
       data = null;
     }
 
-    if (data.result.isSuccess === true) {
-      const document = data.document;
+    if (data !== null && data.result.isSuccess === true) {
+      const reference = data.reference;
       const rows = data.result.tables[0].Rows;
 
       // Edior에 HTML & CSS 세팅
       if (editorRef.current) {
-        editorRef.current.setHtml(document);
+        editorRef.current.setHtml(reference);
       }
+      setDetailDataResult(rows);
     } else {
       console.log("[에러발생]");
       console.log(data);
+
+      if (editorRef.current) {
+        editorRef.current.setHtml("");
+      }
+      setDetailDataResult([]);
     }
     setLoading(false);
   };
@@ -332,6 +356,7 @@ const App = () => {
 
   useEffect(() => {
     if (filters.isFetch) {
+      console.log(filters.isFetch);
       fetchGrid();
       setFilters((prev) => ({ ...prev, isFetch: false }));
     }
@@ -353,6 +378,7 @@ const App = () => {
           </Button>
           <Button
             icon={"file-word"}
+            name="meeting"
             onClick={downloadWordDoc}
             themeColor={"primary"}
             fillMode={"outline"}
@@ -399,7 +425,7 @@ const App = () => {
         </FilterBox>
       </FilterBoxWrap>
       <GridContainerWrap height={"83vh"}>
-        <GridContainer width={`30%`}>
+        <GridContainer width={`25%`}>
           <GridTitleContainer>
             <GridTitle>회의록 리스트</GridTitle>
           </GridTitleContainer>
@@ -453,70 +479,116 @@ const App = () => {
               height: "100%",
             }}
           >
-            <h1
-              style={{
-                textAlign: "center",
-                fontSize: "28px",
-                fontWeight: "bold",
-                marginBottom: "20px",
-              }}
-            >
-              회의록
-            </h1>
-            <table width={"100%"} style={{ ...styles.table }}>
-              <tr>
-                <th></th>
-                <th style={styles.th}>담당</th>
-                <th style={styles.th}>검토</th>
-                <th style={styles.th}>승인</th>
-              </tr>
-              <tr>
-                <td></td>
-                <td height={70} width={85} style={styles.td}></td>
-                <td height={70} width={85} style={styles.td}></td>
-                <td height={70} width={85} style={styles.td}></td>
-              </tr>
-              <tr>
-                <td></td>
-                <td height={25} style={styles.td}></td>
-                <td style={styles.td}></td>
-                <td style={styles.td}></td>
-              </tr>
-            </table>
+            {detailDataResult.length > 0 && (
+              <>
+                <h1
+                  style={{
+                    textAlign: "center",
+                    fontSize: "28px",
+                    fontWeight: "bold",
+                    marginBottom: "20px",
+                  }}
+                >
+                  회의록
+                </h1>
+                <table width={"100%"} style={{ ...styles.table }}>
+                  <tr>
+                    <th></th>
+                    <th style={styles.th}>담당</th>
+                    <th style={styles.th}>검토</th>
+                    <th style={styles.th}>승인</th>
+                  </tr>
+                  <tr>
+                    <td></td>
+                    <td height={70} width={85} style={styles.td}></td>
+                    <td height={70} width={85} style={styles.td}></td>
+                    <td height={70} width={85} style={styles.td}></td>
+                  </tr>
+                  <tr>
+                    <td></td>
+                    <td height={25} style={styles.td}></td>
+                    <td style={styles.td}></td>
+                    <td style={styles.td}></td>
+                  </tr>
+                </table>
 
-            <br />
-            <table width={"100%"} style={{ ...styles.table }}>
-              <tr>
-                <th style={styles.th}>회의 일자</th>
-                <td style={styles.td} width="30%"></td>
-                <th style={styles.th}>작성자</th>
-                <td style={styles.td} width="30%"></td>
-              </tr>
-              <tr>
-                <th style={styles.th}>회의 장소</th>
-                <td style={styles.td} colSpan={3}></td>
-              </tr>
-              <tr>
-                <th style={styles.th}>제목</th>
-                <td style={styles.td} colSpan={3}></td>
-              </tr>
-              <tr>
-                <th style={styles.th}>내용</th>
-                <td style={styles.td} colSpan={3}></td>
-              </tr>
-              <tr>
-                <td
-                  style={{ ...styles.td, height: 550, minHeight: 550 }}
-                  colSpan={4}
-                ></td>
-              </tr>
-            </table>
+                <br />
+                <table width={"100%"} style={{ ...styles.table }}>
+                  <tr>
+                    <th style={styles.th}>회의 일자</th>
+                    <td style={styles.td} width="30%">
+                      {detailDataResult[0].date}
+                    </td>
+                    <th style={styles.th}>작성자</th>
+                    <td style={styles.td} width="30%">
+                      {detailDataResult[0].user_name}
+                    </td>
+                  </tr>
+                  <tr>
+                    <th style={styles.th}>회의 장소</th>
+                    <td
+                      style={{
+                        ...styles.td,
+                        textAlign: "left",
+                        paddingLeft: "10px",
+                      }}
+                      colSpan={3}
+                    >
+                      {detailDataResult[0].place}
+                    </td>
+                  </tr>
+                  <tr>
+                    <th style={styles.th}>제목</th>
+                    <td
+                      style={{
+                        ...styles.td,
+                        textAlign: "left",
+                        paddingLeft: "10px",
+                      }}
+                      colSpan={3}
+                    >
+                      {detailDataResult[0].title}
+                    </td>
+                  </tr>
+                  <tr>
+                    <th style={styles.th}>내용</th>
+                    <td style={styles.td} colSpan={3}></td>
+                  </tr>
+                  <tr>
+                    <td
+                      style={{
+                        ...styles.td,
+                        height: 550,
+                        minHeight: 550,
+                        padding: "10px",
+                        textAlign: "left",
+                        verticalAlign: "top",
+                        lineHeight: "25px",
+                      }}
+                      colSpan={4}
+                    >
+                      {detailDataResult.map((row) => (
+                        <p key={row.meetingseq}>{row.contents}</p>
+                      ))}
+                    </td>
+                  </tr>
+                </table>
+              </>
+            )}
           </div>
         </GridContainer>
         <GridContainer width={`calc(40% - ${GAP}px)`}>
           <GridTitleContainer>
             <GridTitle>참고자료</GridTitle>
-            <Button onClick={saveMeeting}>저장</Button>
+            {/* <Button
+              icon={"file-word"}
+              name="reference"
+              onClick={downloadWordDoc}
+              themeColor={"primary"}
+              fillMode={"outline"}
+            >
+              다운로드
+            </Button> */}
           </GridTitleContainer>
           <RichEditor id="editor" ref={editorRef} readonly />
         </GridContainer>
