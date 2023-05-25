@@ -191,7 +191,7 @@ const AppInner: React.FC = () => {
       <Router>
         <Switch>
           <Route path="/" component={Login} exact />
-          <Route path="/login-admin" component={LoginAdmin} exact />
+          <Route path="/Admin" component={LoginAdmin} exact />
           <PanelBarNavContainer>
             {/* 메인 홈 */}
             <AuthRoute path="/Home" component={Main} exact />

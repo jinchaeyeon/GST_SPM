@@ -265,6 +265,7 @@ function App() {
     }
 
     if (data.isSuccess === true) {
+      // 일정항목 데이터
       const parentRows: TTask[] = data.tables[0].Rows.map((row: any) => ({
         id: getIntegerForString(row.project_itemcd),
         parentId:
@@ -274,6 +275,7 @@ function App() {
         end: new Date(),
         progress: 0,
       }));
+      // 일정 데이터
       const childRows: TTask[] = data.tables[1].Rows.map((row: any) => ({
         id: getIntegerForString(row.guid),
         parentId: getIntegerForString(row.project_itemcd),
@@ -283,8 +285,10 @@ function App() {
         progress: row.rate,
       }));
 
+      // 일정항목과 일정을 합쳐서 하나의 Task 데이터로 만들고 데이터 순서 정렬
       const taskRows = reorderTasks([...parentRows, ...childRows]);
 
+      // 디펜던시(화살표) 데이터
       const dependancyRows: TDependency[] = data.tables[2].Rows.map(
         (row: any) => ({
           id: getIntegerForString(row.guid),

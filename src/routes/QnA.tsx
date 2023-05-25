@@ -192,10 +192,9 @@ const App = () => {
   const search = () => {
     setSelectedState({});
     setMainDataResult(process([], mainDataState));
-    setFilters((prev) => ({ ...prev, pgNum: 1, isFetch: true }));
+    setFilters((prev) => ({ ...prev, pgNum: 1, pgGap: 0, isFetch: true }));
   };
 
-  const [mainPgNum, setMainPgNum] = useState(1);
   const [mainDataState, setMainDataState] = useState<State>({
     sort: [],
   });
@@ -233,8 +232,8 @@ const App = () => {
   };
 
   const onMainScrollHandler = (event: GridEvent) => {
-    if (chkScrollHandler(event, mainPgNum, PAGE_SIZE))
-      setMainPgNum((prev) => prev + 1);
+    if (chkScrollHandler(event, filters.pgNum, PAGE_SIZE))
+      setFilters((prev) => ({ ...prev, pgNum: prev.pgNum + 1 }));
   };
   const onMainSortChange = (e: any) => {
     setMainDataState((prev) => ({ ...prev, sort: e.sort }));

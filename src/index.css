@@ -18,6 +18,9 @@ code {
 div.k-animation-container {
   z-index: 10100 !important;
 }
+.k-grid {
+  margin: 5px 0px;
+}
 
 /* .k-grid tr {
   height: 36px;
@@ -58,6 +61,17 @@ div.k-animation-container {
 }
 .sys-opt-wnd-form-elem .k-form-field-wrap {
   max-width: calc(30% - 10px) !important;
+}
+
+.notice-editor {
+  background: #fafafa;
+  display: flex;
+  justify-content: center;
+  border: solid 1px #ebebeb;
+  padding-top: 15px;
+}
+.notice-editor > .k-editor {
+  width: 21cm;
 }
 
 /* 모바일 결재문서 숨김 처리 */

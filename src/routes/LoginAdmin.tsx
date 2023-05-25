@@ -109,7 +109,7 @@ const Login: React.FC = () => {
           <FormElement horizontal={true}>
             <LoginAppName>
               <Logo size="36px" />
-              GST SPM Admin
+              GST SPM ADMIN
             </LoginAppName>
             <fieldset className={"k-form-fieldset"}>
               <Field name={"userId"} label={"ID"} component={FormInput} />

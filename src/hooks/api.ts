@@ -16,7 +16,16 @@ const domain: any = {
   "meeting-list": { action: "get", url: "api/spm/meeting/:para" },
   "meeting-detail": { action: "get", url: "api/spm/meeting/:para" },
   "meeting-save": { action: "post", url: "api/spm/meeting" },
-  //
+
+  // 공지사항
+  "notice-list": { action: "get", url: "api/spm/notice/:para" },
+  "notice-detail": { action: "get", url: "api/spm/notice/:id" },
+  "notice-save": { action: "post", url: "api/spm/notice" },
+  "notice-delete": { action: "delete", url: "api/spm/notice/:id" },
+
+  // 참조 업체 조회
+  "customers-list": { action: "get", url: "api/spm/:para" },
+
   query: { action: "post", url: "api/data/sql-query" },
   procedure: { action: "post", url: "api/data/sql-procedure" },
   "platform-query": { action: "post", url: "api/data/sql-query" },
