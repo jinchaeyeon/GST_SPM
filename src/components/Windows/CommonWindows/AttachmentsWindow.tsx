@@ -10,7 +10,11 @@ import {
 } from "@progress/kendo-react-grid";
 import { DataResult, process, getter } from "@progress/kendo-data-query";
 import { useApi } from "../../../hooks/api";
-import { ButtonContainer, TitleContainer } from "../../../CommonStyled";
+import {
+  BottomContainer,
+  ButtonContainer,
+  TitleContainer,
+} from "../../../CommonStyled";
 import { Button } from "@progress/kendo-react-buttons";
 import { IAttachmentData, IWindowPosition } from "../../../hooks/interfaces";
 import NumberCell from "../../Cells/NumberCell";
@@ -409,7 +413,7 @@ const KendoWindow = ({
         업로드할 파일을 마우스로 끌어오세요.
       </div>
       <Grid
-        style={{ height: "550px" }}
+        style={{ height: "490px" }}
         data={process(
           mainDataResult.data.map((row) => ({
             ...row,
@@ -465,6 +469,13 @@ const KendoWindow = ({
         />
       </Grid>
       <p>※ 최대 파일 크기 (400MB)</p>
+      <BottomContainer>
+        <ButtonContainer>
+          <Button themeColor={"primary"} onClick={onClose}>
+            확인
+          </Button>
+        </ButtonContainer>
+      </BottomContainer>
     </Window>
   );
 };
