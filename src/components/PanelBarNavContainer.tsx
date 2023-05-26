@@ -412,6 +412,15 @@ const PanelBarNavContainer = (props: any) => {
       isFavorite: false,
     });
     panelBars.push({
+      path: "/MeetingManagement",
+      menuName: "회의록 관리",
+      index: ".5",
+      menuId: "",
+      parentMenuId: "",
+      menuCategory: "",
+      isFavorite: false,
+    });
+    panelBars.push({
       path: "/",
       menuName: "설정",
       index: "",
@@ -434,9 +443,8 @@ const PanelBarNavContainer = (props: any) => {
   // Parent 그룹 없는 메뉴 Array
   const singleMenus = [
     "/Home",
-    "/GANTT",
-    "/WORD_EDITOR",
     "/MeetingView",
+    "/MeetingManagement",
     "/QnA",
     "/Notice",
     "/ProjectSchedule",
