@@ -40,7 +40,12 @@ import {
   toDate,
   UseGetIp,
 } from "../components/CommonFunction";
-import { GAP, PAGE_SIZE, SELECTED_FIELD } from "../components/CommonString";
+import {
+  DEFAULT_ATTDATNUMS,
+  GAP,
+  PAGE_SIZE,
+  SELECTED_FIELD,
+} from "../components/CommonString";
 import {
   deletedAttadatnumsState,
   isLoading,
@@ -55,7 +60,6 @@ import CenterCell from "../components/Cells/CenterCell";
 import { bytesToBase64 } from "byte-base64";
 import { IAttachmentData } from "../hooks/interfaces";
 import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
-import { Console } from "console";
 
 const DraggableGridRowRender = (properties: any) => {
   const {
@@ -87,6 +91,7 @@ type TFilters = {
   pgNum: number;
   pgSize: number;
   isFetch: boolean;
+  isReset: boolean;
   scrollDirrection: string;
   pgGap: number;
 };
@@ -172,7 +177,8 @@ const App = () => {
     findRowValue: "",
     pgNum: 1,
     pgSize: PAGE_SIZE,
-    isFetch: true,
+    isFetch: true, // 조회여부 초기값
+    isReset: true, // 리셋여부 초기값
     scrollDirrection: "down",
     pgGap: 0,
   });
@@ -196,10 +202,18 @@ const App = () => {
   };
 
   const search = () => {
-    setSelectedState({});
-    setDetailData(defaultDetailData);
-    setMainDataResult(process([], mainDataState));
-    setFilters((prev) => ({ ...prev, pgNum: 1, pgGap: 0, isFetch: true }));
+    // DB에 저장안된 첨부파일 서버에서 삭제
+    if (unsavedAttadatnums.attdatnums.length > 0)
+      setDeletedAttadatnums(unsavedAttadatnums);
+
+    // 그리드 재조회
+    setFilters((prev) => ({
+      ...prev,
+      pgNum: 1,
+      pgGap: 0,
+      isFetch: true,
+      isReset: true,
+    }));
   };
 
   useEffect(() => {
@@ -208,8 +222,19 @@ const App = () => {
 
   useEffect(() => {
     if (filters.isFetch) {
-      setFilters((prev) => ({ ...prev, isFetch: false }));
-      fetchGrid();
+      var _ = require("lodash");
+      var deepCopiedFilters = _.cloneDeep(filters);
+
+      // 기본값으로 세팅
+      setFilters((prev) => ({
+        ...prev,
+        isFetch: false,
+        isReset: false,
+        findRowValue: "",
+      }));
+
+      // 그리드 조회
+      fetchGrid(deepCopiedFilters);
     }
   }, [filters]);
 
@@ -236,11 +261,19 @@ const App = () => {
       dataItemKey: DATA_ITEM_KEY,
     });
     setSelectedState(newSelectedState);
+
+    // DB에 저장안된 첨부파일 서버에서 삭제
+    if (unsavedAttadatnums.attdatnums.length > 0)
+      setDeletedAttadatnums(unsavedAttadatnums);
   };
 
   const onMainScrollHandler = (event: GridEvent) => {
     if (!filters.isFetch && chkScrollHandler(event, filters.pgNum, PAGE_SIZE))
-      setFilters((prev) => ({ ...prev, isFetch: true, pgNum: prev.pgNum + 1 }));
+      setFilters((prev) => ({
+        ...prev,
+        isFetch: true,
+        pgNum: prev.pgNum + 1,
+      }));
   };
   const onMainSortChange = (e: any) => {
     setMainDataState((prev) => ({ ...prev, sort: e.sort }));
@@ -253,7 +286,7 @@ const App = () => {
   };
 
   //그리드 데이터 조회
-  const fetchGrid = useCallback(async () => {
+  const fetchGrid = useCallback(async (filters: TFilters) => {
     let data: any;
     setLoading(true);
 
@@ -262,7 +295,9 @@ const App = () => {
         filters.fromDate
       )}&toDate=${convertDateToStr(filters.toDate)}&contents=${
         filters.contents
-      }&page=${filters.pgNum}&pageSize=${filters.pgSize}`,
+      }&findRowValue=${filters.findRowValue}&page=${filters.pgNum}&pageSize=${
+        filters.pgSize
+      }`,
     };
 
     try {
@@ -274,30 +309,57 @@ const App = () => {
     if (data.isSuccess === true) {
       const totalRowCnt = data.tables[0].TotalRowCount;
       const rows = data.tables[0].Rows;
-      if (totalRowCnt > 0) {
-        setMainDataResult((prev) => {
-          return {
-            data: [...prev.data, ...rows],
-            total: totalRowCnt,
-          };
-        });
 
-        console.log("detailData");
-        console.log(detailData);
-        if (detailData.work_type !== "U") {
-          // 첫번째 행 선택하기
+      if (totalRowCnt > 0) {
+        if (filters.findRowValue !== "") {
+          // 데이터 저장 후 조회
+          setSelectedState({ [filters.findRowValue]: true });
+          setMainDataResult({
+            data: rows,
+            total: totalRowCnt,
+          });
+
+          console.log("data.pageNumber");
+          console.log(data.pageNumber);
+          console.log(totalRowCnt);
+
+          setFilters((prev) => ({
+            ...prev,
+            pgNum: data.pageNumber,
+            pgGap: 0,
+          }));
+        } else if (filters.isReset) {
+          // 일반 데이터 조회
+          setMainDataResult({
+            data: rows,
+            total: totalRowCnt,
+          });
+
           const firstRowData = rows[0];
           setSelectedState({ [firstRowData[DATA_ITEM_KEY]]: true });
-        }
-        if (detailData.work_type === "U") {
-          fetchDetail();
+
+          setFilters((prev) => ({
+            ...prev,
+            pgNum: data.pageNumber,
+            pgGap: 0,
+          }));
+        } else {
+          // 스크롤하여 다른 페이지 조회
+          setMainDataResult((prev) => {
+            return {
+              data: [...prev.data, ...rows],
+              total: totalRowCnt,
+            };
+          });
         }
       } else {
+        // 결과 행이 0인 경우 데이터 리셋
+        setMainDataResult(process([], mainDataState));
         resetDetailData();
       }
     }
     setLoading(false);
-  }, [filters, detailData]);
+  }, []);
 
   const fetchDetail = useCallback(async () => {
     let data: any;
@@ -315,10 +377,6 @@ const App = () => {
     }
 
     if (data && data.result.isSuccess === true) {
-      // DB에 저장안된 첨부파일 서버에서 삭제
-      if (unsavedAttadatnums.attdatnums.length > 0)
-        setDeletedAttadatnums(unsavedAttadatnums);
-
       const document = data.document;
       const rowCount0 = data.result.tables[0].RowCount;
       const rowCount1 = data.result.tables[1].RowCount;
@@ -356,10 +414,11 @@ const App = () => {
       console.log("[에러발생]");
       console.log(data);
 
+      // 조회 실패 시
       resetDetailData();
     }
     setLoading(false);
-  }, [selectedState, detailData]);
+  }, [selectedState, detailData, unsavedAttadatnums]);
 
   //그리드 데이터 조회
   const fetchAllCust = useCallback(async () => {
@@ -555,10 +614,14 @@ const App = () => {
 
     if (data && data.isSuccess === true) {
       // unsaved 첨부파일 초기화
-      setUnsavedAttadatnums({ type: null, attdatnums: [] });
+      setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
 
-      setMainDataResult(process([], mainDataState));
-      fetchGrid();
+      // 조회
+      setFilters((prev) => ({
+        ...prev,
+        isFetch: true,
+        findRowValue: data.returnString,
+      }));
     } else {
       console.log("[에러발생]");
       console.log(data);
@@ -567,7 +630,8 @@ const App = () => {
   }, [detailData, refCustData, userId]);
 
   const deleteNotice = useCallback(async () => {
-    if (!window.confirm("정말 삭제하시겠습니까?")) return false;
+    if (!window.confirm("[" + detailData.title + "] 정말 삭제하시겠습니까?"))
+      return false;
     let data: any;
     setLoading(true);
 
@@ -592,8 +656,11 @@ const App = () => {
         });
       }
 
-      setMainDataResult(process([], mainDataState));
-      fetchGrid();
+      setFilters((prev) => ({
+        ...prev,
+        isFetch: true,
+        isReset: true,
+      }));
     } else {
       console.log("[에러발생]");
       console.log(data);
