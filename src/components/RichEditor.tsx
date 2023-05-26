@@ -280,7 +280,11 @@ const RichEditor = React.forwardRef(
     };
 
     return (
-      <div id={id} style={{ height: "100%" }} className={className}>
+      <div
+        id={id}
+        style={{ height: "100%" }}
+        className={className + " editor-container"}
+      >
         <Editor
           style={{ height: "100%" }}
           contentStyle={{ height: "100%" }}

@@ -689,7 +689,7 @@ const App = () => {
             </FilterBox>
           </FilterBoxWrap>
           <Grid
-            style={{ height: `100%` }}
+            style={{ height: `calc(100% - 30px - 168.69px - 10px + 5px)` }}
             data={process(
               mainDataResult.data.map((row) => ({
                 ...row,

@@ -18,8 +18,10 @@ code {
 div.k-animation-container {
   z-index: 10100 !important;
 }
+
+.editor-container,
 .k-grid {
-  margin: 5px 0px;
+  margin-top: 5px;
 }
 
 /* .k-grid tr {
