@@ -10,6 +10,7 @@ import {
   GridColumn,
   GridDataStateChangeEvent,
   GridEvent,
+  GridFooterCellProps,
   GridSelectionChangeEvent,
 } from "@progress/kendo-react-grid";
 import { Input, InputChangeEvent } from "@progress/kendo-react-inputs";
@@ -74,6 +75,8 @@ const styles: { [key: string]: CSSProperties } = {
   },
 };
 
+const DATA_ITEM_KEY = "meetingnum";
+
 const App = () => {
   const processApi = useApi();
   const setLoading = useSetRecoilState(isLoading);
@@ -137,14 +140,18 @@ const App = () => {
   };
 
   const search = () => {
-    setMainDataResult(process([], mainDataState));
-    setFilters((prev) => ({ ...prev, page: 1, isFetch: true }));
+    // 그리드 재조회
+    setFilters((prev) => ({
+      ...prev,
+      pgNum: 1,
+      pgGap: 0,
+      isFetch: true,
+      isReset: true,
+    }));
   };
 
-  const DATA_ITEM_KEY = "meetingnum";
   const idGetter = getter(DATA_ITEM_KEY);
 
-  const [mainPgNum, setMainPgNum] = useState(1);
   const [mainDataState, setMainDataState] = useState<State>({
     sort: [],
   });
@@ -187,8 +194,12 @@ const App = () => {
   };
 
   const onMainScrollHandler = (event: GridEvent) => {
-    if (chkScrollHandler(event, mainPgNum, PAGE_SIZE))
-      setMainPgNum((prev) => prev + 1);
+    if (!filters.isFetch && chkScrollHandler(event, filters.pgNum, PAGE_SIZE))
+      setFilters((prev) => ({
+        ...prev,
+        isFetch: true,
+        pgNum: prev.pgNum + 1,
+      }));
   };
   const onMainSortChange = (e: any) => {
     setMainDataState((prev) => ({ ...prev, sort: e.sort }));
@@ -212,18 +223,30 @@ const App = () => {
     currentDate.getDate()
   );
 
-  const [filters, setFilters] = useState({
-    isFetch: true,
-    pageSize: PAGE_SIZE,
-    page: 1,
+  type TFilters = {
+    fromDate: Date;
+    toDate: Date;
+    custnm: string;
+    contents: string;
+    findRowValue: string;
+    isFetch: boolean;
+    isReset: boolean;
+    pageSize: number;
+    pgNum: number;
+  };
+  const [filters, setFilters] = useState<TFilters>({
     fromDate: fromDate,
     toDate: new Date(),
     custnm: "",
     contents: "",
     findRowValue: "",
+    isFetch: true, // 조회여부 초기값
+    isReset: true, // 리셋여부 초기값
+    pageSize: PAGE_SIZE,
+    pgNum: 1,
   });
 
-  const fetchGrid = async () => {
+  const fetchGrid = async (filters: TFilters) => {
     let data: any;
     setLoading(true);
 
@@ -234,7 +257,7 @@ const App = () => {
         filters.custnm
       }&contents=${filters.contents}&findRowValue=${
         filters.findRowValue
-      }&page=${filters.page}&pageSize=${filters.pageSize}`,
+      }&page=${filters.pgNum}&pageSize=${filters.pageSize}`,
     };
 
     try {
@@ -246,23 +269,35 @@ const App = () => {
     setLoading(false);
 
     if (data.isSuccess === true) {
-      const totalRowCnt = data.tables[0].RowCount;
+      const totalRowCnt = data.tables[0].TotalRowCount;
       const rows = data.tables[0].Rows;
 
       if (totalRowCnt > 0)
-        setMainDataResult((prev) => {
-          return {
-            data: [...prev.data, ...rows],
+        if (filters.isReset) {
+          // 일반 데이터 조회
+          setMainDataResult({
+            data: rows,
             total: totalRowCnt,
-          };
-        });
+          });
 
-      // 첫번째 행 선택
-      if (filters.page === 1) {
-        const firstRowData = rows[0];
-        setSelectedState({ [firstRowData[DATA_ITEM_KEY]]: true });
-        setMeetingnum(firstRowData[DATA_ITEM_KEY]);
-      }
+          const firstRowData = rows[0];
+          setSelectedState({ [firstRowData[DATA_ITEM_KEY]]: true });
+          setMeetingnum(firstRowData[DATA_ITEM_KEY]);
+
+          setDetailData({
+            meetingnum: firstRowData[DATA_ITEM_KEY],
+            attdatnum: firstRowData.attdatnum,
+            files: firstRowData.files,
+          });
+        } else {
+          // 스크롤하여 다른 페이지 조회
+          setMainDataResult((prev) => {
+            return {
+              data: [...prev.data, ...rows],
+              total: totalRowCnt,
+            };
+          });
+        }
     } else {
       console.log("[에러발생]");
       console.log(data);
@@ -367,9 +402,19 @@ const App = () => {
 
   useEffect(() => {
     if (filters.isFetch) {
-      console.log(filters.isFetch);
-      fetchGrid();
-      setFilters((prev) => ({ ...prev, isFetch: false }));
+      var _ = require("lodash");
+      var deepCopiedFilters = _.cloneDeep(filters);
+
+      // 기본값으로 세팅
+      setFilters((prev) => ({
+        ...prev,
+        isFetch: false,
+        isReset: false,
+        findRowValue: "",
+      }));
+
+      // 그리드 조회
+      fetchGrid(deepCopiedFilters);
     }
   }, [filters]);
 
@@ -387,6 +432,15 @@ const App = () => {
         data.original_name +
         (data.rowCount > 1 ? " 등 " + String(data.rowCount) + "건" : ""),
     }));
+  };
+
+  //그리드 푸터
+  const mainTotalFooterCell = (props: GridFooterCellProps) => {
+    return (
+      <td colSpan={props.colSpan} style={props.style}>
+        총 {mainDataResult.total}건
+      </td>
+    );
   };
 
   return (
@@ -445,7 +499,7 @@ const App = () => {
           </tbody>
         </FilterBox>
       </FilterBoxWrap>
-      <GridContainerWrap height={"83vh"}>
+      <GridContainerWrap height={"86vh"}>
         <GridContainer width={`25%`}>
           <GridTitleContainer>
             <GridTitle>회의록 리스트</GridTitle>
@@ -487,6 +541,7 @@ const App = () => {
               title="회의일"
               width={100}
               cell={CenterCell}
+              footerCell={mainTotalFooterCell}
             />
             <GridColumn field="custnm" title="업체" width={120} />
             <GridColumn field="title" title="제목" width={300} />

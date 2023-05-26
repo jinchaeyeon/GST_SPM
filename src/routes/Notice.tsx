@@ -1,7 +1,6 @@
 import { DataResult, getter, process, State } from "@progress/kendo-data-query";
 import { Button } from "@progress/kendo-react-buttons";
 import { DatePicker } from "@progress/kendo-react-dateinputs";
-import { Editor, EditorTools } from "@progress/kendo-react-editor";
 import {
   getSelectedState,
   Grid,
@@ -12,13 +11,7 @@ import {
   GridSelectionChangeEvent,
 } from "@progress/kendo-react-grid";
 import { Input } from "@progress/kendo-react-inputs";
-import React, {
-  useState,
-  CSSProperties,
-  useRef,
-  useEffect,
-  useCallback,
-} from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   ButtonContainer,
   FilterBox,
