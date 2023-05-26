@@ -402,8 +402,8 @@ const App = () => {
 
   useEffect(() => {
     if (filters.isFetch) {
-      var _ = require("lodash");
-      var deepCopiedFilters = _.cloneDeep(filters);
+      const _ = require("lodash");
+      const deepCopiedFilters = _.cloneDeep(filters);
 
       // 기본값으로 세팅
       setFilters((prev) => ({

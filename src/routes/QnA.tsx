@@ -75,6 +75,7 @@ type TFilters = {
   pgNum: number;
   pgSize: number;
   isFetch: boolean;
+  isReset: boolean;
   scrollDirrection: string;
   pgGap: number;
 };
@@ -184,15 +185,25 @@ const App = () => {
     findRowValue: "",
     pgNum: 1,
     pgSize: PAGE_SIZE,
-    isFetch: true,
+    isFetch: true, // 조회여부 초기값
+    isReset: true, // 리셋여부 초기값
     scrollDirrection: "down",
     pgGap: 0,
   });
 
   const search = () => {
-    setSelectedState({});
-    setMainDataResult(process([], mainDataState));
-    setFilters((prev) => ({ ...prev, pgNum: 1, pgGap: 0, isFetch: true }));
+    // DB에 저장안된 첨부파일 서버에서 삭제
+    if (unsavedAttadatnums.attdatnums.length > 0)
+      setDeletedAttadatnums(unsavedAttadatnums);
+
+    // 그리드 재조회
+    setFilters((prev) => ({
+      ...prev,
+      pgNum: 1,
+      pgGap: 0,
+      isFetch: true,
+      isReset: true,
+    }));
   };
 
   const [mainDataState, setMainDataState] = useState<State>({
@@ -226,78 +237,108 @@ const App = () => {
     });
     setSelectedState(newSelectedState);
 
-    // const selectedIdx = event.startRowIndex;
-    // const selectedRowData = event.dataItems[selectedIdx];
-    // setMainDataId(selectedRowData[DATA_ITEM_KEY]);
+    // DB에 저장안된 첨부파일 서버에서 삭제
+    if (unsavedAttadatnums.attdatnums.length > 0)
+      setDeletedAttadatnums(unsavedAttadatnums);
   };
 
   const onMainScrollHandler = (event: GridEvent) => {
-    if (chkScrollHandler(event, filters.pgNum, PAGE_SIZE))
-      setFilters((prev) => ({ ...prev, pgNum: prev.pgNum + 1 }));
+    if (!filters.isFetch && chkScrollHandler(event, filters.pgNum, PAGE_SIZE))
+      setFilters((prev) => ({
+        ...prev,
+        isFetch: true,
+        pgNum: prev.pgNum + 1,
+      }));
   };
   const onMainSortChange = (e: any) => {
     setMainDataState((prev) => ({ ...prev, sort: e.sort }));
   };
 
   //그리드 데이터 조회
-  const fetchGrid = useCallback(async () => {
-    let data: any;
-    setLoading(true);
+  const fetchGrid = useCallback(
+    async (filters: TFilters) => {
+      let data: any;
+      setLoading(true);
 
-    const status =
-      filters.status.length === 0
-        ? 0 // 미선택시 => 0 전체
-        : filters.status.length === 1
-        ? filters.status[0].sub_code // 1개만 선택시 => 선택된 값 (ex. 1 대기)
-        : filters.status.reduce(
-            (total, current) => total + Number(current.sub_code),
-            0
-          ); //  2개 이상 선택시 => 값 합치기 (ex. 1 대기 + 2 진행중 = 3 )
+      const status =
+        filters.status.length === 0
+          ? 0 // 미선택시 => 0 전체
+          : filters.status.length === 1
+          ? filters.status[0].sub_code // 1개만 선택시 => 선택된 값 (ex. 1 대기)
+          : filters.status.reduce(
+              (total, current) => total + Number(current.sub_code),
+              0
+            ); //  2개 이상 선택시 => 값 합치기 (ex. 1 대기 + 2 진행중 = 3 )
 
-    const para = {
-      para: `list?fromDate=${convertDateToStr(
-        filters.fromDate
-      )}&toDate=${convertDateToStr(filters.toDate)}&userName=${
-        filters.userName
-      }&contents=${filters.contents}&isPublic=${
-        filters.isPublic
-      }&status=${status}&findRowValue=${filters.findRowValue}&page=${
-        filters.pgNum
-      }&pageSize=${filters.pgSize}`,
-    };
+      const para = {
+        para: `list?fromDate=${convertDateToStr(
+          filters.fromDate
+        )}&toDate=${convertDateToStr(filters.toDate)}&userName=${
+          filters.userName
+        }&contents=${filters.contents}&isPublic=${
+          filters.isPublic
+        }&status=${status}&findRowValue=${filters.findRowValue}&page=${
+          filters.pgNum
+        }&pageSize=${filters.pgSize}`,
+      };
 
-    try {
-      data = await processApi<any>("qna-list", para);
-    } catch (error) {
-      data = null;
-    }
-
-    if (data.isSuccess === true) {
-      const totalRowCnt = data.tables[0].TotalRowCount;
-      const rows = data.tables[0].Rows;
-      if (totalRowCnt > 0) {
-        setMainDataResult((prev) => {
-          return {
-            data: [...prev.data, ...rows],
-            total: totalRowCnt,
-          };
-        });
-
-        if (Object.keys(selectedState).length === 0) {
-          // 첫번째 행 선택하기
-          const firstRowData = rows[0];
-          setSelectedState({ [firstRowData[DATA_ITEM_KEY]]: true });
-        }
-      } else {
-        resetDetailData();
+      try {
+        data = await processApi<any>("qna-list", para);
+      } catch (error) {
+        data = null;
       }
-    }
-    setFilters((prev) => ({
-      ...prev,
-      isFetch: false,
-    }));
-    setLoading(false);
-  }, [selectedState, filters, setLoading, setSelectedState]);
+
+      if (data.isSuccess === true) {
+        const totalRowCnt = data.tables[0].TotalRowCount;
+        const rows = data.tables[0].Rows;
+        if (totalRowCnt > 0) {
+          if (filters.findRowValue !== "") {
+            // 데이터 저장 후 조회
+            setSelectedState({ [filters.findRowValue]: true });
+            setMainDataResult({
+              data: rows,
+              total: totalRowCnt,
+            });
+
+            setFilters((prev) => ({
+              ...prev,
+              pgNum: data.pageNumber,
+              pgGap: 0,
+            }));
+          } else if (filters.isReset) {
+            // 일반 데이터 조회
+            setMainDataResult({
+              data: rows,
+              total: totalRowCnt,
+            });
+
+            const firstRowData = rows[0];
+            setSelectedState({ [firstRowData[DATA_ITEM_KEY]]: true });
+
+            setFilters((prev) => ({
+              ...prev,
+              pgNum: data.pageNumber,
+              pgGap: 0,
+            }));
+          } else {
+            // 스크롤하여 다른 페이지 조회
+            setMainDataResult((prev) => {
+              return {
+                data: [...prev.data, ...rows],
+                total: totalRowCnt,
+              };
+            });
+          }
+        } else {
+          // 결과 행이 0인 경우 데이터 리셋
+          setMainDataResult(process([], mainDataState));
+          resetDetailData();
+        }
+      }
+      setLoading(false);
+    },
+    [selectedState]
+  );
 
   const fetchDetail = useCallback(
     async (enteredPw: string = "") => {
@@ -322,10 +363,6 @@ const App = () => {
       }
 
       if (data && data.result.isSuccess === true) {
-        // DB에 저장안된 첨부파일 서버에서 삭제
-        if (unsavedAttadatnums.attdatnums.length > 0)
-          setDeletedAttadatnums(unsavedAttadatnums);
-
         const questionDocument = data.questionDocument;
         const answerDocument = data.answerDocument;
         const rowCount = data.result.tables[0].RowCount;
@@ -420,15 +457,12 @@ const App = () => {
       // 초기화
       setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
 
-      if (detailData.work_type === "N") {
-        // 신규 데이터 저장 시 첫번째 행 선택
-        search();
-      } else {
-        // 기존 데이터 저장 시 기존 행 선택 유지
-        setMainDataResult(process([], mainDataState));
-        fetchGrid();
-        fetchDetail();
-      }
+      // 조회
+      setFilters((prev) => ({
+        ...prev,
+        isFetch: true,
+        findRowValue: data.returnString,
+      }));
     } else {
       console.log("[에러발생]");
       console.log(data);
@@ -438,16 +472,16 @@ const App = () => {
   }, [setLoading, detailData, setSelectedState]);
 
   const deleteData = useCallback(async () => {
+    if (!window.confirm("[" + detailData.title + "] 정말 삭제하시겠습니까?"))
+      return false;
+
     let data: any;
-    if (!window.confirm("정말 삭제하시겠습니까?")) return false;
     setLoading(true);
 
-    const mainDataId = Object.getOwnPropertyNames(selectedState)[0];
     const para = {
-      id: mainDataId,
+      id: detailData.document_id,
       password: detailData.password,
     };
-    const deletedAttdatnum = detailData.attdatnum;
 
     try {
       data = await processApi<any>("qna-delete", para);
@@ -457,13 +491,23 @@ const App = () => {
     }
 
     if (data && data.isSuccess === true) {
-      // 첨부파일 삭제
-      setDeletedAttadatnums({
-        type: "question",
-        attdatnums: [deletedAttdatnum],
-      });
-      // 조회
-      search();
+      // 첨부파일 서버에서 삭제
+      if (unsavedAttadatnums.attdatnums.length > 0) {
+        // DB 저장안된 첨부파일
+        setDeletedAttadatnums(unsavedAttadatnums);
+      } else if (detailData.attdatnum) {
+        // DB 저장된 첨부파일
+        setDeletedAttadatnums({
+          type: "notice",
+          attdatnums: [detailData.attdatnum],
+        });
+      }
+
+      setFilters((prev) => ({
+        ...prev,
+        isFetch: true,
+        isReset: true,
+      }));
     } else {
       console.log("[에러발생]");
       console.log(data);
@@ -487,8 +531,19 @@ const App = () => {
 
   useEffect(() => {
     if (filters.isFetch) {
-      setFilters((prev) => ({ ...prev, isFetch: false }));
-      fetchGrid();
+      const _ = require("lodash");
+      const deepCopiedFilters = _.cloneDeep(filters);
+
+      // 기본값으로 세팅
+      setFilters((prev) => ({
+        ...prev,
+        isFetch: false,
+        isReset: false,
+        findRowValue: "",
+      }));
+
+      // 그리드 조회
+      fetchGrid(deepCopiedFilters);
     }
   }, [filters]);
 
@@ -576,30 +631,34 @@ const App = () => {
           <Button onClick={search} icon="search" themeColor={"primary"}>
             조회
           </Button>
-          <Button
-            onClick={addData}
-            icon="file-add"
-            themeColor={"primary"}
-            fillMode="outline"
-          >
-            신규
-          </Button>
-          <Button
-            onClick={saveData}
-            fillMode="outline"
-            themeColor={"primary"}
-            icon="save"
-          >
-            저장
-          </Button>
-          <Button
-            onClick={deleteData}
-            fillMode="outline"
-            themeColor={"primary"}
-            icon="delete"
-          >
-            삭제
-          </Button>
+          {!isAdmin && (
+            <>
+              <Button
+                onClick={addData}
+                icon="file-add"
+                themeColor={"primary"}
+                fillMode="outline"
+              >
+                신규
+              </Button>
+              <Button
+                onClick={saveData}
+                fillMode="outline"
+                themeColor={"primary"}
+                icon="save"
+              >
+                저장
+              </Button>
+              <Button
+                onClick={deleteData}
+                fillMode="outline"
+                themeColor={"primary"}
+                icon="delete"
+              >
+                삭제
+              </Button>
+            </>
+          )}
         </ButtonContainer>
       </TitleContainer>
 
@@ -766,9 +825,9 @@ const App = () => {
 
           <GridContainer
             style={
-              !isDataLocked || detailData.work_type === "N"
-                ? { height: "100%" }
-                : { display: "none", height: "100%" }
+              !isAdmin && isDataLocked && detailData.work_type !== "N"
+                ? { display: "none", height: "100%" }
+                : { height: "100%" }
             }
           >
             <FormBoxWrap
@@ -987,7 +1046,7 @@ const App = () => {
               </FormBox>
             </FormBoxWrap>
           </GridContainer>
-          {isDataLocked && detailData.work_type !== "N" && (
+          {!isAdmin && isDataLocked && detailData.work_type !== "N" && (
             <QnaPwBox onKeyPress={handleKeyPressSearchDetail}>
               <div className="inner">
                 <Icon name="lock" themeColor="primary" size={"xlarge"} />
