@@ -62,7 +62,7 @@ import {
 import { loginResultState } from "../../../store/atoms";
 import { bytesToBase64 } from "byte-base64";
 import { useRecoilValue } from "recoil";
-import ComboBoxCell from "../../Cells/ComboBoxCell";
+import ComboBoxCell from "../../Cells/BizComponentComboBoxCell";
 import RadioGroupCell from "../../Cells/RadioGroupCell";
 import NameCell from "../../Cells/NameCell";
 import CheckBoxCell from "../../Cells/CheckBoxCell";
@@ -181,7 +181,7 @@ const DefaultValueCell = (props: GridCellProps) => {
   const [bizComponentData, setBizComponentData] = useState([]);
   if (bcId) UseBizComponent(bcId, setBizComponentData);
   const bizComponent = bizComponentData.find(
-    (item: any) => item.bizComponentId === bcId
+    (item: any) => item.bizComponentId === bcId,
   );
 
   const defaultRendering = (
@@ -275,7 +275,7 @@ const DraggableGridRowRender = (properties: any) => {
   return React.cloneElement(
     row,
     { ...row.props, ...additionalProps },
-    row.props.children
+    row.props.children,
   );
 };
 
@@ -340,10 +340,10 @@ const KendoWindow = ({ setVisible }: TKendoWindow) => {
 
   const [controlDataResult, setcontrolDataResult] = useState<any>([]);
   const [wordDataResult, setWordDataResult] = useState<DataResult>(
-    process([], mainColumnDataState)
+    process([], mainColumnDataState),
   );
   const [mainColumnDataResult, setMainColumnDataResult] = useState<DataResult>(
-    process([], mainColumnDataState)
+    process([], mainColumnDataState),
   );
   const [detailColumnDataResult, setDetailColumnDataResult] =
     useState<DataResult>(process([], detailColumnDataState));
@@ -382,10 +382,10 @@ const KendoWindow = ({ setVisible }: TKendoWindow) => {
   const [detailDefaultPgNum, setDetailDefaultPgNum] = useState(1);
 
   const [columnWindowWorkType, setColumnWindowWorkType] = useState<"N" | "U">(
-    "N"
+    "N",
   );
   const [defaultWindowWorkType, setDefaultWindowWorkType] = useState<"N" | "U">(
-    "N"
+    "N",
   );
 
   const [parentComponent, setParentComponent] = useState({
@@ -565,7 +565,7 @@ const KendoWindow = ({ setVisible }: TKendoWindow) => {
           rows,
           (i: any) => i.control_name,
           (i: any) => i.parent,
-          subItemsField
+          subItemsField,
         );
 
         setcontrolDataResult([...dataTree]);
@@ -669,7 +669,7 @@ const KendoWindow = ({ setVisible }: TKendoWindow) => {
     if (selectedRowKeyVal === null) return false;
 
     const selectedRowData = mainColumnDataResult.data.find(
-      (item) => item[MAIN_COLUMN_DATA_ITEM_KEY] === selectedRowKeyVal
+      (item) => item[MAIN_COLUMN_DATA_ITEM_KEY] === selectedRowKeyVal,
     );
 
     const para = {
@@ -775,7 +775,7 @@ const KendoWindow = ({ setVisible }: TKendoWindow) => {
               add_day: row.custom_add_day,
               value_lookup: row.custom_value_lookup,
             }
-          : { ...row, sys_use_session: row.use_session }
+          : { ...row, sys_use_session: row.use_session },
       );
 
       const totalRowsCnt = data.RowCount;
@@ -1072,7 +1072,7 @@ const KendoWindow = ({ setVisible }: TKendoWindow) => {
       event,
       detailColumnDataResult,
       setDetailColumnDataResult,
-      DETAIL_COLUMN_DATA_ITEM_KEY
+      DETAIL_COLUMN_DATA_ITEM_KEY,
     );
   };
   const onDetailDefaultItemChange = (event: GridItemChangeEvent) => {
@@ -1082,7 +1082,7 @@ const KendoWindow = ({ setVisible }: TKendoWindow) => {
       event,
       detailDefaultDataResult,
       setDetailDefaultDataResult,
-      DETAIL_DEFAULT_DATA_ITEM_KEY
+      DETAIL_DEFAULT_DATA_ITEM_KEY,
     );
   };
 
@@ -1095,7 +1095,7 @@ const KendoWindow = ({ setVisible }: TKendoWindow) => {
             rowstatus: item.rowstatus === "N" ? "N" : "U",
             [EDIT_FIELD]: field,
           }
-        : { ...item, [EDIT_FIELD]: undefined }
+        : { ...item, [EDIT_FIELD]: undefined },
     );
 
     setDetailColumnDataResult((prev) => {
@@ -1128,7 +1128,7 @@ const KendoWindow = ({ setVisible }: TKendoWindow) => {
             rowstatus: item.rowstatus === "N" ? "N" : "U",
             [EDIT_FIELD]: field,
           }
-        : { ...item, [EDIT_FIELD]: undefined }
+        : { ...item, [EDIT_FIELD]: undefined },
     );
 
     setDetailDefaultDataResult((prev) => {
@@ -1226,7 +1226,7 @@ const KendoWindow = ({ setVisible }: TKendoWindow) => {
     const flatData: any = treeToFlat(
       controlDataResult,
       "control_name",
-      subItemsField
+      subItemsField,
     );
     flatData.forEach((item: any) => delete item[subItemsField]);
 
@@ -1363,7 +1363,7 @@ const KendoWindow = ({ setVisible }: TKendoWindow) => {
   // 디폴트 데이터 초기화 (커스텀 데이터 삭제)
   const onInitDefault = () => {
     const default_id = Object.getOwnPropertyNames(
-      detailDefaultSelectedState
+      detailDefaultSelectedState,
     )[0];
     if (!detailDefaultSelectedState[default_id]) {
       alert("초기화 할 항목을 선택해주세요.");
@@ -1434,11 +1434,11 @@ const KendoWindow = ({ setVisible }: TKendoWindow) => {
     const selectedField = Object.getOwnPropertyNames(selectedState)[0];
 
     const rowData = dataResult.data.find(
-      (row) => row[DATA_ITEM_KEY] === selectedField
+      (row) => row[DATA_ITEM_KEY] === selectedField,
     );
 
     const rowIndex = dataResult.data.findIndex(
-      (row) => row[DATA_ITEM_KEY] === selectedField
+      (row) => row[DATA_ITEM_KEY] === selectedField,
     );
 
     if (rowIndex === -1) {
@@ -1752,7 +1752,7 @@ const KendoWindow = ({ setVisible }: TKendoWindow) => {
     // [data-control-name] 리스트 (Label, Title 등)
     const controlNameObjArr = [...root.querySelectorAll("[data-control-name]")];
     const controlNameList = controlNameObjArr.map(
-      (item: any) => item.dataset.controlName
+      (item: any) => item.dataset.controlName,
     );
     controlNameList.forEach((item) => {
       if (item === "") return;
@@ -1828,13 +1828,13 @@ const KendoWindow = ({ setVisible }: TKendoWindow) => {
     const flatData: any = treeToFlat(
       controlDataResult,
       "control_name",
-      subItemsField
+      subItemsField,
     );
     flatData.forEach((item: any) => delete item[subItemsField]);
 
     ControlList.forEach((item) => {
       const sameControlData = flatData.find(
-        (orgItem: any) => item.control_name === orgItem.control_name
+        (orgItem: any) => item.control_name === orgItem.control_name,
       );
 
       if (sameControlData) {
@@ -1847,7 +1847,7 @@ const KendoWindow = ({ setVisible }: TKendoWindow) => {
       ControlList,
       (i: any) => i.control_name,
       (i: any) => i.parent,
-      subItemsField
+      subItemsField,
     );
 
     setcontrolDataResult([...dataTree]);
@@ -1861,9 +1861,9 @@ const KendoWindow = ({ setVisible }: TKendoWindow) => {
     setControlExpanded(
       e.value
         ? ControlExpanded.filter(
-            (id) => id !== e.dataItem[CONTROL_DATA_ITEM_KEY]
+            (id) => id !== e.dataItem[CONTROL_DATA_ITEM_KEY],
           )
-        : [...ControlExpanded, e.dataItem[CONTROL_DATA_ITEM_KEY]]
+        : [...ControlExpanded, e.dataItem[CONTROL_DATA_ITEM_KEY]],
     );
   };
 
@@ -1914,7 +1914,7 @@ const KendoWindow = ({ setVisible }: TKendoWindow) => {
     const flatData: any = treeToFlat(
       controlDataResult,
       "control_name",
-      subItemsField
+      subItemsField,
     );
 
     flatData.forEach((item: any) => delete item[subItemsField]);
@@ -1927,14 +1927,14 @@ const KendoWindow = ({ setVisible }: TKendoWindow) => {
             word_id: wordDragDataItem.word_id,
             word_text: wordDragDataItem.word_text,
           }
-        : item
+        : item,
     );
 
     const dataTree: any = createDataTree(
       newData,
       (i: any) => i.control_name,
       (i: any) => i.parent,
-      subItemsField
+      subItemsField,
     );
 
     setcontrolDataResult([...dataTree]);
@@ -1952,7 +1952,7 @@ const KendoWindow = ({ setVisible }: TKendoWindow) => {
     const flatData: any = treeToFlat(
       controlDataResult,
       "control_name",
-      subItemsField
+      subItemsField,
     );
 
     flatData.forEach((item: any) => delete item[subItemsField]);
@@ -1965,14 +1965,14 @@ const KendoWindow = ({ setVisible }: TKendoWindow) => {
             word_id: "",
             word_text: "",
           }
-        : item
+        : item,
     );
 
     const dataTree: any = createDataTree(
       newData,
       (i: any) => i.control_name,
       (i: any) => i.parent,
-      subItemsField
+      subItemsField,
     );
 
     setcontrolDataResult([...dataTree]);
@@ -2029,7 +2029,7 @@ const KendoWindow = ({ setVisible }: TKendoWindow) => {
                   data={mapTree(
                     controlDataResult,
                     subItemsField,
-                    ControlCallback
+                    ControlCallback,
                   )}
                   expandField={EXPANDED_FIELD}
                   subItemsField={subItemsField}
@@ -2086,7 +2086,7 @@ const KendoWindow = ({ setVisible }: TKendoWindow) => {
                       ...row,
                       [SELECTED_FIELD]: wordSelectedState[wordIdGetter(row)],
                     })),
-                    wordDataState
+                    wordDataState,
                   )}
                   {...wordDataState}
                   onDataStateChange={onWordDataStateChange}
@@ -2153,7 +2153,7 @@ const KendoWindow = ({ setVisible }: TKendoWindow) => {
                     [SELECTED_FIELD]:
                       mainDefaultSelectedState[mainDefaultIdGetter(row)],
                   })),
-                  mainDefaultDataState
+                  mainDefaultDataState,
                 )}
                 {...mainDefaultDataState}
                 onDataStateChange={onMainDefaultDataStateChange}
@@ -2221,7 +2221,7 @@ const KendoWindow = ({ setVisible }: TKendoWindow) => {
                     [SELECTED_FIELD]:
                       detailDefaultSelectedState[detailDefaultIdGetter(row)],
                   })),
-                  detailDefaultDataState
+                  detailDefaultDataState,
                 )}
                 {...detailDefaultDataState}
                 onDataStateChange={onDetailDefaultDataStateChange}
@@ -2333,7 +2333,7 @@ const KendoWindow = ({ setVisible }: TKendoWindow) => {
                     [SELECTED_FIELD]:
                       mainColumnSelectedState[mainColumnIdGetter(row)],
                   })),
-                  mainColumnDataState
+                  mainColumnDataState,
                 )}
                 {...mainColumnDataState}
                 onDataStateChange={onMainColumnDataStateChange}
@@ -2419,7 +2419,7 @@ const KendoWindow = ({ setVisible }: TKendoWindow) => {
                     [SELECTED_FIELD]:
                       detailColumnSelectedState[detailColumnIdGetter(row)],
                   })),
-                  detailColumnDataState
+                  detailColumnDataState,
                 )}
                 {...detailColumnDataState}
                 onDataStateChange={onDetailColumnDataStateChange}

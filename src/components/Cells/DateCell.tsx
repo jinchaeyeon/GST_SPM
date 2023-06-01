@@ -3,20 +3,26 @@ import { GridCellProps } from "@progress/kendo-react-grid";
 import { convertDateToStr, dateformat2 } from "../CommonFunction";
 import Calendars from "../Calendars/Calendar";
 const DateCell = (props: GridCellProps) => {
-  const { ariaColumnIndex, columnIndex, dataItem, field, render, onChange,
-    className = "", } =
-    props;
+  const {
+    ariaColumnIndex,
+    columnIndex,
+    dataItem,
+    field,
+    render,
+    onChange,
+    className = "",
+  } = props;
   let isInEdit = field === dataItem.inEdit;
 
-    if (className.includes("read-only")) {
+  if (className.includes("read-only")) {
+    isInEdit = false;
+  } else if (className.includes("editable-new-only")) {
+    if (dataItem["rowstatus"] !== "N") {
       isInEdit = false;
-    } else if (className.includes("editable-new-only")) {
-      if (dataItem["rowstatus"] !== "N") {
-        isInEdit = false;
-      }
     }
+  }
 
-  const value = field && dataItem[field] ? dataItem[field] : "";
+  const value = field && dataItem[field] ? dataItem[field] : null;
 
   const onDateChange = (e: any) => {
     if (onChange) {
@@ -39,9 +45,7 @@ const DateCell = (props: GridCellProps) => {
       {isInEdit ? (
         <DatePicker
           name={field}
-          defaultValue={
-            typeof value === "string" && value !== "" ? new Date() : value
-          }
+          defaultValue={value}
           format={"yyyy-MM-dd"}
           onChange={onDateChange}
           calendar={Calendars}
@@ -57,9 +61,7 @@ const DateCell = (props: GridCellProps) => {
     </td>
   );
 
-  //return defaultRendering;
-  //return typeof value === "string"
-  return !(value instanceof Date) || render === undefined
+  return render === undefined
     ? defaultRendering
     : render?.call(undefined, defaultRendering, props);
 };

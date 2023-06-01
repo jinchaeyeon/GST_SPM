@@ -26,10 +26,49 @@ const domain: any = {
   // 참조 업체 조회
   "customers-list": { action: "get", url: "api/spm/:para" },
 
+  //프로젝트 일정계획
+  "project-schedule-list": {
+    action: "get",
+    url: "api/spm/project-schedule/projects",
+  },
+  "project-schedule-detail": {
+    action: "get",
+    url: "api/spm/project-schedule/:id",
+  },
+
+  // 첨부파일
+  "file-list": { action: "get", url: "api/spm/attachment/:attached" },
+  "file-upload": { action: "post", url: "api/spm/:attached" },
+  "file-download": {
+    action: "get",
+    url: "api/spm/attachment/:attached",
+  },
+  "file-delete": { action: "delete", url: "api/spm/attachment/:attached" },
+  "attachment-delete": {
+    // AttachmentNum 자체를 삭제
+    action: "delete",
+    url: "api/spm/:attached",
+  },
+
+  // word doc 다운로드
+  "doc-download": {
+    action: "get",
+    url: "api/spm/files/:para",
+  },
+
+  // 쿼리, 프로시저
   query: { action: "post", url: "api/data/sql-query" },
   procedure: { action: "post", url: "api/data/sql-procedure" },
   "platform-query": { action: "post", url: "api/data/sql-query" },
   "platform-procedure": { action: "post", url: "api/data/sql-procedure" },
+  "bizgst-query": { action: "post", url: "api/data/sql-query" },
+  "bizgst-procedure": { action: "post", url: "api/data/sql-procedure" },
+
+  // 로그인, 로그아웃
+  login: { action: "post", url: "api/auth/login" },
+  logout: { action: "post", url: "api/auth/logout" },
+
+  // 미사용
   fav: { action: "post", url: "api/data/menus/fav/:formId" },
   "del-fav": { action: "delete", url: "api/data/menus/fav/:formId" },
   "custom-option": { action: "get", url: "api/data/:formId/:para" },
@@ -63,35 +102,8 @@ const domain: any = {
     url: "api/data/:formId/custom-option/:para",
   },
   "popup-data": { action: "post", url: "api/data/biz-components/:para" },
-  logout: { action: "post", url: "api/auth/logout" },
-  login: { action: "post", url: "api/auth/login" },
   "login-old": { action: "post", url: "api/auth/login-old" },
   "company-code": { action: "get", url: "api/auth/company-codes" },
-  "file-list": { action: "get", url: "api/spm/attachment/:attached" },
-  "file-upload": { action: "post", url: "api/spm/:attached" },
-  "file-download": {
-    action: "get",
-    url: "api/spm/attachment/:attached",
-  },
-  "file-delete": { action: "delete", url: "api/spm/attachment/:attached" },
-  "attachment-delete": {
-    action: "delete",
-    url: "api/spm/:attached",
-  }, // AttachmentNum 자체를 삭제
-  //프로젝트 일정계획
-  "project-schedule-list": {
-    action: "get",
-    url: "api/spm/project-schedule/projects",
-  },
-  "project-schedule-detail": {
-    action: "get",
-    url: "api/spm/project-schedule/:id",
-  },
-  // word doc 다운로드
-  "doc-download": {
-    action: "get",
-    url: "api/spm/files/:para",
-  },
 };
 let isTokenRefreshing = false;
 let refreshSubscribers: any[] = [];
@@ -170,6 +182,9 @@ export const useApi = () => {
 
       if (name === "platform-procedure" || name === "platform-query")
         headers = { ...headers, DBAlias: "Platform" };
+
+      if (name === "bizgst-procedure" || name === "bizgst-query")
+        headers = { ...headers, DBAlias: "BizGST" };
 
       if (loginResult) {
         // headers = { ...headers, Authorization: `Bearer ${token}` };

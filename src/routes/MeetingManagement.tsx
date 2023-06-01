@@ -7,15 +7,30 @@ import {
 import {
   getSelectedState,
   Grid,
+  GridCellProps,
   GridColumn,
   GridDataStateChangeEvent,
   GridEvent,
   GridFooterCellProps,
+  GridItemChangeEvent,
   GridSelectionChangeEvent,
+  GridToolbar,
 } from "@progress/kendo-react-grid";
-import { Input, InputChangeEvent } from "@progress/kendo-react-inputs";
+import {
+  Checkbox,
+  Input,
+  InputChangeEvent,
+} from "@progress/kendo-react-inputs";
 import { bytesToBase64 } from "byte-base64";
-import React, { useState, CSSProperties, useRef, useEffect } from "react";
+import React, {
+  useState,
+  CSSProperties,
+  useRef,
+  useEffect,
+  useCallback,
+  createContext,
+  useContext,
+} from "react";
 import { useSetRecoilState } from "recoil";
 import {
   ButtonContainer,
@@ -34,11 +49,16 @@ import {
   chkScrollHandler,
   convertDateToStr,
   dateformat2,
+  getGridItemChangedData,
   handleKeyPressSearch,
-  UseGetValueFromSessionItem,
-  UseParaPc,
+  toDate,
 } from "../components/CommonFunction";
-import { GAP, PAGE_SIZE, SELECTED_FIELD } from "../components/CommonString";
+import {
+  EDIT_FIELD,
+  GAP,
+  PAGE_SIZE,
+  SELECTED_FIELD,
+} from "../components/CommonString";
 import RichEditor from "../components/RichEditor";
 import { useApi } from "../hooks/api";
 import { isLoading } from "../store/atoms";
@@ -46,44 +66,85 @@ import { TEditorHandle } from "../store/types";
 import { IAttachmentData } from "../hooks/interfaces";
 import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
 import CenterCell from "../components/Cells/CenterCell";
-
-const styles: { [key: string]: CSSProperties } = {
-  table: {
-    borderCollapse: "collapse",
-    borderSpacing: 0,
-  },
-  th: {
-    fontFamily: "Arial, sans-serif",
-    borderStyle: "solid",
-    borderWidth: "1px",
-    overflow: "hidden",
-    wordBreak: "normal",
-    verticalAlign: "middle",
-    textAlign: "center",
-    backgroundColor: "#e2e2e2",
-    minHeight: 25,
-    height: 25,
-  },
-  td: {
-    fontFamily: "Arial, sans-serif",
-    borderStyle: "solid",
-    borderWidth: "1px",
-    overflow: "hidden",
-    wordBreak: "normal",
-    verticalAlign: "middle",
-    textAlign: "center",
-  },
-};
+import { CellRender, RowRender } from "../components/Renderers/Renderers";
+import CheckBoxCell from "../components/Cells/CheckBoxCell";
+import DateCell from "../components/Cells/DateCell";
+import ComboBoxCell from "../components/Cells/ComboBoxCell";
+import {
+  ComboBoxChangeEvent,
+  MultiColumnComboBox,
+} from "@progress/kendo-react-dropdowns";
 
 const DATA_ITEM_KEY = "meetingnum";
+const DETAIL_ITEM_KEY = "meetingseq";
+
+const defaultDetailData = {
+  work_type: "",
+  unshared: false,
+  orgdiv: "",
+  meetingnum: "",
+  attdatnum: "",
+  attdatnum_private: "",
+  files: "",
+  files_private: "",
+  cust_data: {
+    custcd: "",
+    custnm: "",
+  },
+  recdt: new Date(),
+  place: "",
+  meetingid: "",
+  meetingnm: "",
+  title: "",
+  devmngnum: "",
+  devproject: "",
+  remark2: "",
+};
+
+const valueCodesQueryStr = `SELECT a.sub_code as code,
+a.code_name as name
+FROM comCodeMaster a 
+WHERE a.group_code = 'BA012_GST'
+AND use_yn = 'Y'`;
+
+const valueCodesColumns = [
+  {
+    field: "code",
+    header: "코드",
+    width: 100,
+  },
+  {
+    field: "name",
+    header: "Value 구분",
+    width: 100,
+  },
+];
+const customersQueryStr = `SELECT custcd, custnm FROM ba020t `;
+
+const customersColumns = [
+  {
+    field: "custcd",
+    header: "업체코드",
+    width: 90,
+  },
+  {
+    field: "custnm",
+    header: "업체명",
+    width: 150,
+  },
+];
+const CodesContext = createContext<{
+  valueCodes: any;
+  customers: any;
+}>({
+  valueCodes: [],
+  customers: [],
+});
 
 const App = () => {
   const processApi = useApi();
   const setLoading = useSetRecoilState(isLoading);
-  const [pc, setPc] = useState("");
-  const [meetingnum, setMeetingnum] = useState("");
-  UseParaPc(setPc);
-  const userId = UseGetValueFromSessionItem("user_id");
+  const [meetingnum, setMeetingnum] = useState(""); //Detail 조회조건
 
   const [attachmentsWindowVisible, setAttachmentsWindowVisible] =
     useState<boolean>(false);
@@ -97,46 +158,22 @@ const App = () => {
       [name]: value,
     }));
   };
+  const detailInputChange = (e: DatePickerChangeEvent | InputChangeEvent) => {
+    const { value, name = "" } = e.target;
 
-  const downloadWordDoc = (e: React.MouseEvent<HTMLButtonElement>) => {
-    const name = e.currentTarget.name;
+    setDetailData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+  const detailComboBoxChange = (e: ComboBoxChangeEvent) => {
+    const { value } = e.target;
+    const name = e.target.props.name ?? "";
 
-    let reference = null;
-
-    // const htmlElement = document.getElementById("htmlContent");
-    var iframe = document.querySelector("iframe");
-
-    if (iframe && iframe.contentWindow) {
-      const iframeDocument =
-        iframe.contentDocument || iframe.contentWindow.document;
-
-      // iframe 내부의 요소에 접근
-      reference = iframeDocument.querySelector(".k-content.ProseMirror");
-    }
-
-    const isRef = name === "reference" && reference;
-    const htmlElement = isRef
-      ? reference
-      : document.getElementById("htmlContent");
-
-    if (htmlElement) {
-      const html = htmlElement.innerHTML;
-      const file = new Blob(
-        [
-          '<!DOCTYPE html><html><head><meta charset="utf-8" /><title>Converted Doc</title></head><body>' +
-            html +
-            "</body></html>",
-        ],
-        {
-          type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        },
-      );
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(file);
-      link.download =
-        detailDataLines[0].title + (isRef ? "_참고자료" : "") + ".doc";
-      link.click();
-    }
+    setDetailData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   const search = () => {
@@ -151,27 +188,39 @@ const App = () => {
   };
 
   const idGetter = getter(DATA_ITEM_KEY);
+  const detailIdGetter = getter(DETAIL_ITEM_KEY);
 
   const [mainDataState, setMainDataState] = useState<State>({
+    sort: [],
+  });
+  const [detailRowsState, setDetailRowsState] = useState<State>({
     sort: [],
   });
   const [mainDataResult, setMainDataResult] = useState<DataResult>(
     process([], mainDataState),
   );
-  const [detailDataLines, setDetailDataLines] = useState<any[]>([]);
-  const [detailData, setDetailData] = useState({
-    orgdiv: "",
-    meetingnum: "",
-    attdatnum: "",
-    files: "",
-  });
+  const [isVisibleDetail, setIsVisableDetail] = useState(true);
+
+  const [detailData, setDetailData] = useState(defaultDetailData);
+  const [detailRows, setDetailRows] = useState<DataResult>(
+    process([], detailRowsState),
+  );
 
   const [selectedState, setSelectedState] = useState<{
     [id: string]: boolean | number[];
   }>({});
+  const [detailSelectedState, setDetailSelectedState] = useState<{
+    [id: string]: boolean | number[];
+  }>({});
+
+  const [valueCodesState, setValueCodesState] = useState(null);
+  const [customersState, setCustomersState] = useState<null | []>(null);
 
   const onMainDataStateChange = (event: GridDataStateChangeEvent) => {
     setMainDataState(event.dataState);
+  };
+  const onDetailRowsStateChange = (event: GridDataStateChangeEvent) => {
+    setDetailRowsState(event.dataState);
   };
 
   //메인 그리드 선택 이벤트 => 디테일 조회
@@ -186,15 +235,59 @@ const App = () => {
     const selectedIdx = event.startRowIndex;
     const selectedRowData = event.dataItems[selectedIdx];
 
+    const {
+      orgdiv,
+      unshared,
+      meetingnum,
+      attdatnum,
+      attdatnum_private,
+      files,
+      files_private,
+      custcd,
+      custnm,
+      recdt,
+      place,
+      meetingid,
+      meetingnm,
+      title,
+      devmngnum,
+      devproject,
+      remark2,
+    } = selectedRowData;
+
     setDetailData({
-      meetingnum: selectedRowData[DATA_ITEM_KEY],
-      orgdiv: selectedRowData.orgdiv,
-      attdatnum: selectedRowData.attdatnum,
-      files: selectedRowData.files,
+      work_type: "U",
+      unshared: unshared === "Y" ? true : false,
+      orgdiv,
+      meetingnum,
+      attdatnum,
+      attdatnum_private,
+      files,
+      files_private,
+      cust_data: {
+        custcd,
+        custnm,
+      },
+      recdt: toDate(recdt.replace("-", "").replace("-", "")) ?? new Date(),
+      place,
+      meetingid,
+      meetingnm,
+      title,
+      devmngnum,
+      devproject,
+      remark2,
     });
 
     const id = selectedRowData["orgdiv"] + "_" + selectedRowData["meetingnum"];
     setMeetingnum(id);
+  };
+  const onDetailSelectionChange = (event: GridSelectionChangeEvent) => {
+    const newSelectedState = getSelectedState({
+      event,
+      selectedState: detailSelectedState,
+      dataItemKey: DETAIL_ITEM_KEY,
+    });
+    setDetailSelectedState(newSelectedState);
   };
 
   const onMainScrollHandler = (event: GridEvent) => {
@@ -209,17 +302,7 @@ const App = () => {
     setMainDataState((prev) => ({ ...prev, sort: e.sort }));
   };
 
-  const docEditorRef = useRef<TEditorHandle>(null);
   const refEditorRef = useRef<TEditorHandle>(null);
-
-  const saveMeeting = () => {
-    if (refEditorRef.current) {
-      const editorContent = refEditorRef.current.getContent();
-
-      // 여기서 원하는 작업 수행 (예: 서버에 저장)
-      fetchToSave(editorContent);
-    }
-  };
 
   const currentDate = new Date();
   const fromDate = new Date(
@@ -291,11 +374,47 @@ const App = () => {
           const id = firstRowData["orgdiv"] + "_" + firstRowData["meetingnum"];
           setMeetingnum(id);
 
+          const {
+            orgdiv,
+            unshared,
+            meetingnum,
+            attdatnum,
+            attdatnum_private,
+            files,
+            files_private,
+            custcd,
+            custnm,
+            recdt,
+            place,
+            meetingid,
+            meetingnm,
+            title,
+            devmngnum,
+            devproject,
+            remark2,
+          } = firstRowData;
+
           setDetailData({
-            meetingnum: firstRowData[DATA_ITEM_KEY],
-            orgdiv: firstRowData.orgdiv,
-            attdatnum: firstRowData.attdatnum,
-            files: firstRowData.files,
+            work_type: "U",
+            unshared: unshared === "Y" ? true : false,
+            orgdiv,
+            meetingnum,
+            attdatnum,
+            attdatnum_private,
+            files,
+            files_private,
+            cust_data: {
+              custcd,
+              custnm,
+            },
+            recdt: toDate(recdt) ?? new Date(),
+            place,
+            meetingid,
+            meetingnm,
+            title,
+            devmngnum,
+            devproject,
+            remark2,
           });
         } else {
           // 스크롤하여 다른 페이지 조회
@@ -328,18 +447,22 @@ const App = () => {
     }
 
     if (data !== null && data.result.isSuccess === true) {
-      const document = data.document;
       const reference = data.reference;
-      const rows = data.result.tables[0].Rows;
+      const rows = data.result.tables[0].Rows.map((row: any) => ({
+        ...row,
+        finexpdt: row.finexpdt ? toDate(row.finexpdt) : null,
+        reqdt: row.reqdt ? toDate(row.reqdt) : null,
+        client_finexpdt: row.client_finexpdt
+          ? toDate(row.client_finexpdt)
+          : null,
+      }));
 
       // Edior에 HTML & CSS 세팅
       if (refEditorRef.current) {
         refEditorRef.current.setHtml(reference);
       }
-      if (docEditorRef.current) {
-        docEditorRef.current.setHtml(document);
-      }
-      setDetailDataLines(rows);
+
+      setDetailRows(process(rows, detailRowsState));
     } else {
       console.log("[에러발생]");
       console.log(data);
@@ -347,18 +470,18 @@ const App = () => {
       if (refEditorRef.current) {
         refEditorRef.current.setHtml("");
       }
-      if (docEditorRef.current) {
-        docEditorRef.current.setHtml("");
-      }
-      setDetailDataLines([]);
     }
     setLoading(false);
   };
 
-  const fetchToSave = async (editorContent: string) => {
+  const saveMeeting = async () => {
     let data: any;
     setLoading(true);
 
+    let editorContent: any = "";
+    if (refEditorRef.current) {
+      editorContent = refEditorRef.current.getContent();
+    }
     const bytes = require("utf8-bytes");
     const convertedEditorContent = bytesToBase64(bytes(editorContent));
 
@@ -432,8 +555,6 @@ const App = () => {
 
     if (response !== null) {
       const blob = new Blob([response.data]);
-      // 특정 타입을 정의해야 경우에는 옵션을 사용해 MIME 유형을 정의 할 수 있습니다.
-      // const blob = new Blob([this.content], {type: 'text/plain'})
 
       // blob을 사용해 객체 URL을 생성합니다.
       const fileObjectUrl = window.URL.createObjectURL(blob);
@@ -445,7 +566,6 @@ const App = () => {
 
       // 다운로드 파일 이름을 추출하는 함수
       const extractDownloadFilename = (response: any) => {
-        console.log(response);
         if (response.headers) {
           const disposition = response.headers["content-disposition"];
           let filename = "";
@@ -479,6 +599,12 @@ const App = () => {
 
     setLoading(false);
   };
+
+  useEffect(() => {
+    // ComboBox에 사용할 코드 리스트 조회
+    fetchValueCodes();
+    fetchCustomers();
+  }, []);
 
   useEffect(() => {
     if (filters.isFetch) {
@@ -522,161 +648,711 @@ const App = () => {
       </td>
     );
   };
+  const detailTotalFooterCell = (props: GridFooterCellProps) => {
+    return (
+      <td colSpan={props.colSpan} style={props.style}>
+        총 {detailRows.total}건
+      </td>
+    );
+  };
+
+  const onDetailItemChange = (event: GridItemChangeEvent) => {
+    getGridItemChangedData(event, detailRows, setDetailRows, DETAIL_ITEM_KEY);
+  };
+
+  const enterEdit = (dataItem: any, field: string) => {
+    const newData = detailRows.data.map((item) =>
+      item[DETAIL_ITEM_KEY] === dataItem[DETAIL_ITEM_KEY]
+        ? {
+            ...item,
+            rowstatus: item.rowstatus === "N" ? "N" : "U",
+            [EDIT_FIELD]: field,
+          }
+        : {
+            ...item,
+            [EDIT_FIELD]: undefined,
+          },
+    );
+
+    setDetailRows((prev) => {
+      return {
+        data: newData,
+        total: prev.total,
+      };
+    });
+  };
+
+  const exitEdit = () => {
+    const newData = detailRows.data.map((item) => ({
+      ...item,
+      [EDIT_FIELD]: undefined,
+    }));
+
+    setDetailRows((prev) => {
+      return {
+        data: newData,
+        total: prev.total,
+      };
+    });
+  };
+
+  const customCellRender = (td: any, props: any) => (
+    <CellRender
+      originalProps={props}
+      td={td}
+      enterEdit={enterEdit}
+      editField={EDIT_FIELD}
+    />
+  );
+
+  const customRowRender = (tr: any, props: any) => (
+    <RowRender
+      originalProps={props}
+      tr={tr}
+      exitEdit={exitEdit}
+      editField={EDIT_FIELD}
+    />
+  );
+
+  const createMeeting = () => {
+    setDetailData({ ...defaultDetailData, work_type: "N" });
+    setDetailRows(process([], detailRowsState));
+
+    // Edior에 HTML & CSS 세팅
+    if (refEditorRef.current) {
+      refEditorRef.current.setHtml("");
+    }
+  };
+
+  const deleteMeeting = useCallback(async () => {
+    // if (!window.confirm("[" + detailData.title + "] 정말 삭제하시겠습니까?"))
+    //   return false;
+    // let data: any;
+    // setLoading(true);
+    // const para = { id: detailData.document_id };
+    // try {
+    //   data = await processApi<any>("notice-delete", para);
+    // } catch (error: any) {
+    //   data = null;
+    // }
+    // if (data && data.isSuccess === true) {
+    //   // 첨부파일 서버에서 삭제
+    //   if (unsavedAttadatnums.attdatnums.length > 0) {
+    //     // DB 저장안된 첨부파일
+    //     setDeletedAttadatnums(unsavedAttadatnums);
+    //   } else if (detailData.attdatnum) {
+    //     // DB 저장된 첨부파일
+    //     setDeletedAttadatnums({
+    //       type: "notice",
+    //       attdatnums: [detailData.attdatnum],
+    //     });
+    //   }
+    //   setFilters((prev) => ({
+    //     ...prev,
+    //     isFetch: true,
+    //     isReset: true,
+    //   }));
+    // } else {
+    //   console.log("[에러발생]");
+    //   console.log(data);
+    // }
+    // setLoading(false);
+  }, [detailData]);
+
+  // 디테일 그리드 선택 행 추가
+  const addDetailRow = () => {
+    const selectedKey = Number(Object.keys(detailSelectedState)[0]);
+    const selectedIndex = detailRows.data.findIndex(
+      (row) => row.meetingseq === selectedKey,
+    );
+
+    let newRows = [...detailRows.data];
+
+    if (selectedIndex !== -1) {
+      // 선택된 행이 있을 경우, 해당 행 다음에 새 데이터 삽입
+      newRows.splice(selectedIndex + 1, 0, {
+        rowstatus: "N",
+        meetingseq: detailRows.total + 1,
+        finexpdt: null,
+        cust_browserable: "Y",
+        client_finexpdt: null,
+      });
+    } else {
+      // 선택된 행이 없을 경우, 배열의 끝에 새 데이터 추가
+      newRows.push({
+        rowstatus: "N",
+        meetingseq: detailRows.total + 1,
+        finexpdt: null,
+        cust_browserable: "Y",
+        client_finexpdt: null,
+      });
+    }
+
+    setDetailRows(process(newRows, detailRowsState));
+  };
+
+  // 디테일 그리드 선택 행 삭제
+  const removeDetailRow = () => {
+    const selectedKey = Object.keys(detailSelectedState)[0];
+    const selectedIndex = detailRows.data.findIndex(
+      (row) => row.meetingseq.toString() === selectedKey,
+    );
+
+    if (selectedIndex !== -1) {
+      let newRows = [...detailRows.data];
+      newRows.splice(selectedIndex, 1);
+
+      // 삭제행의 다음행의 index를 계산
+      let nextSelectedIndex =
+        selectedIndex === newRows.length ? selectedIndex - 1 : selectedIndex;
+
+      // 데이터 업데이트
+      setDetailRows((prev) => process(newRows, detailRowsState));
+
+      // selectedState 업데이트
+      if (newRows.length > 0) {
+        setDetailSelectedState({
+          [newRows[nextSelectedIndex].meetingseq]: true,
+        });
+      } else {
+        setDetailSelectedState({});
+      }
+    } else {
+      console.log("No row selected");
+    }
+  };
+
+  // 디테일 그리드 위로 행이동
+  const upDetailRow = () => {
+    const selectedKey = Object.keys(detailSelectedState)[0];
+    const selectedIndex = detailRows.data.findIndex(
+      (row) => row.meetingseq.toString() === selectedKey,
+    );
+
+    if (selectedIndex > 0) {
+      let newRows = [...detailRows.data];
+      const item = newRows.splice(selectedIndex, 1)[0];
+      newRows.splice(selectedIndex - 1, 0, item);
+      setDetailRows((prev) => process(newRows, detailRowsState));
+    } else {
+      console.log("Row is already at the top");
+    }
+  };
+
+  // 디테일 그리드 아래로 행이동
+  const downDetailRow = () => {
+    const selectedKey = Object.keys(detailSelectedState)[0];
+    const selectedIndex = detailRows.data.findIndex(
+      (row) => row.meetingseq.toString() === selectedKey,
+    );
+
+    if (selectedIndex < detailRows.data.length - 1) {
+      let newRows = [...detailRows.data];
+      const item = newRows.splice(selectedIndex, 1)[0];
+      newRows.splice(selectedIndex + 1, 0, item);
+      setDetailRows((prev) => process(newRows, detailRowsState));
+    } else {
+      console.log("Row is already at the bottom");
+    }
+  };
+
+  const fetchValueCodes = async () => {
+    let data: any;
+
+    const bytes = require("utf8-bytes");
+    const convertedQueryStr = bytesToBase64(bytes(valueCodesQueryStr));
+
+    let query = {
+      query: convertedQueryStr,
+    };
+
+    try {
+      data = await processApi<any>("bizgst-query", query);
+    } catch (error) {
+      data = null;
+    }
+
+    if (data !== null && data.isSuccess === true) {
+      const rows = data.tables[0].Rows;
+      setValueCodesState(rows);
+    } else {
+      console.log("[에러발생]");
+      console.log(data);
+    }
+  };
+  const fetchCustomers = async () => {
+    let data: any;
+
+    const bytes = require("utf8-bytes");
+    const convertedQueryStr = bytesToBase64(bytes(customersQueryStr));
+
+    let query = {
+      query: convertedQueryStr,
+    };
+
+    try {
+      data = await processApi<any>("bizgst-query", query);
+    } catch (error) {
+      data = null;
+    }
+
+    if (data !== null && data.isSuccess === true) {
+      const rows = data.tables[0].Rows;
+      setCustomersState(rows);
+    } else {
+      console.log("[에러발생]");
+      console.log(data);
+    }
+  };
 
   return (
     <>
-      <TitleContainer>
-        <Title>회의록 관리</Title>
-        <ButtonContainer>
-          <Button onClick={search} icon="search" themeColor={"primary"}>
-            조회
-          </Button>
-          <Button
-            icon={"file-word"}
-            name="meeting"
-            onClick={downloadDoc}
-            themeColor={"primary"}
-            fillMode={"outline"}
-          >
-            다운로드
-          </Button>
-        </ButtonContainer>
-      </TitleContainer>
-      <FilterBoxWrap>
-        <FilterBox onKeyPress={(e) => handleKeyPressSearch(e, search)}>
-          <tbody>
-            <tr>
-              <th>회의일</th>
-              <td>
-                <div className="filter-item-wrap">
-                  <DatePicker
-                    name="fromDate"
-                    value={filters.fromDate}
-                    format="yyyy-MM-dd"
-                    onChange={filterInputChange}
-                    placeholder=""
-                  />
-                  ~
-                  <DatePicker
-                    name="toDate"
-                    value={filters.toDate}
-                    format="yyyy-MM-dd"
-                    onChange={filterInputChange}
-                    placeholder=""
-                  />
-                </div>
-              </td>
-              <th>제목 및 내용</th>
-              <td colSpan={3}>
-                <Input
-                  name="contents"
-                  type="text"
-                  value={filters.contents}
-                  onChange={filterInputChange}
-                />
-              </td>
-            </tr>
-          </tbody>
-        </FilterBox>
-      </FilterBoxWrap>
-      <GridContainerWrap height={"86vh"}>
-        <GridContainer width={`25%`}>
-          <GridTitleContainer>
-            <GridTitle>회의록 리스트</GridTitle>
-          </GridTitleContainer>
-          <Grid
-            style={{ height: `calc(100% - 35px)` }}
-            data={process(
-              mainDataResult.data.map((row) => ({
-                ...row,
-                recdt: dateformat2(row.recdt),
-                [SELECTED_FIELD]: selectedState[idGetter(row)],
-              })),
-              mainDataState,
-            )}
-            {...mainDataState}
-            onDataStateChange={onMainDataStateChange}
-            //선택 기능
-            dataItemKey={DATA_ITEM_KEY}
-            selectedField={SELECTED_FIELD}
-            selectable={{
-              enabled: true,
-              mode: "single",
-            }}
-            onSelectionChange={onSelectionChange}
-            //스크롤 조회 기능
-            fixedScroll={true}
-            total={mainDataResult.total}
-            onScroll={onMainScrollHandler}
-            //정렬기능
-            sortable={true}
-            onSortChange={onMainSortChange}
-            //컬럼순서조정
-            reorderable={true}
-            //컬럼너비조정
-            resizable={true}
-          >
-            <GridColumn
-              field="recdt"
-              title="회의일"
-              width={100}
-              cell={CenterCell}
-              footerCell={mainTotalFooterCell}
-            />
-            <GridColumn field="custnm" title="업체" width={120} />
-            <GridColumn field="title" title="제목" width={300} />
-          </Grid>
-        </GridContainer>
-        <GridContainer width={`calc(50% - ${GAP}px)`}>
-          <GridTitleContainer>
-            <GridTitle>회의록</GridTitle>
-          </GridTitleContainer>
-          <FormBoxWrap border>
-            <FormBox>
-              <tbody>
-                <tr>
-                  <th>회의록 번호</th>
-                  <td>
-                    <Input
-                      name="meetingnum"
-                      value={detailData.meetingnum}
-                      className="readonly"
-                    />
-                  </td>
-                  <th style={{ width: 0 }}>첨부파일</th>
-                  <td style={{ width: "auto" }}>
-                    <div className="filter-item-wrap">
-                      <Input name="attachment_q" value={detailData.files} />
-                      <Button
-                        icon="more-horizontal"
-                        fillMode={"flat"}
-                        onClick={() => setAttachmentsWindowVisible(true)}
-                      />
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </FormBox>
-          </FormBoxWrap>
-        </GridContainer>
-        <GridContainer width={`calc(40% - ${GAP}px)`}>
-          <GridTitleContainer>
-            <GridTitle>참고자료</GridTitle>
-          </GridTitleContainer>
-          <RichEditor id="refEditor" ref={refEditorRef} readonly />
-        </GridContainer>
-      </GridContainerWrap>
+      <CodesContext.Provider
+        value={{ valueCodes: valueCodesState, customers: customersState }}
+      >
+        <TitleContainer>
+          <Title>회의록 관리</Title>
+          <ButtonContainer>
+            <Button onClick={search} icon="search" themeColor={"primary"}>
+              조회
+            </Button>
+            <Button
+              themeColor={"primary"}
+              fillMode={"outline"}
+              icon="file-add"
+              onClick={createMeeting}
+            >
+              신규
+            </Button>
+            <Button
+              themeColor={"primary"}
+              fillMode={"outline"}
+              icon="save"
+              onClick={saveMeeting}
+            >
+              저장
+            </Button>
+            <Button
+              themeColor={"primary"}
+              fillMode={"outline"}
+              icon="delete"
+              onClick={deleteMeeting}
+            >
+              삭제
+            </Button>
+            <Button
+              icon={"file-word"}
+              name="meeting"
+              onClick={downloadDoc}
+              themeColor={"primary"}
+              fillMode={"outline"}
+            >
+              다운로드
+            </Button>
+          </ButtonContainer>
+        </TitleContainer>
 
-      {attachmentsWindowVisible && (
-        <AttachmentsWindow
-          type="meeting"
-          setVisible={setAttachmentsWindowVisible}
-          setData={getAttachmentsData}
-          para={detailData.attdatnum}
-          permission={{ upload: false, download: true, delete: false }}
-        />
-      )}
+        <GridContainerWrap height={"92vh"}>
+          <GridContainer width={`25%`}>
+            <GridTitleContainer>
+              <GridTitle>회의록 리스트</GridTitle>
+            </GridTitleContainer>
+            <FilterBoxWrap>
+              <FilterBox onKeyPress={(e) => handleKeyPressSearch(e, search)}>
+                <tbody>
+                  <tr>
+                    <th>회의일</th>
+                    <td>
+                      <div className="filter-item-wrap">
+                        <DatePicker
+                          name="fromDate"
+                          value={filters.fromDate}
+                          format="yyyy-MM-dd"
+                          onChange={filterInputChange}
+                          placeholder=""
+                        />
+                        ~
+                        <DatePicker
+                          name="toDate"
+                          value={filters.toDate}
+                          format="yyyy-MM-dd"
+                          onChange={filterInputChange}
+                          placeholder=""
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>제목 및 내용</th>
+                    <td colSpan={3}>
+                      <Input
+                        name="contents"
+                        type="text"
+                        value={filters.contents}
+                        onChange={filterInputChange}
+                      />
+                    </td>
+                  </tr>
+                </tbody>
+              </FilterBox>
+            </FilterBoxWrap>
+            <Grid
+              style={{ height: `calc(100% - 130.13px)` }}
+              data={process(
+                mainDataResult.data.map((row) => ({
+                  ...row,
+                  recdt: dateformat2(row.recdt),
+                  [SELECTED_FIELD]: selectedState[idGetter(row)],
+                })),
+                mainDataState,
+              )}
+              {...mainDataState}
+              onDataStateChange={onMainDataStateChange}
+              //선택 기능
+              dataItemKey={DATA_ITEM_KEY}
+              selectedField={SELECTED_FIELD}
+              selectable={{
+                enabled: true,
+                mode: "single",
+              }}
+              onSelectionChange={onSelectionChange}
+              //스크롤 조회 기능
+              fixedScroll={true}
+              total={mainDataResult.total}
+              onScroll={onMainScrollHandler}
+              //정렬기능
+              sortable={true}
+              onSortChange={onMainSortChange}
+              //컬럼순서조정
+              reorderable={true}
+              //컬럼너비조정
+              resizable={true}
+            >
+              <GridColumn
+                field="recdt"
+                title="회의일"
+                width={95}
+                cell={CenterCell}
+                footerCell={mainTotalFooterCell}
+              />
+              <GridColumn field="custnm" title="업체" width={100} />
+              <GridColumn field="title" title="제목" width={300} />
+            </Grid>
+          </GridContainer>
+          <GridContainer width={`calc(50% - ${GAP}px)`}>
+            <GridTitleContainer>
+              <GridTitle>회의록</GridTitle>
+              <Button
+                themeColor={"primary"}
+                fillMode={"flat"}
+                icon={isVisibleDetail ? "chevron-up" : "chevron-down"}
+                onClick={() => setIsVisableDetail((prev) => !prev)}
+              ></Button>
+            </GridTitleContainer>
+            {isVisibleDetail && (
+              <FormBoxWrap border>
+                <FormBox>
+                  <tbody>
+                    <tr>
+                      <th>회의록 번호</th>
+                      <td>
+                        <Input
+                          name="meetingnum"
+                          value={detailData.meetingnum}
+                          className="readonly"
+                        />
+                      </td>
+                      <th>업체 비공유</th>
+                      <td style={{ textAlign: "left" }}>
+                        <Checkbox
+                          name="unshared"
+                          value={detailData.unshared}
+                          onChange={() =>
+                            setDetailData((prev) => ({
+                              ...prev,
+                              unshared: !prev.unshared,
+                            }))
+                          }
+                        />
+                      </td>
+                    </tr>
+                    <tr>
+                      <th>업체코드</th>
+                      <td>
+                        <div className="filter-item-wrap">
+                          <Input
+                            name="custcd"
+                            value={
+                              detailData.cust_data
+                                ? detailData.cust_data.custcd
+                                : ""
+                            }
+                          />
+                          <Button
+                            icon="more-horizontal"
+                            fillMode={"flat"}
+                            onClick={() => setAttachmentsWindowVisible(true)}
+                          />
+                        </div>
+                      </td>
+                      <th>업체명</th>
+                      <td>
+                        {customersState && (
+                          <MultiColumnComboBox
+                            name="cust_data"
+                            data={customersState}
+                            value={detailData.cust_data}
+                            columns={customersColumns}
+                            textField={"custnm"}
+                            onChange={detailComboBoxChange}
+                          />
+                        )}
+                      </td>
+                    </tr>
+                    <tr>
+                      <th>회의일</th>
+                      <td>
+                        <DatePicker
+                          name="recdt"
+                          value={detailData.recdt}
+                          format="yyyy-MM-dd"
+                          onChange={detailInputChange}
+                          placeholder=""
+                        />
+                      </td>
+                      <th>회의 장소</th>
+                      <td>
+                        <Input
+                          name="place"
+                          value={detailData.place}
+                          onChange={detailInputChange}
+                        />
+                      </td>
+                    </tr>
+                    <tr>
+                      <th>회의록ID</th>
+                      <td>
+                        <Input
+                          name="meetingid"
+                          value={detailData.meetingid}
+                          onChange={detailInputChange}
+                        />
+                      </td>
+                      <th>회의록명</th>
+                      <td>
+                        <Input
+                          name="meetingnm"
+                          value={detailData.meetingnm}
+                          onChange={detailInputChange}
+                        />
+                      </td>
+                    </tr>
+                    <tr>
+                      <th>회의 제목</th>
+                      <td>
+                        <Input
+                          name="title"
+                          value={detailData.title}
+                          onChange={detailInputChange}
+                        />
+                      </td>
+                      <th>프로젝트</th>
+                      <td>
+                        <div className="filter-item-wrap">
+                          <Input
+                            name="devproject"
+                            value={detailData.devproject}
+                            onChange={detailInputChange}
+                          />
+                          <Button
+                            icon="more-horizontal"
+                            fillMode={"flat"}
+                            onClick={() => setAttachmentsWindowVisible(true)}
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th>첨부파일</th>
+                      <td>
+                        <div className="filter-item-wrap">
+                          <Input name="attachment_q" value={detailData.files} />
+                          <Button
+                            icon="more-horizontal"
+                            fillMode={"flat"}
+                            onClick={() => setAttachmentsWindowVisible(true)}
+                          />
+                        </div>
+                      </td>
+                      <th>
+                        첨부파일
+                        <br />
+                        (비공개)
+                      </th>
+                      <td>
+                        <div className="filter-item-wrap">
+                          <Input
+                            name="attachment_q"
+                            value={detailData.files_private}
+                          />
+                          <Button
+                            icon="more-horizontal"
+                            fillMode={"flat"}
+                            onClick={() => setAttachmentsWindowVisible(true)}
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th>비고</th>
+                      <td colSpan={3}>
+                        <Input name="remark2" value={detailData.remark2} />
+                      </td>
+                    </tr>
+                  </tbody>
+                </FormBox>
+              </FormBoxWrap>
+            )}
+
+            <Grid
+              style={{
+                height: isVisibleDetail
+                  ? `calc(100% - 291.94px - 40px - 5px)`
+                  : `calc(100% - 35px )`,
+              }}
+              data={process(
+                detailRows.data.map((row) => ({
+                  ...row,
+                  [SELECTED_FIELD]: detailSelectedState[detailIdGetter(row)],
+                })),
+                detailRowsState,
+              )}
+              {...detailRowsState}
+              onDataStateChange={onDetailRowsStateChange}
+              //선택 기능
+              dataItemKey={DETAIL_ITEM_KEY}
+              selectedField={SELECTED_FIELD}
+              selectable={{
+                enabled: true,
+                mode: "single",
+              }}
+              onSelectionChange={onDetailSelectionChange}
+              //컬럼순서조정
+              reorderable={true}
+              //컬럼너비조정
+              resizable={true}
+              //incell 수정 기능
+              onItemChange={onDetailItemChange}
+              cellRender={customCellRender}
+              rowRender={customRowRender}
+              editField={EDIT_FIELD}
+            >
+              <GridToolbar>
+                <Button
+                  themeColor={"primary"}
+                  fillMode={"outline"}
+                  icon="plus"
+                  onClick={addDetailRow}
+                />
+                <Button
+                  themeColor={"primary"}
+                  fillMode={"outline"}
+                  icon="minus"
+                  onClick={removeDetailRow}
+                />
+                <Button
+                  themeColor={"primary"}
+                  fillMode={"outline"}
+                  icon="chevron-up"
+                  onClick={upDetailRow}
+                />
+                <Button
+                  themeColor={"primary"}
+                  fillMode={"outline"}
+                  icon="chevron-down"
+                  onClick={downDetailRow}
+                />
+              </GridToolbar>
+              <GridColumn field="rowstatus" title=" " width={40} />
+              <GridColumn
+                field="contents"
+                title="내용"
+                width={500}
+                footerCell={detailTotalFooterCell}
+              />
+              <GridColumn
+                field="finexpdt"
+                title="완료예정일"
+                width={170}
+                cell={DateCell}
+              />
+              <GridColumn
+                field="reqdt"
+                title="요청일"
+                width={170}
+                cell={DateCell}
+              />
+              <GridColumn
+                field="is_request"
+                title="요구사항"
+                width={120}
+                cell={CheckBoxCell}
+              />
+              <GridColumn
+                field="cust_browserable"
+                title="고객열람"
+                width={100}
+                cell={CheckBoxCell}
+              />
+              <GridColumn
+                field="value_code3"
+                title="Value 구분"
+                width={160}
+                cell={ValueCodesComboBoxCell}
+              />
+              <GridColumn field="client_name" title="고객담당자" width={100} />
+              <GridColumn
+                field="client_finexpdt"
+                title="고객완료예정일"
+                width={170}
+                cell={DateCell}
+              />
+            </Grid>
+          </GridContainer>
+          <GridContainer width={`calc(40% - ${GAP}px)`}>
+            <GridTitleContainer>
+              <GridTitle>참고자료</GridTitle>
+            </GridTitleContainer>
+            <RichEditor id="refEditor" ref={refEditorRef} />
+          </GridContainer>
+        </GridContainerWrap>
+
+        {attachmentsWindowVisible && (
+          <AttachmentsWindow
+            type="meeting"
+            setVisible={setAttachmentsWindowVisible}
+            setData={getAttachmentsData}
+            para={detailData.attdatnum}
+          />
+        )}
+      </CodesContext.Provider>
     </>
   );
 };
 export default App;
+
+const ValueCodesComboBoxCell = (props: GridCellProps) => {
+  const { valueCodes } = useContext(CodesContext);
+
+  return valueCodes ? (
+    <ComboBoxCell
+      columns={valueCodesColumns}
+      data={valueCodes}
+      textField="name"
+      valueField="code"
+      {...props}
+    />
+  ) : (
+    <td />
+  );
+};

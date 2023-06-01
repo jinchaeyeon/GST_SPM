@@ -64,7 +64,7 @@ const CommentsGrid = (props: {
   });
 
   const [dataResult, setDataResult] = useState<DataResult>(
-    process([], dataState)
+    process([], dataState),
   );
 
   const [selectedState, setSelectedState] = useState<{
@@ -113,7 +113,7 @@ const CommentsGrid = (props: {
         : {
             ...item,
             [EDIT_FIELD]: undefined,
-          }
+          },
     );
 
     setDataResult((prev) => {
@@ -238,7 +238,7 @@ const CommentsGrid = (props: {
       null;
     if (idx === null) return false;
     const selectedRowData = dataResult.data.find(
-      (item) => item[DATA_ITEM_KEY] === idx
+      (item) => item[DATA_ITEM_KEY] === idx,
     );
 
     const newDataItem = {
@@ -280,7 +280,7 @@ const CommentsGrid = (props: {
           (item.row_status === "N" || item.row_status === "U") &&
           item.row_status !== undefined
         );
-      }
+      },
     );
     if (
       dataResult.data.length === 0 ||
@@ -411,7 +411,7 @@ const CommentsGrid = (props: {
             recdt: dateformat2(row.recdt),
             [SELECTED_FIELD]: selectedState[idGetter(row)],
           })),
-          dataState
+          dataState,
         )}
         {...dataState}
         onDataStateChange={onDataStateChange}
