@@ -129,7 +129,7 @@ const App = () => {
         ],
         {
           type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        }
+        },
       );
       const link = document.createElement("a");
       link.href = URL.createObjectURL(file);
@@ -156,10 +156,11 @@ const App = () => {
     sort: [],
   });
   const [mainDataResult, setMainDataResult] = useState<DataResult>(
-    process([], mainDataState)
+    process([], mainDataState),
   );
   const [detailDataLines, setDetailDataLines] = useState<any[]>([]);
   const [detailData, setDetailData] = useState({
+    orgdiv: "",
     meetingnum: "",
     attdatnum: "",
     files: "",
@@ -187,10 +188,13 @@ const App = () => {
 
     setDetailData({
       meetingnum: selectedRowData[DATA_ITEM_KEY],
+      orgdiv: selectedRowData.orgdiv,
       attdatnum: selectedRowData.attdatnum,
       files: selectedRowData.files,
     });
-    setMeetingnum(selectedRowData[DATA_ITEM_KEY]);
+
+    const id = selectedRowData["orgdiv"] + "_" + selectedRowData["meetingnum"];
+    setMeetingnum(id);
   };
 
   const onMainScrollHandler = (event: GridEvent) => {
@@ -205,11 +209,12 @@ const App = () => {
     setMainDataState((prev) => ({ ...prev, sort: e.sort }));
   };
 
-  const editorRef = useRef<TEditorHandle>(null);
+  const docEditorRef = useRef<TEditorHandle>(null);
+  const refEditorRef = useRef<TEditorHandle>(null);
 
   const saveMeeting = () => {
-    if (editorRef.current) {
-      const editorContent = editorRef.current.getContent();
+    if (refEditorRef.current) {
+      const editorContent = refEditorRef.current.getContent();
 
       // 여기서 원하는 작업 수행 (예: 서버에 저장)
       fetchToSave(editorContent);
@@ -220,7 +225,7 @@ const App = () => {
   const fromDate = new Date(
     currentDate.getFullYear(),
     currentDate.getMonth() - 3,
-    currentDate.getDate()
+    currentDate.getDate(),
   );
 
   type TFilters = {
@@ -252,7 +257,7 @@ const App = () => {
 
     const para = {
       para: `list?fromDate=${convertDateToStr(
-        filters.fromDate
+        filters.fromDate,
       )}&toDate=${convertDateToStr(filters.toDate)}&custnm=${
         filters.custnm
       }&contents=${filters.contents}&findRowValue=${
@@ -282,10 +287,13 @@ const App = () => {
 
           const firstRowData = rows[0];
           setSelectedState({ [firstRowData[DATA_ITEM_KEY]]: true });
-          setMeetingnum(firstRowData[DATA_ITEM_KEY]);
+
+          const id = firstRowData["orgdiv"] + "_" + firstRowData["meetingnum"];
+          setMeetingnum(id);
 
           setDetailData({
             meetingnum: firstRowData[DATA_ITEM_KEY],
+            orgdiv: firstRowData.orgdiv,
             attdatnum: firstRowData.attdatnum,
             files: firstRowData.files,
           });
@@ -310,7 +318,7 @@ const App = () => {
 
     const para = {
       para: meetingnum,
-      doc: false,
+      doc: true,
     };
 
     try {
@@ -320,20 +328,27 @@ const App = () => {
     }
 
     if (data !== null && data.result.isSuccess === true) {
+      const document = data.document;
       const reference = data.reference;
       const rows = data.result.tables[0].Rows;
 
       // Edior에 HTML & CSS 세팅
-      if (editorRef.current) {
-        editorRef.current.setHtml(reference);
+      if (refEditorRef.current) {
+        refEditorRef.current.setHtml(reference);
+      }
+      if (docEditorRef.current) {
+        docEditorRef.current.setHtml(document);
       }
       setDetailDataLines(rows);
     } else {
       console.log("[에러발생]");
       console.log(data);
 
-      if (editorRef.current) {
-        editorRef.current.setHtml("");
+      if (refEditorRef.current) {
+        refEditorRef.current.setHtml("");
+      }
+      if (docEditorRef.current) {
+        docEditorRef.current.setHtml("");
       }
       setDetailDataLines([]);
     }
@@ -400,6 +415,71 @@ const App = () => {
     setLoading(false);
   };
 
+  const downloadDoc = async () => {
+    let response: any;
+    setLoading(true);
+
+    const id = detailData.orgdiv + "_" + detailData.meetingnum;
+    const para = {
+      para: "doc?type=Meeting&id=" + id,
+    };
+
+    try {
+      response = await processApi<any>("doc-download", para);
+    } catch (error) {
+      response = null;
+    }
+
+    if (response !== null) {
+      const blob = new Blob([response.data]);
+      // 특정 타입을 정의해야 경우에는 옵션을 사용해 MIME 유형을 정의 할 수 있습니다.
+      // const blob = new Blob([this.content], {type: 'text/plain'})
+
+      // blob을 사용해 객체 URL을 생성합니다.
+      const fileObjectUrl = window.URL.createObjectURL(blob);
+
+      // blob 객체 URL을 설정할 링크를 만듭니다.
+      const link = document.createElement("a");
+      link.href = fileObjectUrl;
+      link.style.display = "none";
+
+      // 다운로드 파일 이름을 추출하는 함수
+      const extractDownloadFilename = (response: any) => {
+        console.log(response);
+        if (response.headers) {
+          const disposition = response.headers["content-disposition"];
+          let filename = "";
+          if (disposition) {
+            var filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+            var matches = filenameRegex.exec(disposition);
+            if (matches != null && matches[1]) {
+              filename = matches[1].replace(/['"]/g, "");
+            }
+          }
+          return filename;
+        } else {
+          return "";
+        }
+      };
+
+      // 다운로드 파일 이름을 지정 할 수 있습니다.
+      // 일반적으로 서버에서 전달해준 파일 이름은 응답 Header의 Content-Disposition에 설정됩니다.
+      link.download = extractDownloadFilename(response);
+
+      // 다운로드 파일의 이름은 직접 지정 할 수 있습니다.
+      // link.download = "sample-file.xlsx";
+
+      // 링크를 body에 추가하고 강제로 click 이벤트를 발생시켜 파일 다운로드를 실행시킵니다.
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      // 다운로드가 끝난 리소스(객체 URL)를 해제합니다
+    }
+
+    setLoading(false);
+  };
+
   useEffect(() => {
     if (filters.isFetch) {
       const _ = require("lodash");
@@ -446,7 +526,7 @@ const App = () => {
   return (
     <>
       <TitleContainer>
-        <Title>회의록 열람</Title>
+        <Title>회의록 관리</Title>
         <ButtonContainer>
           <Button onClick={search} icon="search" themeColor={"primary"}>
             조회
@@ -454,7 +534,7 @@ const App = () => {
           <Button
             icon={"file-word"}
             name="meeting"
-            onClick={downloadWordDoc}
+            onClick={downloadDoc}
             themeColor={"primary"}
             fillMode={"outline"}
           >
@@ -487,7 +567,7 @@ const App = () => {
                 </div>
               </td>
               <th>제목 및 내용</th>
-              <td>
+              <td colSpan={3}>
                 <Input
                   name="contents"
                   type="text"
@@ -512,7 +592,7 @@ const App = () => {
                 recdt: dateformat2(row.recdt),
                 [SELECTED_FIELD]: selectedState[idGetter(row)],
               })),
-              mainDataState
+              mainDataState,
             )}
             {...mainDataState}
             onDataStateChange={onMainDataStateChange}
@@ -578,118 +658,12 @@ const App = () => {
               </tbody>
             </FormBox>
           </FormBoxWrap>
-          <div
-            id="htmlContent"
-            style={{
-              border: "solid 1px rgba(0, 0, 0, 0.08)",
-              padding: "20px",
-              overflow: "scroll",
-              height: "100%",
-            }}
-          >
-            {detailDataLines.length > 0 && (
-              <>
-                <h1
-                  style={{
-                    textAlign: "center",
-                    fontSize: "28px",
-                    fontWeight: "bold",
-                    marginBottom: "20px",
-                  }}
-                >
-                  회의록
-                </h1>
-                <table width={"100%"} style={{ ...styles.table }}>
-                  <tr>
-                    <th></th>
-                    <th style={styles.th}>담당</th>
-                    <th style={styles.th}>검토</th>
-                    <th style={styles.th}>승인</th>
-                  </tr>
-                  <tr>
-                    <td></td>
-                    <td height={70} width={85} style={styles.td}></td>
-                    <td height={70} width={85} style={styles.td}></td>
-                    <td height={70} width={85} style={styles.td}></td>
-                  </tr>
-                  <tr>
-                    <td></td>
-                    <td height={25} style={styles.td}></td>
-                    <td style={styles.td}></td>
-                    <td style={styles.td}></td>
-                  </tr>
-                </table>
-
-                <br />
-                <table width={"100%"} style={{ ...styles.table }}>
-                  <tr>
-                    <th style={styles.th}>회의 일자</th>
-                    <td style={styles.td} width="30%">
-                      {detailDataLines[0].date}
-                    </td>
-                    <th style={styles.th}>작성자</th>
-                    <td style={styles.td} width="30%">
-                      {detailDataLines[0].user_name}
-                    </td>
-                  </tr>
-                  <tr>
-                    <th style={styles.th}>회의 장소</th>
-                    <td
-                      style={{
-                        ...styles.td,
-                        textAlign: "left",
-                        paddingLeft: "10px",
-                      }}
-                      colSpan={3}
-                    >
-                      {detailDataLines[0].place}
-                    </td>
-                  </tr>
-                  <tr>
-                    <th style={styles.th}>제목</th>
-                    <td
-                      style={{
-                        ...styles.td,
-                        textAlign: "left",
-                        paddingLeft: "10px",
-                      }}
-                      colSpan={3}
-                    >
-                      {detailDataLines[0].title}
-                    </td>
-                  </tr>
-                  <tr>
-                    <th style={styles.th}>내용</th>
-                    <td style={styles.td} colSpan={3}></td>
-                  </tr>
-                  <tr>
-                    <td
-                      style={{
-                        ...styles.td,
-                        height: 550,
-                        minHeight: 550,
-                        padding: "10px",
-                        textAlign: "left",
-                        verticalAlign: "top",
-                        lineHeight: "25px",
-                      }}
-                      colSpan={4}
-                    >
-                      {detailDataLines.map((row) => (
-                        <p key={row.meetingseq}>{row.contents}</p>
-                      ))}
-                    </td>
-                  </tr>
-                </table>
-              </>
-            )}
-          </div>
         </GridContainer>
         <GridContainer width={`calc(40% - ${GAP}px)`}>
           <GridTitleContainer>
             <GridTitle>참고자료</GridTitle>
           </GridTitleContainer>
-          <RichEditor id="editor" ref={editorRef} readonly />
+          <RichEditor id="refEditor" ref={refEditorRef} readonly />
         </GridContainer>
       </GridContainerWrap>
 

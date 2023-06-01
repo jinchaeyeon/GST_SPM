@@ -31,7 +31,7 @@ import {
   dateformat2,
   handleKeyPressSearch,
   toDate,
-  UseGetIp,
+  UseParaPc,
 } from "../components/CommonFunction";
 import {
   DEFAULT_ATTDATNUMS,
@@ -72,7 +72,7 @@ const DraggableGridRowRender = (properties: any) => {
   return React.cloneElement(
     row,
     { ...row.props, ...additionalProps },
-    row.props.children
+    row.props.children,
   );
 };
 
@@ -85,8 +85,6 @@ type TFilters = {
   pgSize: number;
   isFetch: boolean;
   isReset: boolean;
-  scrollDirrection: string;
-  pgGap: number;
 };
 
 const defaultDetailData = {
@@ -114,8 +112,8 @@ const App = () => {
   const userId = loginResult ? loginResult.userId : "";
   const editorRef = useRef<TEditorHandle>(null);
 
-  const [ip, setIp] = useState(null);
-  UseGetIp(setIp);
+  const [pc, setPc] = useState("");
+  UseParaPc(setPc);
 
   const processApi = useApi();
 
@@ -124,7 +122,7 @@ const App = () => {
 
   // 서버 업로드는 되었으나 DB에는 저장안된 첨부파일 리스트
   const [unsavedAttadatnums, setUnsavedAttadatnums] = useRecoilState(
-    unsavedAttadatnumsState
+    unsavedAttadatnumsState,
   );
 
   const [attachmentsWindowVisible, setAttachmentsWindowVisible] =
@@ -142,15 +140,15 @@ const App = () => {
     sort: [],
   });
   const [mainDataResult, setMainDataResult] = useState<DataResult>(
-    process([], mainDataState)
+    process([], mainDataState),
   );
   const [detailData, setDetailData] = useState(defaultDetailData);
 
   const [allCustData, setAllCustData] = useState<DataResult>(
-    process([], allCustDataState)
+    process([], allCustDataState),
   );
   const [refCustData, setRefCustData] = useState<DataResult>(
-    process([], refCustDataState)
+    process([], refCustDataState),
   );
 
   const [allCustDragDataItem, setAllCustDragDataItem] = useState<any>(null);
@@ -172,8 +170,6 @@ const App = () => {
     pgSize: PAGE_SIZE,
     isFetch: true, // 조회여부 초기값
     isReset: true, // 리셋여부 초기값
-    scrollDirrection: "down",
-    pgGap: 0,
   });
 
   //조회조건 Input Change 함수 => 사용자가 Input에 입력한 값을 조회 파라미터로 세팅
@@ -203,7 +199,6 @@ const App = () => {
     setFilters((prev) => ({
       ...prev,
       pgNum: 1,
-      pgGap: 0,
       isFetch: true,
       isReset: true,
     }));
@@ -285,12 +280,10 @@ const App = () => {
 
     const para = {
       para: `list?fromDate=${convertDateToStr(
-        filters.fromDate
+        filters.fromDate,
       )}&toDate=${convertDateToStr(filters.toDate)}&contents=${
         filters.contents
-      }&findRowValue=${filters.findRowValue}&page=${filters.pgNum}&pageSize=${
-        filters.pgSize
-      }`,
+      }&page=${filters.pgNum}&pageSize=${filters.pgSize}`,
     };
 
     try {
@@ -311,27 +304,14 @@ const App = () => {
             data: rows,
             total: totalRowCnt,
           });
-
-          setFilters((prev) => ({
-            ...prev,
-            pgNum: data.pageNumber,
-            pgGap: 0,
-          }));
         } else if (filters.isReset) {
           // 일반 데이터 조회
+          const firstRowData = rows[0];
+          setSelectedState({ [firstRowData[DATA_ITEM_KEY]]: true });
           setMainDataResult({
             data: rows,
             total: totalRowCnt,
           });
-
-          const firstRowData = rows[0];
-          setSelectedState({ [firstRowData[DATA_ITEM_KEY]]: true });
-
-          setFilters((prev) => ({
-            ...prev,
-            pgNum: data.pageNumber,
-            pgGap: 0,
-          }));
         } else {
           // 스크롤하여 다른 페이지 조회
           setMainDataResult((prev) => {
@@ -411,6 +391,7 @@ const App = () => {
 
   //그리드 데이터 조회
   const fetchAllCust = useCallback(async () => {
+    if (!isAdmin) return false;
     let data: any;
     setLoading(true);
 
@@ -520,7 +501,7 @@ const App = () => {
   // 참조 업체 삭제
   const handleAllCustDrop = (e: any, dataItem: any) => {
     const newData = refCustData.data.filter(
-      (row) => row.customer_code !== refCustDragDataItem.customer_code
+      (row) => row.customer_code !== refCustDragDataItem.customer_code,
     );
 
     setRefCustData((prev) => ({
@@ -591,7 +572,7 @@ const App = () => {
         "@p_attdatnum": detailData.attdatnum,
         "@p_customer_code_s": getCustomerCodes(refCustData.data),
         "@p_id": userId,
-        "@p_pc": "",
+        "@p_pc": pc,
       },
     };
 
@@ -609,6 +590,7 @@ const App = () => {
       setFilters((prev) => ({
         ...prev,
         isFetch: true,
+        pgNum: 1,
         findRowValue: data.returnString,
       }));
     } else {
@@ -769,7 +751,7 @@ const App = () => {
                 [SELECTED_FIELD]: selectedState[idGetter(row)],
                 notice_date: dateformat2(row.notice_date),
               })),
-              mainDataState
+              mainDataState,
             )}
             {...mainDataState}
             onDataStateChange={onMainDataStateChange}
@@ -811,21 +793,16 @@ const App = () => {
           </GridTitleContainer>
           <FormBoxWrap border>
             <FormBox>
+              <colgroup>
+                <col width={"10%"} />
+                <col width={"20%"} />
+                <col width={"10%"} />
+                <col width={"60%"} />
+              </colgroup>
               <tbody>
                 <tr>
-                  <th>제목</th>
-                  <td colSpan={3}>
-                    <Input
-                      name="title"
-                      type="text"
-                      value={detailData.title}
-                      onChange={detailDataInputChange}
-                      className={!isAdmin ? "readonly" : "required"}
-                      readOnly={!isAdmin}
-                    />
-                  </td>
                   <th>공지일자</th>
-                  <td colSpan={3}>
+                  <td>
                     {isAdmin ? (
                       <DatePicker
                         name="notice_date"
@@ -840,13 +817,24 @@ const App = () => {
                         name="notice_date"
                         type="text"
                         value={dateformat2(
-                          convertDateToStr(detailData.notice_date)
+                          convertDateToStr(detailData.notice_date),
                         )}
                         onChange={detailDataInputChange}
                         className={!isAdmin ? "readonly" : "required"}
                         readOnly={!isAdmin}
                       />
                     )}
+                  </td>
+                  <th>제목</th>
+                  <td>
+                    <Input
+                      name="title"
+                      type="text"
+                      value={detailData.title}
+                      onChange={detailDataInputChange}
+                      className={!isAdmin ? "readonly" : "required"}
+                      readOnly={!isAdmin}
+                    />
                   </td>
                 </tr>
               </tbody>
@@ -903,7 +891,7 @@ const App = () => {
                 )}
               </GridTitleContainer>
               <Grid
-                style={{ height: `calc(100% - 35px)` }}
+                style={{ height: `calc(100% - 40px)`, margin: "5px 0" }}
                 data={process(
                   // 적어도 한개의 행은 나오도록 처리 (그리드 행이 있어야 드롭 가능)
                   refCustData.data.length === 0
@@ -911,7 +899,7 @@ const App = () => {
                     : refCustData.data.map((row) => ({
                         ...row,
                       })),
-                  refCustDataState
+                  refCustDataState,
                 )}
                 {...refCustDataState}
                 onDataStateChange={onRefCustDataStateChange}
@@ -961,7 +949,7 @@ const App = () => {
                     ...row,
                     // [SELECTED_FIELD]: selectedState[idGetter(row)],
                   })),
-                  allCustDataState
+                  allCustDataState,
                 )}
                 {...allCustDataState}
                 onDataStateChange={onAllCustDataStateChange}

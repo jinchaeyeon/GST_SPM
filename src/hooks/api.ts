@@ -78,6 +78,7 @@ const domain: any = {
     action: "delete",
     url: "api/spm/:attached",
   }, // AttachmentNum 자체를 삭제
+  //프로젝트 일정계획
   "project-schedule-list": {
     action: "get",
     url: "api/spm/project-schedule/projects",
@@ -85,6 +86,11 @@ const domain: any = {
   "project-schedule-detail": {
     action: "get",
     url: "api/spm/project-schedule/:id",
+  },
+  // word doc 다운로드
+  "doc-download": {
+    action: "get",
+    url: "api/spm/files/:para",
   },
 };
 let isTokenRefreshing = false;
@@ -148,7 +154,11 @@ export const useApi = () => {
 
       let headers: any = {};
 
-      if (name === "file-upload" || name === "file-download")
+      if (
+        name === "file-upload" ||
+        name === "file-download" ||
+        name === "doc-download"
+      )
         headers = {
           "Content-Type": "multipart/form-data",
           responseType: "stream",
@@ -178,7 +188,7 @@ export const useApi = () => {
         headers: headers,
       };
 
-      if (name === "file-download") {
+      if (name === "file-download" || name === "doc-download") {
         getHeader.responseType = "blob";
       }
 
@@ -208,7 +218,7 @@ export const useApi = () => {
         p
           //.then((response: any) => resolve(response.data))
           .then((response: any) => {
-            return name === "file-download"
+            return name === "file-download" || name === "doc-download"
               ? resolve(response)
               : resolve(response.data);
           })
@@ -295,5 +305,5 @@ axiosInstance.interceptors.response.use(
     }
     // 오류 발생 시 오류 내용 출력 후 요청 거절
     return Promise.reject(error);
-  }
+  },
 );

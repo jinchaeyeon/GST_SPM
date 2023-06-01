@@ -76,8 +76,6 @@ type TFilters = {
   pgSize: number;
   isFetch: boolean;
   isReset: boolean;
-  scrollDirrection: string;
-  pgGap: number;
 };
 
 const DATA_ITEM_KEY = "document_id";
@@ -187,8 +185,6 @@ const App = () => {
     pgSize: PAGE_SIZE,
     isFetch: true, // 조회여부 초기값
     isReset: true, // 리셋여부 초기값
-    scrollDirrection: "down",
-    pgGap: 0,
   });
 
   const search = () => {
@@ -200,7 +196,6 @@ const App = () => {
     setFilters((prev) => ({
       ...prev,
       pgNum: 1,
-      pgGap: 0,
       isFetch: true,
       isReset: true,
     }));
@@ -255,90 +250,72 @@ const App = () => {
   };
 
   //그리드 데이터 조회
-  const fetchGrid = useCallback(
-    async (filters: TFilters) => {
-      let data: any;
-      setLoading(true);
+  const fetchGrid = async (filters: TFilters) => {
+    let data: any;
+    setLoading(true);
 
-      const status =
-        filters.status.length === 0
-          ? 0 // 미선택시 => 0 전체
-          : filters.status.length === 1
-          ? filters.status[0].sub_code // 1개만 선택시 => 선택된 값 (ex. 1 대기)
-          : filters.status.reduce(
-              (total, current) => total + Number(current.sub_code),
-              0
-            ); //  2개 이상 선택시 => 값 합치기 (ex. 1 대기 + 2 진행중 = 3 )
+    const status =
+      filters.status.length === 0
+        ? 0 // 미선택시 => 0 전체
+        : filters.status.length === 1
+        ? filters.status[0].sub_code // 1개만 선택시 => 선택된 값 (ex. 1 대기)
+        : filters.status.reduce(
+            (total, current) => total + Number(current.sub_code),
+            0
+          ); //  2개 이상 선택시 => 값 합치기 (ex. 1 대기 + 2 진행중 = 3 )
 
-      const para = {
-        para: `list?fromDate=${convertDateToStr(
-          filters.fromDate
-        )}&toDate=${convertDateToStr(filters.toDate)}&userName=${
-          filters.userName
-        }&contents=${filters.contents}&isPublic=${
-          filters.isPublic
-        }&status=${status}&findRowValue=${filters.findRowValue}&page=${
-          filters.pgNum
-        }&pageSize=${filters.pgSize}`,
-      };
+    const para = {
+      para: `list?fromDate=${convertDateToStr(
+        filters.fromDate
+      )}&toDate=${convertDateToStr(filters.toDate)}&userName=${
+        filters.userName
+      }&contents=${filters.contents}&isPublic=${
+        filters.isPublic
+      }&status=${status}&page=${filters.pgNum}&pageSize=${filters.pgSize}`,
+    };
 
-      try {
-        data = await processApi<any>("qna-list", para);
-      } catch (error) {
-        data = null;
-      }
+    try {
+      data = await processApi<any>("qna-list", para);
+    } catch (error) {
+      data = null;
+    }
 
-      if (data.isSuccess === true) {
-        const totalRowCnt = data.tables[0].TotalRowCount;
-        const rows = data.tables[0].Rows;
-        if (totalRowCnt > 0) {
-          if (filters.findRowValue !== "") {
-            // 데이터 저장 후 조회
-            setSelectedState({ [filters.findRowValue]: true });
-            setMainDataResult({
-              data: rows,
-              total: totalRowCnt,
-            });
-
-            setFilters((prev) => ({
-              ...prev,
-              pgNum: data.pageNumber,
-              pgGap: 0,
-            }));
-          } else if (filters.isReset) {
-            // 일반 데이터 조회
-            setMainDataResult({
-              data: rows,
-              total: totalRowCnt,
-            });
-
-            const firstRowData = rows[0];
-            setSelectedState({ [firstRowData[DATA_ITEM_KEY]]: true });
-
-            setFilters((prev) => ({
-              ...prev,
-              pgNum: data.pageNumber,
-              pgGap: 0,
-            }));
-          } else {
-            // 스크롤하여 다른 페이지 조회
-            setMainDataResult((prev) => {
-              return {
-                data: [...prev.data, ...rows],
-                total: totalRowCnt,
-              };
-            });
-          }
+    if (data.isSuccess === true) {
+      const totalRowCnt = data.tables[0].TotalRowCount;
+      const rows = data.tables[0].Rows;
+      if (totalRowCnt > 0) {
+        if (filters.findRowValue !== "") {
+          // 데이터 저장 후 조회
+          setSelectedState({ [filters.findRowValue]: true });
+          setMainDataResult({
+            data: rows,
+            total: totalRowCnt,
+          });
+        } else if (filters.isReset) {
+          // 일반 데이터 조회
+          const firstRowData = rows[0];
+          setSelectedState({ [firstRowData[DATA_ITEM_KEY]]: true });
+          setMainDataResult({
+            data: rows,
+            total: totalRowCnt,
+          });
         } else {
-          // 결과 행이 0인 경우 데이터 리셋
-          setMainDataResult(process([], mainDataState));
-          resetDetailData();
+          // 스크롤하여 다른 페이지 조회
+          setMainDataResult((prev) => {
+            return {
+              data: [...prev.data, ...rows],
+              total: totalRowCnt,
+            };
+          });
         }
+      } else {
+        // 결과 행이 0인 경우 데이터 리셋
+        setMainDataResult(process([], mainDataState));
+        resetDetailData();
       }
-      setLoading(false);
-    },
-    [selectedState]
-  );
+    }
+    setLoading(false);
+  };
 
   const fetchDetail = useCallback(
     async (enteredPw: string = "") => {
@@ -461,6 +438,7 @@ const App = () => {
       setFilters((prev) => ({
         ...prev,
         isFetch: true,
+        pgNum: 1,
         findRowValue: data.returnString,
       }));
     } else {
