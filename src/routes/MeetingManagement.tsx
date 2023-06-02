@@ -31,7 +31,7 @@ import React, {
   createContext,
   useContext,
 } from "react";
-import { useSetRecoilState } from "recoil";
+import { useRecoilState, useSetRecoilState } from "recoil";
 import {
   ButtonContainer,
   FilterBox,
@@ -50,8 +50,11 @@ import {
   convertDateToStr,
   dateformat2,
   getGridItemChangedData,
+  getYn,
   handleKeyPressSearch,
   toDate,
+  UseParaPc,
+  getCodeFromValue,
 } from "../components/CommonFunction";
 import {
   EDIT_FIELD,
@@ -61,9 +64,10 @@ import {
 } from "../components/CommonString";
 import RichEditor from "../components/RichEditor";
 import { useApi } from "../hooks/api";
-import { isLoading } from "../store/atoms";
+import { isLoading, loginResultState } from "../store/atoms";
 import { TEditorHandle } from "../store/types";
 import { IAttachmentData } from "../hooks/interfaces";
+import CustomersWindow from "../components/Windows/CommonWindows/CustomersWindow";
 import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
 import CenterCell from "../components/Cells/CenterCell";
 import { CellRender, RowRender } from "../components/Renderers/Renderers";
@@ -79,7 +83,7 @@ const DATA_ITEM_KEY = "meetingnum";
 const DETAIL_ITEM_KEY = "meetingseq";
 
 const defaultDetailData = {
-  work_type: "",
+  work_type: "N",
   unshared: false,
   orgdiv: "",
   meetingnum: "",
@@ -146,6 +150,16 @@ const App = () => {
   const setLoading = useSetRecoilState(isLoading);
   const [meetingnum, setMeetingnum] = useState(""); //Detail 조회조건
 
+  const [loginResult] = useRecoilState(loginResultState);
+  const userId = loginResult ? loginResult.userId : "";
+  const [pc, setPc] = useState("");
+  UseParaPc(setPc);
+
+  const [custWindowVisible, setCustWindowVisible] = useState<boolean>(false);
+
+  const [projectWindowVisible, setProjectWindowVisible] =
+    useState<boolean>(false);
+
   const [attachmentsWindowVisible, setAttachmentsWindowVisible] =
     useState<boolean>(false);
 
@@ -177,6 +191,9 @@ const App = () => {
   };
 
   const search = () => {
+    // 디테일데이터 재조회 위한 처리
+    setMeetingnum("");
+
     // 그리드 재조회
     setFilters((prev) => ({
       ...prev,
@@ -360,7 +377,7 @@ const App = () => {
       const totalRowCnt = data.tables[0].TotalRowCount;
       const rows = data.tables[0].Rows;
 
-      if (totalRowCnt > 0)
+      if (totalRowCnt > 0) {
         if (filters.isReset) {
           // 일반 데이터 조회
           setMainDataResult({
@@ -425,6 +442,12 @@ const App = () => {
             };
           });
         }
+      } else {
+        // 조회 데이터 없을 시 초기화
+        setMainDataResult(process([], mainDataState));
+        setDetailData(defaultDetailData);
+        setDetailRows(process([], mainDataState));
+      }
     } else {
       console.log("[에러발생]");
       console.log(data);
@@ -475,7 +498,22 @@ const App = () => {
   };
 
   const saveMeeting = async () => {
-    let data: any;
+    const { cust_data, recdt, title } = detailData;
+    let isValid = true;
+    // 검증 로직
+    if (!cust_data) {
+      alert("업체명은 필수 입력 항목입니다");
+      return false;
+    }
+    if (!recdt) {
+      alert("회의일은 필수 입력 항목입니다");
+      return false;
+    }
+    if (!title) {
+      alert("회의 제목은 필수 입력 항목입니다.");
+      return false;
+    }
+
     setLoading(true);
 
     let editorContent: any = "";
@@ -485,41 +523,104 @@ const App = () => {
     const bytes = require("utf8-bytes");
     const convertedEditorContent = bytesToBase64(bytes(editorContent));
 
+    type TDetailRowsArr = {
+      meetingseq: string[];
+      sort_seq: string[];
+      contents: string[];
+      value_code3: string[];
+      cust_browserable: string[];
+      reqdt: string[];
+      finexpdt: string[];
+      is_request: string[];
+      client_name: string[];
+      client_finexpdt: string[];
+    };
+    let detailRowsArr: TDetailRowsArr = {
+      meetingseq: [],
+      sort_seq: [],
+      contents: [],
+      value_code3: [],
+      cust_browserable: [],
+      reqdt: [],
+      finexpdt: [],
+      is_request: [],
+      client_name: [],
+      client_finexpdt: [],
+    };
+
+    for (const [idx, item] of detailRows.data.entries()) {
+      const {
+        rowstatus,
+        meetingseq,
+        contents,
+        value_code3,
+        cust_browserable,
+        reqdt,
+        finexpdt,
+        is_request,
+        client_name,
+        client_finexpdt,
+      } = item;
+
+      // 요구사항 체크 시, Value 구분 필수입력
+      if (getYn(is_request) === "Y" && !getCodeFromValue(value_code3, "code")) {
+        alert(idx + 1 + "행의 Value 구분을 입력하세요.");
+        isValid = false;
+        break;
+      }
+
+      detailRowsArr.meetingseq.push(rowstatus === "N" ? "0" : meetingseq);
+      detailRowsArr.sort_seq.push(String(idx + 1));
+      detailRowsArr.contents.push(contents);
+      detailRowsArr.value_code3.push(getCodeFromValue(value_code3, "code"));
+      detailRowsArr.cust_browserable.push(getYn(cust_browserable));
+      detailRowsArr.reqdt.push(convertDateToStr(reqdt));
+      detailRowsArr.finexpdt.push(convertDateToStr(finexpdt));
+      detailRowsArr.is_request.push(getYn(is_request));
+      detailRowsArr.client_name.push(client_name);
+      detailRowsArr.client_finexpdt.push(convertDateToStr(client_finexpdt));
+    }
+
+    if (!isValid) {
+      setLoading(false);
+      return false;
+    }
     const parameters = {
       fileBytes: convertedEditorContent,
       procedureName: "pw6_sav_meeting",
       pageNumber: 0,
       pageSize: 0,
       parameters: {
-        "@p_work_type": "N",
-        "@p_orgdiv": "",
-        "@p_meetingnum": "",
-        "@p_custcd": "10192",
-        "@p_recdt": "20230406",
-        "@p_meetingid": "",
-        "@p_meetingnm": "",
-        "@p_place": "",
-        "@p_title": "WEB 테스트",
-        "@p_remark": "비고",
-        "@p_attdatnum": "",
-        "@p_attdatnum_private": "",
-        "@p_unshared": "",
-        "@p_devmngnum": "",
-        "@p_meetingseq": "0|0",
-        "@p_sort_seq": "1|2",
-        "@p_contents": "내용A|내용B",
-        "@p_value_code3": "|",
-        "@p_cust_browserable": "Y|Y",
-        "@p_reqdt": "|",
-        "@p_finexpdt": "|",
-        "@p_is_request": "N|N",
-        "@p_client_name": "|",
-        "@p_client_finexpdt": "|",
-        "@p_id": "1096",
-        "@p_pc": "125.141.105.80",
+        "@p_work_type": detailData.work_type,
+        "@p_orgdiv": detailData.orgdiv,
+        "@p_meetingnum": detailData.meetingnum,
+        "@p_custcd": detailData.cust_data.custcd,
+        "@p_recdt": convertDateToStr(detailData.recdt),
+        "@p_meetingid": detailData.meetingid,
+        "@p_meetingnm": detailData.meetingnm,
+        "@p_place": detailData.place,
+        "@p_title": detailData.title,
+        "@p_remark": detailData.remark2,
+        "@p_attdatnum": detailData.attdatnum,
+        "@p_attdatnum_private": detailData.attdatnum_private,
+        "@p_unshared": getYn(detailData.unshared),
+        "@p_devmngnum": detailData.devmngnum,
+        "@p_meetingseq": detailRowsArr.meetingseq.join("|"),
+        "@p_sort_seq": detailRowsArr.sort_seq.join("|"),
+        "@p_contents": detailRowsArr.contents.join("|"),
+        "@p_value_code3": detailRowsArr.value_code3.join("|"),
+        "@p_cust_browserable": detailRowsArr.cust_browserable.join("|"),
+        "@p_reqdt": detailRowsArr.reqdt.join("|"),
+        "@p_finexpdt": detailRowsArr.finexpdt.join("|"),
+        "@p_is_request": detailRowsArr.is_request.join("|"),
+        "@p_client_name": detailRowsArr.client_name.join("|"),
+        "@p_client_finexpdt": detailRowsArr.client_finexpdt.join("|"),
+        "@p_id": userId,
+        "@p_pc": pc,
       },
     };
 
+    let data: any;
     try {
       data = await processApi<any>("meeting-save", parameters);
     } catch (error) {
@@ -715,7 +816,8 @@ const App = () => {
   );
 
   const createMeeting = () => {
-    setDetailData({ ...defaultDetailData, work_type: "N" });
+    setMeetingnum("");
+    setDetailData(defaultDetailData);
     setDetailRows(process([], detailRowsState));
 
     // Edior에 HTML & CSS 세팅
@@ -724,40 +826,58 @@ const App = () => {
     }
   };
 
-  const deleteMeeting = useCallback(async () => {
-    // if (!window.confirm("[" + detailData.title + "] 정말 삭제하시겠습니까?"))
-    //   return false;
-    // let data: any;
-    // setLoading(true);
-    // const para = { id: detailData.document_id };
-    // try {
-    //   data = await processApi<any>("notice-delete", para);
-    // } catch (error: any) {
-    //   data = null;
-    // }
-    // if (data && data.isSuccess === true) {
-    //   // 첨부파일 서버에서 삭제
-    //   if (unsavedAttadatnums.attdatnums.length > 0) {
-    //     // DB 저장안된 첨부파일
-    //     setDeletedAttadatnums(unsavedAttadatnums);
-    //   } else if (detailData.attdatnum) {
-    //     // DB 저장된 첨부파일
-    //     setDeletedAttadatnums({
-    //       type: "notice",
-    //       attdatnums: [detailData.attdatnum],
-    //     });
-    //   }
-    //   setFilters((prev) => ({
-    //     ...prev,
-    //     isFetch: true,
-    //     isReset: true,
-    //   }));
-    // } else {
-    //   console.log("[에러발생]");
-    //   console.log(data);
-    // }
-    // setLoading(false);
-  }, [detailData]);
+  const deleteMeeting = async () => {
+    const selectedKey = Number(Object.keys(selectedState)[0]);
+    const selectedData = mainDataResult.data.find(
+      (row) => row.meetingnum === String(selectedKey),
+    );
+
+    if (!selectedData) return false;
+
+    if (
+      !window.confirm(
+        "[" +
+          selectedData.custnm +
+          " '" +
+          selectedData.title +
+          "'] 정말 삭제하시겠습니까?",
+      )
+    ) {
+      return false;
+    }
+    let data: any;
+    setLoading(true);
+
+    const para = { id: selectedData.orgdiv + "_" + selectedData.meetingnum };
+
+    try {
+      data = await processApi<any>("meeting-delete", para);
+    } catch (error: any) {
+      data = null;
+    }
+    if (data && data.isSuccess === true) {
+      // 첨부파일 서버에서 삭제
+      // if (unsavedAttadatnums.attdatnums.length > 0) {
+      // DB 저장안된 첨부파일
+      // setDeletedAttadatnums(unsavedAttadatnums);
+      // } else if (detailData.attdatnum) {
+      // DB 저장된 첨부파일
+      // setDeletedAttadatnums({
+      //   type: "meeting",
+      //   attdatnums: [detailData.attdatnum],
+      // });
+      // }
+      setFilters((prev) => ({
+        ...prev,
+        isFetch: true,
+        isReset: true,
+      }));
+    } else {
+      console.log("[에러발생]");
+      console.log(data);
+    }
+    setLoading(false);
+  };
 
   // 디테일 그리드 선택 행 추가
   const addDetailRow = () => {
@@ -773,6 +893,7 @@ const App = () => {
       newRows.splice(selectedIndex + 1, 0, {
         rowstatus: "N",
         meetingseq: detailRows.total + 1,
+        reqdt: null,
         finexpdt: null,
         cust_browserable: "Y",
         client_finexpdt: null,
@@ -782,6 +903,7 @@ const App = () => {
       newRows.push({
         rowstatus: "N",
         meetingseq: detailRows.total + 1,
+        reqdt: null,
         finexpdt: null,
         cust_browserable: "Y",
         client_finexpdt: null,
@@ -929,6 +1051,7 @@ const App = () => {
               fillMode={"outline"}
               icon="save"
               onClick={saveMeeting}
+              disabled={meetingnum ? false : true}
             >
               저장
             </Button>
@@ -937,6 +1060,7 @@ const App = () => {
               fillMode={"outline"}
               icon="delete"
               onClick={deleteMeeting}
+              disabled={meetingnum ? false : true}
             >
               삭제
             </Button>
@@ -946,6 +1070,7 @@ const App = () => {
               onClick={downloadDoc}
               themeColor={"primary"}
               fillMode={"outline"}
+              disabled={meetingnum ? false : true}
             >
               다운로드
             </Button>
@@ -1087,11 +1212,12 @@ const App = () => {
                                 ? detailData.cust_data.custcd
                                 : ""
                             }
+                            className="readonly"
                           />
                           <Button
                             icon="more-horizontal"
                             fillMode={"flat"}
-                            onClick={() => setAttachmentsWindowVisible(true)}
+                            onClick={() => setCustWindowVisible(true)}
                           />
                         </div>
                       </td>
@@ -1105,6 +1231,7 @@ const App = () => {
                             columns={customersColumns}
                             textField={"custnm"}
                             onChange={detailComboBoxChange}
+                            className="required"
                           />
                         )}
                       </td>
@@ -1118,6 +1245,7 @@ const App = () => {
                           format="yyyy-MM-dd"
                           onChange={detailInputChange}
                           placeholder=""
+                          className="required"
                         />
                       </td>
                       <th>회의 장소</th>
@@ -1154,6 +1282,7 @@ const App = () => {
                           name="title"
                           value={detailData.title}
                           onChange={detailInputChange}
+                          className="required"
                         />
                       </td>
                       <th>프로젝트</th>
@@ -1167,7 +1296,7 @@ const App = () => {
                           <Button
                             icon="more-horizontal"
                             fillMode={"flat"}
-                            onClick={() => setAttachmentsWindowVisible(true)}
+                            onClick={() => setProjectWindowVisible(true)}
                           />
                         </div>
                       </td>
@@ -1176,7 +1305,11 @@ const App = () => {
                       <th>첨부파일</th>
                       <td>
                         <div className="filter-item-wrap">
-                          <Input name="attachment_q" value={detailData.files} />
+                          <Input
+                            name="files"
+                            value={detailData.files}
+                            className="readonly"
+                          />
                           <Button
                             icon="more-horizontal"
                             fillMode={"flat"}
@@ -1192,8 +1325,9 @@ const App = () => {
                       <td>
                         <div className="filter-item-wrap">
                           <Input
-                            name="attachment_q"
+                            name="files_private"
                             value={detailData.files_private}
+                            className="readonly"
                           />
                           <Button
                             icon="more-horizontal"
@@ -1328,6 +1462,22 @@ const App = () => {
         </GridContainerWrap>
 
         {attachmentsWindowVisible && (
+          <AttachmentsWindow
+            type="meeting"
+            setVisible={setAttachmentsWindowVisible}
+            setData={getAttachmentsData}
+            para={detailData.attdatnum}
+          />
+        )}
+        {custWindowVisible && (
+          <AttachmentsWindow
+            type="meeting"
+            setVisible={setAttachmentsWindowVisible}
+            setData={getAttachmentsData}
+            para={detailData.attdatnum}
+          />
+        )}
+        {projectWindowVisible && (
           <AttachmentsWindow
             type="meeting"
             setVisible={setAttachmentsWindowVisible}

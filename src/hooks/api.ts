@@ -16,6 +16,7 @@ const domain: any = {
   "meeting-list": { action: "get", url: "api/spm/meeting/:para" },
   "meeting-detail": { action: "get", url: "api/spm/meeting/:para" },
   "meeting-save": { action: "post", url: "api/spm/meeting" },
+  "meeting-delete": { action: "delete", url: "api/spm/meeting/:id" },
 
   // 공지사항
   "notice-list": { action: "get", url: "api/spm/notice/:para" },

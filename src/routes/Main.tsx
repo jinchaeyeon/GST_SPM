@@ -63,10 +63,10 @@ const Main: React.FC = () => {
   }, [sessionUserId]);
 
   let sessionOrgdiv = sessionItem.find(
-    (sessionItem) => sessionItem.code === "orgdiv"
+    (sessionItem) => sessionItem.code === "orgdiv",
   )!.value;
   let sessionLocation = sessionItem.find(
-    (sessionItem) => sessionItem.code === "location"
+    (sessionItem) => sessionItem.code === "location",
   )!.value;
 
   if (sessionOrgdiv === "") sessionOrgdiv = "01";
@@ -90,11 +90,11 @@ const Main: React.FC = () => {
   });
 
   const [noticeDataResult, setNoticeDataResult] = useState<DataResult>(
-    process([], noticeDataState)
+    process([], noticeDataState),
   );
 
   const [workOrderDataResult, setWorkOrderDataResult] = useState<DataResult>(
-    process([], workOrderDataState)
+    process([], workOrderDataState),
   );
 
   type TSchedulerDataResult = {
@@ -533,7 +533,7 @@ const Main: React.FC = () => {
             .map((item: any) => ({
               code: item.code,
               value: item.value,
-            }))
+            })),
         );
       }
     } catch (e: any) {
@@ -549,7 +549,7 @@ const Main: React.FC = () => {
       setSchedulerFilter((prev) => ({
         ...prev,
         cboSchedulerType: defaultOption.find(
-          (item: any) => item.id === "cboSchedulerType"
+          (item: any) => item.id === "cboSchedulerType",
         ).valueCode,
       }));
     }
@@ -605,7 +605,7 @@ const Main: React.FC = () => {
       </MainTopContainer>
 
       <GridContainerWrap>
-        <GridContainer width={`65%`} >
+        <GridContainer width={`65%`}>
           <GridTitleContainer>
             <GridTitle>Work Calendar</GridTitle>
             {customOptionData !== null && (
@@ -629,7 +629,10 @@ const Main: React.FC = () => {
             <WeekView />
           </Scheduler>
         </GridContainer>
-        <GridContainerWrap style={{width: `calc(35% - ${GAP}px)`}}flexDirection="column">
+        <GridContainerWrap
+          style={{ width: `calc(35% - ${GAP}px)` }}
+          flexDirection="column"
+        >
           <GridContainer>
             <GridTitleContainer>
               <GridTitle>공지사항</GridTitle>
@@ -641,7 +644,7 @@ const Main: React.FC = () => {
                   ...row,
                   [SELECTED_FIELD]: detailSelectedState[idGetter(row)],
                 })),
-                noticeDataState
+                noticeDataState,
               )}
               {...noticeDataState}
               onDataStateChange={onNoticeDataStateChange}
