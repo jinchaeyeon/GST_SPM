@@ -14,8 +14,7 @@ import {
   GridSelectionChangeEvent,
 } from "@progress/kendo-react-grid";
 import { Input, InputChangeEvent } from "@progress/kendo-react-inputs";
-import { bytesToBase64 } from "byte-base64";
-import React, { useState, CSSProperties, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useSetRecoilState } from "recoil";
 import {
   ButtonContainer,
@@ -35,8 +34,6 @@ import {
   convertDateToStr,
   dateformat2,
   handleKeyPressSearch,
-  UseGetValueFromSessionItem,
-  UseParaPc,
 } from "../components/CommonFunction";
 import { GAP, PAGE_SIZE, SELECTED_FIELD } from "../components/CommonString";
 import RichEditor from "../components/RichEditor";
@@ -46,34 +43,6 @@ import { TEditorHandle } from "../store/types";
 import { IAttachmentData } from "../hooks/interfaces";
 import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
 import CenterCell from "../components/Cells/CenterCell";
-
-const styles: { [key: string]: CSSProperties } = {
-  table: {
-    borderCollapse: "collapse",
-    borderSpacing: 0,
-  },
-  th: {
-    fontFamily: "Arial, sans-serif",
-    borderStyle: "solid",
-    borderWidth: "1px",
-    overflow: "hidden",
-    wordBreak: "normal",
-    verticalAlign: "middle",
-    textAlign: "center",
-    backgroundColor: "#e2e2e2",
-    minHeight: 25,
-    height: 25,
-  },
-  td: {
-    fontFamily: "Arial, sans-serif",
-    borderStyle: "solid",
-    borderWidth: "1px",
-    overflow: "hidden",
-    wordBreak: "normal",
-    verticalAlign: "middle",
-    textAlign: "center",
-  },
-};
 
 const DATA_ITEM_KEY = "meetingnum";
 
@@ -95,47 +64,6 @@ const App = () => {
     }));
   };
 
-  const downloadWordDoc = (e: React.MouseEvent<HTMLButtonElement>) => {
-    const name = e.currentTarget.name;
-
-    let reference = null;
-
-    // const htmlElement = document.getElementById("htmlContent");
-    var iframe = document.querySelector("iframe");
-
-    if (iframe && iframe.contentWindow) {
-      const iframeDocument =
-        iframe.contentDocument || iframe.contentWindow.document;
-
-      // iframe 내부의 요소에 접근
-      reference = iframeDocument.querySelector(".k-content.ProseMirror");
-    }
-
-    const isRef = name === "reference" && reference;
-    const htmlElement = isRef
-      ? reference
-      : document.getElementById("htmlContent");
-
-    if (htmlElement) {
-      const html = htmlElement.innerHTML;
-      const file = new Blob(
-        [
-          '<!DOCTYPE html><html><head><meta charset="utf-8" /><title>Converted Doc</title></head><body>' +
-            html +
-            "</body></html>",
-        ],
-        {
-          type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        },
-      );
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(file);
-      link.download =
-        detailDataLines[0].title + (isRef ? "_참고자료" : "") + ".doc";
-      link.click();
-    }
-  };
-
   const search = () => {
     // 그리드 재조회
     setFilters((prev) => ({
@@ -155,7 +83,7 @@ const App = () => {
   const [mainDataResult, setMainDataResult] = useState<DataResult>(
     process([], mainDataState),
   );
-  const [detailDataLines, setDetailDataLines] = useState<any[]>([]);
+
   const [detailData, setDetailData] = useState({
     orgdiv: "",
     meetingnum: "",
@@ -208,15 +136,6 @@ const App = () => {
 
   const docEditorRef = useRef<TEditorHandle>(null);
   const refEditorRef = useRef<TEditorHandle>(null);
-
-  const saveMeeting = () => {
-    if (refEditorRef.current) {
-      const editorContent = refEditorRef.current.getContent();
-
-      // 여기서 원하는 작업 수행 (예: 서버에 저장)
-      fetchToSave(editorContent);
-    }
-  };
 
   const currentDate = new Date();
   const fromDate = new Date(
@@ -327,7 +246,6 @@ const App = () => {
     if (data !== null && data.result.isSuccess === true) {
       const document = data.document;
       const reference = data.reference;
-      const rows = data.result.tables[0].Rows;
 
       // Edior에 HTML & CSS 세팅
       if (refEditorRef.current) {
@@ -336,7 +254,6 @@ const App = () => {
       if (docEditorRef.current) {
         docEditorRef.current.setHtml(document);
       }
-      setDetailDataLines(rows);
     } else {
       console.log("[에러발생]");
       console.log(data);
@@ -346,67 +263,6 @@ const App = () => {
       }
       if (docEditorRef.current) {
         docEditorRef.current.setHtml("");
-      }
-      setDetailDataLines([]);
-    }
-    setLoading(false);
-  };
-
-  const fetchToSave = async (editorContent: string) => {
-    let data: any;
-    setLoading(true);
-
-    const bytes = require("utf8-bytes");
-    const convertedEditorContent = bytesToBase64(bytes(editorContent));
-
-    const parameters = {
-      fileBytes: convertedEditorContent,
-      procedureName: "pw6_sav_meeting",
-      pageNumber: 0,
-      pageSize: 0,
-      parameters: {
-        "@p_work_type": "N",
-        "@p_orgdiv": "",
-        "@p_meetingnum": "",
-        "@p_custcd": "10192",
-        "@p_recdt": "20230406",
-        "@p_meetingid": "",
-        "@p_meetingnm": "",
-        "@p_place": "",
-        "@p_title": "WEB 테스트",
-        "@p_remark": "비고",
-        "@p_attdatnum": "",
-        "@p_attdatnum_private": "",
-        "@p_unshared": "",
-        "@p_devmngnum": "",
-        "@p_meetingseq": "0|0",
-        "@p_sort_seq": "1|2",
-        "@p_contents": "내용A|내용B",
-        "@p_value_code3": "|",
-        "@p_cust_browserable": "Y|Y",
-        "@p_reqdt": "|",
-        "@p_finexpdt": "|",
-        "@p_is_request": "N|N",
-        "@p_client_name": "|",
-        "@p_client_finexpdt": "|",
-        "@p_id": "1096",
-        "@p_pc": "125.141.105.80",
-      },
-    };
-
-    try {
-      data = await processApi<any>("meeting-save", parameters);
-    } catch (error) {
-      data = null;
-    }
-
-    if (data.isSuccess === true) {
-      search();
-    } else {
-      console.log("[에러발생]");
-      console.log(data);
-      if (data.hasOwnProperty("resultMessage")) {
-        alert(data["resultMessage"]);
       }
     }
     setLoading(false);
@@ -643,7 +499,11 @@ const App = () => {
                   <th style={{ width: 0 }}>첨부파일</th>
                   <td style={{ width: "auto" }}>
                     <div className="filter-item-wrap">
-                      <Input name="attachment_q" value={detailData.files} />
+                      <Input
+                        name="attachment_q"
+                        value={detailData.files}
+                        className="readonly"
+                      />
                       <Button
                         icon="more-horizontal"
                         fillMode={"flat"}
@@ -657,112 +517,6 @@ const App = () => {
           </FormBoxWrap>
 
           <RichEditor id="docEditor" ref={docEditorRef} readonly />
-          {/* <div
-            id="htmlContent"
-            style={{
-              border: "solid 1px rgba(0, 0, 0, 0.08)",
-              padding: "20px",
-              overflow: "scroll",
-              height: "100%",
-            }}
-          >
-            {detailDataLines.length > 0 && (
-              <>
-                <h1
-                  style={{
-                    textAlign: "center",
-                    fontSize: "28px",
-                    fontWeight: "bold",
-                    marginBottom: "20px",
-                  }}
-                >
-                  회의록
-                </h1>
-                <table width={"100%"} style={{ ...styles.table }}>
-                  <tr>
-                    <th></th>
-                    <th style={styles.th}>담당</th>
-                    <th style={styles.th}>검토</th>
-                    <th style={styles.th}>승인</th>
-                  </tr>
-                  <tr>
-                    <td></td>
-                    <td height={70} width={85} style={styles.td}></td>
-                    <td height={70} width={85} style={styles.td}></td>
-                    <td height={70} width={85} style={styles.td}></td>
-                  </tr>
-                  <tr>
-                    <td></td>
-                    <td height={25} style={styles.td}></td>
-                    <td style={styles.td}></td>
-                    <td style={styles.td}></td>
-                  </tr>
-                </table>
-
-                <br />
-                <table width={"100%"} style={{ ...styles.table }}>
-                  <tr>
-                    <th style={styles.th}>회의 일자</th>
-                    <td style={styles.td} width="30%">
-                      {detailDataLines[0].date}
-                    </td>
-                    <th style={styles.th}>작성자</th>
-                    <td style={styles.td} width="30%">
-                      {detailDataLines[0].user_name}
-                    </td>
-                  </tr>
-                  <tr>
-                    <th style={styles.th}>회의 장소</th>
-                    <td
-                      style={{
-                        ...styles.td,
-                        textAlign: "left",
-                        paddingLeft: "10px",
-                      }}
-                      colSpan={3}
-                    >
-                      {detailDataLines[0].place}
-                    </td>
-                  </tr>
-                  <tr>
-                    <th style={styles.th}>제목</th>
-                    <td
-                      style={{
-                        ...styles.td,
-                        textAlign: "left",
-                        paddingLeft: "10px",
-                      }}
-                      colSpan={3}
-                    >
-                      {detailDataLines[0].title}
-                    </td>
-                  </tr>
-                  <tr>
-                    <th style={styles.th}>내용</th>
-                    <td style={styles.td} colSpan={3}></td>
-                  </tr>
-                  <tr>
-                    <td
-                      style={{
-                        ...styles.td,
-                        height: 550,
-                        minHeight: 550,
-                        padding: "10px",
-                        textAlign: "left",
-                        verticalAlign: "top",
-                        lineHeight: "25px",
-                      }}
-                      colSpan={4}
-                    >
-                      {detailDataLines.map((row) => (
-                        <p key={row.meetingseq}>{row.contents}</p>
-                      ))}
-                    </td>
-                  </tr>
-                </table>
-              </>
-            )}
-          </div> */}
         </GridContainer>
         <GridContainer width={`calc(40% - ${GAP}px)`}>
           <GridTitleContainer>
