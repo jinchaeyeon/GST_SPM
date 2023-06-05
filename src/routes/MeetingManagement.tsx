@@ -57,6 +57,7 @@ import {
   getCodeFromValue,
 } from "../components/CommonFunction";
 import {
+  DEFAULT_ATTDATNUMS,
   EDIT_FIELD,
   GAP,
   PAGE_SIZE,
@@ -64,9 +65,15 @@ import {
 } from "../components/CommonString";
 import RichEditor from "../components/RichEditor";
 import { useApi } from "../hooks/api";
-import { isLoading, loginResultState } from "../store/atoms";
+import {
+  deletedAttadatnumsState,
+  isLoading,
+  loginResultState,
+  unsavedAttadatnumsState,
+} from "../store/atoms";
 import { TEditorHandle } from "../store/types";
-import { IAttachmentData } from "../hooks/interfaces";
+import { IAttachmentData, ICustData } from "../hooks/interfaces";
+import ProjectsWindow from "../components/Windows/CommonWindows/ProjectsWindow";
 import CustomersWindow from "../components/Windows/CommonWindows/CustomersWindow";
 import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
 import CenterCell from "../components/Cells/CenterCell";
@@ -83,7 +90,7 @@ const DATA_ITEM_KEY = "meetingnum";
 const DETAIL_ITEM_KEY = "meetingseq";
 
 const defaultDetailData = {
-  work_type: "N",
+  work_type: "",
   unshared: false,
   orgdiv: "",
   meetingnum: "",
@@ -155,12 +162,22 @@ const App = () => {
   const [pc, setPc] = useState("");
   UseParaPc(setPc);
 
+  // 삭제할 첨부파일 리스트를 담는 함수
+  const setDeletedAttadatnums = useSetRecoilState(deletedAttadatnumsState);
+
+  // 서버 업로드는 되었으나 DB에는 저장안된 첨부파일 리스트
+  const [unsavedAttadatnums, setUnsavedAttadatnums] = useRecoilState(
+    unsavedAttadatnumsState,
+  );
+
   const [custWindowVisible, setCustWindowVisible] = useState<boolean>(false);
 
   const [projectWindowVisible, setProjectWindowVisible] =
     useState<boolean>(false);
 
-  const [attachmentsWindowVisible, setAttachmentsWindowVisible] =
+  const [attachmentsWindowVisiblePr, setAttachmentsWindowVisiblePr] =
+    useState<boolean>(false);
+  const [attachmentsWindowVisiblePb, setAttachmentsWindowVisiblePb] =
     useState<boolean>(false);
 
   //조회조건 Input Change 함수 => 사용자가 Input에 입력한 값을 조회 파라미터로 세팅
@@ -191,8 +208,9 @@ const App = () => {
   };
 
   const search = () => {
-    // 디테일데이터 재조회 위한 처리
-    setMeetingnum("");
+    // DB에 저장안된 첨부파일 서버에서 삭제
+    if (unsavedAttadatnums.attdatnums.length > 0)
+      setDeletedAttadatnums(unsavedAttadatnums);
 
     // 그리드 재조회
     setFilters((prev) => ({
@@ -248,6 +266,10 @@ const App = () => {
       dataItemKey: DATA_ITEM_KEY,
     });
     setSelectedState(newSelectedState);
+
+    // DB에 저장안된 첨부파일 서버에서 삭제
+    if (unsavedAttadatnums.attdatnums.length > 0)
+      setDeletedAttadatnums(unsavedAttadatnums);
 
     const selectedIdx = event.startRowIndex;
     const selectedRowData = event.dataItems[selectedIdx];
@@ -378,7 +400,63 @@ const App = () => {
       const rows = data.tables[0].Rows;
 
       if (totalRowCnt > 0) {
-        if (filters.isReset) {
+        if (filters.findRowValue !== "") {
+          // 데이터 저장 후 조회
+          setSelectedState({ [filters.findRowValue]: true });
+          setMainDataResult({
+            data: rows,
+            total: totalRowCnt,
+          });
+
+          const selectedData = rows.find(
+            (row: any) => row[DATA_ITEM_KEY] === filters.findRowValue,
+          );
+          if (!selectedData) return false;
+
+          const {
+            orgdiv,
+            unshared,
+            meetingnum,
+            attdatnum,
+            attdatnum_private,
+            files,
+            files_private,
+            custcd,
+            custnm,
+            recdt,
+            place,
+            meetingid,
+            meetingnm,
+            title,
+            devmngnum,
+            devproject,
+            remark2,
+          } = selectedData;
+
+          setMeetingnum(meetingnum);
+          setDetailData({
+            work_type: "U",
+            unshared: unshared === "Y" ? true : false,
+            orgdiv,
+            meetingnum,
+            attdatnum,
+            attdatnum_private,
+            files,
+            files_private,
+            cust_data: {
+              custcd,
+              custnm,
+            },
+            recdt: toDate(recdt) ?? new Date(),
+            place,
+            meetingid,
+            meetingnm,
+            title,
+            devmngnum,
+            devproject,
+            remark2,
+          });
+        } else if (filters.isReset) {
           // 일반 데이터 조회
           setMainDataResult({
             data: rows,
@@ -410,6 +488,8 @@ const App = () => {
             devproject,
             remark2,
           } = firstRowData;
+
+          setMeetingnum(meetingnum);
 
           setDetailData({
             work_type: "U",
@@ -501,7 +581,7 @@ const App = () => {
     const { cust_data, recdt, title } = detailData;
     let isValid = true;
     // 검증 로직
-    if (!cust_data) {
+    if (!cust_data || !cust_data.custcd) {
       alert("업체명은 필수 입력 항목입니다");
       return false;
     }
@@ -628,7 +708,19 @@ const App = () => {
     }
 
     if (data.isSuccess === true) {
-      search();
+      // unsaved 첨부파일 초기화
+      setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
+
+      const { returnString } = data;
+      const splitReturnString = returnString.split("_");
+
+      // 조회
+      setFilters((prev) => ({
+        ...prev,
+        isFetch: true,
+        pgNum: 1,
+        findRowValue: splitReturnString[1],
+      }));
     } else {
       console.log("[에러발생]");
       console.log(data);
@@ -726,12 +818,33 @@ const App = () => {
   }, [filters]);
 
   useEffect(() => {
-    if (meetingnum !== "") {
-      fetchDetail();
-    }
-  }, [meetingnum]);
+    const mainDataId = Object.getOwnPropertyNames(selectedState)[0];
+    if (mainDataId) fetchDetail();
+  }, [selectedState]);
 
-  const getAttachmentsData = (data: IAttachmentData) => {
+  const getAttachmentsDataPr = (data: IAttachmentData) => {
+    if (!detailData.attdatnum_private) {
+      setUnsavedAttadatnums((prev) => ({
+        type: "meeting",
+        attdatnums: [...prev.attdatnums, ...[data.attdatnum]],
+      }));
+    }
+    setDetailData((prev) => ({
+      ...prev,
+      attdatnum_private: data.attdatnum,
+      files_private:
+        data.original_name +
+        (data.rowCount > 1 ? " 등 " + String(data.rowCount) + "건" : ""),
+    }));
+  };
+
+  const getAttachmentsDataPb = (data: IAttachmentData) => {
+    if (!detailData.attdatnum) {
+      setUnsavedAttadatnums((prev) => ({
+        type: "meeting",
+        attdatnums: [...prev.attdatnums, ...[data.attdatnum]],
+      }));
+    }
     setDetailData((prev) => ({
       ...prev,
       attdatnum: data.attdatnum,
@@ -739,6 +852,25 @@ const App = () => {
         data.original_name +
         (data.rowCount > 1 ? " 등 " + String(data.rowCount) + "건" : ""),
     }));
+  };
+
+  const setCustData = (data: ICustData) => {
+    setDetailData((prev: any) => ({
+      ...prev,
+      cust_data: {
+        custcd: data.custcd,
+        custnm: data.custnm,
+      },
+    }));
+  };
+  const setProjectData = (data: ICustData) => {
+    // setDetailData((prev: any) => ({
+    //   ...prev,
+    //   cust_data: {
+    //     custcd: data.custcd,
+    //     custnm: data.custnm,
+    //   },
+    // }));
   };
 
   //그리드 푸터
@@ -817,7 +949,8 @@ const App = () => {
 
   const createMeeting = () => {
     setMeetingnum("");
-    setDetailData(defaultDetailData);
+    setSelectedState({});
+    setDetailData({ ...defaultDetailData, work_type: "N" });
     setDetailRows(process([], detailRowsState));
 
     // Edior에 HTML & CSS 세팅
@@ -827,9 +960,8 @@ const App = () => {
   };
 
   const deleteMeeting = async () => {
-    const selectedKey = Number(Object.keys(selectedState)[0]);
     const selectedData = mainDataResult.data.find(
-      (row) => row.meetingnum === String(selectedKey),
+      (row) => row.meetingnum === meetingnum,
     );
 
     if (!selectedData) return false;
@@ -857,16 +989,16 @@ const App = () => {
     }
     if (data && data.isSuccess === true) {
       // 첨부파일 서버에서 삭제
-      // if (unsavedAttadatnums.attdatnums.length > 0) {
-      // DB 저장안된 첨부파일
-      // setDeletedAttadatnums(unsavedAttadatnums);
-      // } else if (detailData.attdatnum) {
-      // DB 저장된 첨부파일
-      // setDeletedAttadatnums({
-      //   type: "meeting",
-      //   attdatnums: [detailData.attdatnum],
-      // });
-      // }
+      if (unsavedAttadatnums.attdatnums.length > 0) {
+        // DB 저장안된 첨부파일
+        setDeletedAttadatnums(unsavedAttadatnums);
+      } else if (detailData.attdatnum || detailData.attdatnum_private) {
+        // DB 저장된 첨부파일
+        setDeletedAttadatnums({
+          type: "meeting",
+          attdatnums: [detailData.attdatnum, detailData.attdatnum_private],
+        });
+      }
       setFilters((prev) => ({
         ...prev,
         isFetch: true,
@@ -1051,7 +1183,7 @@ const App = () => {
               fillMode={"outline"}
               icon="save"
               onClick={saveMeeting}
-              disabled={meetingnum ? false : true}
+              disabled={detailData.work_type ? false : true}
             >
               저장
             </Button>
@@ -1313,7 +1445,7 @@ const App = () => {
                           <Button
                             icon="more-horizontal"
                             fillMode={"flat"}
-                            onClick={() => setAttachmentsWindowVisible(true)}
+                            onClick={() => setAttachmentsWindowVisiblePb(true)}
                           />
                         </div>
                       </td>
@@ -1332,7 +1464,7 @@ const App = () => {
                           <Button
                             icon="more-horizontal"
                             fillMode={"flat"}
-                            onClick={() => setAttachmentsWindowVisible(true)}
+                            onClick={() => setAttachmentsWindowVisiblePr(true)}
                           />
                         </div>
                       </td>
@@ -1340,7 +1472,11 @@ const App = () => {
                     <tr>
                       <th>비고</th>
                       <td colSpan={3}>
-                        <Input name="remark2" value={detailData.remark2} />
+                        <Input
+                          name="remark2"
+                          value={detailData.remark2}
+                          onChange={detailInputChange}
+                        />
                       </td>
                     </tr>
                   </tbody>
@@ -1461,27 +1597,33 @@ const App = () => {
           </GridContainer>
         </GridContainerWrap>
 
-        {attachmentsWindowVisible && (
+        {attachmentsWindowVisiblePr && (
           <AttachmentsWindow
             type="meeting"
-            setVisible={setAttachmentsWindowVisible}
-            setData={getAttachmentsData}
+            setVisible={setAttachmentsWindowVisiblePr}
+            setData={getAttachmentsDataPr}
+            para={detailData.attdatnum_private}
+          />
+        )}
+        {attachmentsWindowVisiblePb && (
+          <AttachmentsWindow
+            type="meeting"
+            setVisible={setAttachmentsWindowVisiblePb}
+            setData={getAttachmentsDataPb}
             para={detailData.attdatnum}
           />
         )}
         {custWindowVisible && (
-          <AttachmentsWindow
-            type="meeting"
-            setVisible={setAttachmentsWindowVisible}
-            setData={getAttachmentsData}
-            para={detailData.attdatnum}
+          <CustomersWindow
+            workType=""
+            setVisible={setCustWindowVisible}
+            setData={setCustData}
           />
         )}
         {projectWindowVisible && (
-          <AttachmentsWindow
-            type="meeting"
-            setVisible={setAttachmentsWindowVisible}
-            setData={getAttachmentsData}
+          <ProjectsWindow
+            setVisible={setProjectWindowVisible}
+            setData={setProjectData}
             para={detailData.attdatnum}
           />
         )}

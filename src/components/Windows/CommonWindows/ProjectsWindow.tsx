@@ -21,11 +21,16 @@ import {
   Title,
   TitleContainer,
 } from "../../../CommonStyled";
-import { Input } from "@progress/kendo-react-inputs";
+import { Input, RadioGroup } from "@progress/kendo-react-inputs";
 import { Iparameters } from "../../../store/types";
 import { Button } from "@progress/kendo-react-buttons";
 import { IWindowPosition, TCommonCodeData } from "../../../hooks/interfaces";
-import { chkScrollHandler, UseBizComponent } from "../../CommonFunction";
+import {
+  chkScrollHandler,
+  convertDateToStr,
+  getCodeFromValue,
+  UseBizComponent,
+} from "../../CommonFunction";
 import { PAGE_SIZE, SELECTED_FIELD } from "../../CommonString";
 import BizComponentRadioGroup from "../../RadioGroups/BizComponentRadioGroup";
 import BizComponentComboBox from "../../ComboBoxes/BizComponentComboBox";
@@ -33,17 +38,32 @@ import { useSetRecoilState } from "recoil";
 import { isLoading } from "../../../store/atoms";
 import { handleKeyPressSearch } from "../../CommonFunction";
 import { bytesToBase64 } from "byte-base64";
+import { DatePicker } from "@progress/kendo-react-dateinputs";
+import {
+  ComboBoxChangeEvent,
+  MultiColumnComboBox,
+} from "@progress/kendo-react-dropdowns";
 
 type IKendoWindow = {
   setVisible(t: boolean): void;
   setData(data: object): void;
-  workType: string;
-  para?: Iparameters;
+  para?: string;
 };
 
-const DATA_ITEM_KEY = "custcd";
+const DATA_ITEM_KEY = "customer_code";
 
-const KendoWindow = ({ setVisible, workType, setData, para }: IKendoWindow) => {
+const progressStatusData = [
+  { value: "Y", label: "진행" },
+  { value: "N", label: "미진행" },
+  { value: "%", label: "전체" },
+];
+const isStatus = [
+  { value: "Y", label: "완료" },
+  { value: "N", label: "미완료" },
+  { value: "%", label: "전체" },
+];
+
+const KendoWindow = ({ setVisible, setData, para }: IKendoWindow) => {
   const [position, setPosition] = useState<IWindowPosition>({
     left: 300,
     top: 100,
@@ -85,11 +105,13 @@ const KendoWindow = ({ setVisible, workType, setData, para }: IKendoWindow) => {
     }));
   };
 
-  //조회조건 DropDownList Change 함수 => 사용자가 선택한 드롭다운리스트 값을 조회 파라미터로 세팅
-  const filterDropDownListChange = (name: string, data: TCommonCodeData) => {
+  const filterComboBoxChange = (e: ComboBoxChangeEvent) => {
+    const { value } = e.target;
+    const name = e.target.props.name ?? "";
+
     setFilters((prev) => ({
       ...prev,
-      [name]: data.sub_code,
+      [name]: value,
     }));
   };
 
@@ -119,22 +141,47 @@ const KendoWindow = ({ setVisible, workType, setData, para }: IKendoWindow) => {
     process([], mainDataState),
   );
 
+  const from_date = new Date(); // 현재 날짜와 시간을 가져옵니다.
+  from_date.setMonth(from_date.getMonth() - 6);
+
   //조회조건 초기값
   const [filters, setFilters] = useState({
-    custcd: "",
-    custnm: "",
-    // custdiv: "",
-    // useyn: "Y",
+    work_type: "list",
+    date_type: { name: "전체", code: "%" },
+    from_date: from_date,
+    to_date: new Date(),
+    customer_code: "",
+    customer_name: "",
+    pjt_person: "",
+    status: "%",
+    project: "",
+    progress_status: "%",
+    devmngnum: "",
+    code: "",
+    name: "",
   });
 
   //팝업 조회 파라미터
-  const parameters = `SELECT custcd, custnm
-  FROM BA020T 
-  WHERE custcd LIKE '%${filters.custcd}%'
-  AND custnm LIKE '%${filters.custnm}%'
-  `;
-  // AND custdiv LIKE '%${filters.custdiv}%'
-  // AND (CASE WHEN useyn = 'Y' THEN '사용' ELSE '미사용' END) LIKE '${filters.useyn}%'
+  const parameters = {
+    procedureName: "pw6_sel_project_master",
+    pageNumber: 0,
+    pageSize: 0,
+    parameters: {
+      "@p_work_type": filters.work_type,
+      "@p_date_type": getCodeFromValue(filters.date_type, "code"),
+      "@p_from_date": convertDateToStr(filters.from_date),
+      "@p_to_date": convertDateToStr(filters.to_date),
+      "@p_customer_code": filters.customer_code,
+      "@p_customer_name": filters.customer_name,
+      "@p_pjt_person": filters.pjt_person,
+      "@p_status": filters.status,
+      "@p_project": filters.project,
+      "@p_progress_status": filters.progress_status,
+      "@p_devmngnum": filters.devmngnum,
+      "@p_code": filters.code,
+      "@p_name": filters.name,
+    },
+  };
 
   useEffect(() => {
     fetchMainGrid();
@@ -145,15 +192,8 @@ const KendoWindow = ({ setVisible, workType, setData, para }: IKendoWindow) => {
     let data: any;
     setLoading(true);
 
-    const bytes = require("utf8-bytes");
-    const convertedQueryStr = bytesToBase64(bytes(parameters));
-
-    let query = {
-      query: convertedQueryStr,
-    };
-
     try {
-      data = await processApi<any>("bizgst-query", query);
+      data = await processApi<any>("procedure", parameters);
     } catch (error) {
       data = null;
     }
@@ -206,7 +246,7 @@ const KendoWindow = ({ setVisible, workType, setData, para }: IKendoWindow) => {
 
   const onConfirmClick = (props: any) => {
     const rowData = mainDataResult.data.find(
-      (row: any) => row.custcd === Object.keys(selectedState)[0],
+      (row: any) => row.customer_code === Object.keys(selectedState)[0],
     );
 
     // 부모로 데이터 전달, 창 닫기
@@ -239,9 +279,43 @@ const KendoWindow = ({ setVisible, workType, setData, para }: IKendoWindow) => {
     fetchMainGrid();
   };
 
+  const dateTypeState = [
+    {
+      code: "A",
+      name: "계약일",
+    },
+    {
+      code: "B",
+      name: "완료일",
+    },
+    {
+      code: "C",
+      name: "중간점검일",
+    },
+    {
+      code: "D",
+      name: "최종점검일",
+    },
+    {
+      code: "E",
+      name: "사업종료일",
+    },
+    {
+      code: "%",
+      name: "전체",
+    },
+  ];
+
+  const dateTypeColumns = [
+    {
+      field: "name",
+      header: "일자구분",
+      width: 150,
+    },
+  ];
   return (
     <Window
-      title={"업체마스터"}
+      title={"프로젝트 마스터"}
       width={position.width}
       height={position.height}
       onMove={handleMove}
@@ -267,53 +341,98 @@ const KendoWindow = ({ setVisible, workType, setData, para }: IKendoWindow) => {
         <FilterBox onKeyPress={(e) => handleKeyPressSearch(e, search)}>
           <tbody>
             <tr>
-              <th>업체코드</th>
+              <th style={{ padding: "0 10px" }}>
+                <MultiColumnComboBox
+                  name="date_type"
+                  data={dateTypeState}
+                  value={filters.date_type}
+                  columns={dateTypeColumns}
+                  textField={"name"}
+                  onChange={filterComboBoxChange}
+                  className="required"
+                />
+              </th>
+              <td>
+                <div className="filter-item-wrap">
+                  <DatePicker
+                    name="from_date"
+                    value={filters.from_date}
+                    format="yyyy-MM-dd"
+                    onChange={filterInputChange}
+                    placeholder=""
+                    className="required"
+                  />
+                  ~
+                  <DatePicker
+                    name="to_date"
+                    value={filters.to_date}
+                    format="yyyy-MM-dd"
+                    onChange={filterInputChange}
+                    placeholder=""
+                    className="required"
+                  />
+                </div>
+              </td>
+              <th>진행여부</th>
+              <td>
+                <RadioGroup
+                  name="progress_status"
+                  data={progressStatusData}
+                  value={filters.progress_status}
+                  onChange={filterRadioChange}
+                  layout="horizontal"
+                  className="required"
+                ></RadioGroup>
+              </td>
+            </tr>
+
+            <tr>
+              <th>업체</th>
               <td>
                 <Input
-                  name="custcd"
+                  name="customer_name"
                   type="text"
-                  value={filters.custcd}
+                  value={filters.customer_name}
                   onChange={filterInputChange}
                 />
               </td>
-              <th>업체명</th>
+              <th>완료여부</th>
+              <td>
+                <RadioGroup
+                  name="status"
+                  data={isStatus}
+                  value={filters.status}
+                  onChange={filterRadioChange}
+                  layout="horizontal"
+                ></RadioGroup>
+              </td>
+            </tr>
+            <tr>
+              <th>프로젝트</th>
               <td>
                 <Input
-                  name="custnm"
+                  name="project"
                   type="text"
-                  value={filters.custnm}
+                  value={filters.project}
                   onChange={filterInputChange}
                 />
               </td>
-              {/* <th>업체구분</th>
+              <th>사업진행담당</th>
               <td>
-                {bizComponentData !== null && (
-                  <BizComponentComboBox
-                    name="custdiv"
-                    value={filters.custdiv}
-                    bizComponentId="L_BA026"
-                    bizComponentData={bizComponentData}
-                    changeData={filterRadioChange}
-                  />
-                )}
+                <MultiColumnComboBox
+                  name="date_type"
+                  data={dateTypeState}
+                  value={filters.date_type}
+                  columns={dateTypeColumns}
+                  textField={"name"}
+                  onChange={filterComboBoxChange}
+                />
               </td>
-              <th>사용여부</th>
-              <td>
-                {bizComponentData !== null && (
-                  <BizComponentRadioGroup
-                    name="useyn"
-                    value={filters.useyn}
-                    bizComponentId="R_USEYN"
-                    bizComponentData={bizComponentData}
-                    changeData={filterRadioChange}
-                  />
-                )}
-              </td> */}
             </tr>
           </tbody>
         </FilterBox>
       </FilterBoxWrap>
-      <GridContainer height="calc(100% - 170px)">
+      <GridContainer height="calc(100% - 240px)">
         <Grid
           style={{ height: "100%" }}
           data={process(
@@ -347,25 +466,22 @@ const KendoWindow = ({ setVisible, workType, setData, para }: IKendoWindow) => {
           //더블클릭
           onRowDoubleClick={onRowDoubleClick}
         >
+          <GridColumn field="custnm" title="업체" width="200px" locked={true} />
+          <GridColumn field="custabbr" title="차수" width="70" locked={true} />
+          <GridColumn field="project" title="프로젝트" width="140px" />
           <GridColumn
-            field="custcd"
-            title="업체코드"
-            // width="140px"
-            footerCell={mainTotalFooterCell}
+            field="cotracdt"
+            title="사업시작일(계약일)"
+            width="120px"
           />
-
-          <GridColumn
-            field="custnm"
-            title="업체명"
-            // width="200px"
-          />
-          {/* <GridColumn field="custabbr" title="업체약어" width="120px" />
-          <GridColumn field="bizregnum" title="사업자등록번호" width="140px" />
-          <GridColumn field="custdiv" title="업체구분" width="120px" />
-          <GridColumn field="useyn" title="사용유무" width="120px" />
-          <GridColumn field="compclass" title="업태" width="120px" />
-          <GridColumn field="ceonm" title="대표자명" width="120px" />
-          <GridColumn field="remark" title="비고" width="300px" /> */}
+          <GridColumn field="finexpdt" title="사업종료일" width="120px" />
+          <GridColumn field="is_finished" title="완료" width="70" />
+          <GridColumn field="pjtperson" title="사업진행담당" width="110px" />
+          <GridColumn field="pjtmanager" title="담당PM" width="110px" />
+          <GridColumn field="remark" title="비고" width="200px" />
+          <GridColumn field="midchkdt" title="중간점검일" width="120px" />
+          <GridColumn field="finchkdt" title="최종점검일" width="120px" />
+          <GridColumn field="ceonm" title="개발관리번호" width="120px" />
         </Grid>
       </GridContainer>
       <BottomContainer>
