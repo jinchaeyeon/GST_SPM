@@ -53,7 +53,7 @@ const PanelBarNavContainer = (props: any) => {
   }, [token]);
   const [menus, setMenus] = useRecoilState(menusState);
   const [isMobileMenuOpend, setIsMobileMenuOpend] = useRecoilState(
-    isMobileMenuOpendState
+    isMobileMenuOpendState,
   );
   const [isMenuOpend, setIsMenuOpend] = useRecoilState(isMenuOpendState);
   const companyCode = loginResult ? loginResult.companyCode : "";
@@ -64,12 +64,12 @@ const PanelBarNavContainer = (props: any) => {
 
   // 삭제할 첨부파일 리스트를 담는 함수
   const [deletedAttadatnums, setDeletedAttadatnums] = useRecoilState(
-    deletedAttadatnumsState
+    deletedAttadatnumsState,
   );
 
   // 서버 업로드는 되었으나 DB에는 저장안된 첨부파일 리스트
   const [unsavedAttadatnums, setUnsavedAttadatnums] = useRecoilState(
-    unsavedAttadatnumsState
+    unsavedAttadatnumsState,
   );
 
   const [previousRoute, setPreviousRoute] = useState("");
@@ -83,7 +83,7 @@ const PanelBarNavContainer = (props: any) => {
 
   // 반응형 처리
   const [clientWidth, setClientWidth] = useState(
-    document.documentElement.getBoundingClientRect().width
+    document.documentElement.getBoundingClientRect().width,
   );
   useEffect(() => {
     const handleWindowResize = () => {
@@ -175,7 +175,7 @@ const PanelBarNavContainer = (props: any) => {
         (menu: any) =>
           menu.menuCategory === "GROUP" &&
           menu.menuName !== "Home" &&
-          menu.menuName !== "PlusWin6"
+          menu.menuName !== "PlusWin6",
       )
       .forEach((menu: any, idx: number) => {
         paths.push({
@@ -194,7 +194,7 @@ const PanelBarNavContainer = (props: any) => {
       menus
         .filter(
           (menu: any) =>
-            menu.menuCategory === "WEB" && path.menuId === menu.parentMenuId
+            menu.menuCategory === "WEB" && path.menuId === menu.parentMenuId,
         )
         .forEach((menu: any, idx: number) => {
           paths.push({
@@ -411,15 +411,16 @@ const PanelBarNavContainer = (props: any) => {
       menuCategory: "",
       isFavorite: false,
     });
-    panelBars.push({
-      path: "/MeetingManagement",
-      menuName: "회의록 관리",
-      index: ".5",
-      menuId: "",
-      parentMenuId: "",
-      menuCategory: "",
-      isFavorite: false,
-    });
+    isAdmin &&
+      panelBars.push({
+        path: "/MeetingManagement",
+        menuName: "회의록 관리",
+        index: ".5",
+        menuId: "",
+        parentMenuId: "",
+        menuCategory: "",
+        isFavorite: false,
+      });
     panelBars.push({
       path: "/",
       menuName: "설정",
@@ -522,7 +523,7 @@ const PanelBarNavContainer = (props: any) => {
         }
       });
     },
-    []
+    [],
   );
 
   // 첨부파일 삭제
@@ -530,7 +531,7 @@ const PanelBarNavContainer = (props: any) => {
     if (deletedAttadatnums.type && deletedAttadatnums.attdatnums.length > 0) {
       fetchToDeletedAttachment(
         deletedAttadatnums.type,
-        deletedAttadatnums.attdatnums
+        deletedAttadatnums.attdatnums,
       );
 
       // 초기화
@@ -596,7 +597,7 @@ const PanelBarNavContainer = (props: any) => {
                       .filter(
                         (childPath: TPath) =>
                           childPath.menuCategory === "WEB" &&
-                          childPath.parentMenuId === path.menuId
+                          childPath.parentMenuId === path.menuId,
                       )
                       .map((childPath: TPath, childIdx: number) => (
                         <PanelBarItem
