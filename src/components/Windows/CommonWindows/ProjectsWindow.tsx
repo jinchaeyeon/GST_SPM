@@ -60,7 +60,7 @@ const progressStatusData = [
 const isStatus = [
   { value: "Y", label: "완료" },
   { value: "N", label: "미완료" },
-  { value: "%", label: "전체" },
+  { value: "Y,N", label: "전체" },
 ];
 
 const KendoWindow = ({ setVisible, setData, para }: IKendoWindow) => {
@@ -153,7 +153,7 @@ const KendoWindow = ({ setVisible, setData, para }: IKendoWindow) => {
     customer_code: "",
     customer_name: "",
     pjt_person: "",
-    status: "%",
+    status: "Y,N",
     project: "",
     progress_status: "%",
     devmngnum: "",

@@ -15,7 +15,7 @@ import {
 } from "@progress/kendo-react-grid";
 import { Input, InputChangeEvent } from "@progress/kendo-react-inputs";
 import React, { useState, useRef, useEffect } from "react";
-import { useSetRecoilState } from "recoil";
+import { useRecoilState, useSetRecoilState } from "recoil";
 import {
   ButtonContainer,
   FilterBox,
@@ -34,11 +34,12 @@ import {
   convertDateToStr,
   dateformat2,
   handleKeyPressSearch,
+  toDate,
 } from "../components/CommonFunction";
 import { GAP, PAGE_SIZE, SELECTED_FIELD } from "../components/CommonString";
 import RichEditor from "../components/RichEditor";
 import { useApi } from "../hooks/api";
-import { isLoading } from "../store/atoms";
+import { filterValueState, isLoading } from "../store/atoms";
 import { TEditorHandle } from "../store/types";
 import { IAttachmentData } from "../hooks/interfaces";
 import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
@@ -50,6 +51,7 @@ const App = () => {
   const processApi = useApi();
   const setLoading = useSetRecoilState(isLoading);
   const [meetingnum, setMeetingnum] = useState(""); //Detail 조회조건
+  const [filterValue, setFilterValue] = useRecoilState(filterValueState);
 
   const [attachmentsWindowVisible, setAttachmentsWindowVisible] =
     useState<boolean>(false);
@@ -137,12 +139,8 @@ const App = () => {
   const docEditorRef = useRef<TEditorHandle>(null);
   const refEditorRef = useRef<TEditorHandle>(null);
 
-  const currentDate = new Date();
-  const fromDate = new Date(
-    currentDate.getFullYear(),
-    currentDate.getMonth() - 3,
-    currentDate.getDate(),
-  );
+  let fromDate = new Date();
+  fromDate.setDate(fromDate.getDate() - 14); // 시작일 설정
 
   type TFilters = {
     fromDate: Date;
@@ -194,7 +192,21 @@ const App = () => {
       const rows = data.tables[0].Rows;
 
       if (totalRowCnt > 0)
-        if (filters.isReset) {
+        if (filters.findRowValue !== "") {
+          // 데이터 저장 후 조회
+          setSelectedState({ [filters.findRowValue]: true });
+          const selectedRowData = rows.find(
+            (row: any) => row[DATA_ITEM_KEY] === filters.findRowValue,
+          );
+          const id =
+            selectedRowData["orgdiv"] + "_" + selectedRowData["meetingnum"];
+
+          setMeetingnum(id);
+          setMainDataResult({
+            data: rows,
+            total: totalRowCnt,
+          });
+        } else if (filters.isReset) {
           // 일반 데이터 조회
           setMainDataResult({
             data: rows,
@@ -350,6 +362,26 @@ const App = () => {
       fetchGrid(deepCopiedFilters);
     }
   }, [filters]);
+
+  useEffect(() => {
+    // 메인 그리드에서 클릭하여 오픈시 조회조건 재설정하여 조회
+    if (filterValue.type === "meeting") {
+      const isExceedFromDate =
+        convertDateToStr(fromDate) > filterValue.dataItem.recdt;
+
+      const newFromDate = toDate(filterValue.dataItem.recdt) ?? fromDate;
+
+      setFilters((prev) => ({
+        ...prev,
+        fromDate: isExceedFromDate ? newFromDate : fromDate,
+        isFetch: true,
+        isReset: true,
+        findRowValue: filterValue.dataItem[DATA_ITEM_KEY],
+      }));
+
+      setFilterValue({ type: null, dataItem: {} });
+    }
+  }, [filterValue]);
 
   useEffect(() => {
     if (meetingnum !== "") {

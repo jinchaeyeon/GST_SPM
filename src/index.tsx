@@ -5,14 +5,28 @@ import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 import { BrowserRouter } from "react-router-dom";
 import { RecoilRoot } from "recoil";
+import { ThemeSwitcherProvider } from "react-css-theme-switcher";
+
 const root = ReactDOM.createRoot(document.getElementById("root")!);
+const themes = {
+  dark: `${process.env.PUBLIC_URL}/dark-theme.css`,
+  light: `${process.env.PUBLIC_URL}/light-theme.css`,
+};
+
+const defaultTheme = window.location.href.includes("Home") ? "dark" : "light";
 root.render(
   //<React.StrictMode>
-  <RecoilRoot>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
-  </RecoilRoot>
+  <ThemeSwitcherProvider
+    themeMap={themes}
+    defaultTheme={defaultTheme}
+    insertionPoint="styles-insertion-point"
+  >
+    <RecoilRoot>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </RecoilRoot>
+  </ThemeSwitcherProvider>,
   //</React.StrictMode>
 );
 

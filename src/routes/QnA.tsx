@@ -40,6 +40,7 @@ import {
 import { useRecoilState, useSetRecoilState } from "recoil";
 import {
   deletedAttadatnumsState,
+  filterValueState,
   isLoading,
   loginResultState,
   unsavedAttadatnumsState,
@@ -124,6 +125,7 @@ const defaultDetailData = {
 
 const App = () => {
   const [loginResult] = useRecoilState(loginResultState);
+  const [filterValue, setFilterValue] = useRecoilState(filterValueState);
   const setLoading = useSetRecoilState(isLoading);
   const idGetter = getter(DATA_ITEM_KEY);
   const processApi = useApi();
@@ -140,7 +142,7 @@ const App = () => {
 
   // 서버 업로드는 되었으나 DB에는 저장안된 첨부파일 리스트
   const [unsavedAttadatnums, setUnsavedAttadatnums] = useRecoilState(
-    unsavedAttadatnumsState
+    unsavedAttadatnumsState,
   );
 
   //조회조건 Input Change 함수 => 사용자가 Input에 입력한 값을 조회 파라미터로 세팅
@@ -171,7 +173,7 @@ const App = () => {
   };
 
   let fromDate = new Date();
-  fromDate.setMonth(fromDate.getMonth() - 1);
+  fromDate.setDate(fromDate.getDate() - 10); // 시작일 설정
 
   const [filters, setFilters] = useState<TFilters>({
     fromDate: fromDate,
@@ -179,7 +181,11 @@ const App = () => {
     userName: "",
     contents: "",
     isPublic: "All",
-    status: [],
+    status: [
+      { sub_code: "1", code_name: "대기" },
+      { sub_code: "2", code_name: "진행중" },
+      { sub_code: "4", code_name: "보류" },
+    ],
     findRowValue: "",
     pgNum: 1,
     pgSize: PAGE_SIZE,
@@ -205,7 +211,7 @@ const App = () => {
     sort: [],
   });
   const [mainDataResult, setMainDataResult] = useState<DataResult>(
-    process([], mainDataState)
+    process([], mainDataState),
   );
 
   const [detailData, setDetailData] = useState(defaultDetailData);
@@ -261,12 +267,12 @@ const App = () => {
         ? filters.status[0].sub_code // 1개만 선택시 => 선택된 값 (ex. 1 대기)
         : filters.status.reduce(
             (total, current) => total + Number(current.sub_code),
-            0
+            0,
           ); //  2개 이상 선택시 => 값 합치기 (ex. 1 대기 + 2 진행중 = 3 )
 
     const para = {
       para: `list?fromDate=${convertDateToStr(
-        filters.fromDate
+        filters.fromDate,
       )}&toDate=${convertDateToStr(filters.toDate)}&userName=${
         filters.userName
       }&contents=${filters.contents}&isPublic=${
@@ -354,7 +360,7 @@ const App = () => {
             password: enteredPw,
             is_lock: row.is_lock === "Y" ? true : false,
             status: detailDataStatusListData.find(
-              (item: any) => item["sub_code"] === row.status
+              (item: any) => item["sub_code"] === row.status,
             ),
             request_date: toDate(row.request_date),
             reception_date: dateformat2(row.reception_date),
@@ -378,7 +384,7 @@ const App = () => {
       }
       setLoading(false);
     },
-    [selectedState, setLoading, detailData, setIsDataLocked]
+    [selectedState, setLoading, detailData, setIsDataLocked],
   );
 
   const saveData = useCallback(async () => {
@@ -526,6 +532,27 @@ const App = () => {
   }, [filters]);
 
   useEffect(() => {
+    // 메인 그리드에서 클릭하여 오픈시 조회조건 재설정하여 조회
+    if (filterValue.type === "qna") {
+      const isExceedFromDate =
+        convertDateToStr(fromDate) > filterValue.dataItem.request_date;
+
+      const newFromDate = toDate(filterValue.dataItem.request_date) ?? fromDate;
+
+      setFilters((prev) => ({
+        ...prev,
+        status: [],
+        fromDate: isExceedFromDate ? newFromDate : fromDate,
+        isFetch: true,
+        isReset: true,
+        findRowValue: filterValue.dataItem[DATA_ITEM_KEY],
+      }));
+
+      setFilterValue({ type: null, dataItem: {} });
+    }
+  }, [filterValue]);
+
+  useEffect(() => {
     const mainDataId = Object.getOwnPropertyNames(selectedState)[0];
 
     if (mainDataId) {
@@ -563,7 +590,7 @@ const App = () => {
   };
 
   const handleKeyPressSearchDetail = (
-    e: React.KeyboardEvent<HTMLDivElement>
+    e: React.KeyboardEvent<HTMLDivElement>,
   ) => {
     if (e.key === "Enter") {
       fetchDetail(detailData.password);
@@ -736,7 +763,7 @@ const App = () => {
                 completion_date: dateformat2(row.completion_date),
                 [SELECTED_FIELD]: selectedState[idGetter(row)],
               })),
-              mainDataState
+              mainDataState,
             )}
             {...mainDataState}
             onDataStateChange={onMainDataStateChange}
@@ -889,7 +916,7 @@ const App = () => {
                       <RadioGroup
                         name="is_public"
                         data={isPublicListData.filter(
-                          (data) => data.value !== "All"
+                          (data) => data.value !== "All",
                         )}
                         value={detailData.is_public}
                         onChange={(e) =>
@@ -912,7 +939,7 @@ const App = () => {
                           name="request_date"
                           type="text"
                           value={dateformat2(
-                            convertDateToStr(detailData.request_date)
+                            convertDateToStr(detailData.request_date),
                           )}
                           className="readonly"
                           readOnly

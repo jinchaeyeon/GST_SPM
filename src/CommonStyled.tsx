@@ -352,10 +352,13 @@ export const GridContainer = styled.div<TGridContainer>`
   }
 `;
 
-export const GridTitle = styled.h3`
+type TGridTitle = {
+  theme: string;
+};
+export const GridTitle = styled.h3<TGridTitle>`
   font-size: 16px;
   font-weight: 600;
-  color: #424242;
+  color: ${(props) => (props.theme === "dark" ? "#fff" : "#424242")};
 `;
 
 export const PrimaryP = styled.p`
@@ -639,21 +642,28 @@ export const NumberKeypadCell = styled.div`
 
 type TWrapper = {
   isMobileMenuOpend: boolean;
+  theme: string;
 };
 
 export const Wrapper = styled.div<TWrapper>`
   display: flex;
   width: 100%;
   //overflow: ${(props) => (props.isMobileMenuOpend ? "hidden" : "auto")};
+  background-color: ${(props) =>
+    props.theme === "dark" ? "#2b2b2b" : "#fffff"};
 `;
 
-type TGnv = TWrapper;
+type TGnv = {
+  isMobileMenuOpend: boolean;
+  theme: string;
+};
 export const Gnv = styled.div<TGnv>`
   min-width: ${GNV_WIDTH}px;
   text-align: center;
 
   min-height: 100vh;
-  background-color: #fff;
+  background-color: ${(props) =>
+    props.theme === "dark" ? "#2b2b2b" : "#fffff"};
 
   .logout span {
     color: #656565;
@@ -725,9 +735,14 @@ export const Content = styled.div<ContentType>`
 
 export const PageWrap = styled.div`
   padding: 0 15px;
+  height: calc(100% - 20px);
+  padding-top: 20px;
 `;
 
-export const AppName = styled.h1`
+type TAppName = {
+  theme: string;
+};
+export const AppName = styled.h1<TAppName>`
   font-size: 20px;
   color: #2289c3;
   font-weight: 400;
@@ -737,8 +752,9 @@ export const AppName = styled.h1`
   justify-content: center;
   align-items: center;
   gap: 3px;
-  background-color: #fff;
-  border-right: 1px solid #ebebeb;
+  background-color: ${(props) => (props.theme === "dark" ? "#000" : "#fff")};
+  border-right: ${(props) =>
+    props.theme === "dark" ? "none" : "1px solid #ebebeb"};
   cursor: pointer;
 `;
 
@@ -788,7 +804,9 @@ export const TopTitle = styled.div`
   }
 `;
 
-type TModal = TGnv;
+type TModal = {
+  isMobileMenuOpend: boolean;
+};
 export const Modal = styled.div<TModal>`
   position: absolute;
   z-index: 10;
@@ -861,5 +879,45 @@ export const QnaPwBox = styled.div`
     width: 100%;
     height: 40px;
     margin-top: 20px;
+  }
+`;
+
+export const TextBox = styled.div`
+  min-height: 150px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background-color: #101010;
+  flex-direction: column;
+
+  p span {
+    font-weight: 900;
+    font-size: 22px;
+    color: #fff;
+    margin-left: 5px;
+    vertical-align: middle;
+  }
+
+  .medium {
+    font-size: 28px;
+    margin-top: 10px;
+    font-weight: 700;
+  }
+  .large {
+    font-size: 60px;
+    margin-top: 10px;
+    font-weight: 700;
+  }
+
+  .green {
+    color: #4cd180;
+  }
+  .yellow {
+    color: #ffe162;
+  }
+  .blue {
+    color: #2289c3;
   }
 `;

@@ -1,7 +1,8 @@
 import { RecoilRoot, useRecoilValue } from "recoil";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import React from "react";
-import "./index.scss";
+// import "./index.scss";
+
 import { createGlobalStyle } from "styled-components";
 import PanelBarNavContainer from "./components/PanelBarNavContainer";
 import AuthRoute from "./components/AuthRoute";
@@ -171,7 +172,7 @@ load(
   gbNumbers,
   gbLocalCurrency,
   gbCaGregorian,
-  gbDateFields
+  gbDateFields,
 );
 const App: React.FC = () => {
   return (

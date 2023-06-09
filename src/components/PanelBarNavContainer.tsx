@@ -40,6 +40,8 @@ import {
   AutoCompleteCloseEvent,
 } from "@progress/kendo-react-dropdowns";
 import { DEFAULT_ATTDATNUMS } from "./CommonString";
+import { useThemeSwitcher } from "react-css-theme-switcher";
+import ClipLoader from "react-spinners/ClipLoader";
 
 const PanelBarNavContainer = (props: any) => {
   const processApi = useApi();
@@ -60,7 +62,19 @@ const PanelBarNavContainer = (props: any) => {
   const userId = loginResult ? loginResult.userId : "";
   const loginKey = loginResult ? loginResult.loginKey : "";
   const role = loginResult ? loginResult.role : "";
-  const isAdmin = role === "ADMIN" || role === "DEVELOPER" ? true : false;
+  const isAdmin = role === "ADMIN";
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Kendo Chart에 Theme 적용하는데 간헐적으로 오류 발생하여 0.5초후 렌더링되도록 처리함 (모든 메뉴 새로고침 시 적용)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 500);
+
+    return () => clearTimeout(timer); // 컴포넌트가 언마운트될 때 타이머를 제거
+  }, []);
+
+  const { switcher, themes, currentTheme = "" } = useThemeSwitcher();
 
   // 삭제할 첨부파일 리스트를 담는 함수
   const [deletedAttadatnums, setDeletedAttadatnums] = useRecoilState(
@@ -219,6 +233,12 @@ const PanelBarNavContainer = (props: any) => {
 
   const onSelect = (event: PanelBarSelectEventArguments) => {
     const { route, className = "" } = event.target.props;
+
+    if (route && route.includes("Home")) {
+      switcher({ theme: "dark" });
+    } else {
+      switcher({ theme: "light" });
+    }
     props.history.push(route);
 
     if (route) {
@@ -329,11 +349,13 @@ const PanelBarNavContainer = (props: any) => {
 
   const selected = setSelectedIndex(props.location.pathname);
 
-  const logout = useCallback(() => {
+  const logout = () => {
+    switcher({ theme: "light" });
     fetchLogout();
     resetLocalStorage();
-    window.location.href = "/";
-  }, []);
+    // window.location.href = "/";
+    history.push("/");
+  };
 
   const fetchLogout = async () => {
     let data: any;
@@ -540,12 +562,16 @@ const PanelBarNavContainer = (props: any) => {
     }
   }, [deletedAttadatnums]);
 
+  if (!isLoaded) {
+    return <InitialLoading />;
+  }
+
   return (
-    <Wrapper isMobileMenuOpend={isMobileMenuOpend}>
+    <Wrapper isMobileMenuOpend={isMobileMenuOpend} theme={currentTheme}>
       <Modal isMobileMenuOpend={isMobileMenuOpend} onClick={onMenuBtnClick} />
       {isMenuOpend ? (
-        <Gnv isMobileMenuOpend={isMobileMenuOpend}>
-          <AppName onClick={() => setIsMenuOpend(false)}>
+        <Gnv isMobileMenuOpend={isMobileMenuOpend} theme={currentTheme}>
+          <AppName onClick={() => setIsMenuOpend(false)} theme={currentTheme}>
             <Logo size="32px" />
             GST SPM
           </AppName>
@@ -675,6 +701,32 @@ const PanelBarNavContainer = (props: any) => {
 
       <Loading />
     </Wrapper>
+  );
+};
+
+const InitialLoading = () => {
+  return (
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        position: "fixed",
+        zIndex: "99999",
+        top: "0",
+        left: "0",
+      }}
+    >
+      <div
+        style={{
+          position: "fixed",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+        }}
+      >
+        <ClipLoader color="#2184bb" size={100} />
+      </div>
+    </div>
   );
 };
 

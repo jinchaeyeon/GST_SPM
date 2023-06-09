@@ -156,7 +156,6 @@ const App = () => {
   const processApi = useApi();
   const setLoading = useSetRecoilState(isLoading);
   const [meetingnum, setMeetingnum] = useState(""); //Detail 조회조건
-
   const [loginResult] = useRecoilState(loginResultState);
   const userId = loginResult ? loginResult.userId : "";
   const [pc, setPc] = useState("");

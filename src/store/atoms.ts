@@ -96,3 +96,15 @@ export const unsavedAttadatnumsState = atom<{
   key: "unsavedAttadatnums",
   default: { type: null, attdatnums: [] },
 });
+
+// 메인 화면에서 그리드 행 클릭하여 다른 화면으로 이동 시 저장할 조회조건 값
+export const filterValueState = atom<{
+  type: "meeting" | "qna" | null;
+  dataItem: any;
+}>({
+  key: "filterValueState",
+  default: {
+    type: null,
+    dataItem: {},
+  },
+});

@@ -1,0 +1,33 @@
+$primary: #2289c3;
+$info: #ff6358;
+
+$series-a: $primary;
+$series-e: #f5762dff;
+
+$font-size: 13px;
+
+$dark-theme: true;
+$border-radius: 2px;
+$secondary: #f6f6f6;
+$success: #5ec232;
+$warning: #fdce3e;
+$error: #d51923;
+$body-text: #ffffff;
+$body-bg: #000000;
+$heading-text: #ffffff;
+$subtle-text: #e0e0e0;
+$disabled-text: #d0d0d0;
+$component-text: #ffffff;
+$component-bg: #101010;
+$base-text: #ffffff;
+$base-bg: #151515;
+$hovered-text: #ffffff;
+$hovered-bg: #202020;
+$selected-text: #ffffff;
+$selected-bg: $primary;
+$kendo-button-text: #ffffff;
+$kendo-button-bg: #404040;
+$link-text: $primary;
+$link-hover-text: #d6534a;
+
+@import "~@progress/kendo-theme-default/dist/all.scss";
