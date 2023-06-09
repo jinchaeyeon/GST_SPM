@@ -22,10 +22,7 @@ import { useRecoilState } from "recoil";
 import { useApi } from "../hooks/api";
 import { filterValueState, loginResultState } from "../store/atoms";
 import { Iparameters } from "../store/types";
-import {
-  chkScrollHandler,
-  convertDateToStr,
-} from "../components/CommonFunction";
+import { chkScrollHandler } from "../components/CommonFunction";
 import { GAP, PAGE_SIZE, SELECTED_FIELD } from "../components/CommonString";
 import CenterCell from "../components/Cells/CenterCell";
 import { useThemeSwitcher } from "react-css-theme-switcher";
@@ -33,7 +30,6 @@ import {
   Chart,
   ChartCategoryAxis,
   ChartCategoryAxisItem,
-  ChartCategoryAxisTitle,
   ChartLegend,
   ChartSeries,
   ChartSeriesItem,
@@ -41,42 +37,19 @@ import {
 } from "@progress/kendo-react-charts";
 import "hammerjs";
 import CurrentTime from "../components/CurrentTime";
-import Loading from "../components/Loading";
-import ClipLoader from "react-spinners/ClipLoader";
 import DateCell from "../components/Cells/DateCell";
 import { useHistory } from "react-router-dom";
 import Loader from "../components/Loader";
+import QnaStateCell from "../components/Cells/QnaStateCell";
 
 const DATA_ITEM_KEY = "datnum";
 
-const series = [
-  {
-    category: "김철수",
-    value: 0.2545,
-  },
-  {
-    category: "홍길동",
-    value: 0.1552,
-  },
-  {
-    category: "이영희",
-    value: 0.4059,
-  },
-  {
-    category: "박민수",
-    value: 0.0911,
-  },
-  {
-    category: "박동혁",
-    value: 0.0933,
-  },
-];
 const labelContent = (props: any) => {
   let formatedNumber = Number(props.dataItem.value).toLocaleString(undefined, {
     style: "percent",
     minimumFractionDigits: 2,
   });
-  return `${props.dataItem.category} : ${formatedNumber}`;
+  return `${props.dataItem.user_name} : ${props.dataItem.cnt}건`;
 };
 
 const [firstSeries, secondSeries, thirdSeries, fourthSeries] = [
@@ -129,6 +102,11 @@ const Main: React.FC = () => {
     wait: 0,
     progress: 0,
     over_date: 0,
+    avg_reception_days: 0,
+  });
+  const [userSummaryResult, setUserSummaryResult] = useState({
+    total: [],
+    weekly: [],
   });
 
   const [selectedState, setSelectedState] = useState<{
@@ -161,7 +139,7 @@ const Main: React.FC = () => {
       pageSize: 0,
       parameters: {
         "@p_work_type": "question",
-        "@p_customer_code": "10192",
+        "@p_customer_code": userId,
         "@p_user_id": "",
         "@p_ref_key": "",
         "@p_id": "",
@@ -197,7 +175,7 @@ const Main: React.FC = () => {
       pageSize: 0,
       parameters: {
         "@p_work_type": "meeting",
-        "@p_customer_code": "10192",
+        "@p_customer_code": userId,
         "@p_user_id": "",
         "@p_ref_key": "",
         "@p_id": "",
@@ -232,7 +210,7 @@ const Main: React.FC = () => {
       pageSize: 0,
       parameters: {
         "@p_work_type": "task_status",
-        "@p_customer_code": "10192",
+        "@p_customer_code": userId,
         "@p_user_id": "",
         "@p_ref_key": "",
         "@p_id": "",
@@ -248,7 +226,13 @@ const Main: React.FC = () => {
     if (data.isSuccess === true) {
       const rowCount = data.tables[0].RowCount;
       const row = data.tables[0].Rows[0];
-      const { total = 0, wait = 0, progress = 0, over_date = 0 } = row;
+      const {
+        total = 0,
+        wait = 0,
+        progress = 0,
+        over_date = 0,
+        avg_reception_days = 0,
+      } = row;
 
       if (rowCount > 0)
         setTaskStatusResult({
@@ -256,7 +240,38 @@ const Main: React.FC = () => {
           wait,
           progress,
           over_date,
+          avg_reception_days,
         });
+    }
+  };
+  const fetchUserSummary = async () => {
+    let data: any;
+    const parameters: Iparameters = {
+      procedureName: "pw6_sel_home_customer",
+      pageNumber: 0,
+      pageSize: 0,
+      parameters: {
+        "@p_work_type": "user_summary",
+        "@p_customer_code": userId,
+        "@p_user_id": "",
+        "@p_ref_key": "",
+        "@p_id": "",
+        "@p_pc": "",
+      },
+    };
+    try {
+      data = await processApi<any>("procedure", parameters);
+    } catch (error) {
+      data = null;
+    }
+
+    if (data.isSuccess === true) {
+      const rowCount0 = data.tables[0].RowCount;
+      const rowCount1 = data.tables[1].RowCount;
+      const rows0 = data.tables[0].Rows;
+      const rows1 = data.tables[1].Rows;
+
+      setUserSummaryResult({ total: rows0, weekly: rows1 });
     }
   };
 
@@ -265,10 +280,15 @@ const Main: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    search();
+  }, []);
+
+  const search = () => {
     fetchQuestionGrid();
     fetchMeetingGrid();
     fetchTaskStatus();
-  }, []);
+    fetchUserSummary();
+  };
 
   //메인 그리드 선택 이벤트 => 디테일1 그리드 조회
   const onMainSelectionChange = (event: GridSelectionChangeEvent) => {
@@ -395,10 +415,10 @@ const Main: React.FC = () => {
           </p>
         </TextBox>
         <TextBox>
-          <p className="small">평균 접수 시간</p>
+          <p className="small">평균 접수일</p>
           <p className="large blue">
-            {taskStatusResult.progress}
-            <span>분</span>
+            {taskStatusResult.avg_reception_days}
+            <span>일</span>
           </p>
         </TextBox>
         <TextBox
@@ -424,9 +444,9 @@ const Main: React.FC = () => {
             <ChartSeries>
               <ChartSeriesItem
                 type="pie"
-                data={series}
-                field="value"
-                categoryField="category"
+                data={userSummaryResult.total}
+                field="cnt"
+                categoryField="user_name"
                 labels={{
                   visible: true,
                   content: labelContent,
@@ -478,7 +498,7 @@ const Main: React.FC = () => {
               title="날짜"
               cell={DateCell}
               footerCell={questionTotalFooterCell}
-              width="140px"
+              width="110px"
             />
             <GridColumn
               field="user_name"
@@ -487,6 +507,12 @@ const Main: React.FC = () => {
               width="120px"
             />
             <GridColumn field="title" title="제목" />
+            <GridColumn
+              field="status"
+              title="상태"
+              width={80}
+              cell={QnaStateCell}
+            />
           </Grid>
         </GridContainer>
       </GridContainerWrap>
@@ -545,7 +571,7 @@ const Main: React.FC = () => {
               title="작성일"
               cell={DateCell}
               footerCell={meetingTotalFooterCell}
-              width="140px"
+              width="110px"
             />
             <GridColumn field="title" title="제목" />
           </Grid>
