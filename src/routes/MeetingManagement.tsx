@@ -72,7 +72,7 @@ import {
   unsavedAttadatnumsState,
 } from "../store/atoms";
 import { TEditorHandle } from "../store/types";
-import { IAttachmentData, ICustData } from "../hooks/interfaces";
+import { IAttachmentData, ICustData, IPrjData } from "../hooks/interfaces";
 import ProjectsWindow from "../components/Windows/CommonWindows/ProjectsWindow";
 import CustomersWindow from "../components/Windows/CommonWindows/CustomersWindow";
 import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
@@ -117,6 +117,14 @@ a.code_name as name
 FROM comCodeMaster a 
 WHERE a.group_code = 'BA012_GST'
 AND use_yn = 'Y'`;
+
+const projectQueryStr = (custcd: string) => {
+  return `SELECT devmngnum + '|' + project as scalar_value
+FROM CR500T A
+WHERE (CASE WHEN ISNULL(A.findt, 'N') <> '' THEN 'Y' ELSE 'N' END) = 'N'
+AND custcd = '${custcd}'
+ORDER BY insert_time DESC`;
+};
 
 const valueCodesColumns = [
   {
@@ -169,6 +177,8 @@ const App = () => {
     unsavedAttadatnumsState,
   );
 
+  const [selectedDetailCustcd, setSelectedDetailCustcd] = useState("");
+
   const [custWindowVisible, setCustWindowVisible] = useState<boolean>(false);
 
   const [projectWindowVisible, setProjectWindowVisible] =
@@ -189,7 +199,7 @@ const App = () => {
     }));
   };
   const detailInputChange = (e: DatePickerChangeEvent | InputChangeEvent) => {
-    const { value, name = "" } = e.target;
+    const { value, name = "" }: any = e.target;
 
     setDetailData((prev) => ({
       ...prev,
@@ -204,6 +214,9 @@ const App = () => {
       ...prev,
       [name]: value,
     }));
+
+    // 프로젝트 자동세팅
+    if (value) fetchProject(value.custcd);
   };
 
   const search = () => {
@@ -487,8 +500,6 @@ const App = () => {
             devproject,
             remark2,
           } = firstRowData;
-
-          setMeetingnum(meetingnum);
 
           setDetailData({
             work_type: "U",
@@ -861,15 +872,15 @@ const App = () => {
         custnm: data.custnm,
       },
     }));
+
+    fetchProject(data.custcd);
   };
-  const setProjectData = (data: ICustData) => {
-    // setDetailData((prev: any) => ({
-    //   ...prev,
-    //   cust_data: {
-    //     custcd: data.custcd,
-    //     custnm: data.custnm,
-    //   },
-    // }));
+  const setProjectData = (data: IPrjData) => {
+    setDetailData((prev: any) => ({
+      ...prev,
+      devmngnum: data.devmngnum,
+      devproject: data.project,
+    }));
   };
 
   //그리드 푸터
@@ -959,8 +970,9 @@ const App = () => {
   };
 
   const deleteMeeting = async () => {
+    const splitMeetingnum = meetingnum.split("_");
     const selectedData = mainDataResult.data.find(
-      (row) => row.meetingnum === meetingnum,
+      (row) => row.meetingnum === splitMeetingnum[1],
     );
 
     if (!selectedData) return false;
@@ -1152,6 +1164,39 @@ const App = () => {
     if (data !== null && data.isSuccess === true) {
       const rows = data.tables[0].Rows;
       setCustomersState(rows);
+    } else {
+      console.log("[에러발생]");
+      console.log(data);
+    }
+  };
+  const fetchProject = async (custcd: string) => {
+    let data: any;
+
+    const bytes = require("utf8-bytes");
+    const convertedQueryStr = bytesToBase64(bytes(projectQueryStr(custcd)));
+
+    let query = {
+      query: convertedQueryStr,
+    };
+
+    try {
+      data = await processApi<any>("bizgst-query", query);
+    } catch (error) {
+      data = null;
+    }
+
+    if (data !== null && data.isSuccess === true) {
+      const rows = data.tables[0].Rows;
+      if (rows) {
+        const scalarValue = rows[0].scalar_value;
+        const splitValue = scalarValue.split("|");
+
+        setDetailData((prev) => ({
+          ...prev,
+          devmngnum: splitValue[0],
+          devproject: splitValue[1],
+        }));
+      }
     } else {
       console.log("[에러발생]");
       console.log(data);
@@ -1623,7 +1668,7 @@ const App = () => {
           <ProjectsWindow
             setVisible={setProjectWindowVisible}
             setData={setProjectData}
-            para={detailData.attdatnum}
+            para={{ cust_data: detailData.cust_data }}
           />
         )}
       </CodesContext.Provider>

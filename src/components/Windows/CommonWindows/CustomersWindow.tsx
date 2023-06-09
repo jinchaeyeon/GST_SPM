@@ -131,7 +131,7 @@ const KendoWindow = ({ setVisible, workType, setData, para }: IKendoWindow) => {
   const parameters = `SELECT custcd, custnm
   FROM BA020T 
   WHERE custcd LIKE '%${filters.custcd}%'
-  AND custnm LIKE '%${filters.custnm}%'
+  AND custnm LIKE '%${filters.custnm}%'  
   `;
   // AND custdiv LIKE '%${filters.custdiv}%'
   // AND (CASE WHEN useyn = 'Y' THEN '사용' ELSE '미사용' END) LIKE '${filters.useyn}%'

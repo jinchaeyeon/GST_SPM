@@ -29,6 +29,10 @@ export interface ICustData {
   compclass: string;
   ceonm: string;
 }
+export interface IPrjData {
+  devmngnum: string;
+  project: string;
+}
 export interface IItemData {
   itemcd: string;
   itemno: string;

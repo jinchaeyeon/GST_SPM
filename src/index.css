@@ -126,6 +126,9 @@ body {
   -webkit-print-color-adjust: exact;
 }
 
+.center {
+  text-align: center !important;
+}
 /**************** 작업일보 ****************/
 
 #ItemCostSheet {

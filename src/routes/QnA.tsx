@@ -1006,7 +1006,11 @@ const App = () => {
                     <th style={{ width: 0 }}>첨부파일</th>
                     <td style={{ width: "auto" }}>
                       <div className="filter-item-wrap">
-                        <Input name="attachment_q" value={detailData.files} />
+                        <Input
+                          name="attachment_q"
+                          value={detailData.files}
+                          className="readonly"
+                        />
                         <Button
                           icon="more-horizontal"
                           fillMode={"flat"}
@@ -1038,6 +1042,7 @@ const App = () => {
                         <Input
                           name="attachment_a"
                           value={detailData.answer_files}
+                          className="readonly"
                         />
                         <Button
                           icon="more-horizontal"

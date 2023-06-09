@@ -22,35 +22,33 @@ import {
   TitleContainer,
 } from "../../../CommonStyled";
 import { Input, RadioGroup } from "@progress/kendo-react-inputs";
-import { Iparameters } from "../../../store/types";
 import { Button } from "@progress/kendo-react-buttons";
-import { IWindowPosition, TCommonCodeData } from "../../../hooks/interfaces";
+import { IWindowPosition } from "../../../hooks/interfaces";
 import {
   chkScrollHandler,
   convertDateToStr,
   getCodeFromValue,
-  UseBizComponent,
 } from "../../CommonFunction";
 import { PAGE_SIZE, SELECTED_FIELD } from "../../CommonString";
-import BizComponentRadioGroup from "../../RadioGroups/BizComponentRadioGroup";
-import BizComponentComboBox from "../../ComboBoxes/BizComponentComboBox";
 import { useSetRecoilState } from "recoil";
 import { isLoading } from "../../../store/atoms";
 import { handleKeyPressSearch } from "../../CommonFunction";
-import { bytesToBase64 } from "byte-base64";
 import { DatePicker } from "@progress/kendo-react-dateinputs";
 import {
   ComboBoxChangeEvent,
   MultiColumnComboBox,
 } from "@progress/kendo-react-dropdowns";
+import DateCell from "../../Cells/DateCell";
+import { bytesToBase64 } from "byte-base64";
+import CenterCell from "../../Cells/CenterCell";
 
 type IKendoWindow = {
   setVisible(t: boolean): void;
   setData(data: object): void;
-  para?: string;
+  para?: any;
 };
 
-const DATA_ITEM_KEY = "customer_code";
+const DATA_ITEM_KEY = "devmngnum";
 
 const progressStatusData = [
   { value: "Y", label: "진행" },
@@ -64,6 +62,7 @@ const isStatus = [
 ];
 
 const KendoWindow = ({ setVisible, setData, para }: IKendoWindow) => {
+  const { cust_data } = para;
   const [position, setPosition] = useState<IWindowPosition>({
     left: 300,
     top: 100,
@@ -99,6 +98,8 @@ const KendoWindow = ({ setVisible, setData, para }: IKendoWindow) => {
   const filterRadioChange = (e: any) => {
     const { name, value } = e;
 
+    console.log("e");
+    console.log(e);
     setFilters((prev) => ({
       ...prev,
       [name]: value,
@@ -135,8 +136,8 @@ const KendoWindow = ({ setVisible, setData, para }: IKendoWindow) => {
   const [mainDataState, setMainDataState] = useState<State>({
     sort: [],
   });
+  const [usersData, setUsersData] = useState([]);
 
-  const [mainPgNum, setMainPgNum] = useState(1);
   const [mainDataResult, setMainDataResult] = useState<DataResult>(
     process([], mainDataState),
   );
@@ -151,9 +152,9 @@ const KendoWindow = ({ setVisible, setData, para }: IKendoWindow) => {
     from_date: from_date,
     to_date: new Date(),
     customer_code: "",
-    customer_name: "",
+    customer_name: cust_data ? cust_data.custnm : "",
     pjt_person: "",
-    status: "Y,N",
+    status: "N",
     project: "",
     progress_status: "%",
     devmngnum: "",
@@ -173,7 +174,7 @@ const KendoWindow = ({ setVisible, setData, para }: IKendoWindow) => {
       "@p_to_date": convertDateToStr(filters.to_date),
       "@p_customer_code": filters.customer_code,
       "@p_customer_name": filters.customer_name,
-      "@p_pjt_person": filters.pjt_person,
+      "@p_pjt_person": getCodeFromValue(filters.pjt_person, "user_id"),
       "@p_status": filters.status,
       "@p_project": filters.project,
       "@p_progress_status": filters.progress_status,
@@ -185,7 +186,8 @@ const KendoWindow = ({ setVisible, setData, para }: IKendoWindow) => {
 
   useEffect(() => {
     fetchMainGrid();
-  }, [mainPgNum]);
+    fetchUsers();
+  }, []);
 
   //요약정보 조회
   const fetchMainGrid = async () => {
@@ -205,7 +207,7 @@ const KendoWindow = ({ setVisible, setData, para }: IKendoWindow) => {
       if (totalRowCnt) {
         setMainDataResult((prev) => {
           return {
-            data: [...prev.data, ...rows],
+            data: rows,
             total: totalRowCnt,
           };
         });
@@ -218,14 +220,7 @@ const KendoWindow = ({ setVisible, setData, para }: IKendoWindow) => {
 
   //그리드 리셋
   const resetAllGrid = () => {
-    setMainPgNum(1);
     setMainDataResult(process([], mainDataState));
-  };
-
-  //스크롤 핸들러 => 한번에 pageSize만큼 조회
-  const onScrollHandler = (event: GridEvent) => {
-    if (chkScrollHandler(event, mainPgNum, PAGE_SIZE))
-      setMainPgNum((prev) => prev + 1);
   };
 
   //그리드의 dataState 요소 변경 시 => 데이터 컨트롤에 사용되는 dataState에 적용
@@ -246,7 +241,7 @@ const KendoWindow = ({ setVisible, setData, para }: IKendoWindow) => {
 
   const onConfirmClick = (props: any) => {
     const rowData = mainDataResult.data.find(
-      (row: any) => row.customer_code === Object.keys(selectedState)[0],
+      (row: any) => row[DATA_ITEM_KEY] === Object.keys(selectedState)[0],
     );
 
     // 부모로 데이터 전달, 창 닫기
@@ -268,7 +263,11 @@ const KendoWindow = ({ setVisible, setData, para }: IKendoWindow) => {
   //그리드 푸터
   const mainTotalFooterCell = (props: GridFooterCellProps) => {
     return (
-      <td colSpan={props.colSpan} style={props.style}>
+      <td
+        colSpan={props.colSpan}
+        style={props.style}
+        className="k-grid-footer-sticky"
+      >
         총 {mainDataResult.total}건
       </td>
     );
@@ -313,6 +312,51 @@ const KendoWindow = ({ setVisible, setData, para }: IKendoWindow) => {
       width: 150,
     },
   ];
+  const userColumns = [
+    {
+      field: "user_name",
+      header: "담당자명",
+      width: 150,
+    },
+  ];
+
+  const usersQueryStr = `SELECT user_id, user_name FROM sysUserMaster WHERE rtrchk <> 'Y'`;
+
+  const fetchUsers = async () => {
+    let data: any;
+
+    const bytes = require("utf8-bytes");
+    const convertedQueryStr = bytesToBase64(bytes(usersQueryStr));
+
+    let query = {
+      query: convertedQueryStr,
+    };
+
+    try {
+      data = await processApi<any>("bizgst-query", query);
+    } catch (error) {
+      data = null;
+    }
+
+    if (data !== null && data.isSuccess === true) {
+      const rows = data.tables[0].Rows;
+      setUsersData(rows);
+    } else {
+      console.log("[에러발생]");
+      console.log(data);
+    }
+  };
+
+  const getUserName = (rowUserId: string) => {
+    if (!usersData) return "";
+
+    const data: any = usersData.find((item: any) => item.user_id === rowUserId);
+    if (data) {
+      return data.user_name;
+    } else {
+      return "";
+    }
+  };
   return (
     <Window
       title={"프로젝트 마스터"}
@@ -379,7 +423,12 @@ const KendoWindow = ({ setVisible, setData, para }: IKendoWindow) => {
                   name="progress_status"
                   data={progressStatusData}
                   value={filters.progress_status}
-                  onChange={filterRadioChange}
+                  onChange={(e) =>
+                    setFilters((prev) => ({
+                      ...prev,
+                      progress_status: e.value,
+                    }))
+                  }
                   layout="horizontal"
                   className="required"
                 ></RadioGroup>
@@ -402,7 +451,12 @@ const KendoWindow = ({ setVisible, setData, para }: IKendoWindow) => {
                   name="status"
                   data={isStatus}
                   value={filters.status}
-                  onChange={filterRadioChange}
+                  onChange={(e) =>
+                    setFilters((prev) => ({
+                      ...prev,
+                      status: e.value,
+                    }))
+                  }
                   layout="horizontal"
                 ></RadioGroup>
               </td>
@@ -420,11 +474,11 @@ const KendoWindow = ({ setVisible, setData, para }: IKendoWindow) => {
               <th>사업진행담당</th>
               <td>
                 <MultiColumnComboBox
-                  name="date_type"
-                  data={dateTypeState}
-                  value={filters.date_type}
-                  columns={dateTypeColumns}
-                  textField={"name"}
+                  name="pjt_person"
+                  data={usersData}
+                  value={filters.pjt_person}
+                  columns={userColumns}
+                  textField={"user_name"}
                   onChange={filterComboBoxChange}
                 />
               </td>
@@ -439,6 +493,9 @@ const KendoWindow = ({ setVisible, setData, para }: IKendoWindow) => {
             mainDataResult.data.map((row) => ({
               ...row,
               [SELECTED_FIELD]: selectedState[idGetter(row)], //선택된 데이터
+              pjtperson: getUserName(row.pjtperson),
+              pjtmanager: getUserName(row.pjtmanager),
+              is_finished: row.is_finished === "Y" ? "●" : "",
             })),
             mainDataState,
           )}
@@ -455,7 +512,6 @@ const KendoWindow = ({ setVisible, setData, para }: IKendoWindow) => {
           //스크롤 조회 기능
           fixedScroll={true}
           total={mainDataResult.total}
-          onScroll={onScrollHandler}
           //정렬기능
           sortable={true}
           onSortChange={onMainSortChange}
@@ -466,21 +522,54 @@ const KendoWindow = ({ setVisible, setData, para }: IKendoWindow) => {
           //더블클릭
           onRowDoubleClick={onRowDoubleClick}
         >
-          <GridColumn field="custnm" title="업체" width="200px" locked={true} />
-          <GridColumn field="custabbr" title="차수" width="70" locked={true} />
-          <GridColumn field="project" title="프로젝트" width="140px" />
+          <GridColumn
+            field="custnm"
+            title="업체"
+            width="180px"
+            locked={true}
+            footerCell={mainTotalFooterCell}
+          />
+          <GridColumn
+            field="number"
+            title="차수"
+            width="50"
+            locked={true}
+            className="center"
+          />
+          <GridColumn field="project" title="프로젝트" width="180px" />
           <GridColumn
             field="cotracdt"
             title="사업시작일(계약일)"
-            width="120px"
+            width="110px"
+            cell={DateCell}
           />
-          <GridColumn field="finexpdt" title="사업종료일" width="120px" />
-          <GridColumn field="is_finished" title="완료" width="70" />
+          <GridColumn
+            field="finexpdt"
+            title="사업종료일"
+            width="110px"
+            cell={DateCell}
+          />
+          <GridColumn
+            field="is_finished"
+            title="완료"
+            width="70"
+            cell={CenterCell}
+          />
           <GridColumn field="pjtperson" title="사업진행담당" width="110px" />
           <GridColumn field="pjtmanager" title="담당PM" width="110px" />
           <GridColumn field="remark" title="비고" width="200px" />
-          <GridColumn field="midchkdt" title="중간점검일" width="120px" />
-          <GridColumn field="finchkdt" title="최종점검일" width="120px" />
+          <GridColumn
+            field="midchkdt"
+            title="중간점검일"
+            width="110px"
+            cell={DateCell}
+          />
+          <GridColumn
+            field="finchkdt"
+            title="최종점검일"
+            width="110px"
+            cell={DateCell}
+          />
           <GridColumn field="ceonm" title="개발관리번호" width="120px" />
         </Grid>
       </GridContainer>
