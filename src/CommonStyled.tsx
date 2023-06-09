@@ -1,6 +1,9 @@
 import styled from "styled-components";
 import { CLOSED_GNV_WIDTH, GNV_WIDTH } from "./components/CommonString";
 import logoSrc from "./img/logo.png";
+import loginBgSrc from "./img/login_bg.png";
+import loginLogoCscSrc from "./img/login_logo_csc.png";
+import loginLogoSpmSrc from "./img/login_logo_spm.png";
 import checkedStsSrc from "./img/checked_16.png";
 import processStsSrc from "./img/process_16.png";
 import stopStsSrc from "./img/stop_16.png";
@@ -464,15 +467,34 @@ export const FieldWrap = styled.div<TFieldWrap>`
   }
 `;
 
+export const LoginImg = styled.div`
+  background: url(${loginBgSrc});
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center right;
+  height: 100%;
+  width: 50%;
+  top: 0;
+  right: 0;
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  @media (max-width: 768px) {
+    display: none;
+  }
+`;
 export const LoginBox = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
   height: 100vh;
-  padding-bottom: 50px;
+  width: 50%;
+  border-top-left-radius: 300px;
+  background-color: #fff;
 
   > form {
-    background-color: #f7f7f7;
     width: 400px;
     padding: 50px;
     border-radius: 5px;
@@ -480,6 +502,18 @@ export const LoginBox = styled.div`
   .k-button.login-btn {
     width: 100%;
     margin-top: 40px;
+    height: 48px;
+    font-size: 18px;
+    font-weight: 600;
+    background-color: rgb(122 118 206);
+    border-color: rgb(122 118 206);
+  }
+  .k-input {
+    height: 44px;
+    padding-right: 20px;
+    padding-left: 20px;
+    font-size: 14px;
+    border-color: rgba(0, 0, 0, 0.2);
   }
   .k-form-horizontal .k-form-field > .k-label,
   .k-form-horizontal .k-form-field > kendo-label,
@@ -489,6 +523,9 @@ export const LoginBox = styled.div`
   }
   .k-form-horizontal .k-form-field-wrap {
     max-width: calc(75% - 10px) !important;
+  }
+  @media (max-width: 768px) {
+    width: 100%;
   }
 `;
 
@@ -775,11 +812,21 @@ export const MenuSearchBox = styled.div`
   }
 `;
 
-export const LoginAppName = styled(AppName)`
-  border-right: none;
+type TLoginAppName = {
+  type: "SPM" | "CSC";
+};
+export const LoginAppName = styled.h1<TLoginAppName>`
   background-color: transparent;
   font-size: 22px;
   gap: 5px;
+
+  background: url(${(props) =>
+    props.type === "SPM" ? loginLogoSpmSrc : loginLogoCscSrc});
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center right;
+  width: 502px;
+  height: 355px;
 `;
 
 export const TopTitle = styled.div`

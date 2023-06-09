@@ -94,7 +94,7 @@ const TextInputWithValidation = (fieldRenderProps: FieldRenderProps) => {
 
 //Grid Cell 수정모드에서 사용되는 Numeric Text Input
 export const NumericTextBoxWithValidation = (
-  fieldRenderProps: FieldRenderProps
+  fieldRenderProps: FieldRenderProps,
 ) => {
   const {
     onBlur,
@@ -411,6 +411,20 @@ export const FormInput = (fieldRenderProps: FieldRenderProps) => {
       </Label>
       <div className={"k-form-field-wrap"}>
         <Input valid={valid} id={id} {...others} />
+      </div>
+    </FieldWrapper>
+  );
+};
+
+//Login 화면 Form Field에서 사용되는 Input
+export const LoginFormInput = (fieldRenderProps: FieldRenderProps) => {
+  const { validationMessage, visited, label, id, valid, ...others } =
+    fieldRenderProps;
+
+  return (
+    <FieldWrapper>
+      <div className={"k-form-field-wrap"}>
+        <Input valid={valid} id={id} {...others} placeholder={label} />
       </div>
     </FieldWrapper>
   );

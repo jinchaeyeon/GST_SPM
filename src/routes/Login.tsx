@@ -1,15 +1,16 @@
 import { Button } from "@progress/kendo-react-buttons";
 import { Form, Field, FormElement } from "@progress/kendo-react-form";
-import { KeyboardEvent, useCallback, useState } from "react";
+import { KeyboardEvent, useCallback, useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
 import { passwordExpirationInfoState, loginResultState } from "../store/atoms";
 import { useApi } from "../hooks/api";
 import { useSetRecoilState } from "recoil";
-import { FormInput, FormComboBox } from "../components/Editors";
-import { LoginAppName, LoginBox, Logo } from "../CommonStyled";
+import { FormInput, FormComboBox, LoginFormInput } from "../components/Editors";
+import { LoginAppName, LoginBox, LoginImg, Logo } from "../CommonStyled";
 import { UseGetIp } from "../components/CommonFunction";
 import { isLoading } from "../store/atoms";
 import Loading from "../components/Loading";
+import Loader from "../components/Loader";
 // import cookie from "react-cookies";
 
 interface IFormData {
@@ -25,6 +26,16 @@ const Login: React.FC = () => {
   const setLoginResult = useSetRecoilState(loginResultState);
   const setPwExpInfo = useSetRecoilState(passwordExpirationInfoState);
   const setLoading = useSetRecoilState(isLoading);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Kendo Theme 적용하는데 간헐적으로 오류 발생하여 0.2초후 렌더링되도록 처리함
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 200);
+
+    return () => clearTimeout(timer); // 컴포넌트가 언마운트될 때 타이머를 제거
+  }, []);
 
   const handleSubmit = (data: { [name: string]: any }) => {
     processLogin(data);
@@ -42,7 +53,7 @@ const Login: React.FC = () => {
             companyCode: "SPM",
             userId: formData.userId,
             password: formData.password,
-          }
+          },
         );
 
         if (typeof para.companyCode !== "string") {
@@ -98,37 +109,44 @@ const Login: React.FC = () => {
         alert(e.message);
       }
     },
-    []
+    [],
   );
 
+  if (!isLoaded) {
+    return <Loader />;
+  }
   return (
-    <LoginBox>
-      <Form
-        onSubmit={handleSubmit}
-        render={() => (
-          <FormElement horizontal={true}>
-            <LoginAppName>
-              <Logo size="36px" />
-              GST SPM
-            </LoginAppName>
-            <fieldset className={"k-form-fieldset"}>
-              <Field name={"userId"} label={"ID"} component={FormInput} />
-              <Field
-                name={"password"}
-                label={"PASSWORD"}
-                type={"password"}
-                component={FormInput}
-              />
-            </fieldset>
-            <Button className="login-btn" themeColor={"primary"} size="large">
-              LOGIN
-            </Button>
-          </FormElement>
-        )}
-      ></Form>
-
-      <Loading />
-    </LoginBox>
+    <div style={{ backgroundColor: "#2e87b7" }}>
+      <LoginBox>
+        <Form
+          onSubmit={handleSubmit}
+          render={() => (
+            <FormElement>
+              <fieldset className={"k-form-fieldset"}>
+                <Field
+                  name={"userId"}
+                  label={"ID"}
+                  component={LoginFormInput}
+                />
+                <Field
+                  name={"password"}
+                  label={"Password"}
+                  type={"password"}
+                  component={LoginFormInput}
+                />
+              </fieldset>
+              <Button className="login-btn" themeColor={"primary"} size="large">
+                Login
+              </Button>
+            </FormElement>
+          )}
+        ></Form>
+        <Loading />
+      </LoginBox>
+      <LoginImg>
+        <LoginAppName type="CSC"></LoginAppName>
+      </LoginImg>
+    </div>
   );
 };
 export default Login;
