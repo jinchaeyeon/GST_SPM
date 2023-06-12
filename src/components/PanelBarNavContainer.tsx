@@ -235,10 +235,12 @@ const PanelBarNavContainer = (props: any) => {
   const onSelect = (event: PanelBarSelectEventArguments) => {
     const { route, className = "" } = event.target.props;
 
-    if (route && route.includes("Home")) {
-      switcher({ theme: "dark" });
-    } else {
-      switcher({ theme: "light" });
+    if (route) {
+      if (route.includes("Home")) {
+        switcher({ theme: "dark" });
+      } else {
+        switcher({ theme: "light" });
+      }
     }
     props.history.push(route);
 
@@ -574,7 +576,6 @@ const PanelBarNavContainer = (props: any) => {
         <Gnv isMobileMenuOpend={isMobileMenuOpend} theme={currentTheme}>
           <AppName onClick={() => setIsMenuOpend(false)} theme={currentTheme}>
             <Logo size="32px" />
-            GST SPM
           </AppName>
           {prgMenus && (
             <MenuSearchBox>

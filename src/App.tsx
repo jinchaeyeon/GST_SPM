@@ -139,15 +139,8 @@ input.readonly {
 }
 
 // 그리드 행높이 조절 
-.k-grid tbody tr,
-.k-grid tbody tr td,
-.k-grid td.k-state-selected, 
-.k-grid td.k-selected, 
-.k-grid tr.k-state-selected > td, 
-.k-grid tr.k-selected > td{
-  height: 34px;
-  padding-top: 0;
-  padding-bottom: 0;
+.k-grid tbody tr {
+  height: 36px;
 }
 
 .k-tabstrip > .k-content.k-active,

@@ -21,7 +21,7 @@ function Loader({ loading }: { loading?: boolean }) {
           transform: "translate(-50%, -50%)",
         }}
       >
-        <ClipLoader color="#2184bb" size={100} loading={loading ?? true} />
+        <ClipLoader color="#8d92ce" size={100} loading={loading ?? true} />
       </div>
     </div>
   );

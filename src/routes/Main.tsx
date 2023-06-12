@@ -389,7 +389,7 @@ const Main: React.FC = () => {
   }
 
   return (
-    <GridContainerWrap style={{ height: "100%" }}>
+    <GridContainerWrap style={{ height: "100%", marginTop: "20px" }}>
       <GridContainerWrap
         flexDirection="column"
         style={{ gap: "20px", width: `30%` }}

@@ -48,8 +48,8 @@ export const MainWorkStartEndContainer = styled.div`
 
 export const TextContainer = styled.div`
   display: flex;
-  border: solid 1px #2289c3;
-  color: #2289c3;
+  border: solid 1px #8d92ce;
+  color: #8d92ce;
   border-radius: 50px;
   width: 180px;
   line-height: 30px;
@@ -365,7 +365,7 @@ export const GridTitle = styled.h3<TGridTitle>`
 `;
 
 export const PrimaryP = styled.p`
-  color: #2289c3;
+  color: #8d92ce;
 `;
 
 export const PortraitPrint = styled.div`
@@ -611,9 +611,9 @@ export const InfoList = styled.ul`
 
   .big-input {
     height: 50px;
-    border: solid 1px #2289c3;
+    border: solid 1px #8d92ce;
     border-radius: 10px;
-    color: #2289c3;
+    color: #8d92ce;
     text-align: right;
     padding-left: 15px;
     font-size: 18px;
@@ -647,8 +647,8 @@ export const NumberKeypadRow = styled.div`
   justify-content: space-between;
 `;
 export const NumberKeypadCell = styled.div`
-  border: solid 1px #2289c3;
-  color: #2289c3;
+  border: solid 1px #8d92ce;
+  color: #8d92ce;
   font-size: 20px;
   text-align: center;
   border-radius: 5px;
@@ -660,15 +660,15 @@ export const NumberKeypadCell = styled.div`
   justify-content: center;
   cursor: pointer;
   :hover {
-    background-color: #2289c3;
+    background-color: #8d92ce;
     color: #ffffff;
   }
   :focus {
-    background-color: #2289c3;
+    background-color: #8d92ce;
     color: #ffffff;
   }
   :active {
-    background-color: #2289c3;
+    background-color: #8d92ce;
     color: #ffffff;
   }
 `;
@@ -712,7 +712,7 @@ export const Gnv = styled.div<TGnv>`
   .k-panelbar-item-icon.k-icon.k-i-gear,
   .k-panelbar-item-icon.k-icon.k-i-star,
   .k-panelbar-item-icon.k-icon.k-i-star-outline {
-    color: #2289c3;
+    color: #8d92ce;
   }
 
   .k-selected > .k-panelbar-item-icon.k-icon.k-i-star-outline {
@@ -772,8 +772,7 @@ export const Content = styled.div<ContentType>`
 
 export const PageWrap = styled.div`
   padding: 0 15px;
-  height: calc(100% - 20px);
-  padding-top: 20px;
+  height: calc(100% - 40px);
 `;
 
 type TAppName = {
@@ -781,7 +780,7 @@ type TAppName = {
 };
 export const AppName = styled.h1<TAppName>`
   font-size: 20px;
-  color: #2289c3;
+  color: #8d92ce;
   font-weight: 400;
   /* padding: 10px 0; */
   height: 50px;
@@ -873,8 +872,9 @@ export const Logo = styled.div<TLogo>`
   background: url(${logoSrc});
   background-size: contain;
   background-repeat: no-repeat;
-  width: ${(props) => props.size};
-  height: ${(props) => props.size};
+  width: 90%;
+  height: 32px;
+  /* ${(props) => props.size}; */
   background-position: center;
 `;
 
@@ -965,6 +965,6 @@ export const TextBox = styled.div`
     color: #ffe162;
   }
   .blue {
-    color: #2289c3;
+    color: #4b5ffa;
   }
 `;
