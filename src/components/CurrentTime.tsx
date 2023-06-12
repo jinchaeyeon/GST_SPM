@@ -15,10 +15,10 @@ const CurrentTime = () => {
   }, []);
 
   return (
-    <div>
-      {time.toLocaleDateString("ko-KR")} (
-      {["일", "월", "화", "수", "목", "금", "토"][time.getDay()]}){" "}
-      {time.toLocaleTimeString("ko-KR")}
+    <div className="time">
+      {time.toLocaleDateString("ko-KR")}{" "}
+      {["일", "월", "화", "수", "목", "금", "토"][time.getDay()]} <br />
+      <span>{time.toLocaleTimeString("ko-KR")}</span>
     </div>
   );
 };

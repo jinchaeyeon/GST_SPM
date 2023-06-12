@@ -3,7 +3,6 @@ import {
   Grid,
   GridColumn,
   GridDataStateChangeEvent,
-  GridEvent,
   GridSelectionChangeEvent,
   GridFooterCellProps,
   GridRowDoubleClickEvent,
@@ -25,8 +24,7 @@ import {
 import { useRecoilState } from "recoil";
 import { useApi } from "../hooks/api";
 import { filterValueState, loginResultState } from "../store/atoms";
-import { chkScrollHandler } from "../components/CommonFunction";
-import { GAP, PAGE_SIZE, SELECTED_FIELD } from "../components/CommonString";
+import { SELECTED_FIELD } from "../components/CommonString";
 import CenterCell from "../components/Cells/CenterCell";
 import { useThemeSwitcher } from "react-css-theme-switcher";
 import {
@@ -73,15 +71,16 @@ const Main: React.FC = () => {
   const [filterValue, setFilterValue] = useRecoilState(filterValueState);
 
   const userId = loginResult ? loginResult.userId : "";
+  const userName = loginResult ? loginResult.userName : "";
   const { switcher, themes, currentTheme = "" } = useThemeSwitcher();
 
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Kendo Chart에 Theme 적용하는데 간헐적으로 오류 발생하여 0.5초후 렌더링되도록 처리함 (메인메뉴 접속할때마다 적용)
+  // Kendo Chart에 Theme 적용하는데 간헐적으로 오류 발생하여 0.7초후 렌더링되도록 처리함 (메인메뉴 접속할때마다 적용)
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoaded(true);
-    }, 500);
+    }, 700);
 
     return () => clearTimeout(timer); // 컴포넌트가 언마운트될 때 타이머를 제거
   }, []);
@@ -300,7 +299,17 @@ const Main: React.FC = () => {
 
   return (
     <GridContainer style={{ paddingBottom: "20px" }}>
-      <TitleContainer>
+      <TitleContainer
+        style={{
+          minHeight: "80px",
+          fontSize: "24px",
+          paddingTop: "5px",
+        }}
+      >
+        <p className="small" style={{ color: "#fff" }}>
+          <span style={{ fontWeight: 900 }}>{userName}</span> 님, 좋은 하루
+          되세요
+        </p>
         <Title></Title>
         <ButtonContainer>
           <Button
@@ -311,11 +320,16 @@ const Main: React.FC = () => {
           ></Button>
         </ButtonContainer>
       </TitleContainer>
-      <GridContainerWrap height={"100%"}>
-        <GridContainer width="20%" style={{ gap: "20px" }} type="mainLeft">
-          <TextBox>
-            <p className="small">좋은 하루 되세요.</p>
-            <p className="medium">
+      <GridContainerWrap height="calc(100% - 80px)">
+        <GridContainer width="15%" style={{ gap: "15px" }} type="mainLeft">
+          <TextBox
+            style={{
+              minHeight: 0,
+              height: "550px",
+              borderRadius: "10px",
+            }}
+          >
+            <p className="medium" style={{ marginTop: "0" }}>
               <CurrentTime />
             </p>
           </TextBox>
@@ -348,7 +362,7 @@ const Main: React.FC = () => {
           </TextBox>
         </GridContainer>
 
-        <GridContainer width="80%">
+        <GridContainer width="85%" style={{ gap: "15px" }}>
           <GridContainerWrap height={"50%"}>
             <GridContainer width="40%">
               <Chart style={{ height: "100%" }}>

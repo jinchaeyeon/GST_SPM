@@ -328,7 +328,7 @@ export const GridContainer = styled.div<TGridContainer>`
   margin-bottom: ${(props) => (props.margin ? props.margin.bottom ?? "" : "")};
   margin-left: ${(props) => (props.margin ? props.margin.left ?? "" : "")};
   margin-right: ${(props) => (props.margin ? props.margin.right ?? "" : "")};
-  min-width: ${(props) => (props.type === "mainLeft" ? "400px" : "auto")};
+  min-width: ${(props) => (props.type === "mainLeft" ? "360px" : "auto")};
 
   .k-grid .k-command-cell {
     text-align: center;
@@ -690,7 +690,7 @@ export const Wrapper = styled.div<TWrapper>`
   width: 100%;
   //overflow: ${(props) => (props.isMobileMenuOpend ? "hidden" : "auto")};
   background-color: ${(props) =>
-    props.theme === "dark" ? "#2b2b2b" : "#fffff"};
+    props.theme === "dark" ? "#181818" : "#fffff"};
 `;
 
 type TGnv = {
@@ -702,7 +702,8 @@ export const Gnv = styled.div<TGnv>`
   text-align: center;
 
   min-height: 100vh;
-  background-color: ${(props) => (props.theme === "dark" ? "#2b2b2b" : "#fff")};
+  background-color: ${(props) =>
+    props.theme === "dark" ? "rgb(16, 16,16)" : "#fff"};
 
   .logout span {
     color: #656565;
@@ -971,6 +972,14 @@ export const TextBox = styled.div`
     font-size: 64px;
     margin-top: 20px;
     font-weight: 700;
+  }
+  .time {
+    text-align: center;
+    font-weight: 300;
+    line-height: 35px;
+  }
+  .time span {
+    margin: 0;
   }
 
   .gray {

@@ -32,7 +32,7 @@ const Login: React.FC = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoaded(true);
-    }, 200);
+    }, 500);
 
     return () => clearTimeout(timer); // 컴포넌트가 언마운트될 때 타이머를 제거
   }, []);
