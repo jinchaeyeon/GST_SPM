@@ -13,9 +13,9 @@ export const TitleContainer = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 5px 0;
+  padding-top: 10px;
+  padding-bottom: 5px;
   min-height: 40px;
-  margin-top: 5px;
 
   .iot-title {
     font-size: 26px;
@@ -287,6 +287,7 @@ type TGridContainer = {
   width?: string;
   inTab?: boolean;
   margin?: TMargin;
+  type?: string;
 };
 
 type TMargin = {
@@ -322,11 +323,12 @@ export const GridContainer = styled.div<TGridContainer>`
         "px - 150px)" //150: 기본 마진
       : ""};
 
-  height: ${(props) => props.height};
+  height: ${(props) => props.height ?? "100%"};
   margin-top: ${(props) => (props.margin ? props.margin.top ?? "" : "")};
   margin-bottom: ${(props) => (props.margin ? props.margin.bottom ?? "" : "")};
   margin-left: ${(props) => (props.margin ? props.margin.left ?? "" : "")};
   margin-right: ${(props) => (props.margin ? props.margin.right ?? "" : "")};
+  min-width: ${(props) => (props.type === "mainLeft" ? "400px" : "auto")};
 
   .k-grid .k-command-cell {
     text-align: center;
@@ -352,6 +354,7 @@ export const GridContainer = styled.div<TGridContainer>`
 
   @media (max-width: 768px) {
     width: auto;
+    min-width: auto;
   }
 `;
 
@@ -699,8 +702,7 @@ export const Gnv = styled.div<TGnv>`
   text-align: center;
 
   min-height: 100vh;
-  background-color: ${(props) =>
-    props.theme === "dark" ? "#2b2b2b" : "#fffff"};
+  background-color: ${(props) => (props.theme === "dark" ? "#2b2b2b" : "#fff")};
 
   .logout span {
     color: #656565;
@@ -772,7 +774,11 @@ export const Content = styled.div<ContentType>`
 
 export const PageWrap = styled.div`
   padding: 0 15px;
-  height: calc(100% - 40px);
+  height: 100vh;
+
+  @media (max-width: 768px) {
+    height: auto;
+  }
 `;
 
 type TAppName = {
@@ -792,6 +798,12 @@ export const AppName = styled.h1<TAppName>`
   border-right: ${(props) =>
     props.theme === "dark" ? "none" : "1px solid #ebebeb"};
   cursor: pointer;
+
+  @media (max-width: 768px) {
+    border-right: 0;
+    background-color: ${(props) =>
+      props.theme === "dark" ? "#2b2b2b" : "#fff"};
+  }
 `;
 
 export const MenuSearchBox = styled.div`
@@ -872,7 +884,7 @@ export const Logo = styled.div<TLogo>`
   background: url(${logoSrc});
   background-size: contain;
   background-repeat: no-repeat;
-  width: 90%;
+  width: 130px;
   height: 32px;
   /* ${(props) => props.size}; */
   background-position: center;
@@ -941,23 +953,29 @@ export const TextBox = styled.div`
 
   p span {
     font-weight: 900;
-    font-size: 22px;
+    font-size: 28px;
     color: #fff;
     margin-left: 5px;
     vertical-align: middle;
   }
 
+  .small {
+    font-size: 18px;
+  }
   .medium {
-    font-size: 28px;
+    font-size: 24px;
     margin-top: 10px;
     font-weight: 700;
   }
   .large {
-    font-size: 60px;
-    margin-top: 10px;
+    font-size: 64px;
+    margin-top: 20px;
     font-weight: 700;
   }
 
+  .gray {
+    color: #b6b6b6;
+  }
   .green {
     color: #4cd180;
   }

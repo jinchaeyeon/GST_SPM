@@ -664,7 +664,7 @@ const PanelBarNavContainer = (props: any) => {
         <div
           style={{
             paddingTop: "10px",
-            borderRight: "solid 1px #ebebeb",
+            borderRight: "solid 1px #454545",
             height: "100vh",
           }}
         >
@@ -679,7 +679,7 @@ const PanelBarNavContainer = (props: any) => {
       <Content isMenuOpen={isMenuOpend}>
         <TopTitle>
           <div style={{ width: "30px" }}></div>
-          <AppName>
+          <AppName theme={currentTheme}>
             <Logo size="32px" />
           </AppName>
           <Button

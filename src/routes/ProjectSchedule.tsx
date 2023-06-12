@@ -25,6 +25,7 @@ import { useApi } from "../hooks/api";
 import { Iparameters } from "../store/types";
 import {
   convertDateToStrWithTime2,
+  getGridItemChangedData,
   handleKeyPressSearch,
   UseGetValueFromSessionItem,
   UseParaPc,
@@ -33,6 +34,8 @@ import {
   ButtonContainer,
   FilterBox,
   FilterBoxWrap,
+  GridContainer,
+  GridContainerWrap,
   Title,
   TitleContainer,
 } from "../CommonStyled";
@@ -40,6 +43,23 @@ import { DatePicker } from "@progress/kendo-react-dateinputs";
 import { Input, RadioGroup } from "@progress/kendo-react-inputs";
 import { Button } from "@progress/kendo-react-buttons";
 import { ComboBox, MultiColumnComboBox } from "@progress/kendo-react-dropdowns";
+import {
+  Grid,
+  GridColumn,
+  GridDataStateChangeEvent,
+  GridFooterCellProps,
+  GridItemChangeEvent,
+  GridSelectionChangeEvent,
+  GridToolbar,
+  getSelectedState,
+} from "@progress/kendo-react-grid";
+import { EDIT_FIELD, SELECTED_FIELD } from "../components/CommonString";
+import { DataResult, State, process } from "@progress/kendo-data-query";
+import { getter } from "@progress/kendo-react-common";
+import { CellRender, RowRender } from "../components/Renderers/Renderers";
+import DateCell from "../components/Cells/DateCell";
+import NameCell from "../components/Cells/NameCell";
+import NumberCell from "../components/Cells/NumberCell";
 
 type TSavedPara = {
   work_type: "N" | "U" | "D";
@@ -85,7 +105,11 @@ const scaleTypes = [
   { value: "weeks", label: "주별" },
   { value: "days", label: "일별" },
 ];
-export type GanttScaleType =
+const viewTypes = [
+  { value: "Scheduler", label: "Scheduler" },
+  { value: "Grid", label: "Grid" },
+];
+type GanttScaleType =
   | "auto"
   | "minutes"
   | "hours"
@@ -95,6 +119,8 @@ export type GanttScaleType =
   | "months"
   | "quarters"
   | "years";
+
+const DATA_ITEM_KEY = "id";
 
 function App() {
   const processApi = useApi();
@@ -107,10 +133,24 @@ function App() {
   const [dependency, setDependency] = useState<TDependency[]>([]);
   const [resource, setResource] = useState<TResource[]>([]);
 
+  const [gridDataState, setGridDataState] = useState<State>({
+    sort: [],
+  });
+  const [gridData, setGridData] = useState<DataResult>(
+    process([], gridDataState),
+  );
+
+  const [gridSelectedState, setGridSelectedState] = useState<{
+    [id: string]: boolean | number[];
+  }>({});
+
+  const gridIdGetter = getter(DATA_ITEM_KEY);
+
   const [projectsData, setProjectsData] = useState<TTask[]>([]);
   const [projectValue, setProjectValue] = useState<any>(null);
 
   const [scale, setScale] = useState<GanttScaleType>("weeks");
+  const [view, setView] = useState<"Scheduler" | "Grid">("Scheduler");
 
   const onDependencyInserted = (e: DependencyInsertedEvent) => {
     const { values } = e;
@@ -277,6 +317,7 @@ function App() {
       }));
       // 일정 데이터
       const childRows: TTask[] = data.tables[1].Rows.map((row: any) => ({
+        ...row,
         id: getIntegerForString(row.guid),
         parentId: getIntegerForString(row.project_itemcd),
         title: row.title,
@@ -295,9 +336,10 @@ function App() {
           predecessorId: getIntegerForString(row.parent_guid),
           successorId: getIntegerForString(row.guid),
           type: 0,
-        })
+        }),
       );
 
+      setGridData(process(childRows, gridDataState));
       setTask(taskRows);
       setDependency(dependancyRows);
     }
@@ -434,6 +476,149 @@ function App() {
     }
   };
 
+  const onGridDataStateChange = (event: GridDataStateChangeEvent) => {
+    setGridDataState(event.dataState);
+  };
+
+  const onGridSelectionChange = (event: GridSelectionChangeEvent) => {
+    const newSelectedState = getSelectedState({
+      event,
+      selectedState: gridSelectedState,
+      dataItemKey: DATA_ITEM_KEY,
+    });
+    setGridSelectedState(newSelectedState);
+  };
+
+  const onGridItemChange = (event: GridItemChangeEvent) => {
+    getGridItemChangedData(event, gridData, setGridData, DATA_ITEM_KEY);
+  };
+
+  const enterEdit = (dataItem: any, field: string) => {
+    const newData = gridData.data.map((item) =>
+      item[DATA_ITEM_KEY] === dataItem[DATA_ITEM_KEY]
+        ? {
+            ...item,
+            rowstatus: item.rowstatus === "N" ? "N" : "U",
+            [EDIT_FIELD]: field,
+          }
+        : {
+            ...item,
+            [EDIT_FIELD]: undefined,
+          },
+    );
+
+    setGridData((prev) => {
+      return {
+        data: newData,
+        total: prev.total,
+      };
+    });
+  };
+
+  const exitEdit = () => {
+    const newData = gridData.data.map((item) => ({
+      ...item,
+      [EDIT_FIELD]: undefined,
+    }));
+
+    setGridData((prev) => {
+      return {
+        data: newData,
+        total: prev.total,
+      };
+    });
+  };
+
+  const customCellRender = (td: any, props: any) => (
+    <CellRender
+      originalProps={props}
+      td={td}
+      enterEdit={enterEdit}
+      editField={EDIT_FIELD}
+    />
+  );
+
+  const customRowRender = (tr: any, props: any) => (
+    <RowRender
+      originalProps={props}
+      tr={tr}
+      exitEdit={exitEdit}
+      editField={EDIT_FIELD}
+    />
+  );
+
+  // 그리드 선택 행 추가
+  const addGridRow = () => {
+    const selectedKey = Number(Object.keys(gridSelectedState)[0]);
+    const selectedIndex = gridData.data.findIndex(
+      (row) => row.meetingseq === selectedKey,
+    );
+
+    let newRows = [...gridData.data];
+
+    if (selectedIndex !== -1) {
+      // 선택된 행이 있을 경우, 해당 행 다음에 새 데이터 삽입
+      newRows.splice(selectedIndex + 1, 0, {
+        rowstatus: "N",
+        meetingseq: gridData.total + 1,
+        reqdt: null,
+        finexpdt: null,
+        cust_browserable: "Y",
+        client_finexpdt: null,
+      });
+    } else {
+      // 선택된 행이 없을 경우, 배열의 끝에 새 데이터 추가
+      newRows.push({
+        rowstatus: "N",
+        meetingseq: gridData.total + 1,
+        reqdt: null,
+        finexpdt: null,
+        cust_browserable: "Y",
+        client_finexpdt: null,
+      });
+    }
+
+    setGridData(process(newRows, gridDataState));
+  };
+
+  const removeGridRow = () => {
+    const selectedKey = Object.keys(gridSelectedState)[0];
+    const selectedIndex = gridData.data.findIndex(
+      (row) => row.meetingseq.toString() === selectedKey,
+    );
+
+    if (selectedIndex !== -1) {
+      let newRows = [...gridData.data];
+      newRows.splice(selectedIndex, 1);
+
+      // 삭제행의 다음행의 index를 계산
+      let nextSelectedIndex =
+        selectedIndex === newRows.length ? selectedIndex - 1 : selectedIndex;
+
+      // 데이터 업데이트
+      setGridData((prev) => process(newRows, gridDataState));
+
+      // selectedState 업데이트
+      if (newRows.length > 0) {
+        setGridSelectedState({
+          [newRows[nextSelectedIndex].meetingseq]: true,
+        });
+      } else {
+        setGridSelectedState({});
+      }
+    } else {
+      console.log("No row selected");
+    }
+  };
+
+  const gridTotalFooterCell = (props: GridFooterCellProps) => {
+    return (
+      <td colSpan={props.colSpan} style={props.style}>
+        총 {gridData.total}건
+      </td>
+    );
+  };
+
   return (
     <>
       <TitleContainer>
@@ -497,50 +682,161 @@ function App() {
                   value={scale}
                   onChange={(e) => setScale(e.value)}
                   layout="horizontal"
+                  disabled={view === "Grid"}
+                />
+              </td>
+              <th>데이터 보기 유형</th>
+              <td>
+                <RadioGroup
+                  data={viewTypes}
+                  value={view}
+                  onChange={(e) => setView(e.value)}
+                  layout="horizontal"
                 />
               </td>
             </tr>
           </tbody>
         </FilterBox>
       </FilterBoxWrap>
-      <Gantt
-        taskListWidth={500}
-        scaleType={scale}
-        height={"85vh"}
-        onDependencyInserted={onDependencyInserted}
-        onDependencyDeleted={onDependencyDeleted}
-        onTaskInserted={onTaskInserted}
-        onTaskDeleted={onTaskDeleted}
-        onTaskUpdated={onTaskUpdated}
-        onResourceAssigned={onResourceAssigned}
-        onResourceUnassigned={onResourceUnassigned}
-      >
-        <Tasks dataSource={task} />
-        <Dependencies dataSource={dependency} />
-        {/*<Resources dataSource={resource} />
+
+      <GridContainer height={"85%"}>
+        {view === "Scheduler" ? (
+          <Gantt
+            taskListWidth={500}
+            scaleType={scale}
+            height={"100%"}
+            onDependencyInserted={onDependencyInserted}
+            onDependencyDeleted={onDependencyDeleted}
+            onTaskInserted={onTaskInserted}
+            onTaskDeleted={onTaskDeleted}
+            onTaskUpdated={onTaskUpdated}
+            onResourceAssigned={onResourceAssigned}
+            onResourceUnassigned={onResourceUnassigned}
+          >
+            <Tasks dataSource={task} />
+            <Dependencies dataSource={dependency} />
+            {/*<Resources dataSource={resource} />
         <ResourceAssignments dataSource={assignment} /> */}
 
-        <Toolbar>
-          <Item name="undo" />
-          <Item name="redo" />
-          <Item name="separator" />
-          <Item name="collapseAll" />
-          <Item name="expandAll" />
-          <Item name="separator" />
-          <Item name="addTask" />
-          <Item name="deleteTask" />
-          <Item name="separator" />
-          <Item name="zoomIn" />
-          <Item name="zoomOut" />
-        </Toolbar>
+            <Toolbar>
+              <Item name="undo" />
+              <Item name="redo" />
+              <Item name="separator" />
+              <Item name="collapseAll" />
+              <Item name="expandAll" />
+              <Item name="separator" />
+              <Item name="addTask" />
+              <Item name="deleteTask" />
+              <Item name="separator" />
+              <Item name="zoomIn" />
+              <Item name="zoomOut" />
+            </Toolbar>
 
-        <Column dataField="title" caption="Subject" width={300} />
-        <Column dataField="start" caption="Start Date" />
-        <Column dataField="end" caption="End Date" />
+            <Column dataField="title" caption="Subject" width={300} />
+            <Column dataField="start" caption="Start Date" />
+            <Column dataField="end" caption="End Date" />
 
-        <Validation autoUpdateParentTasks />
-        {/* <Editing enabled /> */}
-      </Gantt>
+            <Validation autoUpdateParentTasks />
+            {/* <Editing enabled /> */}
+          </Gantt>
+        ) : (
+          <Grid
+            style={{
+              height: `calc(100% - 100px )`,
+            }}
+            data={process(
+              gridData.data.map((row) => ({
+                ...row,
+                [SELECTED_FIELD]: gridSelectedState[gridIdGetter(row)],
+              })),
+              gridDataState,
+            )}
+            {...gridDataState}
+            onDataStateChange={onGridDataStateChange}
+            //선택 기능
+            dataItemKey={DATA_ITEM_KEY}
+            selectedField={SELECTED_FIELD}
+            selectable={{
+              enabled: true,
+              mode: "single",
+            }}
+            onSelectionChange={onGridSelectionChange}
+            //컬럼순서조정
+            reorderable={true}
+            //컬럼너비조정
+            resizable={true}
+            //incell 수정 기능
+            onItemChange={onGridItemChange}
+            cellRender={customCellRender}
+            rowRender={customRowRender}
+            editField={EDIT_FIELD}
+          >
+            <GridToolbar>
+              <Button
+                themeColor={"primary"}
+                fillMode={"outline"}
+                icon="plus"
+                onClick={addGridRow}
+              />
+              <Button
+                themeColor={"primary"}
+                fillMode={"outline"}
+                icon="minus"
+                onClick={removeGridRow}
+              />
+            </GridToolbar>
+            <GridColumn field="rowstatus" title=" " width={40} />
+            <GridColumn
+              field="project_itemcd"
+              title="일정 항목 코드"
+              width={200}
+              footerCell={gridTotalFooterCell}
+            />
+            <GridColumn
+              field="project_itemnm"
+              title="일정 항목"
+              width={200}
+              editable={false}
+            />
+            <GridColumn
+              field="start"
+              title="시작일자"
+              width={170}
+              cell={DateCell}
+            />
+            <GridColumn
+              field="end"
+              title="종료일자"
+              width={170}
+              cell={DateCell}
+            />
+            <GridColumn
+              field="title"
+              title="제목"
+              cell={NameCell}
+              width={300}
+            />
+            <GridColumn
+              field="progress"
+              title="진행률(%)"
+              width={100}
+              cell={NumberCell}
+            />
+            <GridColumn
+              field="remark"
+              title="비고"
+              width={300}
+              cell={NameCell}
+            />
+            <GridColumn
+              field="guid"
+              title="Guid"
+              width={150}
+              editable={false}
+            />
+          </Grid>
+        )}
+      </GridContainer>
     </>
   );
 }

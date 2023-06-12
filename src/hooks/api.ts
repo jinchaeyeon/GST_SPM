@@ -24,6 +24,9 @@ const domain: any = {
   "notice-save": { action: "post", url: "api/spm/notice" },
   "notice-delete": { action: "delete", url: "api/spm/notice/:id" },
 
+  // 홈화면
+  "home-general": { action: "get", url: "api/spm/home/general" },
+
   // 참조 업체 조회
   "customers-list": { action: "get", url: "api/spm/:para" },
 

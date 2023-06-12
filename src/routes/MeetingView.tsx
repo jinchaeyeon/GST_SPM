@@ -464,7 +464,7 @@ const App = () => {
           </tbody>
         </FilterBox>
       </FilterBoxWrap>
-      <GridContainerWrap height={"86vh"}>
+      <GridContainerWrap height={"85%"}>
         <GridContainer width={`25%`}>
           <GridTitleContainer>
             <GridTitle>회의록 리스트</GridTitle>

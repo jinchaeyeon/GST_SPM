@@ -1253,7 +1253,7 @@ const App = () => {
           </ButtonContainer>
         </TitleContainer>
 
-        <GridContainerWrap height={"92vh"}>
+        <GridContainerWrap height={"90%"}>
           <GridContainer width={`25%`}>
             <GridTitleContainer>
               <GridTitle>회의록 리스트</GridTitle>

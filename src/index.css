@@ -23,6 +23,9 @@ div.k-animation-container {
 .k-grid {
   margin-top: 5px;
 }
+.k-grid {
+  max-height: 800px;
+}
 
 /* .k-grid tr {
   height: 36px;
