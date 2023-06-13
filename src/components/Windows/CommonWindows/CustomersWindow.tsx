@@ -47,7 +47,7 @@ const KendoWindow = ({ setVisible, workType, setData, para }: IKendoWindow) => {
   const [position, setPosition] = useState<IWindowPosition>({
     left: 300,
     top: 100,
-    width: 1200,
+    width: 600,
     height: 800,
   });
 
@@ -123,18 +123,25 @@ const KendoWindow = ({ setVisible, workType, setData, para }: IKendoWindow) => {
   const [filters, setFilters] = useState({
     custcd: "",
     custnm: "",
-    // custdiv: "",
-    // useyn: "Y",
+    custdiv: "",
+    useyn: "",
   });
 
   //팝업 조회 파라미터
-  const parameters = `SELECT custcd, custnm
-  FROM BA020T 
-  WHERE custcd LIKE '%${filters.custcd}%'
-  AND custnm LIKE '%${filters.custnm}%'  
-  `;
-  // AND custdiv LIKE '%${filters.custdiv}%'
-  // AND (CASE WHEN useyn = 'Y' THEN '사용' ELSE '미사용' END) LIKE '${filters.useyn}%'
+  const parameters = {
+    para:
+      "popup-data?id=" +
+      "P_CUSTCD" +
+      "&page=" +
+      mainPgNum +
+      "&pageSize=" +
+      PAGE_SIZE,
+    custcd: filters.custcd,
+    custnm: filters.custnm,
+    custdiv: filters.custdiv,
+    useyn:
+      filters.useyn === "Y" ? "사용" : filters.useyn === "N" ? "미사용" : "",
+  };
 
   useEffect(() => {
     fetchMainGrid();
@@ -145,22 +152,15 @@ const KendoWindow = ({ setVisible, workType, setData, para }: IKendoWindow) => {
     let data: any;
     setLoading(true);
 
-    const bytes = require("utf8-bytes");
-    const convertedQueryStr = bytesToBase64(bytes(parameters));
-
-    let query = {
-      query: convertedQueryStr,
-    };
-
     try {
-      data = await processApi<any>("bizgst-query", query);
+      data = await processApi<any>("bizgst-popup-data", parameters);
     } catch (error) {
       data = null;
     }
 
-    if (data !== null && data.isSuccess) {
-      const totalRowCnt = data.tables[0].RowCount;
-      const rows = data.tables[0].Rows;
+    if (data !== null) {
+      const totalRowCnt = data.data.TotalRowCount;
+      const rows = data.data.Rows;
 
       if (totalRowCnt) {
         setMainDataResult((prev) => {

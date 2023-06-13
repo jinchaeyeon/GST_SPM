@@ -106,6 +106,7 @@ const domain: any = {
     url: "api/data/:formId/custom-option/:para",
   },
   "popup-data": { action: "post", url: "api/data/biz-components/:para" },
+  "bizgst-popup-data": { action: "post", url: "api/data/biz-components/:para" },
   "login-old": { action: "post", url: "api/auth/login-old" },
   "company-code": { action: "get", url: "api/auth/company-codes" },
 };
@@ -184,11 +185,10 @@ export const useApi = () => {
       if (name === "file-list")
         headers = { "Content-Type": "multipart/form-data", accept: "*/*" };
 
-      if (name === "platform-procedure" || name === "platform-query")
+      if (name.includes("platform"))
         headers = { ...headers, DBAlias: "Platform" };
 
-      if (name === "bizgst-procedure" || name === "bizgst-query")
-        headers = { ...headers, DBAlias: "BizGST" };
+      if (name.includes("bizgst")) headers = { ...headers, DBAlias: "BizGST" };
 
       if (loginResult) {
         // headers = { ...headers, Authorization: `Bearer ${token}` };
