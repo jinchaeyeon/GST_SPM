@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import Gantt, {
   Tasks,
   Dependencies,
@@ -25,6 +25,7 @@ import { useApi } from "../hooks/api";
 import { Iparameters } from "../store/types";
 import {
   convertDateToStrWithTime2,
+  getCodeFromValue,
   getGridItemChangedData,
   handleKeyPressSearch,
   UseGetValueFromSessionItem,
@@ -42,9 +43,14 @@ import {
 import { DatePicker } from "@progress/kendo-react-dateinputs";
 import { Input, RadioGroup } from "@progress/kendo-react-inputs";
 import { Button } from "@progress/kendo-react-buttons";
-import { ComboBox, MultiColumnComboBox } from "@progress/kendo-react-dropdowns";
+import {
+  ComboBox,
+  ComboBoxFilterChangeEvent,
+  MultiColumnComboBox,
+} from "@progress/kendo-react-dropdowns";
 import {
   Grid,
+  GridCellProps,
   GridColumn,
   GridDataStateChangeEvent,
   GridFooterCellProps,
@@ -54,12 +60,23 @@ import {
   getSelectedState,
 } from "@progress/kendo-react-grid";
 import { EDIT_FIELD, SELECTED_FIELD } from "../components/CommonString";
-import { DataResult, State, process } from "@progress/kendo-data-query";
+import {
+  DataResult,
+  FilterDescriptor,
+  State,
+  filterBy,
+  process,
+} from "@progress/kendo-data-query";
 import { getter } from "@progress/kendo-react-common";
 import { CellRender, RowRender } from "../components/Renderers/Renderers";
 import DateCell from "../components/Cells/DateCell";
 import NameCell from "../components/Cells/NameCell";
 import NumberCell from "../components/Cells/NumberCell";
+import { bytesToBase64 } from "byte-base64";
+import ComboBoxCell from "../components/Cells/ComboBoxCell";
+import { v4 as uuidv4 } from "uuid";
+import { isLoading, loginResultState } from "../store/atoms";
+import { useRecoilState, useSetRecoilState } from "recoil";
 
 type TSavedPara = {
   work_type: "N" | "U" | "D";
@@ -122,7 +139,44 @@ type GanttScaleType =
 
 const DATA_ITEM_KEY = "id";
 
-function App() {
+const projectItemQueryStr = `SELECT project_itemcd,
+prntitemcd,
+project_itemnm,
+remark
+FROM BizGST.dbo.CR504T`;
+
+const projectColumns = [
+  {
+    field: "devmngnum",
+    header: "프로젝트번호",
+    width: 120,
+  },
+  {
+    field: "custnm",
+    header: "업체명",
+    width: 180,
+  },
+  {
+    field: "project",
+    header: "프로젝트명",
+    width: 450,
+  },
+  {
+    field: "is_registered",
+    header: "등록여부",
+    width: 80,
+  },
+];
+
+const CodesContext = createContext<{
+  projectItems: any[];
+}>({
+  projectItems: [],
+});
+
+const deletedGridData: any[] = [];
+
+const App = () => {
   const processApi = useApi();
   const userid = UseGetValueFromSessionItem("user_id");
   const [pc, setPc] = useState("");
@@ -132,6 +186,7 @@ function App() {
   const [assignment, setAssignment] = useState<TAssignment[]>([]);
   const [dependency, setDependency] = useState<TDependency[]>([]);
   const [resource, setResource] = useState<TResource[]>([]);
+  const [projectItems, setProjectItems] = useState([]);
 
   const [gridDataState, setGridDataState] = useState<State>({
     sort: [],
@@ -145,6 +200,8 @@ function App() {
   }>({});
 
   const gridIdGetter = getter(DATA_ITEM_KEY);
+
+  const setLoading = useSetRecoilState(isLoading);
 
   const [projectsData, setProjectsData] = useState<TTask[]>([]);
   const [projectValue, setProjectValue] = useState<any>(null);
@@ -162,7 +219,7 @@ function App() {
       successorId: String(successorId).padStart(10, "0"),
       dependencyType: type,
     };
-    fetchSaved(para);
+    // fetchSaved(para);
   };
   const onDependencyDeleted = (e: DependencyDeletedEvent) => {
     const { key } = e;
@@ -172,7 +229,7 @@ function App() {
       type: "Dependency",
       id: String(key).padStart(10, "0"),
     };
-    fetchSaved(para);
+    // fetchSaved(para);
   };
   const onTaskInserted = (e: TaskInsertedEvent) => {
     const { values } = e;
@@ -186,7 +243,7 @@ function App() {
       title,
       parentId: String(parentId).padStart(10, "0"),
     };
-    fetchSaved(para);
+    // fetchSaved(para);
   };
   const onTaskDeleted = (e: TaskDeletedEvent) => {
     const { key } = e;
@@ -196,7 +253,7 @@ function App() {
       type: "Task",
       id: String(key).padStart(10, "0"),
     };
-    fetchSaved(para);
+    // fetchSaved(para);
   };
   const onTaskUpdated = (e: TaskUpdatedEvent) => {
     const { values, key } = e;
@@ -219,7 +276,7 @@ function App() {
       title,
       parentId,
     };
-    fetchSaved(para);
+    // fetchSaved(para);
   };
   const onResourceAssigned = (e: ResourceAssignedEvent) => {
     const { values } = e;
@@ -231,7 +288,7 @@ function App() {
       taskId: String(taskId).padStart(10, "0"),
       resourceId: String(resourceId).padStart(10, "0"),
     };
-    fetchSaved(para);
+    // fetchSaved(para);
   };
   const onResourceUnassigned = (e: ResourceUnassignedEvent) => {
     const { key } = e;
@@ -241,12 +298,12 @@ function App() {
       type: "Assignment",
       id: String(key).padStart(10, "0"),
     };
-    fetchSaved(para);
+    // fetchSaved(para);
   };
 
   useEffect(() => {
     fetchProjectList();
-    // fetchMain();
+    fetchProjectItems();
   }, []);
 
   useEffect(() => {
@@ -254,16 +311,6 @@ function App() {
       fetchProjectDetail(projectValue.devmngnum);
     }
   }, [projectValue]);
-
-  //조회조건 파라미터
-  const parameters: Iparameters = {
-    procedureName: "P_GANTT_Q",
-    pageNumber: 0,
-    pageSize: 0,
-    parameters: {
-      "@p_work_type": "Q",
-    },
-  };
 
   const stringToIntegerMap = new Map<string, number>();
 
@@ -316,15 +363,18 @@ function App() {
         progress: 0,
       }));
       // 일정 데이터
-      const childRows: TTask[] = data.tables[1].Rows.map((row: any) => ({
-        ...row,
-        id: getIntegerForString(row.guid),
-        parentId: getIntegerForString(row.project_itemcd),
-        title: row.title,
-        start: new Date(row.start_time),
-        end: new Date(row.end_time),
-        progress: row.rate,
-      }));
+      const childRows: TTask[] = data.tables[1].Rows.map(
+        (row: any, idx: number) => ({
+          ...row,
+          idx,
+          id: getIntegerForString(row.guid),
+          parentId: getIntegerForString(row.project_itemcd),
+          title: row.title,
+          start: new Date(row.start_time),
+          end: new Date(row.end_time),
+          progress: row.rate,
+        }),
+      );
 
       // 일정항목과 일정을 합쳐서 하나의 Task 데이터로 만들고 데이터 순서 정렬
       const taskRows = reorderTasks([...parentRows, ...childRows]);
@@ -364,96 +414,96 @@ function App() {
     }
     return data;
   };
-
-  //그리드 데이터 조회
-  const fetchMain = async () => {
-    let data: any;
-
-    try {
-      data = await processApi<any>("procedure", parameters);
-    } catch (error) {
-      data = null;
-    }
-
-    if (data.isSuccess === true) {
-      const totalRowCnt = data.tables[0].RowCount;
-      const rows1 = data.tables[0].Rows.map((item: TTask) => ({
-        ...item,
-        id: Number(item.id),
-        parentId: Number(item.parentId),
-        start: new Date(item.start),
-        end: new Date(item.end),
-      }));
-      const rows2 = data.tables[1].Rows.map((item: TDependency) => ({
-        ...item,
-        id: Number(item.id),
-        predecessorId: Number(item.predecessorId),
-        successorId: Number(item.successorId),
-        type: Number(item.type),
-      }));
-      const rows3 = data.tables[2].Rows.map((item: TAssignment) => ({
-        ...item,
-        id: Number(item.id),
-        taskId: Number(item.taskId),
-        resourceId: Number(item.resourceId),
-      }));
-      const rows4 = data.tables[3].Rows;
-
-      if (totalRowCnt > 0) {
-        setTask(rows1);
-        setDependency(rows2);
-        setAssignment(rows3);
-        setResource(rows4);
-      }
-    } else {
-      console.log("[에러발생]");
-      console.log(data);
-    }
-  };
+  const [loginResult] = useRecoilState(loginResultState);
+  const userId = loginResult ? loginResult.userId : "";
   // 데이터 저장
-  const fetchSaved = async (savedPara: TSavedPara) => {
-    // if (!permissions?.save) return;
+  const saveProjectGrid = async () => {
     let data: any;
 
-    const {
-      work_type,
-      type,
-      id = "",
-      parentId = "",
-      title = "",
-      start = "",
-      end = "",
-      progress = "",
-      predecessorId = "",
-      successorId = "",
-      dependencyType = "",
-      taskId = "",
-      resourceId = "",
-    } = savedPara;
+    if (!projectValue) {
+      alert("프로젝트 명은 필수 입력 항목입니다.");
+    }
+
+    setLoading(true);
+    const devmngnum = getCodeFromValue(projectValue, "devmngnum");
+
+    type TGridDataArr = {
+      row_status: string[];
+      guid: string[];
+      project_itemcd: string[];
+      title: string[];
+      strtime: string[];
+      endtime: string[];
+      rate: string[];
+      appointment_label: string[];
+    };
+    let gridDataArr: TGridDataArr = {
+      row_status: [],
+      guid: [],
+      project_itemcd: [],
+      title: [],
+      strtime: [],
+      endtime: [],
+      rate: [],
+      appointment_label: [],
+    };
+
+    for (const [idx, item] of gridData.data.entries()) {
+      const { rowstatus, guid, project_itemcd, title, start, end, progress } =
+        item;
+
+      if (!rowstatus) continue;
+
+      gridDataArr.row_status.push(rowstatus);
+      gridDataArr.guid.push(guid);
+      gridDataArr.project_itemcd.push(project_itemcd);
+      gridDataArr.title.push(title);
+      gridDataArr.strtime.push(convertDateToStrWithTime2(start));
+      gridDataArr.endtime.push(convertDateToStrWithTime2(end));
+      gridDataArr.rate.push(progress);
+      gridDataArr.appointment_label.push("0");
+    }
+    deletedGridData.forEach((item) => {
+      const { guid } = item;
+
+      gridDataArr.row_status.push("D");
+      gridDataArr.guid.push(guid);
+      gridDataArr.project_itemcd.push("");
+      gridDataArr.title.push("");
+      gridDataArr.strtime.push("");
+      gridDataArr.endtime.push("");
+      gridDataArr.rate.push("0");
+      gridDataArr.appointment_label.push("");
+    });
 
     const parameters: Iparameters = {
-      procedureName: "P_GANTT_S",
+      procedureName: "pw6_sav_project_schedule",
       pageNumber: 0,
       pageSize: 0,
       parameters: {
-        "@p_work_type": work_type,
-        "@p_type": type,
-        "@p_id": id,
-        "@p_parentId": parentId,
-        "@p_title": title,
-        "@p_start": start,
-        "@p_end": end,
-        "@p_progress": progress,
-        "@p_predecessorId": predecessorId,
-        "@p_successorId": successorId,
-        "@p_dependencyType": dependencyType,
-        "@p_taskId": taskId,
-        "@p_resourceId": resourceId,
-        "@p_userid": userid,
+        "@p_work_type": "SAVE",
+        "@p_devmngnum": devmngnum,
+        "@p_row_status": gridDataArr.row_status.join("|"),
+        "@p_guid": gridDataArr.guid.join("|"),
+        "@p_project_itemcd": gridDataArr.project_itemcd.join("|"),
+        "@p_title": gridDataArr.title.join("|"),
+        "@p_strtime": gridDataArr.strtime.join("|"),
+        "@p_endtime": gridDataArr.endtime.join("|"),
+        "@p_rate": gridDataArr.rate.join("|"),
+        "@p_appointment_label": gridDataArr.appointment_label.join("|"),
+        "@p_dep_row_status": "",
+        "@p_parent_guid": "",
+        "@p_child_guid": "",
+        "@p_project_itemnm": "",
+        "@p_remark": "",
+        "@p_id": userId,
         "@p_pc": pc,
+        "@p_form_id": "SPM_WEB",
       },
     };
 
+    console.log("parameters");
+    console.log(parameters);
     try {
       data = await processApi<any>("procedure", parameters);
     } catch (error) {
@@ -461,14 +511,22 @@ function App() {
     }
 
     if (data.isSuccess === true) {
-      fetchMain();
+      fetchProjectDetail(devmngnum);
     } else {
       console.log("[에러발생]");
       console.log(data);
     }
+    setLoading(false);
   };
 
-  const search = () => {};
+  const search = () => {
+    fetchProjectList();
+    if (!projectValue) {
+      alert("프로젝트 명은 필수 입력값입니다.");
+      return false;
+    }
+    fetchProjectDetail(projectValue.devmngnum);
+  };
 
   const handleChange = (event: any) => {
     if (event) {
@@ -547,36 +605,24 @@ function App() {
     />
   );
 
-  // 그리드 선택 행 추가
   const addGridRow = () => {
-    const selectedKey = Number(Object.keys(gridSelectedState)[0]);
-    const selectedIndex = gridData.data.findIndex(
-      (row) => row.meetingseq === selectedKey,
-    );
+    let end = new Date();
+    end.setDate(end.getDate() + 1);
 
-    let newRows = [...gridData.data];
+    const guid = uuidv4();
 
-    if (selectedIndex !== -1) {
-      // 선택된 행이 있을 경우, 해당 행 다음에 새 데이터 삽입
-      newRows.splice(selectedIndex + 1, 0, {
+    let newRows = [
+      {
         rowstatus: "N",
-        meetingseq: gridData.total + 1,
-        reqdt: null,
-        finexpdt: null,
-        cust_browserable: "Y",
+        [DATA_ITEM_KEY]: getIntegerForString(guid),
+        guid,
+        start: new Date(),
+        end,
+        progress: 0,
         client_finexpdt: null,
-      });
-    } else {
-      // 선택된 행이 없을 경우, 배열의 끝에 새 데이터 추가
-      newRows.push({
-        rowstatus: "N",
-        meetingseq: gridData.total + 1,
-        reqdt: null,
-        finexpdt: null,
-        cust_browserable: "Y",
-        client_finexpdt: null,
-      });
-    }
+      },
+      ...gridData.data,
+    ];
 
     setGridData(process(newRows, gridDataState));
   };
@@ -584,7 +630,7 @@ function App() {
   const removeGridRow = () => {
     const selectedKey = Object.keys(gridSelectedState)[0];
     const selectedIndex = gridData.data.findIndex(
-      (row) => row.meetingseq.toString() === selectedKey,
+      (row) => row[DATA_ITEM_KEY].toString() === selectedKey,
     );
 
     if (selectedIndex !== -1) {
@@ -601,11 +647,17 @@ function App() {
       // selectedState 업데이트
       if (newRows.length > 0) {
         setGridSelectedState({
-          [newRows[nextSelectedIndex].meetingseq]: true,
+          [newRows[nextSelectedIndex][DATA_ITEM_KEY]]: true,
         });
       } else {
         setGridSelectedState({});
       }
+
+      const selectedData = gridData.data.find(
+        (item) => item[DATA_ITEM_KEY].toString() === selectedKey,
+      );
+
+      deletedGridData.push(selectedData);
     } else {
       console.log("No row selected");
     }
@@ -619,226 +671,298 @@ function App() {
     );
   };
 
+  const fetchProjectItems = async () => {
+    let data: any;
+
+    const bytes = require("utf8-bytes");
+    const convertedQueryStr = bytesToBase64(bytes(projectItemQueryStr));
+
+    let query = {
+      query: convertedQueryStr,
+    };
+
+    try {
+      data = await processApi<any>("bizgst-query", query);
+    } catch (error) {
+      data = null;
+    }
+
+    if (data !== null && data.isSuccess === true) {
+      const rows = data.tables[0].Rows;
+      setProjectItems(rows);
+    } else {
+      console.log("[에러발생]");
+      console.log(data);
+    }
+  };
+
+  const [projectFilter, setProjectFilter] = React.useState<FilterDescriptor>();
+  const handleProjectFilterChange = (event: ComboBoxFilterChangeEvent) => {
+    if (event) {
+      setProjectFilter(event.filter);
+    }
+  };
+
+  const saveProject = () => {
+    if (view === "Scheduler") {
+    } else {
+      saveProjectGrid();
+    }
+  };
+
   return (
     <>
-      <TitleContainer>
-        <Title>프로젝트 일정계획</Title>{" "}
-        <ButtonContainer>
-          <Button onClick={search} icon="search" themeColor={"primary"}>
-            조회
-          </Button>
-        </ButtonContainer>
-      </TitleContainer>
-      <FilterBoxWrap>
-        <FilterBox onKeyPress={(e) => handleKeyPressSearch(e, search)}>
-          <tbody>
-            <tr>
-              <th>프로젝트 명</th>
-              <td>
-                <MultiColumnComboBox
-                  columns={[
-                    {
-                      field: "devmngnum",
-                      header: "프로젝트번호",
-                      width: 100,
-                    },
-                    {
-                      field: "custnm",
-                      header: "업체명",
-                      width: 100,
-                    },
-                    {
-                      field: "project",
-                      header: "프로젝트명",
-                      width: 150,
-                    },
-                    {
-                      field: "is_registered",
-                      header: "등록여부",
-                      width: 60,
-                    },
-                  ]}
-                  name="user_name"
-                  data={projectsData}
-                  value={projectValue}
-                  textField="project"
-                  onChange={handleChange}
-                ></MultiColumnComboBox>
-              </td>
-              <th>프로젝트 번호</th>
-              <td>
-                <Input
-                  name="user_name"
-                  type="text"
-                  value={projectValue ? projectValue.devmngnum : ""}
-                  className="readonly"
-                  // onChange={filterInputChange}
-                />
-              </td>
-              <th>표시형식</th>
-              <td>
-                <RadioGroup
-                  data={scaleTypes}
-                  value={scale}
-                  onChange={(e) => setScale(e.value)}
-                  layout="horizontal"
-                  disabled={view === "Grid"}
-                />
-              </td>
-              <th>데이터 보기 유형</th>
-              <td>
-                <RadioGroup
-                  data={viewTypes}
-                  value={view}
-                  onChange={(e) => setView(e.value)}
-                  layout="horizontal"
-                />
-              </td>
-            </tr>
-          </tbody>
-        </FilterBox>
-      </FilterBoxWrap>
+      <CodesContext.Provider value={{ projectItems: projectItems }}>
+        <TitleContainer>
+          <Title>프로젝트 일정계획</Title>{" "}
+          <ButtonContainer>
+            <Button onClick={search} icon="search" themeColor={"primary"}>
+              조회
+            </Button>
+            <Button
+              themeColor={"primary"}
+              fillMode={"outline"}
+              icon="save"
+              onClick={saveProject}
+            >
+              저장
+            </Button>
+          </ButtonContainer>
+        </TitleContainer>
+        <FilterBoxWrap>
+          <FilterBox onKeyPress={(e) => handleKeyPressSearch(e, search)}>
+            <tbody>
+              <tr>
+                <th>프로젝트 명</th>
+                <td>
+                  <MultiColumnComboBox
+                    columns={projectColumns}
+                    name="user_name"
+                    data={
+                      projectFilter
+                        ? filterBy(projectsData, projectFilter)
+                        : projectsData
+                    }
+                    value={projectValue}
+                    textField="project"
+                    filterable={true}
+                    onFilterChange={handleProjectFilterChange}
+                    onChange={handleChange}
+                    className="required"
+                  ></MultiColumnComboBox>
+                </td>
+                <th>프로젝트 번호</th>
+                <td>
+                  <Input
+                    name="user_name"
+                    type="text"
+                    value={projectValue ? projectValue.devmngnum : ""}
+                    className="readonly"
+                    // onChange={filterInputChange}
+                  />
+                </td>
+                <th>표시형식</th>
+                <td>
+                  <RadioGroup
+                    data={scaleTypes}
+                    value={scale}
+                    onChange={(e) => setScale(e.value)}
+                    layout="horizontal"
+                    disabled={view === "Grid"}
+                  />
+                </td>
+                <th>데이터 보기 유형</th>
+                <td>
+                  <RadioGroup
+                    data={viewTypes}
+                    value={view}
+                    onChange={(e) => setView(e.value)}
+                    layout="horizontal"
+                  />
+                </td>
+              </tr>
+            </tbody>
+          </FilterBox>
+        </FilterBoxWrap>
 
-      <GridContainer height={"85%"}>
-        {view === "Scheduler" ? (
-          <Gantt
-            taskListWidth={500}
-            scaleType={scale}
-            height={"100%"}
-            onDependencyInserted={onDependencyInserted}
-            onDependencyDeleted={onDependencyDeleted}
-            onTaskInserted={onTaskInserted}
-            onTaskDeleted={onTaskDeleted}
-            onTaskUpdated={onTaskUpdated}
-            onResourceAssigned={onResourceAssigned}
-            onResourceUnassigned={onResourceUnassigned}
-          >
-            <Tasks dataSource={task} />
-            <Dependencies dataSource={dependency} />
-            {/*<Resources dataSource={resource} />
+        <GridContainer height={"85%"}>
+          {view === "Scheduler" ? (
+            <Gantt
+              taskListWidth={500}
+              scaleType={scale}
+              height={"100%"}
+              onDependencyInserted={onDependencyInserted}
+              onDependencyDeleted={onDependencyDeleted}
+              onTaskInserted={onTaskInserted}
+              onTaskDeleted={onTaskDeleted}
+              onTaskUpdated={onTaskUpdated}
+              onResourceAssigned={onResourceAssigned}
+              onResourceUnassigned={onResourceUnassigned}
+            >
+              <Tasks dataSource={task} />
+              <Dependencies dataSource={dependency} />
+              {/*<Resources dataSource={resource} />
         <ResourceAssignments dataSource={assignment} /> */}
 
-            <Toolbar>
-              <Item name="undo" />
-              <Item name="redo" />
-              <Item name="separator" />
-              <Item name="collapseAll" />
-              <Item name="expandAll" />
-              <Item name="separator" />
-              <Item name="addTask" />
-              <Item name="deleteTask" />
-              <Item name="separator" />
-              <Item name="zoomIn" />
-              <Item name="zoomOut" />
-            </Toolbar>
+              <Toolbar>
+                <Item name="undo" />
+                <Item name="redo" />
+                <Item name="separator" />
+                <Item name="collapseAll" />
+                <Item name="expandAll" />
+                <Item name="separator" />
+                <Item name="addTask" />
+                <Item name="deleteTask" />
+                <Item name="separator" />
+                <Item name="zoomIn" />
+                <Item name="zoomOut" />
+              </Toolbar>
 
-            <Column dataField="title" caption="Subject" width={300} />
-            <Column dataField="start" caption="Start Date" />
-            <Column dataField="end" caption="End Date" />
+              <Column dataField="title" caption="Subject" width={300} />
+              <Column dataField="start" caption="Start Date" />
+              <Column dataField="end" caption="End Date" />
 
-            <Validation autoUpdateParentTasks />
-            {/* <Editing enabled /> */}
-          </Gantt>
-        ) : (
-          <Grid
-            style={{
-              height: `calc(100% - 100px )`,
-            }}
-            data={process(
-              gridData.data.map((row) => ({
-                ...row,
-                [SELECTED_FIELD]: gridSelectedState[gridIdGetter(row)],
-              })),
-              gridDataState,
-            )}
-            {...gridDataState}
-            onDataStateChange={onGridDataStateChange}
-            //선택 기능
-            dataItemKey={DATA_ITEM_KEY}
-            selectedField={SELECTED_FIELD}
-            selectable={{
-              enabled: true,
-              mode: "single",
-            }}
-            onSelectionChange={onGridSelectionChange}
-            //컬럼순서조정
-            reorderable={true}
-            //컬럼너비조정
-            resizable={true}
-            //incell 수정 기능
-            onItemChange={onGridItemChange}
-            cellRender={customCellRender}
-            rowRender={customRowRender}
-            editField={EDIT_FIELD}
-          >
-            <GridToolbar>
-              <Button
-                themeColor={"primary"}
-                fillMode={"outline"}
-                icon="plus"
-                onClick={addGridRow}
+              <Validation autoUpdateParentTasks />
+              {/* <Editing enabled /> */}
+            </Gantt>
+          ) : (
+            <Grid
+              style={{ height: `100%` }}
+              data={process(
+                gridData.data.map((row) => ({
+                  ...row,
+                  [SELECTED_FIELD]: gridSelectedState[gridIdGetter(row)],
+                })),
+                gridDataState,
+              )}
+              {...gridDataState}
+              onDataStateChange={onGridDataStateChange}
+              //선택 기능
+              dataItemKey={DATA_ITEM_KEY}
+              selectedField={SELECTED_FIELD}
+              selectable={{
+                enabled: true,
+                mode: "single",
+              }}
+              onSelectionChange={onGridSelectionChange}
+              //컬럼순서조정
+              reorderable={true}
+              //컬럼너비조정
+              resizable={true}
+              //incell 수정 기능
+              onItemChange={onGridItemChange}
+              cellRender={customCellRender}
+              rowRender={customRowRender}
+              editField={EDIT_FIELD}
+            >
+              <GridToolbar>
+                <Button
+                  themeColor={"primary"}
+                  fillMode={"outline"}
+                  icon="plus"
+                  onClick={addGridRow}
+                />
+                <Button
+                  themeColor={"primary"}
+                  fillMode={"outline"}
+                  icon="minus"
+                  onClick={removeGridRow}
+                />
+              </GridToolbar>
+              <GridColumn
+                field="rowstatus"
+                title=" "
+                width={40}
+                editable={false}
               />
-              <Button
-                themeColor={"primary"}
-                fillMode={"outline"}
-                icon="minus"
-                onClick={removeGridRow}
+              <GridColumn
+                field="project_itemcd"
+                title="일정 항목 코드"
+                width={170}
+                editable={false}
+                footerCell={gridTotalFooterCell}
               />
-            </GridToolbar>
-            <GridColumn field="rowstatus" title=" " width={40} />
-            <GridColumn
-              field="project_itemcd"
-              title="일정 항목 코드"
-              width={200}
-              footerCell={gridTotalFooterCell}
-            />
-            <GridColumn
-              field="project_itemnm"
-              title="일정 항목"
-              width={200}
-              editable={false}
-            />
-            <GridColumn
-              field="start"
-              title="시작일자"
-              width={170}
-              cell={DateCell}
-            />
-            <GridColumn
-              field="end"
-              title="종료일자"
-              width={170}
-              cell={DateCell}
-            />
-            <GridColumn
-              field="title"
-              title="제목"
-              cell={NameCell}
-              width={300}
-            />
-            <GridColumn
-              field="progress"
-              title="진행률(%)"
-              width={100}
-              cell={NumberCell}
-            />
-            <GridColumn
-              field="remark"
-              title="비고"
-              width={300}
-              cell={NameCell}
-            />
-            <GridColumn
-              field="guid"
-              title="Guid"
-              width={150}
-              editable={false}
-            />
-          </Grid>
-        )}
-      </GridContainer>
+              <GridColumn
+                field="project_itemcd"
+                title="일정 항목"
+                width={170}
+                cell={ProjectItemCell}
+              />
+              <GridColumn
+                field="start"
+                title="시작일자"
+                width={150}
+                cell={DateCell}
+              />
+              <GridColumn
+                field="end"
+                title="종료일자"
+                width={150}
+                cell={DateCell}
+              />
+              <GridColumn
+                field="title"
+                title="제목"
+                cell={NameCell}
+                width={400}
+              />
+              <GridColumn
+                field="progress"
+                title="진행률(%)"
+                width={100}
+                cell={NumberCell}
+              />
+              <GridColumn
+                field="remark"
+                title="비고"
+                width={300}
+                cell={NameCell}
+              />
+              <GridColumn
+                field="guid"
+                title="Guid"
+                width={150}
+                editable={false}
+              />
+            </Grid>
+          )}
+        </GridContainer>
+      </CodesContext.Provider>
     </>
   );
-}
+};
+
+const projectItemsColumns = [
+  {
+    field: "project_itemcd",
+    header: "코드",
+    width: 100,
+  },
+  {
+    field: "project_itemnm",
+    header: "코드명",
+    width: 100,
+  },
+  {
+    field: "remark",
+    header: "비고",
+    width: 200,
+  },
+];
+const ProjectItemCell = (props: GridCellProps) => {
+  const { projectItems } = useContext(CodesContext);
+
+  return projectItems ? (
+    <ComboBoxCell
+      columns={projectItemsColumns}
+      data={projectItems}
+      textField="project_itemnm"
+      valueField="project_itemcd"
+      {...props}
+    />
+  ) : (
+    <td />
+  );
+};
 
 export default App;
