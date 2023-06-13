@@ -298,7 +298,11 @@ const Main: React.FC = () => {
   }
 
   return (
-    <GridContainer style={{ paddingBottom: "20px" }}>
+    <GridContainer
+      className="darkScrollbar"
+      style={{ paddingBottom: "20px" }}
+      theme="dark"
+    >
       <TitleContainer
         style={{
           minHeight: "80px",
@@ -321,10 +325,14 @@ const Main: React.FC = () => {
         </ButtonContainer>
       </TitleContainer>
       <GridContainerWrap height="calc(100% - 80px)">
-        <GridContainer width="15%" style={{ gap: "15px" }} type="mainLeft">
+        <GridContainer
+          width="15%"
+          style={{ gap: "15px", overflow: "overlay" }}
+          type="mainLeft"
+        >
           <TextBox
             style={{
-              minHeight: 0,
+              minHeight: "120px",
               height: "100%",
               maxHeight: "150px",
               borderRadius: "10px",

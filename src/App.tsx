@@ -148,6 +148,18 @@ input.readonly {
   width: inherit;
 }
 
+.darkScrollbar ::-webkit-scrollbar {
+  width: 10px;
+}
+
+.darkScrollbar ::-webkit-scrollbar-thumb {
+  border-radius: 2px;
+  background: #6c757d;
+}
+.darkScrollbar ::-webkit-scrollbar-corner {  
+  background: transparent;
+}
+
 `;
 
 load(
