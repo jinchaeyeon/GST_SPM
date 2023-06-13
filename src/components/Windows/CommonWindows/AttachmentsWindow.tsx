@@ -77,26 +77,30 @@ const KendoWindow = ({
 
   const processApi = useApi();
   const [mainDataResult, setMainDataResult] = useState<DataResult>(
-    process([], {})
+    process([], {}),
   );
 
   useEffect(() => {
     fetchGrid();
   }, [attachmentNumber]);
 
-  const uploadFile = async (files: File) => {
+  const uploadFile = async (files: File, newAttachmentNumber?: string) => {
     let data: any;
 
+    const queryParams = new URLSearchParams();
+
+    if (attachmentNumber) {
+      queryParams.append("attachmentNumber", attachmentNumber);
+    } else if (newAttachmentNumber) {
+      queryParams.append("attachmentNumber", newAttachmentNumber);
+    }
+
+    queryParams.append("type", type);
+    queryParams.append("formId", "%28web%29" + pathname);
+
     const filePara = {
-      attached: attachmentNumber
-        ? "attachment?type=" +
-          type +
-          "&attachmentNumber=" +
-          attachmentNumber +
-          "&formId=%28web%29" +
-          pathname
-        : "attachment?type=" + type + "&formId=%28web%29" + pathname,
-      files: files, //.FileList,
+      attached: "attachment?" + queryParams.toString(),
+      files: files,
     };
 
     try {
@@ -106,11 +110,9 @@ const KendoWindow = ({
     }
 
     if (data !== null) {
-      if (data.attachmentNumber !== attachmentNumber) {
-        setAttachmentNumber(data.attachmentNumber);
-      } else {
-        fetchGrid();
-      }
+      return data.attachmentNumber;
+    } else {
+      return data;
     }
   };
 
@@ -216,17 +218,27 @@ const KendoWindow = ({
 
         // 다운로드 파일 이름을 추출하는 함수
         const extractDownloadFilename = (response: any) => {
-          console.log(response);
           if (response.headers) {
             const disposition = response.headers["content-disposition"];
             let filename = "";
+
             if (disposition) {
-              var filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
-              var matches = filenameRegex.exec(disposition);
+              const filenameRegex = /filename\*?=UTF-8''([^;\n]+)/;
+              const matches = filenameRegex.exec(disposition);
+
               if (matches != null && matches[1]) {
-                filename = matches[1].replace(/['"]/g, "");
+                const encodedFilename = matches[1].trim();
+                filename = decodeURIComponent(encodedFilename);
+              } else {
+                const fallbackRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+                const fallbackMatches = fallbackRegex.exec(disposition);
+
+                if (fallbackMatches != null && fallbackMatches[1]) {
+                  filename = fallbackMatches[1].replace(/['"]/g, "");
+                }
               }
             }
+
             return filename;
           } else {
             return "";
@@ -290,7 +302,7 @@ const KendoWindow = ({
 
       setSelectedState(newSelectedState);
     },
-    [selectedState]
+    [selectedState],
   );
 
   const onHeaderSelectionChange = React.useCallback(
@@ -307,8 +319,44 @@ const KendoWindow = ({
 
       setSelectedState(newSelectedState);
     },
-    []
+    [],
   );
+
+  const handleFileUpload = async (files: FileList | null) => {
+    if (files === null) return false;
+
+    let newAttachmentNumber = "";
+    const promises = [];
+
+    for (const file of files) {
+      // 최초 등록 시, 업로드 후 첨부번호를 가져옴 (다중 업로드 대응)
+      if (!attachmentNumber && !newAttachmentNumber) {
+        newAttachmentNumber = await uploadFile(file);
+        const promise = newAttachmentNumber;
+        promises.push(promise);
+        continue;
+      }
+
+      const promise = newAttachmentNumber
+        ? await uploadFile(file, newAttachmentNumber)
+        : await uploadFile(file);
+      promises.push(promise);
+    }
+
+    const results = await Promise.all(promises);
+
+    // 실패한 파일이 있는지 확인
+    if (results.includes(null)) {
+      alert("파일 업로드에 실패했습니다.");
+    } else {
+      // 모든 파일이 성공적으로 업로드된 경우
+      if (!attachmentNumber) {
+        setAttachmentNumber(newAttachmentNumber);
+      } else {
+        fetchGrid();
+      }
+    }
+  };
 
   return (
     <Window
@@ -342,12 +390,7 @@ const KendoWindow = ({
               multiple
               ref={excelInput}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                const files = event.target.files;
-                if (files === null) return false;
-                for (let i = 0; i < files.length; ++i) {
-                  const file = files[i];
-                  uploadFile(file);
-                }
+                handleFileUpload(event.target.files);
               }}
             />
           </Button>
@@ -388,11 +431,7 @@ const KendoWindow = ({
         onDrop={(event: React.DragEvent<HTMLInputElement>) => {
           event.preventDefault();
           const files = event.dataTransfer.files;
-          if (files === null) return false;
-          for (let i = 0; i < files.length; ++i) {
-            const file = files[i];
-            uploadFile(file);
-          }
+          handleFileUpload(files);
         }}
         onDragOver={(e: React.DragEvent<HTMLDivElement>) => {
           e.preventDefault();
@@ -420,7 +459,7 @@ const KendoWindow = ({
             insert_time: convertDateToStrWithTime2(new Date(row.insert_time)),
             [SELECTED_FIELD]: selectedState[idGetter(row)],
           })),
-          {}
+          {},
         )}
         sortable={true}
         groupable={false}
@@ -444,7 +483,7 @@ const KendoWindow = ({
           width="45px"
           headerSelectionValue={
             mainDataResult.data.findIndex(
-              (item: any) => !selectedState[idGetter(item)]
+              (item: any) => !selectedState[idGetter(item)],
             ) === -1
           }
         />
