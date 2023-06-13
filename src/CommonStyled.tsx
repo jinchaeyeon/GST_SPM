@@ -769,9 +769,11 @@ export const Content = styled.div<ContentType>`
 
 export const PageWrap = styled.div`
   padding: 0 15px;
-  height: 100vh;
+  min-height: 100vh;
+  height: 100%;
 
   @media (max-width: 768px) {
+    min-height: auto;
     height: auto;
   }
 `;
@@ -986,5 +988,15 @@ export const TextBox = styled.div`
   }
   .blue {
     color: #4b5ffa;
+  }
+`;
+
+export const SmallGnv = styled.div`
+  padding-top: 10px;
+  border-right: solid 1px #454545;
+  height: 100vh;
+
+  @media (max-width: 768px) {
+    display: none;
   }
 `;

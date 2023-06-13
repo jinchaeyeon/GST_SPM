@@ -31,6 +31,7 @@ import {
   MenuSearchBox,
   Modal,
   PageWrap,
+  SmallGnv,
   TopTitle,
   Wrapper,
 } from "../CommonStyled";
@@ -379,8 +380,9 @@ const PanelBarNavContainer = (props: any) => {
     switcher({ theme: "light" });
     fetchLogout();
     resetLocalStorage();
-    // window.location.href = "/";
+    setIsMobileMenuOpend(false);
     history.push("/");
+    // window.location.href = "/";
   };
 
   const fetchLogout = async () => {
@@ -549,20 +551,14 @@ const PanelBarNavContainer = (props: any) => {
           </ButtonContainer>
         </Gnv>
       ) : (
-        <div
-          style={{
-            paddingTop: "10px",
-            borderRight: "solid 1px #454545",
-            height: "100vh",
-          }}
-        >
+        <SmallGnv>
           <Button
             icon="menu"
             fillMode={"flat"}
             themeColor={"primary"}
             onClick={() => setIsMenuOpend(true)}
           />
-        </div>
+        </SmallGnv>
       )}
       <Content isMenuOpen={isMenuOpend}>
         <TopTitle>

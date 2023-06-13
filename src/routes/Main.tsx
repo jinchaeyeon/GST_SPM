@@ -325,8 +325,10 @@ const Main: React.FC = () => {
           <TextBox
             style={{
               minHeight: 0,
-              height: "550px",
+              height: "100%",
+              maxHeight: "150px",
               borderRadius: "10px",
+              padding: "20px",
             }}
           >
             <p className="medium" style={{ marginTop: "0" }}>
