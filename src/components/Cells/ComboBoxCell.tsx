@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
 import {
   ComboBoxChangeEvent,
+  ComboBoxFilterChangeEvent,
   MultiColumnComboBox,
 } from "@progress/kendo-react-dropdowns";
 import { GridCellProps } from "@progress/kendo-react-grid";
 import { bytesToBase64 } from "byte-base64";
 import { useApi } from "../../hooks/api";
+import { FilterDescriptor, filterBy } from "@progress/kendo-data-query";
 
 interface CustomCellProps extends GridCellProps {
   data: any;
@@ -86,14 +88,23 @@ const ComboBoxCell = (props: CustomCellProps) => {
   //   }
   // };
 
+  const [filter, setFilter] = React.useState<FilterDescriptor>();
+  const handleFilterChange = (event: ComboBoxFilterChangeEvent) => {
+    if (event) {
+      setFilter(event.filter);
+    }
+  };
+
   const defaultRendering = (
     <td aria-colindex={ariaColumnIndex} data-grid-col-index={columnIndex}>
       {isInEdit ? (
         <MultiColumnComboBox
-          data={listData}
+          data={filter ? filterBy(listData, filter) : listData}
           value={value}
           columns={columns}
           textField={textField}
+          filterable={true}
+          onFilterChange={handleFilterChange}
           onChange={handleChange}
         />
       ) : value ? (
