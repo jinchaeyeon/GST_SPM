@@ -732,12 +732,6 @@ export const Gnv = styled.div<TGnv>`
     background-color: rgba(51, 122, 183, 0.05);
   }
 
-  .k-panelbar .k-group > .k-item > .k-link,
-  .k-panelbar .k-panelbar-group > .k-panelbar-item > .k-link {
-    flex-direction: row-reverse;
-    justify-content: space-between;
-  }
-
   /*=========================================================================
 	미디어 쿼리
 	##Device = 모바일
@@ -803,7 +797,7 @@ export const AppName = styled.h1<TAppName>`
   @media (max-width: 768px) {
     border-right: 0;
     background-color: ${(props) =>
-      props.theme === "dark" ? "#2b2b2b" : "#fff"};
+      props.theme === "dark" ? "#181818" : "#fff"};
   }
 `;
 
@@ -831,7 +825,6 @@ export const LoginAppName = styled.h1<TLoginAppName>`
   background-color: transparent;
   font-size: 22px;
   gap: 5px;
-
   background: url(${(props) =>
     props.type === "SPM" ? loginLogoSpmSrc : loginLogoCscSrc});
   background-size: cover;

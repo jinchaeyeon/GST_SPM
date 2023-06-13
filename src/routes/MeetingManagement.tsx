@@ -85,6 +85,7 @@ import {
   ComboBoxChangeEvent,
   MultiColumnComboBox,
 } from "@progress/kendo-react-dropdowns";
+import NameCell from "../components/Cells/NameCell";
 
 const DATA_ITEM_KEY = "meetingnum";
 const DETAIL_ITEM_KEY = "meetingseq";
@@ -1587,12 +1588,18 @@ const App = () => {
                   onClick={downDetailRow}
                 />
               </GridToolbar>
-              <GridColumn field="rowstatus" title=" " width={40} />
+              <GridColumn
+                field="rowstatus"
+                title=" "
+                width={40}
+                editable={false}
+              />
               <GridColumn
                 field="contents"
                 title="내용"
                 width={500}
                 footerCell={detailTotalFooterCell}
+                cell={NameCell}
               />
               <GridColumn
                 field="finexpdt"
@@ -1624,7 +1631,12 @@ const App = () => {
                 width={160}
                 cell={ValueCodesComboBoxCell}
               />
-              <GridColumn field="client_name" title="고객담당자" width={100} />
+              <GridColumn
+                field="client_name"
+                title="고객담당자"
+                width={100}
+                cell={NameCell}
+              />
               <GridColumn
                 field="client_finexpdt"
                 title="고객완료예정일"

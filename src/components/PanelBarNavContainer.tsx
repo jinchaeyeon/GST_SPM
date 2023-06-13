@@ -41,12 +41,37 @@ import {
 } from "@progress/kendo-react-dropdowns";
 import { DEFAULT_ATTDATNUMS } from "./CommonString";
 import { useThemeSwitcher } from "react-css-theme-switcher";
-import ClipLoader from "react-spinners/ClipLoader";
 import Loader from "./Loader";
+
+const paths = [
+  {
+    path: "/Home",
+    index: ".0",
+  },
+  {
+    path: "/Notice",
+    index: ".1",
+  },
+  {
+    path: "/QnA",
+    index: ".2",
+  },
+  {
+    path: "/MeetingView",
+    index: ".3",
+  },
+  {
+    path: "/ProjectSchedule",
+    index: ".4",
+  },
+  {
+    path: "/MeetingManagement",
+    index: ".5",
+  },
+];
 
 const PanelBarNavContainer = (props: any) => {
   const processApi = useApi();
-  const location = useLocation();
   const [loginResult] = useRecoilState(loginResultState);
   const accessToken = localStorage.getItem("accessToken");
   const [token] = useState(accessToken);
@@ -141,89 +166,89 @@ const PanelBarNavContainer = (props: any) => {
     }
   }, []);
 
-  let paths: Array<TPath> = [];
-  if (menus !== null) {
-    // Home push
-    menus
-      .filter((menu: any) => menu.formId === "Home")
-      .forEach((menu: any, idx: number) => {
-        paths.push({
-          path: "/" + menu.formId,
-          menuName: menu.menuName,
-          index: "." + idx,
-          menuId: menu.menuId,
-          parentMenuId: menu.parentMenuId,
-          menuCategory: menu.menuCategory,
-          isFavorite: menu.isFavorite,
-        });
-      });
+  // let paths: Array<TPath> = [];
+  // if (menus !== null) {
+  //   // Home push
+  //   menus
+  //     .filter((menu: any) => menu.formId === "Home")
+  //     .forEach((menu: any, idx: number) => {
+  //       paths.push({
+  //         path: "/" + menu.formId,
+  //         menuName: menu.menuName,
+  //         index: "." + idx,
+  //         menuId: menu.menuId,
+  //         parentMenuId: menu.parentMenuId,
+  //         menuCategory: menu.menuCategory,
+  //         isFavorite: menu.isFavorite,
+  //       });
+  //     });
 
-    // 즐겨찾기 그룹 push
-    paths.push({
-      path: "",
-      menuName: "즐겨찾기",
-      index: "." + 1,
-      menuId: "fav",
-      parentMenuId: "",
-      menuCategory: "GROUP",
-      isFavorite: false,
-    });
+  //   // 즐겨찾기 그룹 push
+  //   paths.push({
+  //     path: "",
+  //     menuName: "즐겨찾기",
+  //     index: "." + 1,
+  //     menuId: "fav",
+  //     parentMenuId: "",
+  //     menuCategory: "GROUP",
+  //     isFavorite: false,
+  //   });
 
-    // 즐겨찾기 Menu push
-    menus
-      .filter((menu) => menu.menuCategory === "WEB" && menu.isFavorite)
-      .forEach((menu, idx: number) => {
-        paths.push({
-          path: "/" + menu.formId,
-          menuName: menu.menuName,
-          index: ".1." + idx,
-          menuId: menu.menuId,
-          parentMenuId: "fav",
-          menuCategory: menu.menuCategory,
-          isFavorite: menu.isFavorite,
-        });
-      });
+  //   // 즐겨찾기 Menu push
+  //   menus
+  //     .filter((menu) => menu.menuCategory === "WEB" && menu.isFavorite)
+  //     .forEach((menu, idx: number) => {
+  //       paths.push({
+  //         path: "/" + menu.formId,
+  //         menuName: menu.menuName,
+  //         index: ".1." + idx,
+  //         menuId: menu.menuId,
+  //         parentMenuId: "fav",
+  //         menuCategory: menu.menuCategory,
+  //         isFavorite: menu.isFavorite,
+  //       });
+  //     });
 
-    // Group push (Home, PlusWin6 Group 제외)
-    menus
-      .filter(
-        (menu: any) =>
-          menu.menuCategory === "GROUP" &&
-          menu.menuName !== "Home" &&
-          menu.menuName !== "PlusWin6",
-      )
-      .forEach((menu: any, idx: number) => {
-        paths.push({
-          path: "/" + menu.formId,
-          menuName: menu.menuName,
-          index: "." + (idx + 2), // home, 즐겨찾기 때문에 +2
-          menuId: menu.menuId,
-          parentMenuId: menu.parentMenuId,
-          menuCategory: menu.menuCategory,
-          isFavorite: menu.isFavorite,
-        });
-      });
+  //   // Group push (Home, PlusWin6 Group 제외)
+  //   menus
+  //     .filter(
+  //       (menu: any) =>
+  //         menu.menuCategory === "GROUP" &&
+  //         menu.menuName !== "Home" &&
+  //         menu.menuName !== "PlusWin6",
+  //     )
+  //     .forEach((menu: any, idx: number) => {
+  //       paths.push({
+  //         path: "/" + menu.formId,
+  //         menuName: menu.menuName,
+  //         index: "." + (idx + 2), // home, 즐겨찾기 때문에 +2
+  //         menuId: menu.menuId,
+  //         parentMenuId: menu.parentMenuId,
+  //         menuCategory: menu.menuCategory,
+  //         isFavorite: menu.isFavorite,
+  //       });
+  //     });
 
-    // Group별 Menu push
-    paths.forEach((path: TPath) => {
-      menus
-        .filter(
-          (menu: any) =>
-            menu.menuCategory === "WEB" && path.menuId === menu.parentMenuId,
-        )
-        .forEach((menu: any, idx: number) => {
-          paths.push({
-            path: "/" + menu.formId,
-            menuName: menu.menuName,
-            index: path.index + "." + idx,
-            menuId: menu.menuId,
-            parentMenuId: menu.parentMenuId,
-            menuCategory: menu.menuCategory,
-            isFavorite: menu.isFavorite,
-          });
-        });
-    });
-  }
+  //   // Group별 Menu push
+  //   paths.forEach((path: TPath) => {
+  //     menus
+  //       .filter(
+  //         (menu: any) =>
+  //           menu.menuCategory === "WEB" && path.menuId === menu.parentMenuId,
+  //       )
+  //       .forEach((menu: any, idx: number) => {
+  //         paths.push({
+  //           path: "/" + menu.formId,
+  //           menuName: menu.menuName,
+  //           index: path.index + "." + idx,
+  //           menuId: menu.menuId,
+  //           parentMenuId: menu.parentMenuId,
+  //           menuCategory: menu.menuCategory,
+  //           isFavorite: menu.isFavorite,
+  //         });
+  //       });
+  //   });
+  // }
 
   const [userOptionsWindowVisible, setUserOptionsWindowVisible] =
     useState<boolean>(false);
@@ -343,9 +368,7 @@ const PanelBarNavContainer = (props: any) => {
   // };
 
   const setSelectedIndex = (pathName: any) => {
-    let currentPath: any = paths
-      .filter((item) => item.parentMenuId !== "fav")
-      .find((item: any) => item.path === pathName);
+    let currentPath: any = paths.find((item: any) => item.path === pathName);
 
     return currentPath ? currentPath.index : 0;
   };
@@ -382,120 +405,7 @@ const PanelBarNavContainer = (props: any) => {
     setIsMobileMenuOpend((prev) => !prev);
   };
 
-  const onClickChatbot = () => {
-    window.open("/CHAT_A0001W", "_blank");
-  };
-
-  const panelBars: TPath[] = [
-    ...paths.filter((path) => path.path === "/Home"),
-    ...paths.filter((path) => path.menuCategory === "GROUP"),
-  ];
-  if (companyCode !== "2207C612") {
-    panelBars.push({
-      path: "/Home",
-      menuName: "Home",
-      index: ".0",
-      menuId: "",
-      parentMenuId: "",
-      menuCategory: "",
-      isFavorite: false,
-    });
-    panelBars.push({
-      path: "/Notice",
-      menuName: "공지사항",
-      index: ".1",
-      menuId: "",
-      parentMenuId: "",
-      menuCategory: "",
-      isFavorite: false,
-    });
-    panelBars.push({
-      path: "/QnA",
-      menuName: "QnA",
-      index: ".2",
-      menuId: "",
-      parentMenuId: "",
-      menuCategory: "",
-      isFavorite: false,
-    });
-    panelBars.push({
-      path: "/MeetingView",
-      menuName: "회의록 열람",
-      index: ".3",
-      menuId: "",
-      parentMenuId: "",
-      menuCategory: "",
-      isFavorite: false,
-    });
-    panelBars.push({
-      path: "/ProjectSchedule",
-      menuName: "프로젝트 일정계획",
-      index: ".4",
-      menuId: "",
-      parentMenuId: "",
-      menuCategory: "",
-      isFavorite: false,
-    });
-    isAdmin &&
-      panelBars.push({
-        path: "/MeetingManagement",
-        menuName: "회의록 관리",
-        index: ".5",
-        menuId: "",
-        parentMenuId: "",
-        menuCategory: "",
-        isFavorite: false,
-      });
-    panelBars.push({
-      path: "/",
-      menuName: "설정",
-      index: "",
-      menuId: "setting",
-      parentMenuId: "",
-      menuCategory: "WEB",
-      isFavorite: false,
-    });
-    paths.push({
-      path: "/",
-      menuName: "비밀번호 변경",
-      index: "",
-      menuId: "change-password",
-      parentMenuId: "setting",
-      menuCategory: "WEB",
-      isFavorite: false,
-    });
-  }
-
-  // Parent 그룹 없는 메뉴 Array
-  const singleMenus = [
-    "/Home",
-    "/MeetingView",
-    "/MeetingManagement",
-    "/QnA",
-    "/Notice",
-    "/ProjectSchedule",
-  ];
-
-  let prgMenus: null | { id: string; text: string }[] = null;
-  if (menus) {
-    prgMenus = menus
-      .filter((menu) => menu.menuCategory === "WEB")
-      .map((menu) => ({ id: menu.formId, text: menu.menuName }));
-  }
-  const [searchedMenu, setSearchedMenu] = useState("");
-
   const history = useHistory();
-
-  const openSelctedMenu = (e: AutoCompleteCloseEvent) => {
-    const { value } = e.target;
-
-    if (prgMenus) {
-      const selectedValue = prgMenus.find((menu) => menu.text === value);
-      if (selectedValue) {
-        history.push("/" + selectedValue.id);
-      }
-    }
-  };
 
   // 새로고침하거나 Path 변경 시
   useEffect(() => {
@@ -577,72 +487,50 @@ const PanelBarNavContainer = (props: any) => {
           <AppName onClick={() => setIsMenuOpend(false)} theme={currentTheme}>
             <Logo size="32px" />
           </AppName>
-          {prgMenus && (
-            <MenuSearchBox>
-              {searchedMenu === "" && (
-                <span className="k-icon k-i-search"></span>
-              )}
-              <AutoComplete
-                style={{ width: "100%" }}
-                data={prgMenus}
-                textField="text"
-                value={searchedMenu}
-                onChange={(e) => setSearchedMenu(e.value)}
-                onBlur={(e) => setSearchedMenu("")}
-                onClose={openSelctedMenu}
-                size="small"
-                placeholder="Search menu.."
-              />
-            </MenuSearchBox>
-          )}
-          {paths.length > 0 && (
+          {isAdmin ? (
             <PanelBar
               selected={String(selected)}
               expandMode={"single"}
               onSelect={onSelect}
             >
-              {panelBars.map((path: TPath, idx: number) => {
-                return singleMenus.includes(path.path) ? (
-                  <PanelBarItem
-                    key={idx}
-                    title={path.menuName}
-                    route={path.path}
-                  />
-                ) : (
-                  <PanelBarItem
-                    key={idx}
-                    title={path.menuName}
-                    icon={
-                      path.menuId === "fav"
-                        ? "star"
-                        : path.menuId === "setting"
-                        ? "gear"
-                        : undefined
-                    }
-                    className={path.menuId === "fav" ? "fav-menu" : ""}
-                  >
-                    {paths
-                      .filter(
-                        (childPath: TPath) =>
-                          childPath.menuCategory === "WEB" &&
-                          childPath.parentMenuId === path.menuId,
-                      )
-                      .map((childPath: TPath, childIdx: number) => (
-                        <PanelBarItem
-                          key={childIdx}
-                          title={childPath.menuName}
-                          route={
-                            path.menuId === "setting"
-                              ? undefined
-                              : childPath.path
-                          }
-                          className={childPath.menuId}
-                          icon={childPath.isFavorite ? "circle" : "circle"}
-                        ></PanelBarItem>
-                      ))}
-                  </PanelBarItem>
-                );
-              })}
+              <PanelBarItem title={"Home"} route="/Home" />
+              <PanelBarItem title={"공지사항"} route="/Notice" />
+              <PanelBarItem title={"QnA"} route="/QnA" />
+              <PanelBarItem title={"회의록 열람"} route="/MeetingView" />
+              <PanelBarItem
+                title={"프로젝트 일정계획"}
+                route="/ProjectSchedule"
+              />
+              <PanelBarItem title={"회의록 관리"} route="/MeetingManagement" />
+              <PanelBarItem title={"설정"} icon={"gear"}>
+                <PanelBarItem
+                  title={"비밀번호 변경"}
+                  route={undefined}
+                  className="change-password"
+                ></PanelBarItem>
+              </PanelBarItem>
+            </PanelBar>
+          ) : (
+            <PanelBar
+              selected={String(selected)}
+              expandMode={"single"}
+              onSelect={onSelect}
+            >
+              <PanelBarItem title={"Home"} route="/Home" />
+              <PanelBarItem title={"공지사항"} route="/Notice" />
+              <PanelBarItem title={"QnA"} route="/QnA" />
+              <PanelBarItem title={"회의록 열람"} route="/MeetingView" />
+              <PanelBarItem
+                title={"프로젝트 일정계획"}
+                route="/ProjectSchedule"
+              />
+              <PanelBarItem title={"설정"} icon={"gear"}>
+                <PanelBarItem
+                  title={"비밀번호 변경"}
+                  route={undefined}
+                  className="change-password"
+                ></PanelBarItem>
+              </PanelBarItem>
             </PanelBar>
           )}
 
