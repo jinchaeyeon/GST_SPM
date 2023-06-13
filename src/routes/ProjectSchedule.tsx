@@ -182,6 +182,11 @@ const App = () => {
   const [pc, setPc] = useState("");
   UseParaPc(setPc);
 
+  const [loginResult] = useRecoilState(loginResultState);
+  const userId = loginResult ? loginResult.userId : "";
+  const role = loginResult ? loginResult.role : "";
+  const isAdmin = role === "ADMIN";
+
   const [task, setTask] = useState<TTask[]>([]);
   const [assignment, setAssignment] = useState<TAssignment[]>([]);
   const [dependency, setDependency] = useState<TDependency[]>([]);
@@ -414,8 +419,7 @@ const App = () => {
     }
     return data;
   };
-  const [loginResult] = useRecoilState(loginResultState);
-  const userId = loginResult ? loginResult.userId : "";
+
   // 데이터 저장
   const saveProjectGrid = async () => {
     let data: any;
@@ -719,14 +723,16 @@ const App = () => {
             <Button onClick={search} icon="search" themeColor={"primary"}>
               조회
             </Button>
-            <Button
-              themeColor={"primary"}
-              fillMode={"outline"}
-              icon="save"
-              onClick={saveProject}
-            >
-              저장
-            </Button>
+            {isAdmin && (
+              <Button
+                themeColor={"primary"}
+                fillMode={"outline"}
+                icon="save"
+                onClick={saveProject}
+              >
+                저장
+              </Button>
+            )}
           </ButtonContainer>
         </TitleContainer>
         <FilterBoxWrap>
@@ -771,15 +777,17 @@ const App = () => {
                     disabled={view === "Grid"}
                   />
                 </td>
-                <th>데이터 보기 유형</th>
-                <td>
-                  <RadioGroup
-                    data={viewTypes}
-                    value={view}
-                    onChange={(e) => setView(e.value)}
-                    layout="horizontal"
-                  />
-                </td>
+                {isAdmin && <th>데이터 보기 유형</th>}
+                {isAdmin && (
+                  <td>
+                    <RadioGroup
+                      data={viewTypes}
+                      value={view}
+                      onChange={(e) => setView(e.value)}
+                      layout="horizontal"
+                    />
+                  </td>
+                )}
               </tr>
             </tbody>
           </FilterBox>

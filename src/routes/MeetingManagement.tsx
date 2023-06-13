@@ -86,6 +86,7 @@ import {
   MultiColumnComboBox,
 } from "@progress/kendo-react-dropdowns";
 import NameCell from "../components/Cells/NameCell";
+import { useHistory } from "react-router-dom";
 
 const DATA_ITEM_KEY = "meetingnum";
 const DETAIL_ITEM_KEY = "meetingseq";
@@ -169,6 +170,21 @@ const App = () => {
   const userId = loginResult ? loginResult.userId : "";
   const [pc, setPc] = useState("");
   UseParaPc(setPc);
+
+  const history = useHistory();
+
+  useEffect(() => {
+    // 접근 권한 검증
+    if (loginResult) {
+      const role = loginResult ? loginResult.role : "";
+      const isAdmin = role === "ADMIN";
+
+      if (!isAdmin) {
+        alert("접근 권한이 없습니다.");
+        history.goBack();
+      }
+    }
+  }, [loginResult]);
 
   // 삭제할 첨부파일 리스트를 담는 함수
   const setDeletedAttadatnums = useSetRecoilState(deletedAttadatnumsState);
