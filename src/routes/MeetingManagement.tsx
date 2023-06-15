@@ -739,14 +739,13 @@ const App = () => {
       setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
 
       const { returnString } = data;
-      const splitReturnString = returnString.split("_");
 
       // 조회
       setFilters((prev) => ({
         ...prev,
         isFetch: true,
         pgNum: 1,
-        findRowValue: splitReturnString[1],
+        findRowValue: returnString,
       }));
     } else {
       console.log("[에러발생]");

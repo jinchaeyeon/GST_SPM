@@ -45,7 +45,9 @@ const DateCell = (props: GridCellProps) => {
       {isInEdit ? (
         <DatePicker
           name={field}
-          defaultValue={value}
+          defaultValue={
+            typeof value === "string" && value !== "" ? new Date() : value
+          }
           format={"yyyy-MM-dd"}
           onChange={onDateChange}
           calendar={Calendars}
