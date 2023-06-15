@@ -1547,7 +1547,7 @@ const App = () => {
             <Grid
               style={{
                 height: isVisibleDetail
-                  ? `calc(100% - 291.94px - 40px - 5px)`
+                  ? `calc(100% - 291.94px - 40px - 10px)`
                   : `calc(100% - 35px )`,
               }}
               data={process(
