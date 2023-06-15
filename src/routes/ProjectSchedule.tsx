@@ -24,7 +24,9 @@ import {
 import { useApi } from "../hooks/api";
 import { Iparameters } from "../store/types";
 import {
+  convertDateToStr,
   convertDateToStrWithTime2,
+  dateformat2,
   getCodeFromValue,
   getGridItemChangedData,
   handleKeyPressSearch,
@@ -79,19 +81,19 @@ import { isLoading, loginResultState } from "../store/atoms";
 import { useRecoilState, useSetRecoilState } from "recoil";
 
 type TSavedPara = {
-  work_type: "N" | "U" | "D";
-  type: "Task" | "Dependency" | "Assignment";
-  id?: string;
-  parentId?: string;
+  row_status?: "N" | "U" | "D";
+  guid?: string;
+  project_itemcd?: string;
   title?: string;
-  start?: string;
-  end?: string;
-  progress?: string;
-  predecessorId?: string;
-  successorId?: string;
-  dependencyType?: string;
-  taskId?: string;
-  resourceId?: string;
+  strtime?: string;
+  endtime?: string;
+  rate?: string;
+  appointment_label?: string;
+  dep_row_status?: "N" | "D";
+  parent_guid?: string;
+  child_guid?: string;
+  project_itemnm?: string;
+  remark?: string;
 };
 
 type TTask = {
@@ -101,12 +103,18 @@ type TTask = {
   start: Date;
   end: Date;
   progress: number;
+  project_itemcd: string;
+  guid: string;
+  parent_guid: string;
+  child_guid: string;
 };
 type TDependency = {
   id: string;
   predecessorId: string;
   successorId: string;
   type: string;
+  parent_guid: string;
+  child_guid: string;
 };
 type TAssignment = {
   id: string;
@@ -176,6 +184,8 @@ const CodesContext = createContext<{
 
 const deletedGridData: any[] = [];
 
+let taskForDeleting: any[] = []; // 삭제할때 참조되는 용도
+
 const App = () => {
   const processApi = useApi();
   const userid = UseGetValueFromSessionItem("user_id");
@@ -215,95 +225,79 @@ const App = () => {
   const [view, setView] = useState<"Scheduler" | "Grid">("Scheduler");
 
   const onDependencyInserted = (e: DependencyInsertedEvent) => {
-    const { values } = e;
-    const { predecessorId, successorId, type } = values;
-    const para: TSavedPara = {
-      work_type: "N",
-      type: "Dependency",
-      predecessorId: String(predecessorId).padStart(10, "0"),
-      successorId: String(successorId).padStart(10, "0"),
-      dependencyType: type,
-    };
-    // fetchSaved(para);
-  };
-  const onDependencyDeleted = (e: DependencyDeletedEvent) => {
-    const { key } = e;
+    const { predecessorId, successorId } = e.values;
+
+    const predecessorData = task.find((item) => item.id === predecessorId);
+    const successorData = task.find((item) => item.id === successorId);
 
     const para: TSavedPara = {
-      work_type: "D",
-      type: "Dependency",
-      id: String(key).padStart(10, "0"),
+      dep_row_status: "N",
+      parent_guid: predecessorData ? predecessorData.guid : "",
+      child_guid: successorData ? successorData.guid : "",
     };
-    // fetchSaved(para);
+
+    saveProjectScheduler(para);
+  };
+  const onDependencyDeleted = (e: DependencyDeletedEvent) => {
+    const { predecessorId, successorId } = e.values;
+
+    const predecessorData = task.find((item) => item.id === predecessorId);
+    const successorData = task.find((item) => item.id === successorId);
+
+    const para: TSavedPara = {
+      dep_row_status: "D",
+      parent_guid: predecessorData ? predecessorData.guid : "",
+      child_guid: successorData ? successorData.guid : "",
+    };
+    saveProjectScheduler(para);
   };
   const onTaskInserted = (e: TaskInsertedEvent) => {
-    const { values } = e;
-    const { start, end, progress, title, parentId = "0000000000" } = values;
+    const { guid, start, end, progress, title, project_itemcd = "" } = e.values;
+
     const para: TSavedPara = {
-      work_type: "N",
-      type: "Task",
-      start: convertDateToStrWithTime2(start),
-      end: convertDateToStrWithTime2(end),
-      progress,
+      row_status: "N",
+      guid,
+      project_itemcd,
       title,
-      parentId: String(parentId).padStart(10, "0"),
+      strtime: convertDateToStrWithTime2(start),
+      endtime: convertDateToStrWithTime2(end),
+      rate: progress,
     };
-    // fetchSaved(para);
+    saveProjectScheduler(para);
   };
   const onTaskDeleted = (e: TaskDeletedEvent) => {
     const { key } = e;
+    const deletedData = taskForDeleting.find((item) => item.id === key);
 
     const para: TSavedPara = {
-      work_type: "D",
-      type: "Task",
-      id: String(key).padStart(10, "0"),
+      row_status: "D",
+      guid: deletedData?.guid,
+      rate: "0",
     };
-    // fetchSaved(para);
+    saveProjectScheduler(para);
   };
   const onTaskUpdated = (e: TaskUpdatedEvent) => {
     const { values, key } = e;
     const updatedData = task.find((item) => item.id === key);
     const {
+      guid = updatedData?.guid,
       start = updatedData?.start,
       end = updatedData?.end,
       progress = updatedData?.progress,
       title = updatedData?.title,
-      parentId = updatedData?.parentId,
+      project_itemcd = updatedData?.project_itemcd,
     } = values;
 
     const para: TSavedPara = {
-      work_type: "U",
-      type: "Task",
-      id: String(key).padStart(10, "0"),
-      start: convertDateToStrWithTime2(start),
-      end: convertDateToStrWithTime2(end),
-      progress,
+      row_status: "U",
+      guid,
+      strtime: convertDateToStrWithTime2(start),
+      endtime: convertDateToStrWithTime2(end),
+      rate: progress,
       title,
-      parentId,
+      project_itemcd,
     };
-    // fetchSaved(para);
-  };
-  const onResourceAssigned = (e: ResourceAssignedEvent) => {
-    const { values } = e;
-    const { taskId, resourceId } = values;
-
-    const para: TSavedPara = {
-      work_type: "N",
-      type: "Assignment",
-      taskId: String(taskId).padStart(10, "0"),
-      resourceId: String(resourceId).padStart(10, "0"),
-    };
-    // fetchSaved(para);
-  };
-  const onResourceUnassigned = (e: ResourceUnassignedEvent) => {
-    const { key } = e;
-
-    const para: TSavedPara = {
-      work_type: "D",
-      type: "Assignment",
-      id: String(key).padStart(10, "0"),
-    };
-    // fetchSaved(para);
+    saveProjectScheduler(para);
   };
 
   useEffect(() => {
@@ -359,6 +353,7 @@ const App = () => {
     if (data.isSuccess === true) {
       // 일정항목 데이터
       const parentRows: TTask[] = data.tables[0].Rows.map((row: any) => ({
+        ...row,
         id: getIntegerForString(row.project_itemcd),
         parentId:
           row.prntitemcd === "" ? null : getIntegerForString(row.prntitemcd),
@@ -376,7 +371,9 @@ const App = () => {
           parentId: getIntegerForString(row.project_itemcd),
           title: row.title,
           start: new Date(row.start_time),
+          startStrig: dateformat2(row.start_time),
           end: new Date(row.end_time),
+          endStrig: dateformat2(row.end_time),
           progress: row.rate,
         }),
       );
@@ -387,6 +384,7 @@ const App = () => {
       // 디펜던시(화살표) 데이터
       const dependancyRows: TDependency[] = data.tables[2].Rows.map(
         (row: any) => ({
+          ...row,
           id: getIntegerForString(row.guid),
           predecessorId: getIntegerForString(row.parent_guid),
           successorId: getIntegerForString(row.guid),
@@ -397,6 +395,9 @@ const App = () => {
       setGridData(process(childRows, gridDataState));
       setTask(taskRows);
       setDependency(dependancyRows);
+
+      taskForDeleting = [];
+      taskForDeleting.push(...taskRows);
     }
   };
 
@@ -420,6 +421,73 @@ const App = () => {
     return data;
   };
 
+  const saveProjectScheduler = async (para: TSavedPara) => {
+    let data: any;
+    const {
+      row_status = "",
+      guid = "",
+      project_itemcd = "",
+      title = "",
+      strtime = "",
+      endtime = "",
+      rate = "",
+      appointment_label = "",
+      dep_row_status = "",
+      parent_guid = "",
+      child_guid = "",
+      project_itemnm = "",
+    } = para;
+
+    if (!projectValue) {
+      alert("프로젝트 명은 필수 입력 항목입니다.");
+    }
+
+    // setLoading(true);
+    const devmngnum = getCodeFromValue(projectValue, "devmngnum");
+
+    const parameters: Iparameters = {
+      procedureName: "pw6_sav_project_schedule",
+      pageNumber: 0,
+      pageSize: 0,
+      parameters: {
+        "@p_work_type": "SAVE",
+        "@p_devmngnum": devmngnum,
+        "@p_row_status": row_status,
+        "@p_guid": guid,
+        "@p_project_itemcd": project_itemcd,
+        "@p_title": title,
+        "@p_strtime": strtime,
+        "@p_endtime": endtime,
+        "@p_rate": rate,
+        "@p_appointment_label": appointment_label,
+        "@p_dep_row_status": dep_row_status,
+        "@p_parent_guid": parent_guid,
+        "@p_child_guid": child_guid,
+        "@p_project_itemnm": project_itemnm,
+        "@p_remark": "",
+        "@p_id": userId,
+        "@p_pc": pc,
+        "@p_form_id": "SPM_WEB",
+      },
+    };
+
+    console.log("parameters");
+    console.log(parameters);
+
+    try {
+      data = await processApi<any>("procedure", parameters);
+    } catch (error) {
+      data = null;
+    }
+
+    if (data.isSuccess === true) {
+      fetchProjectDetail(devmngnum);
+    } else {
+      console.log("[에러발생]");
+      console.log(data);
+    }
+    setLoading(false);
+  };
   // 데이터 저장
   const saveProjectGrid = async () => {
     let data: any;
@@ -506,8 +574,6 @@ const App = () => {
       },
     };
 
-    console.log("parameters");
-    console.log(parameters);
     try {
       data = await processApi<any>("procedure", parameters);
     } catch (error) {
@@ -804,13 +870,13 @@ const App = () => {
               onTaskInserted={onTaskInserted}
               onTaskDeleted={onTaskDeleted}
               onTaskUpdated={onTaskUpdated}
-              onResourceAssigned={onResourceAssigned}
-              onResourceUnassigned={onResourceUnassigned}
+              // onResourceAssigned={onResourceAssigned}
+              // onResourceUnassigned={onResourceUnassigned}
             >
               <Tasks dataSource={task} />
               <Dependencies dataSource={dependency} />
               {/*<Resources dataSource={resource} />
-        <ResourceAssignments dataSource={assignment} /> */}
+              <ResourceAssignments dataSource={assignment} /> */}
 
               <Toolbar>
                 <Item name="undo" />
@@ -826,12 +892,18 @@ const App = () => {
                 <Item name="zoomOut" />
               </Toolbar>
 
-              <Column dataField="title" caption="Subject" width={300} />
-              <Column dataField="start" caption="Start Date" />
-              <Column dataField="end" caption="End Date" />
+              <Column dataField="title" caption="일정 항목" width={300} />
+              <Column
+                dataField="start"
+                caption="시작일자"
+                // cellRender={(date) => {
+                //   return dateformat2(convertDateToStr(date));
+                // }}
+              />
+              <Column dataField="end" caption="종료일자" />
 
               <Validation autoUpdateParentTasks />
-              {/* <Editing enabled /> */}
+              <Editing enabled={isAdmin} />
             </Gantt>
           ) : (
             <Grid
