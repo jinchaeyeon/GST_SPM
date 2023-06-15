@@ -370,11 +370,15 @@ const App = () => {
 
         // Edior에 HTML & CSS 세팅
         if (qEditorRef.current) {
+          if (isAdmin) qEditorRef.current.updateEditable(true);
           qEditorRef.current.setHtml(questionDocument);
+          if (isAdmin) qEditorRef.current.updateEditable(false);
         }
 
         if (aEditorRef.current) {
+          aEditorRef.current.updateEditable(true);
           aEditorRef.current.setHtml(answerDocument);
+          aEditorRef.current.updateEditable(false);
         }
       } else {
         console.log("[에러발생]");
@@ -992,7 +996,7 @@ const App = () => {
                 </tbody>
               </FormBox>
             </FormBoxWrap>
-            <RichEditor id="qEditor" ref={qEditorRef} readonly={isAdmin} />
+            <RichEditor id="qEditor" ref={qEditorRef} hideTools={isAdmin} />
             <FormBoxWrap
               border
               style={{
@@ -1025,7 +1029,7 @@ const App = () => {
             <GridTitleContainer>
               <GridTitle>답변</GridTitle>
             </GridTitleContainer>
-            <RichEditor id="aEditor" ref={aEditorRef} readonly />{" "}
+            <RichEditor id="aEditor" ref={aEditorRef} hideTools />
             <FormBoxWrap
               border
               style={{

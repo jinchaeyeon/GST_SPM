@@ -261,10 +261,14 @@ const App = () => {
 
       // Edior에 HTML & CSS 세팅
       if (refEditorRef.current) {
+        refEditorRef.current.updateEditable(true);
         refEditorRef.current.setHtml(reference);
+        refEditorRef.current.updateEditable(false);
       }
       if (docEditorRef.current) {
+        docEditorRef.current.updateEditable(true);
         docEditorRef.current.setHtml(document);
+        docEditorRef.current.updateEditable(false);
       }
     } else {
       console.log("[에러발생]");
@@ -548,13 +552,13 @@ const App = () => {
             </FormBox>
           </FormBoxWrap>
 
-          <RichEditor id="docEditor" ref={docEditorRef} readonly />
+          <RichEditor id="docEditor" ref={docEditorRef} hideTools />
         </GridContainer>
         <GridContainer width={`calc(40% - ${GAP}px)`}>
           <GridTitleContainer>
             <GridTitle>참고자료</GridTitle>
           </GridTitleContainer>
-          <RichEditor id="refEditor" ref={refEditorRef} readonly />
+          <RichEditor id="refEditor" ref={refEditorRef} hideTools />
         </GridContainer>
       </GridContainerWrap>
 

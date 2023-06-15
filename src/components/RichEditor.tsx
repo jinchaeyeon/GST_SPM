@@ -1,4 +1,4 @@
-import * as React from "react";
+import React, { useEffect } from "react";
 import {
   Editor,
   EditorChangeEvent,
@@ -52,18 +52,25 @@ const { imageResizing } = EditorUtils;
 
 type TRichEditor = {
   id: string;
-  readonly?: boolean;
+  hideTools?: boolean;
   className?: string;
 };
 
 const noticeStyle = `body {
   padding : 1.5cm;
 }`;
+
+const { EditorState, EditorView, Plugin, PluginKey } = ProseMirror;
+
 const RichEditor = React.forwardRef(
-  ({ id, readonly, className = "" }: TRichEditor, ref) => {
+  ({ id, hideTools, className = "" }: TRichEditor, ref) => {
     const editor = React.createRef<Editor>();
     // let styles: null | string = null;
     const [styles, setStyles] = React.useState<null | string>(null);
+    const editableRef = React.useRef<boolean>(true);
+    const [editable, setEditable] = React.useState<boolean>(true);
+
+    const view = React.useRef<any>(null);
 
     const onMount = (event: EditorMountEvent) => {
       const state = event.viewProps.state;
@@ -71,20 +78,32 @@ const RichEditor = React.forwardRef(
         ...state.plugins,
         insertImagePlugin(onImageInsert),
         imageResizing(),
-        // new Plugin({
-        //     key: new PluginKey('readonly'),
-        //     props: { editable: () => editableRef.current },
-        //     filterTransaction: ((tr, _st) => editableRef.current || !tr.docChanged)
-        //   })
+        new Plugin({
+          key: new PluginKey("readonly"),
+          props: { editable: () => editableRef.current },
+          filterTransaction: (tr, _st) => editableRef.current || !tr.docChanged,
+        }),
       ];
 
-      return new ProseMirror.EditorView(
+      return new EditorView(
         { mount: event.dom },
         {
           ...event.viewProps,
-          state: ProseMirror.EditorState.create({ doc: state.doc, plugins }),
-        }
+          state: EditorState.create({ doc: state.doc, plugins }),
+        },
       );
+    };
+
+    useEffect(() => {
+      if (view.current && editable) {
+        console.log(view.current.state);
+        view.current.updateState(view.current.state);
+      }
+    }, [editable]);
+
+    const updateEditable = (editable: boolean) => {
+      setEditable(editable);
+      editableRef.current = editable;
     };
 
     const onImageInsert = (args: TInsertImageFiles) => {
@@ -103,13 +122,14 @@ const RichEditor = React.forwardRef(
 
     React.useImperativeHandle(ref, () => ({
       setHtml,
+      updateEditable,
       getContent: () => {
         if (editor.current) {
           const view = editor.current.view;
           if (view) {
             let html = EditorUtils.getHtml(view.state);
             html = addClassToColorStyledElementsInHtmlString(
-              EditorUtils.getHtml(view.state)
+              EditorUtils.getHtml(view.state),
             );
 
             if (className.includes("notice-editor")) {
@@ -198,7 +218,7 @@ const RichEditor = React.forwardRef(
 
     // HTML 스트링을 받아서 color, background-color에 대한 스타일을 추가하여서 반환하는 함수
     const addClassToColorStyledElementsInHtmlString = (
-      htmlString: string
+      htmlString: string,
     ): string => {
       // HTML 문자열을 가상의 DOM 요소로 변환
       const parser = new DOMParser();
@@ -256,7 +276,7 @@ const RichEditor = React.forwardRef(
             /rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*(\d+(?:\.\d+)?))?\)/g;
           const updatedElementStyle = elementStyle.replace(
             rgbaRegex,
-            (_, r, g, b, a) => rgbaToHex(`rgba(${r}, ${g}, ${b}, ${a || "1"})`)
+            (_, r, g, b, a) => rgbaToHex(`rgba(${r}, ${g}, ${b}, ${a || "1"})`),
           );
 
           element.setAttribute("style", updatedElementStyle);
@@ -269,7 +289,7 @@ const RichEditor = React.forwardRef(
     // 컬러코드 변환 (rgba -> hex 6자리)
     const rgbaToHex = (rgba: string): string => {
       const match = rgba.match(
-        /^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*\d+(?:\.\d+)?)?\)$/
+        /^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*\d+(?:\.\d+)?)?\)$/,
       );
       if (!match) return rgba;
 
@@ -289,7 +309,7 @@ const RichEditor = React.forwardRef(
           style={{ height: "100%" }}
           contentStyle={{ height: "100%" }}
           tools={
-            readonly
+            hideTools
               ? []
               : [
                   [Bold, Italic, Underline, Strikethrough],
@@ -315,7 +335,7 @@ const RichEditor = React.forwardRef(
         />
       </div>
     );
-  }
+  },
 );
 
 export default RichEditor;

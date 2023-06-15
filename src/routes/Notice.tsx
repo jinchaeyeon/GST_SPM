@@ -378,7 +378,9 @@ const App = () => {
 
       // Edior에 HTML & CSS 세팅
       if (editorRef.current) {
+        if (!isAdmin) editorRef.current.updateEditable(true);
         editorRef.current.setHtml(document);
+        if (!isAdmin) editorRef.current.updateEditable(false);
       }
     } else {
       console.log("[에러발생]");
@@ -844,7 +846,7 @@ const App = () => {
           <RichEditor
             id="editor"
             ref={editorRef}
-            readonly={!isAdmin}
+            hideTools={!isAdmin}
             className={"notice-editor"}
           />
           <FormBoxWrap

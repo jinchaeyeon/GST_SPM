@@ -154,6 +154,7 @@ export type TLogParaVal = {
 export type TEditorHandle = {
   getContent: () => string;
   setHtml: (html: string) => string;
+  updateEditable: (editable: boolean) => void;
 };
 
 export type TSysMessageKey =
