@@ -551,7 +551,7 @@ const PanelBarNavContainer = (props: any) => {
           </ButtonContainer>
         </Gnv>
       ) : (
-        <SmallGnv>
+        <SmallGnv theme={currentTheme}>
           <Button
             icon="menu"
             fillMode={"flat"}

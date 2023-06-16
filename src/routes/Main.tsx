@@ -54,14 +54,15 @@ const currentDate = new Date();
 const currentYear = currentDate.getFullYear();
 
 const labelContent = (props: any) => {
-  let formatedNumber = Number(props.dataItem.value).toLocaleString(undefined, {
-    style: "percent",
-    minimumFractionDigits: 2,
-  });
   return `${props.dataItem.name} : ${props.dataItem.data}건`;
 };
 
 const categories = ["월", "화", "수", "목", "금"];
+
+const chartTitleFont = "600 16px 'Noto Sans KR', 'Source Sans Pro', sans-serif";
+const chartLegendFont = "15px 'Noto Sans KR', 'Source Sans Pro',sans-serif";
+const chartAxisFont = "14px 'Noto Sans KR', 'Source Sans Pro',sans-serif";
+const chartSeriesFont = "400 13px 'Noto Sans KR', 'Source Sans Pro',sans-serif";
 
 const Main: React.FC = () => {
   const history = useHistory();
@@ -73,9 +74,8 @@ const Main: React.FC = () => {
   const [loginResult, setLoginResult] = useRecoilState(loginResultState);
   const [filterValue, setFilterValue] = useRecoilState(filterValueState);
 
-  const userId = loginResult ? loginResult.userId : "";
   const userName = loginResult ? loginResult.userName : "";
-  const { switcher, themes, currentTheme = "" } = useThemeSwitcher();
+  const { switcher, currentTheme = "" } = useThemeSwitcher();
 
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -132,9 +132,6 @@ const Main: React.FC = () => {
   const [projectSelectedState, setProjectSelectedState] = useState<{
     [id: string]: boolean | number[];
   }>({});
-
-  const [questionPgNum, setQuestionPgNum] = useState(1);
-  const [meetingPgNum, setMeetingPgNum] = useState(1);
 
   const fetchHome = async () => {
     let data: any;
@@ -381,13 +378,11 @@ const Main: React.FC = () => {
               <Chart style={{ height: "100%" }}>
                 <ChartTitle
                   text={currentYear + "년 담당자별 문의"}
-                  font="600 16px 'Noto Sans KR', 'Source Sans Pro', sans-serif"
+                  font={chartTitleFont}
                 />
                 <ChartLegend
                   position="bottom"
-                  labels={{
-                    font: "15px 'Noto Sans KR', 'Source Sans Pro',sans-serif",
-                  }}
+                  labels={{ font: chartLegendFont }}
                 />
                 <ChartSeries>
                   <ChartSeriesItem
@@ -398,7 +393,7 @@ const Main: React.FC = () => {
                     labels={{
                       visible: true,
                       content: labelContent,
-                      font: "400 13px 'Noto Sans KR', 'Source Sans Pro',sans-serif",
+                      font: chartSeriesFont,
                     }}
                   />
                 </ChartSeries>
@@ -406,32 +401,23 @@ const Main: React.FC = () => {
             </GridContainer>
             <GridContainer width="60%">
               <Chart style={{ height: "100%" }}>
-                <ChartTitle
-                  text="요일별 담당자 문의"
-                  font="600 16px 'Noto Sans KR', 'Source Sans Pro', sans-serif"
-                />
+                <ChartTitle text="요일별 담당자 문의" font={chartTitleFont} />
                 <ChartLegend
                   position="bottom"
-                  labels={{
-                    font: "15px 'Noto Sans KR', 'Source Sans Pro',sans-serif",
-                  }}
+                  labels={{ font: chartLegendFont }}
                 />
 
                 <ChartCategoryAxis>
                   <ChartCategoryAxisItem
                     categories={categories}
-                    labels={{
-                      font: "14px 'Noto Sans KR', 'Source Sans Pro',sans-serif",
-                    }}
+                    labels={{ font: chartAxisFont }}
                   ></ChartCategoryAxisItem>
                 </ChartCategoryAxis>
 
                 <ChartValueAxis>
                   <ChartValueAxisItem
                     majorUnit={1}
-                    labels={{
-                      font: "14px 'Noto Sans KR', 'Source Sans Pro',sans-serif",
-                    }}
+                    labels={{ font: chartAxisFont }}
                   />
                 </ChartValueAxis>
                 <ChartSeries>

@@ -990,11 +990,14 @@ export const TextBox = styled.div`
   }
 `;
 
-export const SmallGnv = styled.div`
+type TSmallGnv = {
+  theme: "dark" | "light";
+};
+export const SmallGnv = styled.div<TSmallGnv>`
   padding-top: 10px;
-  border-right: solid 1px #454545;
+  border-right: ${(props) =>
+    props.theme === "dark" ? "solid 1px #454545" : "1px solid #ebebeb"};
   height: 100vh;
-
   @media (max-width: 768px) {
     display: none;
   }
