@@ -79,6 +79,10 @@ div.k-animation-container {
   width: 21cm;
 }
 
+/* 메뉴 바 폰트 굵기 조정 */
+.k-panelbar > .k-item > .k-link, .k-panelbar > .k-panelbar-header > .k-link{
+  font-weight: 400;
+}
 /* 모바일 결재문서 숨김 처리 */
 @media (max-width: 768px) {
   .visible-mobile-only {

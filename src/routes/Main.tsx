@@ -50,6 +50,9 @@ const QUESTION_ITEM_KEY = "document_id";
 const MEETING_ITEM_KEY = "meetingnum";
 const PROJECT_ITEM_KEY = "project";
 
+const currentDate = new Date();
+const currentYear = currentDate.getFullYear();
+
 const labelContent = (props: any) => {
   let formatedNumber = Number(props.dataItem.value).toLocaleString(undefined, {
     style: "percent",
@@ -311,7 +314,7 @@ const Main: React.FC = () => {
         }}
       >
         <p className="small" style={{ color: "#fff" }}>
-          <span style={{ fontWeight: 900 }}>{userName}</span> 님, 좋은 하루
+          <span style={{ fontWeight: 700 }}>{userName}</span> 님, 좋은 하루
           되세요
         </p>
         <Title></Title>
@@ -376,8 +379,16 @@ const Main: React.FC = () => {
           <GridContainerWrap height={"50%"}>
             <GridContainer width="40%">
               <Chart style={{ height: "100%" }}>
-                <ChartTitle text="2023년 담당자별 문의" />
-                <ChartLegend position="bottom" />
+                <ChartTitle
+                  text={currentYear + "년 담당자별 문의"}
+                  font="600 16px 'Noto Sans KR', 'Source Sans Pro', sans-serif"
+                />
+                <ChartLegend
+                  position="bottom"
+                  labels={{
+                    font: "15px 'Noto Sans KR', 'Source Sans Pro',sans-serif",
+                  }}
+                />
                 <ChartSeries>
                   <ChartSeriesItem
                     type="pie"
@@ -387,6 +398,7 @@ const Main: React.FC = () => {
                     labels={{
                       visible: true,
                       content: labelContent,
+                      font: "400 13px 'Noto Sans KR', 'Source Sans Pro',sans-serif",
                     }}
                   />
                 </ChartSeries>
@@ -394,17 +406,33 @@ const Main: React.FC = () => {
             </GridContainer>
             <GridContainer width="60%">
               <Chart style={{ height: "100%" }}>
-                <ChartTitle text="요일별 담당자 문의" />
-                <ChartLegend position="bottom" />
+                <ChartTitle
+                  text="요일별 담당자 문의"
+                  font="600 16px 'Noto Sans KR', 'Source Sans Pro', sans-serif"
+                />
+                <ChartLegend
+                  position="bottom"
+                  labels={{
+                    font: "15px 'Noto Sans KR', 'Source Sans Pro',sans-serif",
+                  }}
+                />
 
                 <ChartCategoryAxis>
                   <ChartCategoryAxisItem
                     categories={categories}
+                    labels={{
+                      font: "14px 'Noto Sans KR', 'Source Sans Pro',sans-serif",
+                    }}
                   ></ChartCategoryAxisItem>
                 </ChartCategoryAxis>
 
                 <ChartValueAxis>
-                  <ChartValueAxisItem majorUnit={1} />
+                  <ChartValueAxisItem
+                    majorUnit={1}
+                    labels={{
+                      font: "14px 'Noto Sans KR', 'Source Sans Pro',sans-serif",
+                    }}
+                  />
                 </ChartValueAxis>
                 <ChartSeries>
                   {userSummaryResult.weekly.map(

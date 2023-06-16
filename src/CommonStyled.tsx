@@ -947,7 +947,7 @@ export const TextBox = styled.div`
   flex-direction: column;
 
   p span {
-    font-weight: 900;
+    font-weight: 700;
     font-size: 28px;
     color: #fff;
     margin-left: 5px;
