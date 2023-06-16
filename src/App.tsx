@@ -27,25 +27,51 @@ import likelySubtags from "cldr-core/supplemental/likelySubtags.json";
 import currencyData from "cldr-core/supplemental/currencyData.json";
 import weekData from "cldr-core/supplemental/weekData.json";
 
-import bgNumbers from "cldr-numbers-full/main/bg/numbers.json";
-import bgLocalCurrency from "cldr-numbers-full/main/bg/currencies.json";
-import bgCaGregorian from "cldr-dates-full/main/bg/ca-gregorian.json";
-import bgDateFields from "cldr-dates-full/main/bg/dateFields.json";
+import numbersKo from "cldr-numbers-full/main/ko/numbers.json";
+import caGregorianKo from "cldr-dates-full/main/ko/ca-gregorian.json";
+import dateFieldsKo from "cldr-dates-full/main/ko/dateFields.json";
+import timeZoneNamesKo from "cldr-dates-full/main/ko/timeZoneNames.json";
 
-import usNumbers from "cldr-numbers-full/main/en/numbers.json";
-import usLocalCurrency from "cldr-numbers-full/main/en/currencies.json";
-import usCaGregorian from "cldr-dates-full/main/en/ca-gregorian.json";
-import usDateFields from "cldr-dates-full/main/en/dateFields.json";
+import numbersEn from "cldr-numbers-full/main/en/numbers.json";
+import caGregorianEn from "cldr-dates-full/main/en/ca-gregorian.json";
+import dateFieldsEn from "cldr-dates-full/main/en/dateFields.json";
+import timeZoneNamesEn from "cldr-dates-full/main/en/timeZoneNames.json";
 
-import gbNumbers from "cldr-numbers-full/main/en-GB/numbers.json";
-import gbLocalCurrency from "cldr-numbers-full/main/en-GB/currencies.json";
-import gbCaGregorian from "cldr-dates-full/main/en-GB/ca-gregorian.json";
-import gbDateFields from "cldr-dates-full/main/en-GB/dateFields.json";
+import numbersJa from "cldr-numbers-full/main/ja/numbers.json";
+import caGregorianJa from "cldr-dates-full/main/ja/ca-gregorian.json";
+import dateFieldsJa from "cldr-dates-full/main/ja/dateFields.json";
+import timeZoneNamesJa from "cldr-dates-full/main/ja/timeZoneNames.json";
+
+import numbersZh from "cldr-numbers-full/main/zh/numbers.json";
+import caGregorianZh from "cldr-dates-full/main/zh/ca-gregorian.json";
+import dateFieldsZh from "cldr-dates-full/main/zh/dateFields.json";
+import timeZoneNamesZh from "cldr-dates-full/main/zh/timeZoneNames.json";
 
 import koMessages from "./store/cultures/ko.json";
 
-loadMessages(koMessages, "ko-KR");
+load(
+  likelySubtags,
+  currencyData,
+  weekData,
+  numbersKo,
+  caGregorianKo,
+  dateFieldsKo,
+  timeZoneNamesKo,
+  numbersEn,
+  caGregorianEn,
+  dateFieldsEn,
+  timeZoneNamesEn,
+  numbersJa,
+  caGregorianJa,
+  dateFieldsJa,
+  timeZoneNamesJa,
+  numbersZh,
+  caGregorianZh,
+  dateFieldsZh,
+  timeZoneNamesZh,
+);
 
+loadMessages(koMessages, "ko-KR");
 type TGlobalStyle = {
   isMobileMenuOpend: boolean;
 };
@@ -173,30 +199,12 @@ input.readonly {
 
 `;
 
-load(
-  likelySubtags,
-  currencyData,
-  weekData,
-  bgNumbers,
-  bgLocalCurrency,
-  bgCaGregorian,
-  bgDateFields,
-  usNumbers,
-  usLocalCurrency,
-  usCaGregorian,
-  usDateFields,
-  gbNumbers,
-  gbLocalCurrency,
-  gbCaGregorian,
-  gbDateFields,
-);
 const App: React.FC = () => {
   return (
     <RecoilRoot>
       <AppInner></AppInner>
     </RecoilRoot>
   );
-  //}
 };
 const AppInner: React.FC = () => {
   const isMobileMenuOpend = useRecoilValue(isMobileMenuOpendState);
@@ -204,35 +212,35 @@ const AppInner: React.FC = () => {
   return (
     <>
       <GlobalStyle isMobileMenuOpend={isMobileMenuOpend} />
-      {/* <LocalizationProvider language={"ko-KR"}>
-        <IntlProvider locale={"ko"}> */}
-      <Router>
-        <Switch>
-          <Route path="/" component={Login} exact />
-          <Route path="/Admin" component={LoginAdmin} exact />
-          <PanelBarNavContainer>
-            {/* 메인 홈 */}
-            <AuthRoute path="/Home" component={Main} exact />
+      <LocalizationProvider language={"ko"}>
+        <IntlProvider locale={"ko"}>
+          <Router>
+            <Switch>
+              <Route path="/" component={Login} exact />
+              <Route path="/Admin" component={LoginAdmin} exact />
+              <PanelBarNavContainer>
+                {/* 메인 홈 */}
+                <AuthRoute path="/Home" component={Main} exact />
 
-            {/* SPM */}
-            <AuthRoute path="/MeetingView" component={MeetingView} exact />
-            <AuthRoute
-              path="/MeetingManagement"
-              component={MeetingManagement}
-              exact
-            />
-            <AuthRoute path="/Qna" component={QnA} exact />
-            <AuthRoute path="/Notice" component={Notice} exact />
-            <AuthRoute
-              path="/ProjectSchedule"
-              component={ProjectSchedule}
-              exact
-            />
-          </PanelBarNavContainer>
-        </Switch>
-      </Router>
-      {/* </IntlProvider>
-      </LocalizationProvider> */}
+                {/* SPM */}
+                <AuthRoute path="/MeetingView" component={MeetingView} exact />
+                <AuthRoute
+                  path="/MeetingManagement"
+                  component={MeetingManagement}
+                  exact
+                />
+                <AuthRoute path="/Qna" component={QnA} exact />
+                <AuthRoute path="/Notice" component={Notice} exact />
+                <AuthRoute
+                  path="/ProjectSchedule"
+                  component={ProjectSchedule}
+                  exact
+                />
+              </PanelBarNavContainer>
+            </Switch>
+          </Router>
+        </IntlProvider>
+      </LocalizationProvider>
     </>
   );
   //}

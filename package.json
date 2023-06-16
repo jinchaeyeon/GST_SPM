@@ -50,7 +50,7 @@
     "byte-base64": "^1.1.0",
     "cachios": "^4.0.0",
     "calculate-size": "^1.1.1",
-    "cldr-core": "^42.0.0",
+    "cldr-core": "^43.1.0",
     "cldr-dates-full": "^42.0.0",
     "cldr-numbers-full": "^42.0.0",
     "crypto-random-string": "^5.0.0",
