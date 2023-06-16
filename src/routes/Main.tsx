@@ -79,11 +79,11 @@ const Main: React.FC = () => {
 
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Kendo Chart에 Theme 적용하는데 간헐적으로 오류 발생하여 0.7초후 렌더링되도록 처리함 (메인메뉴 접속할때마다 적용)
+  // Kendo Chart에 Theme 적용하는데 간헐적으로 오류 발생하여 n초 후 렌더링되도록 처리함 (메인메뉴 접속할때마다 적용)
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoaded(true);
-    }, 700);
+    }, 1000);
 
     return () => clearTimeout(timer); // 컴포넌트가 언마운트될 때 타이머를 제거
   }, []);
@@ -189,9 +189,6 @@ const Main: React.FC = () => {
 
   useEffect(() => {
     switcher({ theme: "dark" });
-  }, []);
-
-  useEffect(() => {
     search();
   }, []);
 

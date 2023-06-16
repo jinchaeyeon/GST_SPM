@@ -803,9 +803,11 @@ const App = () => {
               width={100}
               cell={CenterCell}
             />
-            <GridColumn field="customer_name" title="업체명" width={120} />
-            <GridColumn field="user_name" title="작성자" width={120} />
-            <GridColumn field="title" title="제목" width={150} />
+            {isAdmin && (
+              <GridColumn field="customer_name" title="업체명" width={120} />
+            )}
+            <GridColumn field="user_name" title="작성자" width={100} />
+            <GridColumn field="title" title="제목" width={200} />
             <GridColumn
               field="reception_date"
               title="접수일"
@@ -996,7 +998,9 @@ const App = () => {
                 </tbody>
               </FormBox>
             </FormBoxWrap>
-            <RichEditor id="qEditor" ref={qEditorRef} hideTools={isAdmin} />
+            <GridContainer style={{ minHeight: "350px" }}>
+              <RichEditor id="qEditor" ref={qEditorRef} hideTools={isAdmin} />
+            </GridContainer>
             <FormBoxWrap
               border
               style={{

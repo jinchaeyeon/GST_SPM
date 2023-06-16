@@ -23,13 +23,12 @@ div.k-animation-container {
 .k-grid {
   margin-top: 5px;
 }
-.k-grid {
-  max-height: 820px;
-}
 
-/* .k-grid tr {
-  height: 36px;
-} */
+@media (max-width: 768px) {
+  .k-grid {
+    max-height: 820px;
+  }
+}
 
 .k-form-horizontal .k-form-field > .k-label,
 .k-form-horizontal .k-form-field > kendo-label,
@@ -80,7 +79,8 @@ div.k-animation-container {
 }
 
 /* 메뉴 바 폰트 굵기 조정 */
-.k-panelbar > .k-item > .k-link, .k-panelbar > .k-panelbar-header > .k-link{
+.k-panelbar > .k-item > .k-link,
+.k-panelbar > .k-panelbar-header > .k-link {
   font-weight: 400;
 }
 /* 모바일 결재문서 숨김 처리 */

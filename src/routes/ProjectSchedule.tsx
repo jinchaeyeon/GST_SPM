@@ -77,7 +77,7 @@ import NumberCell from "../components/Cells/NumberCell";
 import { bytesToBase64 } from "byte-base64";
 import ComboBoxCell from "../components/Cells/ComboBoxCell";
 import { v4 as uuidv4 } from "uuid";
-import { isLoading, loginResultState } from "../store/atoms";
+import { filterValueState, isLoading, loginResultState } from "../store/atoms";
 import { useRecoilState, useSetRecoilState } from "recoil";
 
 type TSavedPara = {
@@ -188,9 +188,9 @@ let taskForDeleting: any[] = []; // 삭제할때 참조되는 용도
 
 const App = () => {
   const processApi = useApi();
-  const userid = UseGetValueFromSessionItem("user_id");
   const [pc, setPc] = useState("");
   UseParaPc(setPc);
+  const [filterValue, setFilterValue] = useRecoilState(filterValueState);
 
   const [loginResult] = useRecoilState(loginResultState);
   const userId = loginResult ? loginResult.userId : "";
@@ -219,7 +219,10 @@ const App = () => {
   const setLoading = useSetRecoilState(isLoading);
 
   const [projectsData, setProjectsData] = useState<TTask[]>([]);
-  const [projectValue, setProjectValue] = useState<any>(null);
+  const [projectValue, setProjectValue] = useState<{
+    project: string;
+    devmngnum: string;
+  } | null>(null);
 
   const [scale, setScale] = useState<GanttScaleType>("weeks");
   const [view, setView] = useState<"Scheduler" | "Grid">("Scheduler");
@@ -304,6 +307,15 @@ const App = () => {
     fetchProjectList();
     fetchProjectItems();
   }, []);
+
+  useEffect(() => {
+    // 메인 그리드에서 클릭하여 오픈시 조회조건 재설정하여 조회
+    if (filterValue.type === "project") {
+      const { project, devmngnum } = filterValue.dataItem;
+      setProjectValue({ project, devmngnum });
+      setFilterValue({ type: null, dataItem: {} });
+    }
+  }, [filterValue]);
 
   useEffect(() => {
     if (projectValue && projectValue.devmngnum) {
@@ -470,9 +482,6 @@ const App = () => {
         "@p_form_id": "SPM_WEB",
       },
     };
-
-    console.log("parameters");
-    console.log(parameters);
 
     try {
       data = await processApi<any>("procedure", parameters);
