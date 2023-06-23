@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import Gantt, {
   Tasks,
   Dependencies,
@@ -17,6 +23,7 @@ import {
   DependencyInsertedEvent,
   ResourceAssignedEvent,
   ResourceUnassignedEvent,
+  ScaleCellPreparedEvent,
   TaskDeletedEvent,
   TaskInsertedEvent,
   TaskUpdatedEvent,
@@ -79,6 +86,7 @@ import ComboBoxCell from "../components/Cells/ComboBoxCell";
 import { v4 as uuidv4 } from "uuid";
 import { filterValueState, isLoading, loginResultState } from "../store/atoms";
 import { useRecoilState, useSetRecoilState } from "recoil";
+import { locale } from "devextreme/localization";
 
 type TSavedPara = {
   row_status?: "N" | "U" | "D";
@@ -226,6 +234,10 @@ const App = () => {
 
   const [scale, setScale] = useState<GanttScaleType>("weeks");
   const [view, setView] = useState<"Scheduler" | "Grid">("Scheduler");
+
+  useEffect(() => {
+    locale("ko");
+  }, []);
 
   const onDependencyInserted = (e: DependencyInsertedEvent) => {
     const { predecessorId, successorId } = e.values;
@@ -789,6 +801,49 @@ const App = () => {
     }
   };
 
+  const handleScaleCellPrepared = useCallback((e: ScaleCellPreparedEvent) => {
+    const startDate = e.startDate;
+    const endDate = e.endDate;
+
+    if (e.scaleIndex === 1 && e.scaleType === "months") {
+      const formattedStartDate = `${startDate.getFullYear()}년 ${
+        startDate.getMonth() + 1
+      }월`;
+
+      e.scaleElement.innerText = `${formattedStartDate}`;
+    } else if (e.scaleIndex === 0 && e.scaleType === "months") {
+      const formattedStartDate = `${startDate.getMonth() + 1}월`;
+
+      e.scaleElement.innerText = `${formattedStartDate}`;
+    } else if (e.scaleIndex === 1 && e.scaleType === "weeks") {
+      const formattedStartDate = `${startDate.getFullYear()}년 ${
+        startDate.getMonth() + 1
+      }월 ${startDate.getDate()}일`;
+      const formattedEndDate = `${
+        endDate.getMonth() + 1
+      }월 ${endDate.getDate()}일`;
+
+      e.scaleElement.innerText = `${formattedStartDate} - ${formattedEndDate}`;
+    } else if (e.scaleIndex === 0 && e.scaleType === "weeks") {
+      const formattedStartDate = `${
+        startDate.getMonth() + 1
+      }월 ${startDate.getDate()}일`;
+      const formattedEndDate = `${
+        endDate.getMonth() + 1
+      }월 ${endDate.getDate()}일`;
+
+      e.scaleElement.innerText = `${formattedStartDate} - ${formattedEndDate}`;
+    } else if (e.scaleType === "days") {
+      const formattedStartDate = `${
+        startDate.getMonth() + 1
+      }월 ${startDate.getDate()}일, ${endDate.toLocaleString("ko-KR", {
+        weekday: "short",
+      })}`;
+
+      e.scaleElement.innerText = `${formattedStartDate}`;
+    }
+  }, []);
+
   return (
     <>
       <CodesContext.Provider value={{ projectItems: projectItems }}>
@@ -879,6 +934,7 @@ const App = () => {
               onTaskInserted={onTaskInserted}
               onTaskDeleted={onTaskDeleted}
               onTaskUpdated={onTaskUpdated}
+              onScaleCellPrepared={handleScaleCellPrepared}
               // onResourceAssigned={onResourceAssigned}
               // onResourceUnassigned={onResourceUnassigned}
             >
@@ -905,11 +961,15 @@ const App = () => {
               <Column
                 dataField="start"
                 caption="시작일자"
-                // cellRender={(date) => {
-                //   return dateformat2(convertDateToStr(date));
-                // }}
+                format={"yyyy-MM-dd"}
+                alignment={"center"}
               />
-              <Column dataField="end" caption="종료일자" />
+              <Column
+                dataField="end"
+                format={"yyyy-MM-dd"}
+                caption="종료일자"
+                alignment={"center"}
+              />
 
               <Validation autoUpdateParentTasks />
               <Editing enabled={isAdmin} />
