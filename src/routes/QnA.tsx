@@ -685,7 +685,7 @@ const App = () => {
               <tbody>
                 <tr>
                   <th>요청일자</th>
-                  <td colSpan={3}>
+                  <td>
                     <div className="filter-item-wrap">
                       <DatePicker
                         name="fromDate"
@@ -706,8 +706,6 @@ const App = () => {
                       />
                     </div>
                   </td>
-                </tr>
-                <tr>
                   <th>공개 여부</th>
                   <td colSpan={3}>
                     <RadioGroup
@@ -723,7 +721,7 @@ const App = () => {
                 </tr>
                 <tr>
                   <th>상태</th>
-                  <td colSpan={3}>
+                  <td>
                     <MultiSelect
                       data={statusListData}
                       onChange={filterMultiSelectChange}
@@ -732,8 +730,6 @@ const App = () => {
                       dataItemKey="sub_code"
                     />
                   </td>
-                </tr>
-                <tr>
                   <th>작성자</th>
                   <td>
                     <Input
@@ -743,8 +739,10 @@ const App = () => {
                       onChange={filterInputChange}
                     />
                   </td>
+                </tr>
+                <tr>
                   <th>제목 및 내용</th>
-                  <td>
+                  <td colSpan={3}>
                     <Input
                       name="contents"
                       type="text"
@@ -757,7 +755,7 @@ const App = () => {
             </FilterBox>
           </FilterBoxWrap>
           <Grid
-            style={{ height: `calc(100% - 30px - 168.69px - 10px + 5px)` }}
+            style={{ height: `calc(100% - 30px - 129.69px - 10px + 5px)` }}
             data={process(
               mainDataResult.data.map((row) => ({
                 ...row,
