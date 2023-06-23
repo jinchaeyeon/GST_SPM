@@ -336,9 +336,9 @@ const Main: React.FC = () => {
               padding: "20px",
             }}
           >
-            <p className="medium" style={{ marginTop: "0" }}>
+            <div className="medium" style={{ marginTop: "0" }}>
               <CurrentTime />
-            </p>
+            </div>
           </TextBox>
           <TextBox
             style={{ cursor: "pointer" }}
