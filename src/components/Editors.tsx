@@ -30,6 +30,7 @@ import { useApi } from "../hooks/api";
 import { FORM_DATA_INDEX } from "./CommonString";
 import { bytesToBase64 } from "byte-base64";
 import { IFormComboBoxCell } from "../hooks/interfaces";
+import { useThemeSwitcher } from "react-css-theme-switcher";
 
 //Grid Cell에 표시되는 Value
 export const DisplayValue = (fieldRenderProps: FieldRenderProps) => {
@@ -403,6 +404,8 @@ export const FormCheckBoxReadOnlyCell = (props: GridCellProps) => {
 export const FormInput = (fieldRenderProps: FieldRenderProps) => {
   const { validationMessage, visited, label, id, valid, ...others } =
     fieldRenderProps;
+  const { className = "" } = fieldRenderProps;
+  const { currentTheme = "" } = useThemeSwitcher();
 
   return (
     <FieldWrapper>
@@ -410,7 +413,16 @@ export const FormInput = (fieldRenderProps: FieldRenderProps) => {
         {label}
       </Label>
       <div className={"k-form-field-wrap"}>
-        <Input valid={valid} id={id} {...others} />
+        <Input
+          valid={valid}
+          id={id}
+          {...others}
+          style={
+            currentTheme === "dark" && className.includes("required")
+              ? { color: "#000" }
+              : undefined
+          }
+        />
       </div>
     </FieldWrapper>
   );

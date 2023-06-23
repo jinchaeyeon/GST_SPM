@@ -59,8 +59,10 @@ export type TSessionItem = {
 export type TPasswordExpirationInfo = {
   status: "Ok" | "Expired" | "BeforeExpiry" | "Initial";
   useExpiration: boolean;
+  useChangeNext: boolean;
   lastChangePasswordDate: string;
   expirationDate: string;
+  expirationPeriodMonths: number;
   remainingDays: number;
 };
 export type TPasswordRequirements = {

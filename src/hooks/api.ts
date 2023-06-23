@@ -72,6 +72,9 @@ const domain: any = {
   login: { action: "post", url: "api/auth/login" },
   logout: { action: "post", url: "api/auth/logout" },
 
+  // 비밀번호 변경
+  "change-password": { action: "post", url: "api/auth/change-password" },
+
   // 미사용
   fav: { action: "post", url: "api/data/menus/fav/:formId" },
   "del-fav": { action: "delete", url: "api/data/menus/fav/:formId" },

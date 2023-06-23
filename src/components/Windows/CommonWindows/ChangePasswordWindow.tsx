@@ -14,33 +14,27 @@ import {
   FormRenderProps,
 } from "@progress/kendo-react-form";
 import { FormInput } from "../../Editors";
-import { Iparameters, TPasswordRequirements } from "../../../store/types";
-import {
-  validator,
-  UseParaPc,
-  UseGetValueFromSessionItem,
-} from "../../CommonFunction";
+import { TPasswordRequirements } from "../../../store/types";
+import { validator } from "../../CommonFunction";
 import { Button } from "@progress/kendo-react-buttons";
 import { IWindowPosition } from "../../../hooks/interfaces";
-import { passwordExpirationInfoState } from "../../../store/atoms";
-import { useRecoilState } from "recoil";
+import { isLoading, passwordExpirationInfoState } from "../../../store/atoms";
+import { useRecoilState, useSetRecoilState } from "recoil";
 
 type TKendoWindow = {
   setVisible(t: boolean): void;
 };
 
 const KendoWindow = ({ setVisible }: TKendoWindow) => {
-  const [pwExpInfo] = useRecoilState(passwordExpirationInfoState);
-  const userId = UseGetValueFromSessionItem("user_id");
+  const [pwExpInfo, setPwExpInfo] = useRecoilState(passwordExpirationInfoState);
   const [pwReq, setPwReq] = useState<TPasswordRequirements | null>(null);
-  const [pc, setPc] = useState("");
-  UseParaPc(setPc);
+  const setLoading = useSetRecoilState(isLoading);
 
   const [position, setPosition] = useState<IWindowPosition>({
     left: 300,
     top: 100,
     width: 500,
-    height: 310,
+    height: 320,
   });
 
   const handleMove = (event: WindowMoveEvent) => {
@@ -58,74 +52,58 @@ const KendoWindow = ({ setVisible }: TKendoWindow) => {
   const onClose = () => {
     if (
       pwExpInfo &&
-      pwExpInfo.useExpiration &&
-      (pwExpInfo.status === "Expired" || pwExpInfo.status === "Initial")
+      ((pwExpInfo.useExpiration && pwExpInfo.status === "Expired") ||
+        pwExpInfo.status === "Initial")
     ) {
       alert("비밀번호를 수정 후 저장해주세요.");
       return false;
     }
+
+    // 만료 알림 상태의 경우, 로그인 후 최초 한번만 팝업 뜨도록
+    if (pwExpInfo && pwExpInfo.status === "BeforeExpiry") {
+      setPwExpInfo((prev) => ({ ...prev, useExpiration: false }));
+    }
     setVisible(false);
   };
 
-  const [formKey, setFormKey] = React.useState(1);
-  const resetForm = () => {
-    setFormKey(formKey + 1);
-  };
-  //수정 없이 submit 가능하도록 임의 value를 change 시켜줌
-  useEffect(() => {
-    const valueChanged = document.getElementById("valueChanged");
-    valueChanged!.click();
-  }, [formKey]);
   const processApi = useApi();
 
   //프로시저 파라미터 초기값
   const [paraData, setParaData] = useState({
     work_type: "",
+    isLater: false,
     old_password: "",
     new_password: "",
     check_new_password: "",
-    id: userId,
-    pc: pc,
   });
 
   //프로시저 파라미터
-  const paraSaved: Iparameters = {
-    procedureName: "sys_upd_user_password",
-    pageNumber: 0,
-    pageSize: 0,
-    parameters: {
-      "@p_work_type": paraData.work_type,
-      "@p_user_id": paraData.id,
-      "@p_old_password": paraData.old_password,
-      "@p_new_password": paraData.new_password,
-      "@p_check_new_password": paraData.check_new_password,
-      "@p_id": paraData.id,
-      "@p_pc": paraData.pc,
-    },
+  const paraSaved = {
+    isLater: paraData.isLater,
+    currentPassword: paraData.old_password,
+    newPassword: paraData.new_password,
+    confirmNewPassword: paraData.check_new_password,
   };
 
   const fetchMainSaved = async () => {
     let data: any;
-
+    setLoading(true);
     try {
-      data = await processApi<any>("procedure", paraSaved);
-    } catch (error) {
+      data = await processApi<any>("change-password", paraSaved);
+    } catch (error: any) {
       data = null;
-    }
-
-    if (data.isSuccess === true) {
-      setVisible(false);
-    } else {
       console.log("[오류 발생]");
-      console.log(data);
-
-      alert(data.resultMessage);
+      console.log(error);
+      alert(error.message);
+      setLoading(false);
     }
-    // 초기화
-    setParaData((prev) => ({
-      ...prev,
-      work_type: "",
-    }));
+    setLoading(false);
+
+    if (data !== null) {
+      alert("처리가 완료되었습니다.");
+      setVisible(false);
+      setPwExpInfo((prev) => ({ ...prev, status: "Ok", useExpiration: false }));
+    }
   };
 
   const handleSubmit = (dataItem: { [name: string]: any }) => {
@@ -141,7 +119,14 @@ const KendoWindow = ({ setVisible }: TKendoWindow) => {
   };
 
   useEffect(() => {
-    if (paraData.work_type !== "") fetchMainSaved();
+    if (paraData.work_type !== "") {
+      // 초기화
+      setParaData((prev) => ({
+        ...prev,
+        work_type: "",
+      }));
+      fetchMainSaved();
+    }
   }, [paraData]);
 
   useEffect(() => {
@@ -175,7 +160,6 @@ const KendoWindow = ({ setVisible }: TKendoWindow) => {
     >
       <Form
         onSubmit={handleSubmit}
-        key={formKey}
         initialValues={{
           old_password: "",
           new_password: "",
@@ -184,16 +168,6 @@ const KendoWindow = ({ setVisible }: TKendoWindow) => {
         render={(formRenderProps: FormRenderProps) => (
           <FormElement horizontal={true}>
             <fieldset className={"k-form-fieldset"}>
-              <button
-                id="valueChanged"
-                style={{ display: "none" }}
-                onClick={(e) => {
-                  e.preventDefault(); // Changing desired field value
-                  formRenderProps.onChange("valueChanged", {
-                    value: "1",
-                  });
-                }}
-              ></button>
               <FieldWrap fieldWidth="100%">
                 <Field
                   name={"old_password"}
@@ -201,6 +175,7 @@ const KendoWindow = ({ setVisible }: TKendoWindow) => {
                   component={FormInput}
                   validator={validator}
                   className={"required"}
+                  type={"password"}
                 />
               </FieldWrap>
               <FieldWrap fieldWidth="100%">
@@ -210,6 +185,7 @@ const KendoWindow = ({ setVisible }: TKendoWindow) => {
                   component={FormInput}
                   validator={validator}
                   className="required"
+                  type={"password"}
                 />
               </FieldWrap>
               <FieldWrap fieldWidth="100%">
@@ -219,28 +195,53 @@ const KendoWindow = ({ setVisible }: TKendoWindow) => {
                   component={FormInput}
                   validator={validator}
                   className="required"
+                  type={"password"}
                 />
               </FieldWrap>
             </fieldset>
-            {pwReq && (
-              <div
-                style={{
-                  fontSize: "12px",
-                  textAlign: "right",
-                  marginTop: "10px",
-                  color: "#ff6358",
-                }}
-              >
+
+            <div
+              style={{
+                fontSize: "12px",
+                textAlign: "right",
+                marginTop: "10px",
+                color: "#ff6358",
+              }}
+            >
+              {pwExpInfo && pwExpInfo.status === "Initial" && (
+                <p>- 초기 비밀번호를 변경해주세요.</p>
+              )}
+              {pwReq && (
                 <p>
                   - 비밀번호는 최소 {pwReq.minimumLength}자리를 입력해주세요.
                 </p>
-                {pwReq.useSpecialChar && (
-                  <p>- 비밀번호는 특수문자를 포함해주세요.</p>
-                )}
-              </div>
-            )}
+              )}
+              {pwReq && pwReq.useSpecialChar && (
+                <p>- 비밀번호는 영문자, 숫자, 특수문자를 포함해주세요.</p>
+              )}
+            </div>
             <BottomContainer>
               <ButtonContainer>
+                {pwExpInfo &&
+                  pwExpInfo.useChangeNext &&
+                  pwExpInfo.useExpiration &&
+                  pwExpInfo.status !== "Ok" &&
+                  pwExpInfo.status !== "Initial" && (
+                    <Button
+                      type={"button"}
+                      themeColor={"primary"}
+                      fillMode={"outline"}
+                      onClick={() =>
+                        setParaData((prev) => ({
+                          ...prev,
+                          work_type: "change",
+                          isLater: true,
+                        }))
+                      }
+                    >
+                      다음에 변경
+                    </Button>
+                  )}
                 <Button type={"submit"} themeColor={"primary"} icon="save">
                   저장
                 </Button>
