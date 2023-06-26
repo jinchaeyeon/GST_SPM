@@ -212,6 +212,9 @@ export const useApi = () => {
 
       if (name === "file-download" || name === "doc-download") {
         getHeader.responseType = "blob";
+        // 캐싱 방지용 타임스탬프
+        url +=
+          (url.includes("?") ? "&" : "?") + "timestamp=" + new Date().getTime();
       }
 
       switch (info.action) {
