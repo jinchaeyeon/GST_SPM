@@ -431,7 +431,11 @@ const App = () => {
       if (totalRowCnt > 0) {
         if (filters.findRowValue !== "") {
           // 데이터 저장 후 조회
-          setSelectedState({ [filters.findRowValue]: true });
+          console.log(filters.findRowValue);
+
+          let spitFindRowValue = filters.findRowValue.split("_");
+
+          setSelectedState({ [spitFindRowValue[1]]: true });
           setMainDataResult({
             data: rows,
             total: totalRowCnt,

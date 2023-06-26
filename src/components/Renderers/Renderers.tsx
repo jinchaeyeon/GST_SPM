@@ -25,15 +25,62 @@ export const CellRender = (props: any) => {
               input.select();
             }
           },
+          onClick: () => {
+            props.enterEdit(dataItem, cellField);
+          },
+          onKeyDown: (ev: any) => {
+            let activeCell = ev.target.closest("TD");
+
+            if (ev.keyCode === 9 && ev.shiftKey) {
+              //ev.keyCode === 37
+              ev.preventDefault();
+
+              if (activeCell.previousSibling) {
+                activeCell.previousSibling.focus();
+                activeCell.previousSibling.click();
+              }
+            } else if (ev.keyCode === 9) {
+              //ev.keyCode === 39 ||
+              ev.preventDefault();
+
+              if (activeCell.nextSibling) {
+                activeCell.nextSibling.focus();
+                activeCell.nextSibling.click();
+              }
+            } else if (ev.keyCode === 38) {
+              ev.preventDefault();
+
+              if (activeCell.parentElement.previousSibling) {
+                activeCell.parentElement.previousSibling.cells[
+                  activeCell.cellIndex
+                ].focus();
+                activeCell.parentElement.previousSibling.cells[
+                  activeCell.cellIndex
+                ].click();
+              }
+            } else if (ev.keyCode === 40) {
+              ev.preventDefault();
+
+              if (activeCell.parentElement.nextSibling) {
+                activeCell.parentElement.nextSibling.cells[
+                  activeCell.cellIndex
+                ].focus();
+                activeCell.parentElement.nextSibling.cells[
+                  activeCell.cellIndex
+                ].click();
+              }
+            }
+          },
         }
       : {
           onClick: () => {
             props.enterEdit(dataItem, cellField);
           },
-          onFocus: () => {
-            props.enterEdit(dataItem, cellField);
+          onKeyDown: (ev: any) => {
+            if (ev.keyCode === 13) {
+              props.enterEdit(dataItem, cellField);
+            }
           },
-          tabIndex: "0",
         };
   const clonedProps = { ...props.td.props, ...additionalProps };
   return React.cloneElement(props.td, clonedProps, props.td.props.children);
@@ -42,16 +89,7 @@ export const RowRender = (props: any) => {
   const trProps = {
     ...props.tr.props,
     onBlur: () => {
-      props.exitEdit();
-      // setTimeout(() => {
-      //   const activeElement = document.activeElement;
-
-      //   if (activeElement === null) return false;
-
-      //    if (activeElement.className.indexOf("k-calendar") < 0) {
-      //      props.exitEdit();
-      //    }
-      // });
+      //props.exitEdit();
     },
   };
   return React.cloneElement(props.tr, { ...trProps }, props.tr.props.children);
