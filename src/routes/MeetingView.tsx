@@ -71,7 +71,6 @@ const App = () => {
     setFilters((prev) => ({
       ...prev,
       pgNum: 1,
-      pgGap: 0,
       isFetch: true,
       isReset: true,
     }));
@@ -86,12 +85,13 @@ const App = () => {
     process([], mainDataState),
   );
 
-  const [detailData, setDetailData] = useState({
+  const defaultDetailData = {
     orgdiv: "",
     meetingnum: "",
     attdatnum: "",
     files: "",
-  });
+  };
+  const [detailData, setDetailData] = useState(defaultDetailData);
 
   const [selectedState, setSelectedState] = useState<{
     [id: string]: boolean | number[];
@@ -191,7 +191,7 @@ const App = () => {
       const totalRowCnt = data.tables[0].TotalRowCount;
       const rows = data.tables[0].Rows;
 
-      if (totalRowCnt > 0)
+      if (totalRowCnt > 0) {
         if (filters.findRowValue !== "") {
           // 데이터 저장 후 조회
           setSelectedState({ [filters.findRowValue]: true });
@@ -217,8 +217,8 @@ const App = () => {
           setSelectedState({ [firstRowData[DATA_ITEM_KEY]]: true });
 
           const id = firstRowData["orgdiv"] + "_" + firstRowData["meetingnum"];
-          setMeetingnum(id);
 
+          setMeetingnum(id);
           setDetailData({
             meetingnum: firstRowData[DATA_ITEM_KEY],
             orgdiv: firstRowData.orgdiv,
@@ -234,12 +234,44 @@ const App = () => {
             };
           });
         }
+      } else {
+        // 결과 행이 0인 경우 데이터 리셋
+        setMeetingnum("");
+        setMainDataResult(process([], mainDataState));
+        resetDetailData();
+      }
     } else {
       console.log("[에러발생]");
       console.log(data);
     }
   };
 
+  // 상세정보 초기화
+  const resetDetailData = () => {
+    setDetailData({ ...defaultDetailData });
+
+    // Edior에 HTML & CSS 세팅
+    setHtmlOnEditor({ document: "", reference: "" });
+  };
+
+  const setHtmlOnEditor = ({
+    document,
+    reference,
+  }: {
+    document: string;
+    reference: string;
+  }) => {
+    if (refEditorRef.current) {
+      refEditorRef.current.updateEditable(true);
+      refEditorRef.current.setHtml(reference);
+      refEditorRef.current.updateEditable(false);
+    }
+    if (docEditorRef.current) {
+      docEditorRef.current.updateEditable(true);
+      docEditorRef.current.setHtml(document);
+      docEditorRef.current.updateEditable(false);
+    }
+  };
   const fetchDetail = async () => {
     let data: any;
     setLoading(true);
@@ -259,27 +291,12 @@ const App = () => {
       const document = data.document;
       const reference = data.reference;
 
-      // Edior에 HTML & CSS 세팅
-      if (refEditorRef.current) {
-        refEditorRef.current.updateEditable(true);
-        refEditorRef.current.setHtml(reference);
-        refEditorRef.current.updateEditable(false);
-      }
-      if (docEditorRef.current) {
-        docEditorRef.current.updateEditable(true);
-        docEditorRef.current.setHtml(document);
-        docEditorRef.current.updateEditable(false);
-      }
+      setHtmlOnEditor({ document, reference });
     } else {
       console.log("[에러발생]");
       console.log(data);
 
-      if (refEditorRef.current) {
-        refEditorRef.current.setHtml("");
-      }
-      if (docEditorRef.current) {
-        docEditorRef.current.setHtml("");
-      }
+      setHtmlOnEditor({ document: "", reference: "" });
     }
     setLoading(false);
   };
@@ -314,17 +331,27 @@ const App = () => {
 
       // 다운로드 파일 이름을 추출하는 함수
       const extractDownloadFilename = (response: any) => {
-        console.log(response);
         if (response.headers) {
           const disposition = response.headers["content-disposition"];
           let filename = "";
+
           if (disposition) {
-            var filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
-            var matches = filenameRegex.exec(disposition);
+            const filenameRegex = /filename\*?=UTF-8''([^;\n]+)/;
+            const matches = filenameRegex.exec(disposition);
+
             if (matches != null && matches[1]) {
-              filename = matches[1].replace(/['"]/g, "");
+              const encodedFilename = matches[1].trim();
+              filename = decodeURIComponent(encodedFilename);
+            } else {
+              const fallbackRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+              const fallbackMatches = fallbackRegex.exec(disposition);
+
+              if (fallbackMatches != null && fallbackMatches[1]) {
+                filename = fallbackMatches[1].replace(/['"]/g, "");
+              }
             }
           }
+
           return filename;
         } else {
           return "";
@@ -334,9 +361,6 @@ const App = () => {
       // 다운로드 파일 이름을 지정 할 수 있습니다.
       // 일반적으로 서버에서 전달해준 파일 이름은 응답 Header의 Content-Disposition에 설정됩니다.
       link.download = extractDownloadFilename(response);
-
-      // 다운로드 파일의 이름은 직접 지정 할 수 있습니다.
-      // link.download = "sample-file.xlsx";
 
       // 링크를 body에 추가하고 강제로 click 이벤트를 발생시켜 파일 다운로드를 실행시킵니다.
       document.body.appendChild(link);

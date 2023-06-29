@@ -325,6 +325,11 @@ const App = () => {
         setMainDataResult(process([], mainDataState));
         setSelectedState({});
         resetDetailData();
+        setHtmlOnEditor({
+          questionDocument: "",
+          answerDocument: "",
+        });
+        setIsDataLocked(false);
       }
     }
     setLoading(false);
@@ -381,18 +386,10 @@ const App = () => {
           }));
         }
 
-        // Edior에 HTML & CSS 세팅
-        if (qEditorRef.current) {
-          if (isAdmin) qEditorRef.current.updateEditable(true);
-          qEditorRef.current.setHtml(questionDocument);
-          if (isAdmin) qEditorRef.current.updateEditable(false);
-        }
-
-        if (aEditorRef.current) {
-          aEditorRef.current.updateEditable(true);
-          aEditorRef.current.setHtml(answerDocument);
-          aEditorRef.current.updateEditable(false);
-        }
+        setHtmlOnEditor({
+          questionDocument,
+          answerDocument,
+        });
       } else {
         console.log("[에러발생]");
         console.log(data);
@@ -403,6 +400,26 @@ const App = () => {
     },
     [selectedState, setLoading, detailData, setIsDataLocked],
   );
+
+  const setHtmlOnEditor = ({
+    questionDocument,
+    answerDocument,
+  }: {
+    questionDocument: string;
+    answerDocument: string;
+  }) => {
+    if (qEditorRef.current) {
+      if (isAdmin) qEditorRef.current.updateEditable(true);
+      qEditorRef.current.setHtml(questionDocument);
+      if (isAdmin) qEditorRef.current.updateEditable(false);
+    }
+
+    if (aEditorRef.current) {
+      aEditorRef.current.updateEditable(true);
+      aEditorRef.current.setHtml(answerDocument);
+      aEditorRef.current.updateEditable(false);
+    }
+  };
 
   const saveData = useCallback(async () => {
     let data: any;
@@ -555,14 +572,10 @@ const App = () => {
   const resetDetailData = () => {
     setDetailData(defaultDetailData);
 
-    // Edior에 HTML & CSS 세팅
-    if (qEditorRef.current) {
-      qEditorRef.current.setHtml("");
-    }
-
-    if (aEditorRef.current) {
-      aEditorRef.current.setHtml("");
-    }
+    setHtmlOnEditor({
+      questionDocument: "",
+      answerDocument: "",
+    });
   };
 
   useEffect(() => {
@@ -631,13 +644,11 @@ const App = () => {
       ...defaultDetailData,
     }));
 
-    if (qEditorRef.current) {
-      qEditorRef.current.setHtml("");
-    }
+    setHtmlOnEditor({
+      questionDocument: "",
+      answerDocument: "",
+    });
 
-    if (aEditorRef.current) {
-      aEditorRef.current.setHtml("");
-    }
     setIsDataLocked(false);
   };
 
