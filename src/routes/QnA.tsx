@@ -56,7 +56,7 @@ import CenterCell from "../components/Cells/CenterCell";
 import QnaStateCell from "../components/Cells/QnaStateCell";
 import { bytesToBase64 } from "byte-base64";
 import { Icon } from "@progress/kendo-react-common";
-import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
+import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsDialog";
 import { IAttachmentData } from "../hooks/interfaces";
 
 type TItem = {
@@ -674,7 +674,7 @@ const App = () => {
       <GridContainerWrap height={"90%"}>
         <GridContainer width={`40%`}>
           <GridTitleContainer>
-            <GridTitle>요약정보</GridTitle>
+            <GridTitle>조회조건</GridTitle>
           </GridTitleContainer>
           <FilterBoxWrap style={{ padding: "0 0 10px" }}>
             <FilterBox
@@ -754,6 +754,9 @@ const App = () => {
               </tbody>
             </FilterBox>
           </FilterBoxWrap>
+          <GridTitleContainer>
+            <GridTitle>요약정보</GridTitle>
+          </GridTitleContainer>
           <Grid
             style={{ height: `calc(100% - 30px - 129.69px - 10px + 5px)` }}
             data={process(

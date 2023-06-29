@@ -52,7 +52,7 @@ import { useApi } from "../hooks/api";
 import CenterCell from "../components/Cells/CenterCell";
 import { bytesToBase64 } from "byte-base64";
 import { IAttachmentData } from "../hooks/interfaces";
-import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
+import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsDialog";
 import { useThemeSwitcher } from "react-css-theme-switcher";
 
 const DraggableGridRowRender = (properties: any) => {
@@ -704,6 +704,9 @@ const App = () => {
           </Button>
         </ButtonContainer>
       </TitleContainer>
+      <GridTitleContainer>
+        <GridTitle>조회조건</GridTitle>
+      </GridTitleContainer>
       <FilterBoxWrap>
         <FilterBox onKeyPress={(e) => handleKeyPressSearch(e, search)}>
           <tbody>

@@ -42,7 +42,7 @@ import { useApi } from "../hooks/api";
 import { filterValueState, isLoading } from "../store/atoms";
 import { TEditorHandle } from "../store/types";
 import { IAttachmentData } from "../hooks/interfaces";
-import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
+import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsDialog";
 import CenterCell from "../components/Cells/CenterCell";
 
 const DATA_ITEM_KEY = "meetingnum";
@@ -431,6 +431,9 @@ const App = () => {
           </Button>
         </ButtonContainer>
       </TitleContainer>
+      <GridTitleContainer>
+        <GridTitle>조회조건</GridTitle>
+      </GridTitleContainer>
       <FilterBoxWrap>
         <FilterBox onKeyPress={(e) => handleKeyPressSearch(e, search)}>
           <tbody>
@@ -471,7 +474,7 @@ const App = () => {
       <GridContainerWrap height={"85%"}>
         <GridContainer width={`25%`}>
           <GridTitleContainer>
-            <GridTitle>회의록 리스트</GridTitle>
+            <GridTitle>요약정보</GridTitle>
           </GridTitleContainer>
           <Grid
             style={{ height: `calc(100% - 35px)` }}

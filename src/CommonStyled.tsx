@@ -690,7 +690,11 @@ export const Wrapper = styled.div<TWrapper>`
   width: 100%;
   //overflow: ${(props) => (props.isMobileMenuOpend ? "hidden" : "auto")};
   background-color: ${(props) =>
-    props.theme === "dark" ? "#181818" : "#fffff"};
+    props.theme === "dark" ? "#181818" : "#ffffff"};
+  margin-bottom: 30px;
+  @media (max-width: 768px) {
+    margin-bottom: 0;
+  }
 `;
 
 type TGnv = {
@@ -701,7 +705,8 @@ export const Gnv = styled.div<TGnv>`
   min-width: ${GNV_WIDTH}px;
   text-align: center;
 
-  min-height: 100vh;
+  min-height: calc(100vh - 30px);
+
   background-color: ${(props) =>
     props.theme === "dark" ? "rgb(16, 16,16)" : "#fff"};
 
@@ -748,6 +753,30 @@ export const Gnv = styled.div<TGnv>`
   }
 `;
 
+export const Footer = styled.div`
+  width: 100%;
+  height: 30px;
+  position: fixed;
+  bottom: 0;
+  background-color: #656565;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  z-index: 10000;
+
+  div {
+    line-height: 30px;
+    border-left: solid 1px gray;
+    color: #fff;
+    padding-right: 10px;
+    padding-left: 10px;
+    font-size: 13px;
+    font-weight: 100;
+  }
+  @media (max-width: 768px) {
+    display: none;
+  }
+`;
 type ContentType = {
   isMenuOpen: boolean;
 };
@@ -769,7 +798,7 @@ export const Content = styled.div<ContentType>`
 
 export const PageWrap = styled.div`
   padding: 0 15px;
-  height: 100vh;
+  height: calc(100vh - 30px);
 
   @media (max-width: 768px) {
     min-height: auto;

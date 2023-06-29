@@ -157,6 +157,7 @@ const KendoWindow = ({ setVisible }: TKendoWindow) => {
       onMove={handleMove}
       onResize={handleResize}
       onClose={onClose}
+      modal={true}
     >
       <Form
         onSubmit={handleSubmit}

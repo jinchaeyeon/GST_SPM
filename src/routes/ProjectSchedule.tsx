@@ -46,6 +46,8 @@ import {
   FilterBoxWrap,
   GridContainer,
   GridContainerWrap,
+  GridTitle,
+  GridTitleContainer,
   Title,
   TitleContainer,
 } from "../CommonStyled";
@@ -865,6 +867,9 @@ const App = () => {
             )}
           </ButtonContainer>
         </TitleContainer>
+        <GridTitleContainer>
+          <GridTitle>조회조건</GridTitle>
+        </GridTitleContainer>
         <FilterBoxWrap>
           <FilterBox onKeyPress={(e) => handleKeyPressSearch(e, search)}>
             <tbody>
@@ -923,7 +928,7 @@ const App = () => {
           </FilterBox>
         </FilterBoxWrap>
 
-        <GridContainer height={"85%"}>
+        <GridContainer height={"80%"}>
           {view === "Scheduler" ? (
             <Gantt
               taskListWidth={500}

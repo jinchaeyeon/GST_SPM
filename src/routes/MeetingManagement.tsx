@@ -75,7 +75,7 @@ import { TEditorHandle } from "../store/types";
 import { IAttachmentData, ICustData, IPrjData } from "../hooks/interfaces";
 import ProjectsWindow from "../components/Windows/CommonWindows/ProjectsWindow";
 import CustomersWindow from "../components/Windows/CommonWindows/CustomersWindow";
-import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
+import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsDialog";
 import CenterCell from "../components/Cells/CenterCell";
 import { CellRender, RowRender } from "../components/Renderers/Renderers";
 import CheckBoxCell from "../components/Cells/CheckBoxCell";
@@ -1276,7 +1276,7 @@ const App = () => {
         <GridContainerWrap height={"90%"}>
           <GridContainer width={`25%`}>
             <GridTitleContainer>
-              <GridTitle>회의록 리스트</GridTitle>
+              <GridTitle>조회조건</GridTitle>
             </GridTitleContainer>
             <FilterBoxWrap>
               <FilterBox onKeyPress={(e) => handleKeyPressSearch(e, search)}>
@@ -1317,8 +1317,11 @@ const App = () => {
                 </tbody>
               </FilterBox>
             </FilterBoxWrap>
+            <GridTitleContainer>
+              <GridTitle>요약정보</GridTitle>
+            </GridTitleContainer>
             <Grid
-              style={{ height: `calc(100% - 130.13px)` }}
+              style={{ height: `calc(100% - 160.13px)` }}
               data={process(
                 mainDataResult.data.map((row) => ({
                   ...row,

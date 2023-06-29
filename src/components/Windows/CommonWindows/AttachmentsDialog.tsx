@@ -23,6 +23,8 @@ import { convertDateToStrWithTime2 } from "../../CommonFunction";
 import { SELECTED_FIELD } from "../../CommonString";
 import { useLocation } from "react-router-dom";
 import { TAttachmentType } from "../../../store/types";
+import { isLoading } from "../../../store/atoms";
+import { useSetRecoilState } from "recoil";
 
 type permission = {
   upload: boolean;
@@ -54,6 +56,7 @@ const KendoWindow = ({
     height: 800,
   });
 
+  const setLoading = useSetRecoilState(isLoading);
   const [attachmentNumber, setAttachmentNumber] = useState(para);
 
   const location = useLocation();
@@ -103,11 +106,15 @@ const KendoWindow = ({
       files: files,
     };
 
+    setLoading(true);
+
     try {
       data = await processApi<any>("file-upload", filePara);
     } catch (error) {
       data = null;
     }
+
+    setLoading(false);
 
     if (data !== null) {
       return data.attachmentNumber;
@@ -183,14 +190,17 @@ const KendoWindow = ({
   };
 
   const downloadFiles = async () => {
-    // value 가 false인 속성 삭제
-    for (var prop in selectedState) {
-      if (!selectedState[prop]) {
-        delete selectedState[prop];
-      }
+    const parameters = Object.keys(selectedState).filter(
+      (key) => selectedState[key] === true,
+    );
+
+    if (parameters.length === 0) {
+      alert("선택된 자료가 없습니다.");
+      return false;
     }
-    const parameters = Object.keys(selectedState);
-    // const parameter = parameters[0];
+
+    setLoading(true);
+
     let response: any;
 
     parameters.forEach(async (parameter) => {
@@ -259,15 +269,24 @@ const KendoWindow = ({
 
         // 다운로드가 끝난 리소스(객체 URL)를 해제합니다
       }
+      setLoading(false);
     });
   };
 
   const deleteFiles = () => {
+    const parameters = Object.keys(selectedState).filter(
+      (key) => selectedState[key] === true,
+    );
+
+    if (parameters.length === 0) {
+      alert("선택된 자료가 없습니다.");
+      return false;
+    }
+
     if (!window.confirm("삭제하시겠습니까?")) {
       return false;
     }
     let data: any;
-    const parameters = Object.keys(selectedState);
 
     parameters.forEach(async (parameter) => {
       try {
@@ -366,6 +385,7 @@ const KendoWindow = ({
       onMove={handleMove}
       onResize={handleResize}
       onClose={onClose}
+      modal={true}
     >
       <TitleContainer>
         <ButtonContainer>
@@ -426,33 +446,40 @@ const KendoWindow = ({
           </Button>
         </ButtonContainer>
       </TitleContainer>
+      {(!permission || (permission && permission.upload)) && (
+        <div
+          onDrop={(event: React.DragEvent<HTMLInputElement>) => {
+            event.preventDefault();
+            const files = event.dataTransfer.files;
+            handleFileUpload(files);
+          }}
+          onDragOver={(e: React.DragEvent<HTMLDivElement>) => {
+            e.preventDefault();
+          }}
+          style={{
+            width: "100% ",
+            lineHeight: "100px",
+            border: "solid 1px rgba(0, 0, 0, 0.08)",
+            marginBottom: "5px",
+            textAlign: "center",
+            color: "rgba(0,0,0,0.8)",
+          }}
+        >
+          <span
+            className="k-icon k-i-file-add"
+            style={{ marginRight: "5px" }}
+          ></span>
+          업로드할 파일을 마우스로 끌어오세요.
+        </div>
+      )}
 
-      <div
-        onDrop={(event: React.DragEvent<HTMLInputElement>) => {
-          event.preventDefault();
-          const files = event.dataTransfer.files;
-          handleFileUpload(files);
-        }}
-        onDragOver={(e: React.DragEvent<HTMLDivElement>) => {
-          e.preventDefault();
-        }}
-        style={{
-          width: "100% ",
-          lineHeight: "100px",
-          border: "solid 1px rgba(0, 0, 0, 0.08)",
-          marginBottom: "5px",
-          textAlign: "center",
-          color: "rgba(0,0,0,0.8)",
-        }}
-      >
-        <span
-          className="k-icon k-i-file-add"
-          style={{ marginRight: "5px" }}
-        ></span>
-        업로드할 파일을 마우스로 끌어오세요.
-      </div>
       <Grid
-        style={{ height: "490px" }}
+        style={{
+          height:
+            !permission || (permission && permission.upload)
+              ? "490px"
+              : "600px",
+        }}
         data={process(
           mainDataResult.data.map((row) => ({
             ...row,

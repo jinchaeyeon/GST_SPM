@@ -26,6 +26,7 @@ import {
   AppName,
   ButtonContainer,
   Content,
+  Footer,
   Gnv,
   Logo,
   MenuSearchBox,
@@ -86,10 +87,12 @@ const PanelBarNavContainer = (props: any) => {
   );
   const [isMenuOpend, setIsMenuOpend] = useRecoilState(isMenuOpendState);
   const companyCode = loginResult ? loginResult.companyCode : "";
+  const customerName = loginResult ? loginResult.customerName : "";
   const userId = loginResult ? loginResult.userId : "";
   const loginKey = loginResult ? loginResult.loginKey : "";
   const role = loginResult ? loginResult.role : "";
   const isAdmin = role === "ADMIN";
+  const userName = loginResult ? loginResult.userName : "";
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Kendo Chart에 Theme 적용하는데 간헐적으로 오류 발생하여 0.5초후 렌더링되도록 처리함 (모든 메뉴 새로고침 시 적용)
@@ -482,111 +485,123 @@ const PanelBarNavContainer = (props: any) => {
   }
 
   return (
-    <Wrapper isMobileMenuOpend={isMobileMenuOpend} theme={currentTheme}>
-      <Modal isMobileMenuOpend={isMobileMenuOpend} onClick={onMenuBtnClick} />
-      {isMenuOpend ? (
-        <Gnv isMobileMenuOpend={isMobileMenuOpend} theme={currentTheme}>
-          <AppName onClick={() => setIsMenuOpend(false)} theme={currentTheme}>
-            <Logo size="32px" />
-          </AppName>
-          {isAdmin ? (
-            <PanelBar
-              selected={String(selected)}
-              expandMode={"single"}
-              onSelect={onSelect}
-            >
-              <PanelBarItem title={"Home"} route="/Home" />
-              <PanelBarItem title={"공지사항"} route="/Notice" />
-              <PanelBarItem title={"QnA"} route="/QnA" />
-              <PanelBarItem title={"회의록 열람"} route="/MeetingView" />
-              <PanelBarItem
-                title={"프로젝트 일정계획"}
-                route="/ProjectSchedule"
-              />
-              <PanelBarItem title={"회의록 관리"} route="/MeetingManagement" />
-              <PanelBarItem title={"설정"} icon={"gear"}>
+    <>
+      <Wrapper isMobileMenuOpend={isMobileMenuOpend} theme={currentTheme}>
+        <Modal isMobileMenuOpend={isMobileMenuOpend} onClick={onMenuBtnClick} />
+        {isMenuOpend ? (
+          <Gnv isMobileMenuOpend={isMobileMenuOpend} theme={currentTheme}>
+            <AppName onClick={() => setIsMenuOpend(false)} theme={currentTheme}>
+              <Logo size="32px" />
+            </AppName>
+            {isAdmin ? (
+              <PanelBar
+                selected={String(selected)}
+                expandMode={"single"}
+                onSelect={onSelect}
+              >
+                <PanelBarItem title={"Home"} route="/Home" />
+                <PanelBarItem title={"공지사항"} route="/Notice" />
+                <PanelBarItem title={"QnA"} route="/QnA" />
+                <PanelBarItem title={"회의록 열람"} route="/MeetingView" />
                 <PanelBarItem
-                  title={"비밀번호 변경"}
-                  route={undefined}
-                  className="change-password"
-                ></PanelBarItem>
-              </PanelBarItem>
-            </PanelBar>
-          ) : (
-            <PanelBar
-              selected={String(selected)}
-              expandMode={"single"}
-              onSelect={onSelect}
-            >
-              <PanelBarItem title={"Home"} route="/Home" />
-              <PanelBarItem title={"공지사항"} route="/Notice" />
-              <PanelBarItem title={"QnA"} route="/QnA" />
-              <PanelBarItem title={"회의록 열람"} route="/MeetingView" />
-              <PanelBarItem
-                title={"프로젝트 일정계획"}
-                route="/ProjectSchedule"
-              />
-              <PanelBarItem title={"설정"} icon={"gear"}>
+                  title={"프로젝트 일정계획"}
+                  route="/ProjectSchedule"
+                />
                 <PanelBarItem
-                  title={"비밀번호 변경"}
-                  route={undefined}
-                  className="change-password"
-                ></PanelBarItem>
-              </PanelBarItem>
-            </PanelBar>
-          )}
+                  title={"회의록 관리"}
+                  route="/MeetingManagement"
+                />
+                <PanelBarItem title={"설정"} icon={"gear"}>
+                  <PanelBarItem
+                    title={"비밀번호 변경"}
+                    route={undefined}
+                    className="change-password"
+                  ></PanelBarItem>
+                </PanelBarItem>
+              </PanelBar>
+            ) : (
+              <PanelBar
+                selected={String(selected)}
+                expandMode={"single"}
+                onSelect={onSelect}
+              >
+                <PanelBarItem title={"Home"} route="/Home" />
+                <PanelBarItem title={"공지사항"} route="/Notice" />
+                <PanelBarItem title={"QnA"} route="/QnA" />
+                <PanelBarItem title={"회의록 열람"} route="/MeetingView" />
+                <PanelBarItem
+                  title={"프로젝트 일정계획"}
+                  route="/ProjectSchedule"
+                />
+                <PanelBarItem title={"설정"} icon={"gear"}>
+                  <PanelBarItem
+                    title={"비밀번호 변경"}
+                    route={undefined}
+                    className="change-password"
+                  ></PanelBarItem>
+                </PanelBarItem>
+              </PanelBar>
+            )}
 
-          <ButtonContainer
-            flexDirection={"column"}
-            style={{ marginTop: "10px", gap: "5px" }}
-          >
+            <ButtonContainer
+              flexDirection={"column"}
+              style={{ marginTop: "10px", gap: "5px" }}
+            >
+              <Button
+                onClick={logout}
+                icon={"logout"}
+                fillMode={"flat"}
+                themeColor={"secondary"}
+              >
+                로그아웃
+              </Button>
+            </ButtonContainer>
+          </Gnv>
+        ) : (
+          <SmallGnv theme={currentTheme}>
             <Button
-              onClick={logout}
-              icon={"logout"}
+              icon="menu"
               fillMode={"flat"}
-              themeColor={"secondary"}
-            >
-              로그아웃
-            </Button>
-          </ButtonContainer>
-        </Gnv>
-      ) : (
-        <SmallGnv theme={currentTheme}>
-          <Button
-            icon="menu"
-            fillMode={"flat"}
-            themeColor={"primary"}
-            onClick={() => setIsMenuOpend(true)}
-          />
-        </SmallGnv>
-      )}
-      <Content isMenuOpen={isMenuOpend}>
-        <TopTitle>
-          <div style={{ width: "30px" }}></div>
-          <AppName theme={currentTheme}>
-            <Logo size="32px" />
-          </AppName>
-          <Button
-            icon="menu"
-            themeColor={"primary"}
-            fillMode={"flat"}
-            onClick={onMenuBtnClick}
-          />
-        </TopTitle>
-        <PageWrap>{props.children}</PageWrap>
-      </Content>
-      {userOptionsWindowVisible && (
-        <UserOptionsWindow setVisible={setUserOptionsWindowVisible} />
-      )}
-      {changePasswordWindowVisible && (
-        <ChangePasswordWindow setVisible={setChangePasswordWindowVisible} />
-      )}
-      {systemOptionWindowWindowVisible && (
-        <SystemOptionWindow setVisible={setSystemOptionWindowVisible} />
-      )}
+              themeColor={"primary"}
+              onClick={() => setIsMenuOpend(true)}
+            />
+          </SmallGnv>
+        )}
+        <Content isMenuOpen={isMenuOpend}>
+          <TopTitle>
+            <div style={{ width: "30px" }}></div>
+            <AppName theme={currentTheme}>
+              <Logo size="32px" />
+            </AppName>
+            <Button
+              icon="menu"
+              themeColor={"primary"}
+              fillMode={"flat"}
+              onClick={onMenuBtnClick}
+            />
+          </TopTitle>
+          <PageWrap>{props.children}</PageWrap>
+        </Content>
+        {userOptionsWindowVisible && (
+          <UserOptionsWindow setVisible={setUserOptionsWindowVisible} />
+        )}
+        {changePasswordWindowVisible && (
+          <ChangePasswordWindow setVisible={setChangePasswordWindowVisible} />
+        )}
+        {systemOptionWindowWindowVisible && (
+          <SystemOptionWindow setVisible={setSystemOptionWindowVisible} />
+        )}
 
-      <Loading />
-    </Wrapper>
+        <Loading />
+      </Wrapper>
+      <Footer>
+        <div>
+          {userName}({userId})
+        </div>
+        <div>{customerName}</div>
+        <div>{ip}</div>
+      </Footer>
+    </>
   );
 };
 
