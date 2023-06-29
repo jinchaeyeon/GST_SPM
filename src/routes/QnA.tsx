@@ -335,10 +335,13 @@ const App = () => {
       let data: any;
       setLoading(true);
 
+      const bytes = require("utf8-bytes");
+      const convertedPassword = bytesToBase64(bytes(detailData.password));
+
       const mainDataId = Object.getOwnPropertyNames(selectedState)[0];
       const para = {
         id: mainDataId,
-        password: detailData.password,
+        password: convertedPassword,
       };
 
       try {
@@ -430,11 +433,16 @@ const App = () => {
       setLoading(false);
       return false;
     }
+
+    const bytes2 = require("utf8-bytes");
+    const convertedPassword = bytesToBase64(bytes2(detailData.password));
+    const urlEncodedPassword = encodeURIComponent(convertedPassword);
+
     const bytes = require("utf8-bytes");
     const convertedEditorContent = bytesToBase64(bytes(editorContent));
 
     const para = {
-      password: `qna?password=${detailData.password}`,
+      para: `qna?password=${urlEncodedPassword}`,
       fileBytes: convertedEditorContent,
       procedureName: "pw6_sav_questions",
       pageNumber: 0,
@@ -442,7 +450,7 @@ const App = () => {
       parameters: {
         "@p_work_type": detailData.work_type,
         "@p_document_id": detailData.document_id,
-        "@p_password": bytesToBase64(bytes(detailData.password)),
+        "@p_password": "",
         "@p_salt": "",
         "@p_customer_code": customercode,
         "@p_user_id": loginResult.userId,
@@ -503,9 +511,12 @@ const App = () => {
     let data: any;
     setLoading(true);
 
+    const bytes = require("utf8-bytes");
+    const convertedPassword = bytesToBase64(bytes(detailData.password));
+
     const para = {
       id: selectedRow.document_id,
-      password: detailData.password,
+      password: convertedPassword,
     };
 
     try {

@@ -9,7 +9,7 @@ const domain: any = {
   //QnA
   "qna-list": { action: "get", url: "api/spm/qna/:para" },
   "qna-detail": { action: "get", url: "api/spm/qna/:id" },
-  "qna-save": { action: "post", url: "api/spm/:password" },
+  "qna-save": { action: "post", url: "api/spm/:para" },
   "qna-delete": { action: "delete", url: "api/spm/qna/:id" },
 
   //회의록
