@@ -56,8 +56,10 @@ import CenterCell from "../components/Cells/CenterCell";
 import QnaStateCell from "../components/Cells/QnaStateCell";
 import { bytesToBase64 } from "byte-base64";
 import { Icon } from "@progress/kendo-react-common";
-import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsDialog";
+import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
 import { IAttachmentData } from "../hooks/interfaces";
+import jwtDecode from "jwt-decode";
+import CheckCell from "../components/Cells/CheckCell";
 
 type TItem = {
   sub_code: string;
@@ -104,7 +106,7 @@ const detailDataStatusListData: TItem[] = [
 ];
 
 const defaultDetailData = {
-  work_type: "",
+  work_type: "N",
   document_id: "",
   title: "",
   password: "",
@@ -125,6 +127,10 @@ const defaultDetailData = {
 
 const App = () => {
   const [loginResult] = useRecoilState(loginResultState);
+  const accessToken = localStorage.getItem("accessToken");
+  const [token] = useState(accessToken);
+  const decodedToken: any = token ? jwtDecode(token) : undefined;
+  const { customercode = "" } = decodedToken || {};
   const [filterValue, setFilterValue] = useRecoilState(filterValueState);
   const setLoading = useSetRecoilState(isLoading);
   const idGetter = getter(DATA_ITEM_KEY);
@@ -317,6 +323,7 @@ const App = () => {
       } else {
         // 결과 행이 0인 경우 데이터 리셋
         setMainDataResult(process([], mainDataState));
+        setSelectedState({});
         resetDetailData();
       }
     }
@@ -338,9 +345,12 @@ const App = () => {
         data = await processApi<any>("qna-detail", para);
       } catch (error: any) {
         data = null;
-        console.log(error.message === "암호를 확인해 주십시오.");
+        console.log(
+          "It shoud be 'true' => " +
+            (error.message === "비밀번호를 확인해 주십시오."),
+        );
         console.log(error);
-        if (error.message === "암호를 확인해 주십시오.") {
+        if (error.message === "비밀번호를 확인해 주십시오.") {
           setIsDataLocked(true);
         }
       }
@@ -400,6 +410,21 @@ const App = () => {
       editorContent = qEditorRef.current.getContent();
     }
 
+    if (!detailData.title) {
+      alert("제목은(는) 필수 입력 항목입니다.");
+      setLoading(false);
+      return false;
+    }
+    if (!detailData.user_name) {
+      alert("작성자은(는) 필수 입력 항목입니다.");
+      setLoading(false);
+      return false;
+    }
+    if (!detailData.request_date) {
+      alert("요청일은(는) 필수 입력 항목입니다.");
+      setLoading(false);
+      return false;
+    }
     if (detailData.is_lock && !detailData.password) {
       alert("비밀번호를 입력해주세요.");
       setLoading(false);
@@ -417,9 +442,9 @@ const App = () => {
       parameters: {
         "@p_work_type": detailData.work_type,
         "@p_document_id": detailData.document_id,
-        "@p_password": detailData.password,
+        "@p_password": bytesToBase64(bytes(detailData.password)),
         "@p_salt": "",
-        "@p_customer_code": loginResult.userId,
+        "@p_customer_code": customercode,
         "@p_user_id": loginResult.userId,
         "@p_user_name": detailData.user_name,
         "@p_user_tel": detailData.user_tel,
@@ -460,14 +485,26 @@ const App = () => {
   }, [setLoading, detailData, setSelectedState]);
 
   const deleteData = useCallback(async () => {
-    if (!window.confirm("[" + detailData.title + "] 정말 삭제하시겠습니까?"))
+    const mainDataId = Object.getOwnPropertyNames(selectedState)[0];
+
+    if (!mainDataId) {
+      alert("선택된 자료가 없습니다.");
+      return false;
+    }
+    const selectedRow = mainDataResult.data.find(
+      (item) => item[DATA_ITEM_KEY] === mainDataId,
+    );
+
+    if (
+      !window.confirm("[" + selectedRow.title + "] 문의 글을 삭제하시겠습니까")
+    )
       return false;
 
     let data: any;
     setLoading(true);
 
     const para = {
-      id: detailData.document_id,
+      id: selectedRow.document_id,
       password: detailData.password,
     };
 
@@ -483,11 +520,11 @@ const App = () => {
       if (unsavedAttadatnums.attdatnums.length > 0) {
         // DB 저장안된 첨부파일
         setDeletedAttadatnums(unsavedAttadatnums);
-      } else if (detailData.attdatnum) {
+      } else if (selectedRow.attdatnum) {
         // DB 저장된 첨부파일
         setDeletedAttadatnums({
           type: "notice",
-          attdatnums: [detailData.attdatnum],
+          attdatnums: [selectedRow.attdatnum],
         });
       }
 
@@ -581,7 +618,6 @@ const App = () => {
     setDetailData((prev) => ({
       ...prev,
       ...defaultDetailData,
-      work_type: "N",
     }));
 
     if (qEditorRef.current) {
@@ -591,6 +627,7 @@ const App = () => {
     if (aEditorRef.current) {
       aEditorRef.current.setHtml("");
     }
+    setIsDataLocked(false);
   };
 
   const handleKeyPressSearchDetail = (
@@ -631,6 +668,67 @@ const App = () => {
         (data.rowCount > 1 ? " 등 " + String(data.rowCount) + "건" : ""),
     }));
   };
+
+  const checkAnswer = async () => {
+    let data: any;
+
+    const mainDataId = Object.getOwnPropertyNames(selectedState)[0];
+
+    if (!mainDataId) {
+      alert("선택된 자료가 없습니다.");
+      return false;
+    }
+    const selectedRow = mainDataResult.data.find(
+      (item) => item[DATA_ITEM_KEY] === mainDataId,
+    );
+
+    if (!selectedRow.answer_document_id) {
+      alert("답변이 등록되지 않았습니다.");
+      return false;
+    }
+
+    const queryStr = `UPDATE QuestionAndReceptions 
+    SET check_date = ${selectedRow.is_checked === "Y" ? "null" : "GETDATE()"} 
+    WHERE document_id = '${selectedRow.document_id}'`;
+
+    const bytes = require("utf8-bytes");
+    const convertedQueryStr = bytesToBase64(bytes(queryStr));
+
+    setLoading(true);
+    let query = {
+      query: convertedQueryStr,
+    };
+
+    try {
+      data = await processApi<any>("query", query);
+    } catch (error) {
+      data = null;
+    }
+
+    if (data && data.isSuccess) {
+      // 초기화
+      setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
+
+      // 조회
+      setFilters((prev) => ({
+        ...prev,
+        isFetch: true,
+        isReset: true,
+      }));
+    } else {
+      console.log("[에러발생]");
+      console.log(data);
+    }
+    setLoading(false);
+  };
+
+  const selectedItem = mainDataResult.data.find(
+    (item) =>
+      item[DATA_ITEM_KEY] === Object.getOwnPropertyNames(selectedState)[0] ??
+      "",
+  );
+
+  const isChecked = selectedItem && selectedItem.is_checked === "Y";
 
   return (
     <>
@@ -809,6 +907,14 @@ const App = () => {
             )}
             <GridColumn field="user_name" title="작성자" width={100} />
             <GridColumn field="title" title="제목" width={200} />
+            {!isAdmin && (
+              <GridColumn
+                field="is_checked"
+                title="답변 확인"
+                width={80}
+                cell={CheckCell}
+              />
+            )}
             <GridColumn
               field="reception_date"
               title="접수일"
@@ -837,7 +943,7 @@ const App = () => {
 
           <GridContainer
             style={
-              !isAdmin && isDataLocked && detailData.work_type !== "N"
+              !isAdmin && isDataLocked
                 ? { display: "none", height: "100%" }
                 : { height: "100%" }
             }
@@ -1033,6 +1139,18 @@ const App = () => {
             </FormBoxWrap>
             <GridTitleContainer>
               <GridTitle>답변</GridTitle>
+              <ButtonContainer>
+                {!isAdmin && (
+                  <Button
+                    themeColor={"primary"}
+                    fillMode={"flat"}
+                    icon={isChecked ? "x" : "check"}
+                    onClick={checkAnswer}
+                  >
+                    {isChecked ? "답변 확인 취소" : "답변 확인"}
+                  </Button>
+                )}
+              </ButtonContainer>
             </GridTitleContainer>
             <RichEditor id="aEditor" ref={aEditorRef} hideTools />
             <FormBoxWrap
@@ -1065,7 +1183,7 @@ const App = () => {
               </FormBox>
             </FormBoxWrap>
           </GridContainer>
-          {!isAdmin && isDataLocked && detailData.work_type !== "N" && (
+          {!isAdmin && isDataLocked && (
             <QnaPwBox onKeyPress={handleKeyPressSearchDetail}>
               <div className="inner">
                 <Icon name="lock" themeColor="primary" size={"xlarge"} />

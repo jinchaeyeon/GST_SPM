@@ -5,18 +5,20 @@ const QnaStateCell = (props: GridCellProps) => {
   const { ariaColumnIndex, columnIndex, dataItem, field = "" } = props;
   return (
     <td
-      style={{ textAlign: "left", display: "flex", alignItems: "center" }}
+      style={{ textAlign: "left" }}
       aria-colindex={ariaColumnIndex}
       data-grid-col-index={columnIndex}
     >
-      <StatusIcon status={dataItem[field]} />{" "}
-      {dataItem[field] === "N"
-        ? "대기"
-        : dataItem[field] === "R"
-        ? "진행중"
-        : dataItem[field] === "Y"
-        ? "완료"
-        : "보류"}
+      <div style={{ display: "flex", alignItems: "center" }}>
+        <StatusIcon status={dataItem[field]} />{" "}
+        {dataItem[field] === "N"
+          ? "대기"
+          : dataItem[field] === "R"
+          ? "진행중"
+          : dataItem[field] === "Y"
+          ? "완료"
+          : "보류"}
+      </div>
     </td>
   );
 };

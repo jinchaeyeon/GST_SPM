@@ -42,7 +42,7 @@ import { useApi } from "../hooks/api";
 import { filterValueState, isLoading } from "../store/atoms";
 import { TEditorHandle } from "../store/types";
 import { IAttachmentData } from "../hooks/interfaces";
-import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsDialog";
+import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
 import CenterCell from "../components/Cells/CenterCell";
 
 const DATA_ITEM_KEY = "meetingnum";

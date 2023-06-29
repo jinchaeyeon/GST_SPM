@@ -75,7 +75,7 @@ import { TEditorHandle } from "../store/types";
 import { IAttachmentData, ICustData, IPrjData } from "../hooks/interfaces";
 import ProjectsWindow from "../components/Windows/CommonWindows/ProjectsWindow";
 import CustomersWindow from "../components/Windows/CommonWindows/CustomersWindow";
-import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsDialog";
+import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
 import CenterCell from "../components/Cells/CenterCell";
 import { CellRender, RowRender } from "../components/Renderers/Renderers";
 import CheckBoxCell from "../components/Cells/CheckBoxCell";

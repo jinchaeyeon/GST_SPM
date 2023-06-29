@@ -52,7 +52,7 @@ import { useApi } from "../hooks/api";
 import CenterCell from "../components/Cells/CenterCell";
 import { bytesToBase64 } from "byte-base64";
 import { IAttachmentData } from "../hooks/interfaces";
-import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsDialog";
+import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
 import { useThemeSwitcher } from "react-css-theme-switcher";
 
 const DraggableGridRowRender = (properties: any) => {
@@ -88,7 +88,15 @@ type TFilters = {
   isReset: boolean;
 };
 
-const defaultDetailData = {
+const defaultDetailData: {
+  work_type: string;
+  document_id: string;
+  title: string;
+  notice_date: Date | null;
+  contents: string;
+  attdatnum: string;
+  files: string;
+} = {
   work_type: "",
   document_id: "",
   title: "",
@@ -377,11 +385,7 @@ const App = () => {
       }
 
       // Edior에 HTML & CSS 세팅
-      if (editorRef.current) {
-        if (!isAdmin) editorRef.current.updateEditable(true);
-        editorRef.current.setHtml(document);
-        if (!isAdmin) editorRef.current.updateEditable(false);
-      }
+      setHtmlOnEditor(document);
     } else {
       console.log("[에러발생]");
       console.log(data);
@@ -425,13 +429,11 @@ const App = () => {
 
   // 상세정보 초기화
   const resetDetailData = () => {
-    setDetailData(defaultDetailData);
+    setDetailData({ ...defaultDetailData, notice_date: null });
     setRefCustData(process([], refCustDataState));
 
     // Edior에 HTML & CSS 세팅
-    if (editorRef.current) {
-      editorRef.current.setHtml("");
-    }
+    setHtmlOnEditor("");
   };
 
   const print = () => {
@@ -540,9 +542,7 @@ const App = () => {
     setRefCustData(process([], refCustDataState));
 
     // Edior에 HTML & CSS 세팅
-    if (editorRef.current) {
-      editorRef.current.setHtml("");
-    }
+    setHtmlOnEditor("");
   };
 
   // ex. 파라미터 = {custcd : "10192", custnm : "a"}, {custcd : "43049", custnm : "b"} ]
@@ -658,6 +658,13 @@ const App = () => {
     }));
   };
 
+  const setHtmlOnEditor = (content: string) => {
+    if (editorRef.current) {
+      if (!isAdmin) editorRef.current.updateEditable(true);
+      editorRef.current.setHtml(content);
+      if (!isAdmin) editorRef.current.updateEditable(false);
+    }
+  };
   return (
     <>
       <TitleContainer>
