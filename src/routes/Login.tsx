@@ -44,8 +44,15 @@ const Login: React.FC = () => {
   const processLogin = useCallback(
     async (formData: { [name: string]: any }) => {
       try {
+        if (!formData.userId) {
+          alert("ID를 입력하세요.");
+          return false;
+        }
+        if (!formData.password) {
+          alert("비밀번호를 입력하세요.");
+          return false;
+        }
         setLoading(true);
-
         let para: IFormData = Object.assign(
           {},
           {
@@ -115,6 +122,7 @@ const Login: React.FC = () => {
   if (!isLoaded) {
     return <Loader />;
   }
+
   return (
     <div style={{ backgroundColor: "#2e87b7" }}>
       <LoginBox>
