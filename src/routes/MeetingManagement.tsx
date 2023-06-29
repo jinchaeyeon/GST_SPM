@@ -140,7 +140,7 @@ const valueCodesColumns = [
     width: 100,
   },
 ];
-const customersQueryStr = `SELECT custcd, custnm FROM ba020t `;
+const customersQueryStr = `SELECT custcd, custnm FROM ba020t WHERE useyn = 'Y'`;
 
 const customersColumns = [
   {
@@ -1207,7 +1207,8 @@ const App = () => {
 
     if (data !== null && data.isSuccess === true) {
       const rows = data.tables[0].Rows;
-      if (rows) {
+
+      if (rows.length > 0) {
         const scalarValue = rows[0].scalar_value;
         const splitValue = scalarValue.split("|");
 
@@ -1301,6 +1302,17 @@ const App = () => {
                           placeholder=""
                         />
                       </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>업체</th>
+                    <td colSpan={3}>
+                      <Input
+                        name="custnm"
+                        type="text"
+                        value={filters.custnm}
+                        onChange={filterInputChange}
+                      />
                     </td>
                   </tr>
                   <tr>
@@ -1490,12 +1502,25 @@ const App = () => {
                           <Input
                             name="devproject"
                             value={detailData.devproject}
-                            onChange={detailInputChange}
+                            className="readonly"
                           />
                           <Button
                             icon="more-horizontal"
                             fillMode={"flat"}
                             onClick={() => setProjectWindowVisible(true)}
+                            style={{
+                              right: "28.56px",
+                            }}
+                          />
+                          <Button
+                            icon="x"
+                            fillMode={"flat"}
+                            onClick={() =>
+                              setProjectData({
+                                devmngnum: "",
+                                project: "",
+                              })
+                            }
                           />
                         </div>
                       </td>
