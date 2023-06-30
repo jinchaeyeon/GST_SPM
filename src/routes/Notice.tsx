@@ -8,6 +8,7 @@ import {
   GridDataStateChangeEvent,
   GridEvent,
   GridFooterCellProps,
+  GridRowDoubleClickEvent,
   GridSelectionChangeEvent,
 } from "@progress/kendo-react-grid";
 import { Input } from "@progress/kendo-react-inputs";
@@ -97,7 +98,7 @@ const defaultDetailData: {
   attdatnum: string;
   files: string;
 } = {
-  work_type: "",
+  work_type: "N",
   document_id: "",
   title: "",
   notice_date: new Date(),
@@ -334,6 +335,7 @@ const App = () => {
         // 결과 행이 0인 경우 데이터 리셋
         setMainDataResult(process([], mainDataState));
         resetDetailData();
+        setSelectedState({});
       }
     }
     setLoading(false);
@@ -382,6 +384,8 @@ const App = () => {
           work_type: "U",
           notice_date: toDate(row.notice_date),
         }));
+      } else {
+        resetDetailData();
       }
 
       // Edior에 HTML & CSS 세팅
@@ -499,19 +503,20 @@ const App = () => {
   const handleRefCustDrop = (e: any, dataItem: any) => {
     setRefCustData((prev) => ({
       data: [...prev.data, ...[{ ...allCustDragDataItem, work_type: "N" }]],
-      total: prev.total + 1,
+      total: [...prev.data, ...[{ ...allCustDragDataItem, work_type: "N" }]]
+        .length,
     }));
   };
 
   // 참조 업체 삭제
   const handleAllCustDrop = (e: any, dataItem: any) => {
     const newData = refCustData.data.filter(
-      (row) => row.customer_code !== refCustDragDataItem.customer_code,
+      (row) => row?.customer_code !== refCustDragDataItem?.customer_code,
     );
 
     setRefCustData((prev) => ({
       data: newData,
-      total: prev.total - 1,
+      total: newData.length,
     }));
   };
 
@@ -664,6 +669,29 @@ const App = () => {
       editorRef.current.setHtml(content);
       if (!isAdmin) editorRef.current.updateEditable(false);
     }
+  };
+
+  // 참조업체 행 더블클릭 => 참조 업체 삭제
+  const refCustRowDoubleClick = (e: GridRowDoubleClickEvent) => {
+    const { dataItem } = e;
+    const newData = refCustData.data.filter(
+      (row) => row?.customer_code !== dataItem?.customer_code,
+    );
+
+    setRefCustData((prev) => ({
+      data: newData,
+      total: newData.length,
+    }));
+  };
+
+  // 전체업체 행 더블클릭 => 참조 업체 추가
+  const allCustRowDoubleClick = (e: GridRowDoubleClickEvent) => {
+    const { dataItem } = e;
+
+    setRefCustData((prev) => ({
+      data: [...prev.data, ...[{ ...dataItem, work_type: "N" }]],
+      total: [...prev.data, ...[{ ...dataItem, work_type: "N" }]].length,
+    }));
   };
   return (
     <>
@@ -925,6 +953,8 @@ const App = () => {
                 //컬럼너비조정
                 resizable={true}
                 rowRender={refCustRowRender}
+                //행 클릭 이벤트
+                onRowDoubleClick={refCustRowDoubleClick}
               >
                 <GridColumn field="work_type" title=" " width={50} />
                 <GridColumn
@@ -977,6 +1007,8 @@ const App = () => {
                 rowRender={allCustRowRender}
                 //필터기능
                 filterable={true}
+                //행 클릭 이벤트
+                onRowDoubleClick={allCustRowDoubleClick}
               >
                 <GridColumn
                   field="customer_name"
