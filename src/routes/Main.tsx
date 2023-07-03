@@ -78,7 +78,6 @@ const Main: React.FC = () => {
   const { switcher, currentTheme = "" } = useThemeSwitcher();
 
   const [isLoaded, setIsLoaded] = useState(false);
-
   // Kendo Chart에 Theme 적용하는데 간헐적으로 오류 발생하여 n초 후 렌더링되도록 처리함 (메인메뉴 접속할때마다 적용)
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -188,7 +187,7 @@ const Main: React.FC = () => {
   };
 
   useEffect(() => {
-    switcher({ theme: "dark" });
+    // switcher({ theme: "dark" });
     search();
   }, []);
 
@@ -286,7 +285,7 @@ const Main: React.FC = () => {
   };
 
   const moveMenu = (id: string) => {
-    switcher({ theme: "light" });
+    // switcher({ theme: "light" });
     history.push("/" + id);
   };
 
@@ -295,11 +294,7 @@ const Main: React.FC = () => {
   }
 
   return (
-    <GridContainer
-      className="darkScrollbar"
-      style={{ paddingBottom: "20px" }}
-      theme="dark"
-    >
+    <GridContainer style={{ paddingBottom: "20px" }}>
       <TitleContainer
         style={{
           minHeight: "80px",
@@ -307,7 +302,7 @@ const Main: React.FC = () => {
           paddingTop: "5px",
         }}
       >
-        <p className="small" style={{ color: "#fff" }}>
+        <p className="small">
           <span style={{ fontWeight: 700 }}>{userName}</span> 님, 좋은 하루
           되세요
         </p>
@@ -367,12 +362,19 @@ const Main: React.FC = () => {
               <span>일</span>
             </p>
           </TextBox>
+          <TextBox>
+            <p className="small">공지사항</p>
+            <p className="large green">
+              {taskStatusResult.avg_reception_days}
+              <span>건</span>
+            </p>
+          </TextBox>
         </GridContainer>
 
         <GridContainer width="85%" style={{ gap: "15px" }}>
           <GridContainerWrap height={"50%"}>
             <GridContainer width="40%">
-              <Chart style={{ height: "100%" }}>
+              <Chart style={{ height: "100%", border: "solid 1px #e6e6e6" }}>
                 <ChartTitle
                   text={currentYear + "년 담당자별 문의"}
                   font={chartTitleFont}
@@ -397,7 +399,7 @@ const Main: React.FC = () => {
               </Chart>
             </GridContainer>
             <GridContainer width="60%">
-              <Chart style={{ height: "100%" }}>
+              <Chart style={{ height: "100%", border: "solid 1px #e6e6e6" }}>
                 <ChartTitle text="요일별 담당자 문의" font={chartTitleFont} />
                 <ChartLegend
                   position="bottom"
@@ -437,53 +439,6 @@ const Main: React.FC = () => {
             </GridContainer>
           </GridContainerWrap>
           <GridContainerWrap height={"50%"}>
-            <GridContainer>
-              <GridTitleContainer>
-                <GridTitle theme={currentTheme}>프로젝트 진행 현황</GridTitle>
-              </GridTitleContainer>
-              <Grid
-                style={{ height: "calc(100% - 35px)" }}
-                data={process(
-                  projectDataResult.data.map((row) => ({
-                    ...row,
-                    [SELECTED_FIELD]:
-                      projectSelectedState[projectIdGetter(row)],
-                  })),
-                  projectDataState,
-                )}
-                {...projectDataState}
-                onDataStateChange={onProjectDataStateChange}
-                //선택기능
-                dataItemKey={PROJECT_ITEM_KEY}
-                selectedField={SELECTED_FIELD}
-                selectable={{
-                  enabled: true,
-                  mode: "single",
-                }}
-                onSelectionChange={onProjectSelectionChange}
-                //정렬기능
-                sortable={true}
-                onSortChange={onProjectSortChange}
-                //컬럼순서조정
-                reorderable={true}
-                //컬럼너비조정
-                resizable={true}
-                //행 더블클릭
-                onRowDoubleClick={onProjectRowDoubleClick}
-              >
-                <GridColumn
-                  field="project"
-                  title="프로젝트"
-                  footerCell={projectTotalFooterCell}
-                />
-                <GridColumn
-                  field="progress"
-                  title="진행률"
-                  width={80}
-                  cell={CenterCell}
-                />
-              </Grid>
-            </GridContainer>
             <GridContainer>
               <GridTitleContainer>
                 <GridTitle theme={currentTheme}>문의 내용</GridTitle>
@@ -540,7 +495,53 @@ const Main: React.FC = () => {
                 />
               </Grid>
             </GridContainer>
-
+            <GridContainer>
+              <GridTitleContainer>
+                <GridTitle theme={currentTheme}>프로젝트 진행 현황</GridTitle>
+              </GridTitleContainer>
+              <Grid
+                style={{ height: "calc(100% - 35px)" }}
+                data={process(
+                  projectDataResult.data.map((row) => ({
+                    ...row,
+                    [SELECTED_FIELD]:
+                      projectSelectedState[projectIdGetter(row)],
+                  })),
+                  projectDataState,
+                )}
+                {...projectDataState}
+                onDataStateChange={onProjectDataStateChange}
+                //선택기능
+                dataItemKey={PROJECT_ITEM_KEY}
+                selectedField={SELECTED_FIELD}
+                selectable={{
+                  enabled: true,
+                  mode: "single",
+                }}
+                onSelectionChange={onProjectSelectionChange}
+                //정렬기능
+                sortable={true}
+                onSortChange={onProjectSortChange}
+                //컬럼순서조정
+                reorderable={true}
+                //컬럼너비조정
+                resizable={true}
+                //행 더블클릭
+                onRowDoubleClick={onProjectRowDoubleClick}
+              >
+                <GridColumn
+                  field="project"
+                  title="프로젝트"
+                  footerCell={projectTotalFooterCell}
+                />
+                <GridColumn
+                  field="progress"
+                  title="진행률"
+                  width={80}
+                  cell={CenterCell}
+                />
+              </Grid>
+            </GridContainer>
             <GridContainer>
               <GridTitleContainer>
                 <GridTitle theme={currentTheme}>회의록</GridTitle>

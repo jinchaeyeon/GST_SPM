@@ -94,13 +94,11 @@ const PanelBarNavContainer = (props: any) => {
   const isAdmin = role === "ADMIN";
   const userName = loginResult ? loginResult.userName : "";
   const [isLoaded, setIsLoaded] = useState(false);
-
   // Kendo Chart에 Theme 적용하는데 간헐적으로 오류 발생하여 0.5초후 렌더링되도록 처리함 (모든 메뉴 새로고침 시 적용)
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoaded(true);
     }, 500);
-
     return () => clearTimeout(timer); // 컴포넌트가 언마운트될 때 타이머를 제거
   }, []);
 
@@ -264,13 +262,13 @@ const PanelBarNavContainer = (props: any) => {
   const onSelect = (event: PanelBarSelectEventArguments) => {
     const { route, className = "" } = event.target.props;
 
-    if (route) {
-      if (route.includes("Home")) {
-        switcher({ theme: "dark" });
-      } else {
-        switcher({ theme: "light" });
-      }
-    }
+    // if (route) {
+    //   if (route.includes("Home")) {
+    //     switcher({ theme: "dark" });
+    //   } else {
+    //     switcher({ theme: "light" });
+    //   }
+    // }
     props.history.push(route);
 
     if (route) {
@@ -380,7 +378,7 @@ const PanelBarNavContainer = (props: any) => {
   const selected = setSelectedIndex(props.location.pathname);
 
   const logout = () => {
-    switcher({ theme: "light" });
+    // switcher({ theme: "light" });
     fetchLogout();
     resetLocalStorage();
     setIsMobileMenuOpend(false);

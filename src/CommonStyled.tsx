@@ -60,7 +60,10 @@ export const TextContainer = styled.div`
 export const Title = styled.h3`
   font-size: 22px;
   font-weight: 600;
-  color: #424242;
+  /* color: #424242; */
+  color: #7a76ce;
+  padding-bottom: 10px;
+  padding-top: 10px;
 `;
 type TButtonContainer = {
   flexDirection?: "column" | "row";
@@ -971,14 +974,12 @@ export const TextBox = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
-  background-color: #101010;
+  background-color: rgb(245 245 245);
   flex-direction: column;
 
   p span {
     font-weight: 700;
     font-size: 28px;
-    color: #fff;
     margin-left: 5px;
     vertical-align: middle;
   }
@@ -1006,13 +1007,13 @@ export const TextBox = styled.div`
   }
 
   .gray {
-    color: #b6b6b6;
+    color: #838383;
   }
   .green {
     color: #4cd180;
   }
   .yellow {
-    color: #ffe162;
+    color: #ffd519;
   }
   .blue {
     color: #4b5ffa;

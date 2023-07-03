@@ -13,12 +13,13 @@ const themes = {
   light: `${process.env.PUBLIC_URL}/light-theme.css`,
 };
 
-const defaultTheme = window.location.href.includes("Home") ? "dark" : "light";
+// const defaultTheme = window.location.href.includes("Home") ? "dark" : "light";
+
 root.render(
   //<React.StrictMode>
   <ThemeSwitcherProvider
     themeMap={themes}
-    defaultTheme={defaultTheme}
+    defaultTheme={"light"}
     insertionPoint="styles-insertion-point"
   >
     <RecoilRoot>
