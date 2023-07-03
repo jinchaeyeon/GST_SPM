@@ -19,7 +19,10 @@ import { Button } from "@progress/kendo-react-buttons";
 import { IAttachmentData, IWindowPosition } from "../../../hooks/interfaces";
 import NumberCell from "../../Cells/NumberCell";
 import CenterCell from "../../Cells/CenterCell";
-import { convertDateToStrWithTime2 } from "../../CommonFunction";
+import {
+  convertDateToStrWithTime2,
+  extractDownloadFilename,
+} from "../../CommonFunction";
 import { SELECTED_FIELD } from "../../CommonString";
 import { useLocation } from "react-router-dom";
 import { TAttachmentType } from "../../../store/types";
@@ -225,35 +228,6 @@ const KendoWindow = ({
         const link = document.createElement("a");
         link.href = fileObjectUrl;
         link.style.display = "none";
-
-        // 다운로드 파일 이름을 추출하는 함수
-        const extractDownloadFilename = (response: any) => {
-          if (response.headers) {
-            const disposition = response.headers["content-disposition"];
-            let filename = "";
-
-            if (disposition) {
-              const filenameRegex = /filename\*?=UTF-8''([^;\n]+)/;
-              const matches = filenameRegex.exec(disposition);
-
-              if (matches != null && matches[1]) {
-                const encodedFilename = matches[1].trim();
-                filename = decodeURIComponent(encodedFilename);
-              } else {
-                const fallbackRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
-                const fallbackMatches = fallbackRegex.exec(disposition);
-
-                if (fallbackMatches != null && fallbackMatches[1]) {
-                  filename = fallbackMatches[1].replace(/['"]/g, "");
-                }
-              }
-            }
-
-            return filename;
-          } else {
-            return "";
-          }
-        };
 
         // 다운로드 파일 이름을 지정 할 수 있습니다.
         // 일반적으로 서버에서 전달해준 파일 이름은 응답 Header의 Content-Disposition에 설정됩니다.

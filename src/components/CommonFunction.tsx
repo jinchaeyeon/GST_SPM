@@ -971,3 +971,31 @@ export const getAttdatnumQuery = (code: any) => {
     WHERE group_code = 'SYS060' AND sub_code = '${code}'
     `;
 };
+// 다운로드 파일 이름을 추출하는 함수
+export const extractDownloadFilename = (response: any) => {
+  if (response.headers) {
+    const disposition = response.headers["content-disposition"];
+    let filename = "";
+
+    if (disposition) {
+      const filenameRegex = /filename\*?=UTF-8''([^;\n]+)/;
+      const matches = filenameRegex.exec(disposition);
+
+      if (matches != null && matches[1]) {
+        const encodedFilename = matches[1].trim();
+        filename = decodeURIComponent(encodedFilename);
+      } else {
+        const fallbackRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+        const fallbackMatches = fallbackRegex.exec(disposition);
+
+        if (fallbackMatches != null && fallbackMatches[1]) {
+          filename = fallbackMatches[1].replace(/['"]/g, "");
+        }
+      }
+    }
+
+    return filename;
+  } else {
+    return "";
+  }
+};

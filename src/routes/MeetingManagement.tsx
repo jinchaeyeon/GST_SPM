@@ -1,4 +1,11 @@
-import { DataResult, getter, process, State } from "@progress/kendo-data-query";
+import {
+  DataResult,
+  FilterDescriptor,
+  getter,
+  process,
+  State,
+  filterBy,
+} from "@progress/kendo-data-query";
 import { Button } from "@progress/kendo-react-buttons";
 import {
   DatePicker,
@@ -55,6 +62,7 @@ import {
   toDate,
   UseParaPc,
   getCodeFromValue,
+  extractDownloadFilename,
 } from "../components/CommonFunction";
 import {
   DEFAULT_ATTDATNUMS,
@@ -83,6 +91,7 @@ import DateCell from "../components/Cells/DateCell";
 import ComboBoxCell from "../components/Cells/ComboBoxCell";
 import {
   ComboBoxChangeEvent,
+  ComboBoxFilterChangeEvent,
   MultiColumnComboBox,
 } from "@progress/kendo-react-dropdowns";
 import NameCell from "../components/Cells/NameCell";
@@ -558,6 +567,7 @@ const App = () => {
         setMainDataResult(process([], mainDataState));
         setDetailData(defaultDetailData);
         setDetailRows(process([], mainDataState));
+        setSelectedState({});
       }
     } else {
       console.log("[에러발생]");
@@ -763,13 +773,23 @@ const App = () => {
 
   const downloadDoc = async () => {
     let response: any;
-    setLoading(true);
 
-    const id = detailData.orgdiv + "_" + detailData.meetingnum;
+    const mainDataId = Object.getOwnPropertyNames(selectedState)[0];
+
+    if (!mainDataId) {
+      alert("선택된 자료가 없습니다.");
+      return false;
+    }
+    const selectedRow = mainDataResult.data.find(
+      (item) => item[DATA_ITEM_KEY] === mainDataId,
+    );
+
+    const id = selectedRow.orgdiv + "_" + selectedRow.meetingnum;
     const para = {
       para: "doc?type=Meeting&id=" + id,
     };
 
+    setLoading(true);
     try {
       response = await processApi<any>("doc-download", para);
     } catch (error) {
@@ -786,24 +806,6 @@ const App = () => {
       const link = document.createElement("a");
       link.href = fileObjectUrl;
       link.style.display = "none";
-
-      // 다운로드 파일 이름을 추출하는 함수
-      const extractDownloadFilename = (response: any) => {
-        if (response.headers) {
-          const disposition = response.headers["content-disposition"];
-          let filename = "";
-          if (disposition) {
-            var filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
-            var matches = filenameRegex.exec(disposition);
-            if (matches != null && matches[1]) {
-              filename = matches[1].replace(/['"]/g, "");
-            }
-          }
-          return filename;
-        } else {
-          return "";
-        }
-      };
 
       // 다운로드 파일 이름을 지정 할 수 있습니다.
       // 일반적으로 서버에서 전달해준 파일 이름은 응답 Header의 Content-Disposition에 설정됩니다.
@@ -990,20 +992,23 @@ const App = () => {
   };
 
   const deleteMeeting = async () => {
-    const splitMeetingnum = meetingnum.split("_");
-    const selectedData = mainDataResult.data.find(
-      (row) => row.meetingnum === splitMeetingnum[1],
-    );
+    const mainDataId = Object.getOwnPropertyNames(selectedState)[0];
 
-    if (!selectedData) return false;
+    if (!mainDataId) {
+      alert("선택된 자료가 없습니다.");
+      return false;
+    }
+    const selectedRow = mainDataResult.data.find(
+      (item) => item[DATA_ITEM_KEY] === mainDataId,
+    );
 
     if (
       !window.confirm(
         "[" +
-          selectedData.custnm +
+          selectedRow.custnm +
           " '" +
-          selectedData.title +
-          "'] 정말 삭제하시겠습니까?",
+          selectedRow.title +
+          "']의 데이터를 삭제하시겠습니까?",
       )
     ) {
       return false;
@@ -1011,7 +1016,7 @@ const App = () => {
     let data: any;
     setLoading(true);
 
-    const para = { id: selectedData.orgdiv + "_" + selectedData.meetingnum };
+    const para = { id: selectedRow.orgdiv + "_" + selectedRow.meetingnum };
 
     try {
       data = await processApi<any>("meeting-delete", para);
@@ -1224,6 +1229,13 @@ const App = () => {
     }
   };
 
+  const [custFilter, setCustFilter] = useState<FilterDescriptor>();
+  const handleFilterChange = (event: ComboBoxFilterChangeEvent) => {
+    if (event) {
+      setCustFilter(event.filter);
+    }
+  };
+
   return (
     <>
       <CodesContext.Provider
@@ -1248,7 +1260,6 @@ const App = () => {
               fillMode={"outline"}
               icon="save"
               onClick={saveMeeting}
-              disabled={detailData.work_type ? false : true}
             >
               저장
             </Button>
@@ -1257,7 +1268,6 @@ const App = () => {
               fillMode={"outline"}
               icon="delete"
               onClick={deleteMeeting}
-              disabled={meetingnum ? false : true}
             >
               삭제
             </Button>
@@ -1267,7 +1277,6 @@ const App = () => {
               onClick={downloadDoc}
               themeColor={"primary"}
               fillMode={"outline"}
-              disabled={meetingnum ? false : true}
             >
               다운로드
             </Button>
@@ -1437,12 +1446,18 @@ const App = () => {
                         {customersState && (
                           <MultiColumnComboBox
                             name="cust_data"
-                            data={customersState}
+                            data={
+                              custFilter
+                                ? filterBy(customersState, custFilter)
+                                : customersState
+                            }
                             value={detailData.cust_data}
                             columns={customersColumns}
                             textField={"custnm"}
                             onChange={detailComboBoxChange}
                             className="required"
+                            filterable={true}
+                            onFilterChange={handleFilterChange}
                           />
                         )}
                       </td>
