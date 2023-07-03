@@ -334,6 +334,12 @@ const App = () => {
   useEffect(() => {
     if (projectValue && projectValue.devmngnum) {
       fetchProjectDetail(projectValue.devmngnum);
+    } else {
+      // 초기화
+      setGridData(process([], gridDataState));
+      setTask([]);
+      setDependency([]);
+      taskForDeleting = [];
     }
   }, [projectValue]);
 
@@ -349,6 +355,20 @@ const App = () => {
     let randomInt = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
     stringToIntegerMap.set(s, randomInt);
     return randomInt;
+  };
+
+  const stringToUuidMap = new Map<string, string>();
+
+  const getUuidForString = (s: string): string => {
+    // If the map already contains the string, return the existing value
+    if (stringToUuidMap.has(s)) {
+      return stringToUuidMap.get(s)!;
+    }
+
+    // Otherwise, generate a new UUID, store it in the map, and return it
+    const newUuid = uuidv4();
+    stringToUuidMap.set(s, newUuid);
+    return newUuid;
   };
 
   const fetchProjectList = async () => {
@@ -380,21 +400,22 @@ const App = () => {
       // 일정항목 데이터
       const parentRows: TTask[] = data.tables[0].Rows.map((row: any) => ({
         ...row,
-        id: getIntegerForString(row.project_itemcd),
+        id: getUuidForString(row.project_itemcd),
         parentId:
-          row.prntitemcd === "" ? null : getIntegerForString(row.prntitemcd),
+          row.prntitemcd === "" ? null : getUuidForString(row.prntitemcd),
         title: row.project_itemnm,
         start: new Date(),
         end: new Date(),
         progress: 0,
       }));
+
       // 일정 데이터
       const childRows: TTask[] = data.tables[1].Rows.map(
         (row: any, idx: number) => ({
           ...row,
           idx,
-          id: getIntegerForString(row.guid),
-          parentId: getIntegerForString(row.project_itemcd),
+          id: getUuidForString(row.guid),
+          parentId: getUuidForString(row.project_itemcd),
           title: row.title,
           start: new Date(row.start_time),
           startStrig: dateformat2(row.start_time),
@@ -408,15 +429,15 @@ const App = () => {
       const taskRows = reorderTasks([...parentRows, ...childRows]);
 
       // 디펜던시(화살표) 데이터
-      const dependancyRows: TDependency[] = data.tables[2].Rows.map(
-        (row: any) => ({
-          ...row,
-          id: getIntegerForString(row.guid),
-          predecessorId: getIntegerForString(row.parent_guid),
-          successorId: getIntegerForString(row.guid),
-          type: 0,
-        }),
-      );
+      const dependancyRows: TDependency[] = data.tables[2].Rows.filter(
+        (row: any) => row.parent_guid !== "",
+      ).map((row: any) => ({
+        ...row,
+        id: getUuidForString(row.guid),
+        predecessorId: getUuidForString(row.parent_guid),
+        successorId: getUuidForString(row.guid),
+        type: 0,
+      }));
 
       setGridData(process(childRows, gridDataState));
       setTask(taskRows);
@@ -707,7 +728,7 @@ const App = () => {
     let newRows = [
       {
         rowstatus: "N",
-        [DATA_ITEM_KEY]: getIntegerForString(guid),
+        [DATA_ITEM_KEY]: getUuidForString(guid),
         guid,
         start: new Date(),
         end,
