@@ -49,6 +49,7 @@ import { useApi } from "../hooks/api";
 import { TEditorHandle } from "../store/types";
 import RichEditor from "../components/RichEditor";
 import {
+  DropDownList,
   MultiSelect,
   MultiSelectChangeEvent,
 } from "@progress/kendo-react-dropdowns";
@@ -60,6 +61,7 @@ import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWi
 import { IAttachmentData } from "../hooks/interfaces";
 import jwtDecode from "jwt-decode";
 import CheckCell from "../components/Cells/CheckCell";
+import { filter } from "@progress/kendo-data-query/dist/npm/transducers";
 
 type TItem = {
   sub_code: string;
@@ -68,6 +70,7 @@ type TItem = {
 
 //조회조건 초기값
 type TFilters = {
+  dateType: { value: string; label: string };
   fromDate: Date;
   toDate: Date;
   userName: string;
@@ -80,6 +83,12 @@ type TFilters = {
   isFetch: boolean;
   isReset: boolean;
 };
+
+const dateType = [
+  { value: "A", label: "요청일" },
+  { value: "B", label: "접수일" },
+  { value: "C", label: "완료예정일" },
+];
 
 const DATA_ITEM_KEY = "document_id";
 const isPublicListData = [
@@ -182,6 +191,7 @@ const App = () => {
   fromDate.setDate(fromDate.getDate() - 10); // 시작일 설정
 
   const [filters, setFilters] = useState<TFilters>({
+    dateType: dateType[0],
     fromDate: fromDate,
     toDate: new Date(),
     userName: "",
@@ -277,7 +287,9 @@ const App = () => {
           ); //  2개 이상 선택시 => 값 합치기 (ex. 1 대기 + 2 진행중 = 3 )
 
     const para = {
-      para: `list?fromDate=${convertDateToStr(
+      para: `list?dateType=${
+        filters.dateType.value
+      }&fromDate=${convertDateToStr(
         filters.fromDate,
       )}&toDate=${convertDateToStr(filters.toDate)}&userName=${
         filters.userName
@@ -804,7 +816,16 @@ const App = () => {
             >
               <tbody>
                 <tr>
-                  <th>요청일자</th>
+                  <th style={{ paddingRight: "5px", paddingLeft: "5px" }}>
+                    <DropDownList
+                      name="dateType"
+                      data={dateType}
+                      textField="label"
+                      dataItemKey="value"
+                      value={filters.dateType}
+                      onChange={filterInputChange}
+                    />
+                  </th>
                   <td>
                     <div className="filter-item-wrap">
                       <DatePicker
@@ -1062,7 +1083,7 @@ const App = () => {
                         }
                         layout="horizontal"
                         className={isAdmin ? "readonly" : "required"}
-                        disabled={detailData.is_lock ? false : true}
+                        disabled={detailData.is_lock && !isAdmin ? false : true}
                       />
                     </td>
                   </tr>

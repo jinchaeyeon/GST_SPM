@@ -365,6 +365,7 @@ const KendoWindow = ({ setVisible, setData, para }: IKendoWindow) => {
       onMove={handleMove}
       onResize={handleResize}
       onClose={onClose}
+      modal={true}
     >
       <TitleContainer>
         <Title />

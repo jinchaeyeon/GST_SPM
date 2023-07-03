@@ -836,6 +836,9 @@ const App = () => {
       const _ = require("lodash");
       const deepCopiedFilters = _.cloneDeep(filters);
 
+      // 그리드 조회
+      fetchGrid(deepCopiedFilters);
+
       // 기본값으로 세팅
       setFilters((prev) => ({
         ...prev,
@@ -843,9 +846,6 @@ const App = () => {
         isReset: false,
         findRowValue: "",
       }));
-
-      // 그리드 조회
-      fetchGrid(deepCopiedFilters);
     }
   }, [filters]);
 
