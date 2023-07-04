@@ -560,6 +560,17 @@ const App = () => {
     let data: any;
     setLoading(true);
 
+    if (!detailData.title) {
+      alert("제목은(는) 필수 입력 항목입니다.");
+      setLoading(false);
+      return false;
+    }
+    if (!detailData.notice_date) {
+      alert("공지일자은(는) 필수 입력 항목입니다.");
+      setLoading(false);
+      return false;
+    }
+
     let editorContent = "";
     if (editorRef.current) {
       editorContent = editorRef.current.getContent();
@@ -609,12 +620,22 @@ const App = () => {
   }, [detailData, refCustData, userId]);
 
   const deleteNotice = useCallback(async () => {
-    if (!window.confirm("[" + detailData.title + "] 정말 삭제하시겠습니까?"))
+    const mainDataId = Object.getOwnPropertyNames(selectedState)[0];
+
+    if (!mainDataId) {
+      alert("선택된 자료가 없습니다.");
+      return false;
+    }
+    const selectedRow = mainDataResult.data.find(
+      (item) => item[DATA_ITEM_KEY] === mainDataId,
+    );
+
+    if (!window.confirm("[" + selectedRow.title + "] 정말 삭제하시겠습니까?"))
       return false;
     let data: any;
     setLoading(true);
 
-    const para = { id: detailData.document_id };
+    const para = { id: selectedRow.document_id };
 
     try {
       data = await processApi<any>("notice-delete", para);
@@ -900,7 +921,11 @@ const App = () => {
                   <th style={{ width: 0 }}>첨부파일</th>
                   <td style={{ width: "auto" }}>
                     <div className="filter-item-wrap">
-                      <Input name="attachment_q" value={detailData.files} />
+                      <Input
+                        name="attachment_q"
+                        value={detailData.files}
+                        className="readonly"
+                      />
                       <Button
                         icon="more-horizontal"
                         fillMode={"flat"}

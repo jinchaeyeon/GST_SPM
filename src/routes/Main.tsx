@@ -373,7 +373,10 @@ const Main: React.FC = () => {
         <GridContainer width="85%" style={{ gap: "15px" }}>
           <GridContainerWrap height={"50%"}>
             <GridContainer width="40%">
-              <Chart style={{ height: "100%", border: "solid 1px #e6e6e6" }}>
+              <Chart
+                style={{ height: "100%", border: "solid 1px #e6e6e6" }}
+                transitions={false}
+              >
                 <ChartTitle
                   text={currentYear + "년 담당자별 문의"}
                   font={chartTitleFont}
@@ -398,7 +401,10 @@ const Main: React.FC = () => {
               </Chart>
             </GridContainer>
             <GridContainer width="60%">
-              <Chart style={{ height: "100%", border: "solid 1px #e6e6e6" }}>
+              <Chart
+                style={{ height: "100%", border: "solid 1px #e6e6e6" }}
+                transitions={false}
+              >
                 <ChartTitle text="요일별 담당자 문의" font={chartTitleFont} />
                 <ChartLegend
                   position="bottom"

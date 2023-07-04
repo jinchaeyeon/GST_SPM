@@ -464,6 +464,11 @@ const App = () => {
       return false;
     }
 
+    // 에디터 내 문자 추출
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(editorContent, "text/html");
+    const textContent = doc.body.textContent || "";
+
     const bytes2 = require("utf8-bytes");
     const convertedPassword = bytesToBase64(bytes2(detailData.password));
     const urlEncodedPassword = encodeURIComponent(convertedPassword);
@@ -488,7 +493,7 @@ const App = () => {
         "@p_user_tel": detailData.user_tel,
         "@p_request_date": convertDateToStr(detailData.request_date),
         "@p_title": detailData.title,
-        "@p_contents": "",
+        "@p_contents": textContent,
         "@p_is_lock": detailData.is_lock ? "Y" : "N",
         "@p_is_public": detailData.is_public,
         "@p_attdatnum": detailData.attdatnum,
@@ -748,7 +753,8 @@ const App = () => {
       setFilters((prev) => ({
         ...prev,
         isFetch: true,
-        isReset: true,
+        pgNum: 1,
+        findRowValue: selectedRow.document_id,
       }));
     } else {
       console.log("[에러발생]");
