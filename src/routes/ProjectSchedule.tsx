@@ -101,6 +101,7 @@ import {
 
 import DetailWindow from "../components/Windows/CommonWindows/ProjectScheduleDetailWindow";
 import RequiredHeader from "../components/RequiredHeader";
+import NumberPercentCell from "../components/Cells/NumberPercentCell";
 type TSavedPara = {
   row_status?: "N" | "U" | "D";
   guid?: string;
@@ -115,6 +116,7 @@ type TSavedPara = {
   child_guid?: string;
   project_itemnm?: string;
   remark?: string;
+  person?: string;
 };
 
 type TTask = {
@@ -473,6 +475,8 @@ const App = () => {
       parent_guid = "",
       child_guid = "",
       project_itemnm = "",
+      remark = "",
+      person = "",
     } = para;
 
     if (!projectValue) {
@@ -490,19 +494,20 @@ const App = () => {
       parameters: {
         "@p_work_type": "SAVE",
         "@p_devmngnum": devmngnum,
-        "@p_row_status": row_status,
+        "@p_rowstatus": row_status,
         "@p_guid": guid,
         "@p_project_itemcd": project_itemcd,
         "@p_title": title,
         "@p_strtime": strtime,
         "@p_endtime": endtime,
         "@p_rate": rate,
+        "@p_person": person,
+        "@p_remark": remark,
         "@p_appointment_label": appointment_label,
-        "@p_dep_row_status": dep_row_status,
-        "@p_parent_guid": parent_guid,
-        "@p_child_guid": child_guid,
+        "@p_dep_rowstatus": dep_row_status,
+        "@p_parentguid": parent_guid,
+        "@p_childguid": child_guid,
         "@p_project_itemnm": project_itemnm,
-        "@p_remark": "",
         "@p_id": userId,
         "@p_pc": pc,
         "@p_form_id": "SPM_WEB",
@@ -545,6 +550,8 @@ const App = () => {
       endtime: string[];
       rate: string[];
       appointment_label: string[];
+      remark: string[];
+      person: string[];
     };
     let gridDataArr: TGridDataArr = {
       row_status: [],
@@ -555,11 +562,22 @@ const App = () => {
       endtime: [],
       rate: [],
       appointment_label: [],
+      remark: [],
+      person: [],
     };
 
     for (const [idx, item] of gridData.data.entries()) {
-      const { rowstatus, guid, project_itemcd, title, start, end, progress } =
-        item;
+      const {
+        rowstatus,
+        guid,
+        project_itemcd,
+        title,
+        start,
+        end,
+        progress,
+        remark,
+        person,
+      } = item;
 
       if (!rowstatus) continue;
       if (!project_itemcd) {
@@ -585,6 +603,8 @@ const App = () => {
       gridDataArr.strtime.push(convertDateToStrWithTime2(start));
       gridDataArr.endtime.push(convertDateToStrWithTime2(end));
       gridDataArr.rate.push(progress);
+      gridDataArr.person.push(person);
+      gridDataArr.remark.push(remark);
       gridDataArr.appointment_label.push("0");
     }
     deletedGridData.forEach((item) => {
@@ -597,6 +617,8 @@ const App = () => {
       gridDataArr.strtime.push("");
       gridDataArr.endtime.push("");
       gridDataArr.rate.push("0");
+      gridDataArr.person.push("");
+      gridDataArr.remark.push("");
       gridDataArr.appointment_label.push("");
     });
 
@@ -604,6 +626,7 @@ const App = () => {
       setLoading(false);
       return false;
     }
+
     const parameters: Iparameters = {
       procedureName: "pw6_sav_project_schedule",
       pageNumber: 0,
@@ -611,19 +634,20 @@ const App = () => {
       parameters: {
         "@p_work_type": "SAVE",
         "@p_devmngnum": devmngnum,
-        "@p_row_status": gridDataArr.row_status.join("|"),
+        "@p_rowstatus": gridDataArr.row_status.join("|"),
         "@p_guid": gridDataArr.guid.join("|"),
         "@p_project_itemcd": gridDataArr.project_itemcd.join("|"),
         "@p_title": gridDataArr.title.join("|"),
         "@p_strtime": gridDataArr.strtime.join("|"),
         "@p_endtime": gridDataArr.endtime.join("|"),
         "@p_rate": gridDataArr.rate.join("|"),
+        "@p_person": gridDataArr.person.join("|"),
+        "@p_remark": gridDataArr.remark.join("|"),
         "@p_appointment_label": gridDataArr.appointment_label.join("|"),
-        "@p_dep_row_status": "",
-        "@p_parent_guid": "",
-        "@p_child_guid": "",
+        "@p_dep_rowstatus": "",
+        "@p_parentguid": "",
+        "@p_childguid": "",
         "@p_project_itemnm": "",
-        "@p_remark": "",
         "@p_id": userId,
         "@p_pc": pc,
         "@p_form_id": "SPM_WEB",
@@ -836,6 +860,139 @@ const App = () => {
     }
   };
 
+  // 간트에서는 항목 추가할수없음
+  // const saveAllProjectItem = async () => {
+  //   let data: any;
+
+  //   console.log("projectItems");
+  //   console.log(projectItems);
+
+  //   if (!projectValue) {
+  //     alert("프로젝트 명은 필수 입력 항목입니다.");
+  //     return false;
+  //   }
+
+  //   if (!window.confirm("전체 일정 항목을 추가하겠습니까?")) {
+  //     return false;
+  //   }
+
+  //   setLoading(true);
+  //   const devmngnum = getCodeFromValue(projectValue, "devmngnum");
+  //   let isValid = true;
+
+  //   type TDataArr = {
+  //     row_status: string[];
+  //     guid: string[];
+  //     project_itemcd: string[];
+  //     title: string[];
+  //     strtime: string[];
+  //     endtime: string[];
+  //     rate: string[];
+  //     appointment_label: string[];
+  //     remark: string[];
+  //     person: string[];
+  //   };
+  //   let dataArr: TDataArr = {
+  //     row_status: [],
+  //     guid: [],
+  //     project_itemcd: [],
+  //     title: [],
+  //     strtime: [],
+  //     endtime: [],
+  //     rate: [],
+  //     appointment_label: [],
+  //     remark: [],
+  //     person: [],
+  //   };
+
+  //   for (const [idx, item] of projectItems.entries()) {
+  //     const {
+  //       rowstatus,
+  //       guid,
+  //       project_itemcd,
+  //       title,
+  //       start,
+  //       end,
+  //       progress,
+  //       remark,
+  //       person,
+  //     } = item;
+
+  //     if (!rowstatus) continue;
+  //     if (!project_itemcd) {
+  //       isValid = false;
+  //       alert("일정항목은 필수 입력 항목입니다.");
+  //       break;
+  //     }
+  //     if (!start) {
+  //       isValid = false;
+  //       alert("시작일자는 필수 입력 항목입니다.");
+  //       break;
+  //     }
+  //     if (!end) {
+  //       isValid = false;
+  //       alert("종료일자는 필수 입력 항목입니다.");
+  //       break;
+  //     }
+
+  //     dataArr.row_status.push(rowstatus);
+  //     dataArr.guid.push("");
+  //     dataArr.project_itemcd.push(project_itemcd);
+  //     dataArr.title.push("");
+  //     dataArr.strtime.push(convertDateToStrWithTime2(start));
+  //     dataArr.endtime.push(convertDateToStrWithTime2(end));
+  //     dataArr.rate.push(progress);
+  //     dataArr.remark.push(remark);
+  //     dataArr.person.push(person);
+  //     dataArr.appointment_label.push("0");
+  //   }
+
+  //   if (!isValid) {
+  //     setLoading(false);
+  //     return false;
+  //   }
+  //   const parameters: Iparameters = {
+  //     procedureName: "pw6_sav_project_schedule",
+  //     pageNumber: 0,
+  //     pageSize: 0,
+  //     parameters: {
+  //       "@p_work_type": "SAVE",
+  //       "@p_devmngnum": devmngnum,
+  //       "@p_rowstatus": dataArr.row_status.join("|"),
+  //       "@p_guid": dataArr.guid.join("|"),
+  //       "@p_project_itemcd": dataArr.project_itemcd.join("|"),
+  //       "@p_title": dataArr.title.join("|"),
+  //       "@p_strtime": dataArr.strtime.join("|"),
+  //       "@p_endtime": dataArr.endtime.join("|"),
+  //       "@p_rate": dataArr.rate.join("|"),
+  //       "@p_person": dataArr.rate.join("|"),
+  //       "@p_remark": dataArr.rate.join("|"),
+  //       "@p_appointment_label": dataArr.appointment_label.join("|"),
+  //       "@p_dep_rowstatus": "",
+  //       "@p_parentguid": "",
+  //       "@p_childguid": "",
+  //       "@p_project_itemnm": "",
+  //       "@p_id": userId,
+  //       "@p_pc": pc,
+  //       "@p_form_id": "SPM_WEB",
+  //     },
+  //   };
+
+  //   try {
+  //     data = await processApi<any>("procedure", parameters);
+  //   } catch (error) {
+  //     data = null;
+  //   }
+
+  //   if (data.isSuccess === true) {
+  //     fetchProjectDetail(devmngnum);
+  //   } else {
+  //     console.log("[에러발생]");
+  //     console.log(data);
+  //   }
+  //   setLoading(false);
+  // };
+
   const handleScaleCellPrepared = useCallback((e: ScaleCellPreparedEvent) => {
     const startDate = e.startDate;
     const endDate = e.endDate;
@@ -945,11 +1102,31 @@ const App = () => {
     <>
       <CodesContext.Provider value={{ projectItems: projectItems }}>
         <TitleContainer>
-          <Title>프로젝트 일정계획</Title>{" "}
+          <Title>프로젝트 일정계획</Title>
           <ButtonContainer>
             <Button onClick={search} icon="search" themeColor={"primary"}>
               조회
             </Button>
+            {/* {isAdmin && view === "Scheduler" && (
+              <Button
+                themeColor={"primary"}
+                fillMode={"outline"}
+                onClick={saveProject}
+                icon="list-unordered"
+              >
+                일정 항목 관리
+              </Button>
+            )} */}
+            {/* {isAdmin && view === "Scheduler" && (
+              <Button
+                themeColor={"primary"}
+                fillMode={"outline"}
+                onClick={saveAllProjectItem}
+                icon="file-add"
+              >
+                전체 일정 항목 추가
+              </Button>
+            )} */}
             {isAdmin && view === "Grid" && (
               <Button
                 themeColor={"primary"}
@@ -1166,7 +1343,7 @@ const App = () => {
                 field="progress"
                 title="진행률(%)"
                 width={100}
-                cell={NumberCell}
+                cell={NumberPercentCell}
               />
               <GridColumn
                 field="remark"

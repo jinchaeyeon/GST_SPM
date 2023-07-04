@@ -92,8 +92,15 @@ const KendoWindow = ({ setVisible, data, reload }: IKendoWindow) => {
 
   // Input Change 함수 => 사용자가 Input에 입력한 값을 조회 파라미터로 세팅
   const dataInputChange = (e: any) => {
-    const { value, name } = e.target;
+    let { value, name } = e.target;
 
+    if (name === "progress") {
+      if (value < 0) {
+        value = 0;
+      } else if (value > 100) {
+        value = 100;
+      }
+    }
     setDetailData((prev: any) => ({
       ...prev,
       [name]: value,
@@ -170,8 +177,9 @@ const KendoWindow = ({ setVisible, data, reload }: IKendoWindow) => {
       return false;
     }
 
-    // setLoading(true);
+    setLoading(true);
     const devmngnum = getCodeFromValue(project_value, "devmngnum");
+    const user_id = getCodeFromValue(pjt_person, "user_id");
 
     const parameters: Iparameters = {
       procedureName: "pw6_sav_project_schedule",
@@ -180,29 +188,25 @@ const KendoWindow = ({ setVisible, data, reload }: IKendoWindow) => {
       parameters: {
         "@p_work_type": "SAVE",
         "@p_devmngnum": devmngnum,
-        "@p_row_status": workType,
+        "@p_rowstatus": workType,
         "@p_guid": guid,
         "@p_project_itemcd": project.project_itemcd,
         "@p_title": title,
         "@p_strtime": convertDateToStrWithTime2(start),
         "@p_endtime": convertDateToStrWithTime2(end),
         "@p_rate": progress,
+        "@p_person": user_id,
+        "@p_remark": remark,
         "@p_appointment_label": appointment_label,
-        "@p_dep_row_status": "",
-        "@p_parent_guid": "",
-        "@p_child_guid": "",
+        "@p_dep_rowstatus": "",
+        "@p_parentguid": "",
+        "@p_childguid": "",
         "@p_project_itemnm": "",
-        "@p_remark": "",
         "@p_id": userId,
         "@p_pc": pc,
         "@p_form_id": "SPM_WEB",
       },
     };
-
-    console.log("parameters");
-    console.log(parameters);
-
-    // 저장테스트하기
 
     try {
       data = await processApi<any>("procedure", parameters);
@@ -385,7 +389,7 @@ const KendoWindow = ({ setVisible, data, reload }: IKendoWindow) => {
                   name="progress"
                   value={detailData.progress}
                   onChange={dataInputChange}
-                  min={0}
+                  min={0} // spiner 제한
                   max={100}
                 />
               </td>
