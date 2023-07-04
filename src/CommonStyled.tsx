@@ -763,18 +763,24 @@ export const Footer = styled.div`
   bottom: 0;
   background-color: #656565;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
   z-index: 10000;
 
+  > div {
+    display: flex;
+  }
+
   div {
     line-height: 30px;
-    border-left: solid 1px gray;
     color: #fff;
     padding-right: 10px;
     padding-left: 10px;
     font-size: 13px;
     font-weight: 100;
+  }
+  .default div {
+    border-left: solid 1px gray;
   }
   @media (max-width: 768px) {
     display: none;

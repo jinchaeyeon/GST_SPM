@@ -594,10 +594,15 @@ const PanelBarNavContainer = (props: any) => {
       </Wrapper>
       <Footer>
         <div>
-          {userName}({userId})
+          {!isAdmin && "[업무시간] 평일 09:00-18:00, 토요일 09:00-15:00"}
         </div>
-        <div>{customerName}</div>
-        <div>{ip}</div>
+        <div className="default">
+          <div>
+            {userName}({userId})
+          </div>
+          <div>{customerName}</div>
+          <div>{ip}</div>
+        </div>
       </Footer>
     </>
   );
