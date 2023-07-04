@@ -101,7 +101,7 @@ const DATA_ITEM_KEY = "meetingnum";
 const DETAIL_ITEM_KEY = "meetingseq";
 
 const defaultDetailData = {
-  work_type: "",
+  work_type: "N",
   unshared: false,
   orgdiv: "",
   meetingnum: "",
@@ -174,7 +174,6 @@ const CodesContext = createContext<{
 const App = () => {
   const processApi = useApi();
   const setLoading = useSetRecoilState(isLoading);
-  const [meetingnum, setMeetingnum] = useState(""); //Detail 조회조건
   const [loginResult] = useRecoilState(loginResultState);
   const userId = loginResult ? loginResult.userId : "";
   const [pc, setPc] = useState("");
@@ -355,9 +354,6 @@ const App = () => {
       devproject,
       remark2,
     });
-
-    const id = selectedRowData["orgdiv"] + "_" + selectedRowData["meetingnum"];
-    setMeetingnum(id);
   };
   const onDetailSelectionChange = (event: GridSelectionChangeEvent) => {
     const newSelectedState = getSelectedState({
@@ -441,18 +437,17 @@ const App = () => {
       if (totalRowCnt > 0) {
         if (filters.findRowValue !== "") {
           // 데이터 저장 후 조회
-          console.log(filters.findRowValue);
+          const spitFindRowValue = filters.findRowValue.split("_");
+          const selectedMeetingnum = spitFindRowValue[1];
 
-          let spitFindRowValue = filters.findRowValue.split("_");
-
-          setSelectedState({ [spitFindRowValue[1]]: true });
+          setSelectedState({ [selectedMeetingnum]: true });
           setMainDataResult({
             data: rows,
             total: totalRowCnt,
           });
 
           const selectedData = rows.find(
-            (row: any) => row[DATA_ITEM_KEY] === filters.findRowValue,
+            (row: any) => row[DATA_ITEM_KEY] === selectedMeetingnum,
           );
           if (!selectedData) return false;
 
@@ -476,7 +471,6 @@ const App = () => {
             remark2,
           } = selectedData;
 
-          setMeetingnum(meetingnum);
           setDetailData({
             work_type: "U",
             unshared: unshared === "Y" ? true : false,
@@ -508,9 +502,6 @@ const App = () => {
 
           const firstRowData = rows[0];
           setSelectedState({ [firstRowData[DATA_ITEM_KEY]]: true });
-
-          const id = firstRowData["orgdiv"] + "_" + firstRowData["meetingnum"];
-          setMeetingnum(id);
 
           const {
             orgdiv,
@@ -580,8 +571,15 @@ const App = () => {
     let data: any;
     setLoading(true);
 
+    const mainDataId = Object.getOwnPropertyNames(selectedState)[0];
+    const selectedRowData = mainDataResult.data.find(
+      (item) => item[DATA_ITEM_KEY] === mainDataId,
+    );
+
+    const id = selectedRowData["orgdiv"] + "_" + selectedRowData["meetingnum"];
+
     const para = {
-      para: meetingnum,
+      para: id,
       doc: true,
     };
 
@@ -981,9 +979,7 @@ const App = () => {
   );
 
   const createMeeting = () => {
-    setMeetingnum("");
-    setSelectedState({});
-    setDetailData({ ...defaultDetailData, work_type: "N" });
+    setDetailData({ ...defaultDetailData });
     setDetailRows(process([], detailRowsState));
 
     // Edior에 HTML & CSS 세팅
