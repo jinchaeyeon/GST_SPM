@@ -28,6 +28,7 @@ import {
   chkScrollHandler,
   convertDateToStr,
   getCodeFromValue,
+  usersQueryStr,
 } from "../../CommonFunction";
 import { PAGE_SIZE, SELECTED_FIELD } from "../../CommonString";
 import { useSetRecoilState } from "recoil";
@@ -41,6 +42,10 @@ import {
 import DateCell from "../../Cells/DateCell";
 import { bytesToBase64 } from "byte-base64";
 import CenterCell from "../../Cells/CenterCell";
+import {
+  dateTypeColumns,
+  userColumns,
+} from "../../../store/columns/common-columns";
 
 type IKendoWindow = {
   setVisible(t: boolean): void;
@@ -304,23 +309,6 @@ const KendoWindow = ({ setVisible, setData, para }: IKendoWindow) => {
       name: "전체",
     },
   ];
-
-  const dateTypeColumns = [
-    {
-      field: "name",
-      header: "일자구분",
-      width: 150,
-    },
-  ];
-  const userColumns = [
-    {
-      field: "user_name",
-      header: "담당자명",
-      width: 150,
-    },
-  ];
-
-  const usersQueryStr = `SELECT user_id, user_name FROM sysUserMaster WHERE rtrchk <> 'Y'`;
 
   const fetchUsers = async () => {
     let data: any;

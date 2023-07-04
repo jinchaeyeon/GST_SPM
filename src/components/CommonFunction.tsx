@@ -999,3 +999,13 @@ export const extractDownloadFilename = (response: any) => {
     return "";
   }
 };
+
+export const projectItemQueryStr = `SELECT project_itemcd,
+prntitemcd,
+project_itemnm,
+remark
+FROM BizGST.dbo.CR504T`;
+
+export const usersQueryStr = `SELECT user_id, user_name 
+FROM sysUserMaster 
+WHERE rtrchk <> 'Y'`;

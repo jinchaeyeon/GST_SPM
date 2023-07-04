@@ -7,6 +7,7 @@ import {
   GridColumn,
   GridDataStateChangeEvent,
   GridEvent,
+  GridFooterCellProps,
   GridSelectionChangeEvent,
 } from "@progress/kendo-react-grid";
 import { Input, RadioGroup } from "@progress/kendo-react-inputs";
@@ -764,6 +765,15 @@ const App = () => {
 
   const isChecked = selectedItem && selectedItem.is_checked === "Y";
 
+  //그리드 푸터
+  const mainTotalFooterCell = (props: GridFooterCellProps) => {
+    return (
+      <td colSpan={props.colSpan} style={props.style}>
+        총 {mainDataResult.total}건
+      </td>
+    );
+  };
+
   return (
     <>
       <TitleContainer>
@@ -938,6 +948,7 @@ const App = () => {
               title="상태"
               width={80}
               cell={QnaStateCell}
+              footerCell={mainTotalFooterCell}
             />
             <GridColumn
               field="request_date"

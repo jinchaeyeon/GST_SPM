@@ -21,11 +21,14 @@ import "devexpress-gantt/dist/dx-gantt.min.css";
 import {
   DependencyDeletedEvent,
   DependencyInsertedEvent,
+  DependencyInsertingEvent,
   ResourceAssignedEvent,
   ResourceUnassignedEvent,
   ScaleCellPreparedEvent,
   TaskDeletedEvent,
+  TaskEditDialogShowingEvent,
   TaskInsertedEvent,
+  TaskInsertingEvent,
   TaskUpdatedEvent,
 } from "devextreme/ui/gantt";
 import { useApi } from "../hooks/api";
@@ -37,6 +40,7 @@ import {
   getCodeFromValue,
   getGridItemChangedData,
   handleKeyPressSearch,
+  projectItemQueryStr,
   UseGetValueFromSessionItem,
   UseParaPc,
 } from "../components/CommonFunction";
@@ -89,7 +93,14 @@ import { v4 as uuidv4 } from "uuid";
 import { filterValueState, isLoading, loginResultState } from "../store/atoms";
 import { useRecoilState, useSetRecoilState } from "recoil";
 import { locale } from "devextreme/localization";
+import { IAttachmentData } from "../hooks/interfaces";
+import {
+  projectColumns,
+  projectItemsColumns,
+} from "../store/columns/common-columns";
 
+import DetailWindow from "../components/Windows/CommonWindows/ProjectScheduleDetailWindow";
+import RequiredHeader from "../components/RequiredHeader";
 type TSavedPara = {
   row_status?: "N" | "U" | "D";
   guid?: string;
@@ -114,9 +125,14 @@ type TTask = {
   end: Date;
   progress: number;
   project_itemcd: string;
+  project_itemnm: string;
   guid: string;
   parent_guid: string;
   child_guid: string;
+  remark: string;
+  person: string;
+  user_name: string;
+  isChild: boolean;
 };
 type TDependency = {
   id: string;
@@ -156,35 +172,6 @@ type GanttScaleType =
   | "years";
 
 const DATA_ITEM_KEY = "id";
-
-const projectItemQueryStr = `SELECT project_itemcd,
-prntitemcd,
-project_itemnm,
-remark
-FROM BizGST.dbo.CR504T`;
-
-const projectColumns = [
-  {
-    field: "devmngnum",
-    header: "프로젝트번호",
-    width: 120,
-  },
-  {
-    field: "custnm",
-    header: "업체명",
-    width: 180,
-  },
-  {
-    field: "project",
-    header: "프로젝트명",
-    width: 450,
-  },
-  {
-    field: "is_registered",
-    header: "등록여부",
-    width: 80,
-  },
-];
 
 const CodesContext = createContext<{
   projectItems: any[];
@@ -360,6 +347,7 @@ const App = () => {
   const stringToUuidMap = new Map<string, string>();
 
   const getUuidForString = (s: string): string => {
+    // 일정 항목을 간트에 표현하려면 uuid가 필요하여 생성하여 사용
     // If the map already contains the string, return the existing value
     if (stringToUuidMap.has(s)) {
       return stringToUuidMap.get(s)!;
@@ -407,6 +395,7 @@ const App = () => {
         start: new Date(),
         end: new Date(),
         progress: 0,
+        isChild: false,
       }));
 
       // 일정 데이터
@@ -414,7 +403,7 @@ const App = () => {
         (row: any, idx: number) => ({
           ...row,
           idx,
-          id: getUuidForString(row.guid),
+          id: row.guid,
           parentId: getUuidForString(row.project_itemcd),
           title: row.title,
           start: new Date(row.start_time),
@@ -422,6 +411,7 @@ const App = () => {
           end: new Date(row.end_time),
           endStrig: dateformat2(row.end_time),
           progress: row.rate,
+          isChild: true,
         }),
       );
 
@@ -430,12 +420,12 @@ const App = () => {
 
       // 디펜던시(화살표) 데이터
       const dependancyRows: TDependency[] = data.tables[2].Rows.filter(
-        (row: any) => row.parent_guid !== "",
+        (row: any) => row.guid !== "" && row.parent_guid !== "",
       ).map((row: any) => ({
         ...row,
-        id: getUuidForString(row.guid),
-        predecessorId: getUuidForString(row.parent_guid),
-        successorId: getUuidForString(row.guid),
+        id: row.guid,
+        predecessorId: row.parent_guid,
+        successorId: row.guid,
         type: 0,
       }));
 
@@ -487,9 +477,10 @@ const App = () => {
 
     if (!projectValue) {
       alert("프로젝트 명은 필수 입력 항목입니다.");
+      return false;
     }
 
-    // setLoading(true);
+    setLoading(true);
     const devmngnum = getCodeFromValue(projectValue, "devmngnum");
 
     const parameters: Iparameters = {
@@ -538,10 +529,12 @@ const App = () => {
 
     if (!projectValue) {
       alert("프로젝트 명은 필수 입력 항목입니다.");
+      return false;
     }
 
     setLoading(true);
     const devmngnum = getCodeFromValue(projectValue, "devmngnum");
+    let isValid = true;
 
     type TGridDataArr = {
       row_status: string[];
@@ -569,6 +562,21 @@ const App = () => {
         item;
 
       if (!rowstatus) continue;
+      if (!project_itemcd) {
+        isValid = false;
+        alert("일정항목은 필수 입력 항목입니다.");
+        break;
+      }
+      if (!start) {
+        isValid = false;
+        alert("시작일자는 필수 입력 항목입니다.");
+        break;
+      }
+      if (!end) {
+        isValid = false;
+        alert("종료일자는 필수 입력 항목입니다.");
+        break;
+      }
 
       gridDataArr.row_status.push(rowstatus);
       gridDataArr.guid.push(guid);
@@ -592,6 +600,10 @@ const App = () => {
       gridDataArr.appointment_label.push("");
     });
 
+    if (!isValid) {
+      setLoading(false);
+      return false;
+    }
     const parameters: Iparameters = {
       procedureName: "pw6_sav_project_schedule",
       pageNumber: 0,
@@ -867,6 +879,68 @@ const App = () => {
     }
   }, []);
 
+  const [currentTask, setCurrentTask] = useState<any>(null); // 현재 편집중인 태스크 데이터를 상태로 관리
+
+  const onDependencyInserting = (e: DependencyInsertingEvent) => {
+    const { predecessorId, successorId } = e.values;
+    const successorData = task.find(
+      (item) => item[DATA_ITEM_KEY] === successorId,
+    );
+    const predecessorData = task.find(
+      (item) => item[DATA_ITEM_KEY] === predecessorId,
+    );
+
+    if (!successorData?.isChild || !predecessorData?.isChild) {
+      e.cancel = true; // 일정항목의 경우 생성 취소
+    }
+  };
+
+  const onTaskInserting = (e: TaskInsertingEvent) => {
+    e.cancel = true; // 기본 생성 취소
+    const { values } = e;
+
+    const guid = uuidv4();
+
+    setCurrentTask({
+      ...values,
+      project_value: projectValue,
+      workType: "N",
+      title: "",
+      guid,
+    });
+    setDetailWindowVisible(true);
+  };
+
+  const onTaskEditDialogShowing = (e: TaskEditDialogShowingEvent) => {
+    e.cancel = true; // 기본 팝업을 숨김
+    const { key, values } = e;
+    const selectedData = task.find((item) => item[DATA_ITEM_KEY] === key);
+
+    if (!selectedData?.isChild) {
+      return false;
+    }
+
+    setCurrentTask({
+      ...values,
+      project_value: projectValue,
+      workType: "U",
+      guid: selectedData?.guid,
+      project: {
+        project_itemcd: selectedData?.project_itemcd,
+        project_itemnm: selectedData?.project_itemnm,
+      },
+      remark: selectedData?.remark,
+      pjt_person: {
+        user_id: selectedData?.person,
+        user_name: selectedData?.user_name,
+      },
+    });
+    setDetailWindowVisible(true);
+  };
+
+  const [detailWindowVisible, setDetailWindowVisible] =
+    useState<boolean>(false);
+
   return (
     <>
       <CodesContext.Provider value={{ projectItems: projectItems }}>
@@ -876,7 +950,7 @@ const App = () => {
             <Button onClick={search} icon="search" themeColor={"primary"}>
               조회
             </Button>
-            {isAdmin && (
+            {isAdmin && view === "Grid" && (
               <Button
                 themeColor={"primary"}
                 fillMode={"outline"}
@@ -956,32 +1030,36 @@ const App = () => {
               scaleType={scale}
               height={"100%"}
               onDependencyInserted={onDependencyInserted}
+              onDependencyInserting={onDependencyInserting}
               onDependencyDeleted={onDependencyDeleted}
+              onTaskInserting={onTaskInserting}
               onTaskInserted={onTaskInserted}
               onTaskDeleted={onTaskDeleted}
               onTaskUpdated={onTaskUpdated}
               onScaleCellPrepared={handleScaleCellPrepared}
               // onResourceAssigned={onResourceAssigned}
               // onResourceUnassigned={onResourceUnassigned}
+              onTaskEditDialogShowing={onTaskEditDialogShowing}
             >
               <Tasks dataSource={task} />
               <Dependencies dataSource={dependency} />
-              {/*<Resources dataSource={resource} />
+              {/* <Resources dataSource={resource} />
               <ResourceAssignments dataSource={assignment} /> */}
-
-              <Toolbar>
-                <Item name="undo" />
-                <Item name="redo" />
-                <Item name="separator" />
-                <Item name="collapseAll" />
-                <Item name="expandAll" />
-                <Item name="separator" />
-                <Item name="addTask" />
-                <Item name="deleteTask" />
-                <Item name="separator" />
-                <Item name="zoomIn" />
-                <Item name="zoomOut" />
-              </Toolbar>
+              {projectValue && (
+                <Toolbar>
+                  <Item name="undo" />
+                  <Item name="redo" />
+                  <Item name="separator" />
+                  <Item name="collapseAll" />
+                  <Item name="expandAll" />
+                  <Item name="separator" />
+                  <Item name="addTask" />
+                  <Item name="deleteTask" />
+                  <Item name="separator" />
+                  <Item name="zoomIn" />
+                  <Item name="zoomOut" />
+                </Toolbar>
+              )}
 
               <Column dataField="title" caption="일정 항목" width={300} />
               <Column
@@ -998,7 +1076,7 @@ const App = () => {
               />
 
               <Validation autoUpdateParentTasks />
-              <Editing enabled={isAdmin} />
+              <Editing enabled={isAdmin} allowTaskAdding={projectValue} />
             </Gantt>
           ) : (
             <Grid
@@ -1062,18 +1140,21 @@ const App = () => {
                 title="일정 항목"
                 width={170}
                 cell={ProjectItemCell}
+                headerCell={RequiredHeader}
               />
               <GridColumn
                 field="start"
                 title="시작일자"
                 width={150}
                 cell={DateCell}
+                headerCell={RequiredHeader}
               />
               <GridColumn
                 field="end"
                 title="종료일자"
                 width={150}
                 cell={DateCell}
+                headerCell={RequiredHeader}
               />
               <GridColumn
                 field="title"
@@ -1103,27 +1184,21 @@ const App = () => {
           )}
         </GridContainer>
       </CodesContext.Provider>
+
+      {detailWindowVisible && (
+        <DetailWindow
+          setVisible={setDetailWindowVisible}
+          data={currentTask}
+          reload={() => {
+            const devmngnum = getCodeFromValue(projectValue, "devmngnum");
+            fetchProjectDetail(devmngnum);
+          }}
+        />
+      )}
     </>
   );
 };
 
-const projectItemsColumns = [
-  {
-    field: "project_itemcd",
-    header: "코드",
-    width: 100,
-  },
-  {
-    field: "project_itemnm",
-    header: "코드명",
-    width: 100,
-  },
-  {
-    field: "remark",
-    header: "비고",
-    width: 200,
-  },
-];
 const ProjectItemCell = (props: GridCellProps) => {
   const { projectItems } = useContext(CodesContext);
 
