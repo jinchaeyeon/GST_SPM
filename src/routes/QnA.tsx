@@ -774,6 +774,8 @@ const App = () => {
     );
   };
 
+  const filterRef = useRef<HTMLDivElement>(null);
+
   return (
     <>
       <TitleContainer>
@@ -818,7 +820,7 @@ const App = () => {
           <GridTitleContainer>
             <GridTitle>조회조건</GridTitle>
           </GridTitleContainer>
-          <FilterBoxWrap style={{ padding: "0 0 10px" }}>
+          <FilterBoxWrap ref={filterRef} style={{ padding: "0 0 10px" }}>
             <FilterBox
               onKeyPress={(e) => {
                 handleKeyPressSearch(e, search);
@@ -909,7 +911,11 @@ const App = () => {
             <GridTitle>요약정보</GridTitle>
           </GridTitleContainer>
           <Grid
-            style={{ height: `calc(100% - 30px - 129.69px - 10px + 5px)` }}
+            style={{
+              height: `calc(100% - 65px - ${
+                filterRef.current ? filterRef.current.offsetHeight : 0
+              }px)`,
+            }}
             data={process(
               mainDataResult.data.map((row) => ({
                 ...row,
@@ -1159,9 +1165,7 @@ const App = () => {
                 </tbody>
               </FormBox>
             </FormBoxWrap>
-            <GridContainer style={{ minHeight: "350px" }}>
-              <RichEditor id="qEditor" ref={qEditorRef} hideTools={isAdmin} />
-            </GridContainer>
+            <RichEditor id="qEditor" ref={qEditorRef} hideTools={isAdmin} />
             <FormBoxWrap
               border
               style={{
@@ -1206,7 +1210,9 @@ const App = () => {
                 )}
               </ButtonContainer>
             </GridTitleContainer>
-            <RichEditor id="aEditor" ref={aEditorRef} hideTools />
+            <GridContainer style={{ maxHeight: "170px" }}>
+              <RichEditor id="aEditor" ref={aEditorRef} hideTools />
+            </GridContainer>
             <FormBoxWrap
               border
               style={{

@@ -181,6 +181,7 @@ const App = () => {
   UseParaPc(setPc);
 
   const history = useHistory();
+  const filterRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // 접근 권한 검증
@@ -1288,7 +1289,7 @@ const App = () => {
             <GridTitleContainer>
               <GridTitle>조회조건</GridTitle>
             </GridTitleContainer>
-            <FilterBoxWrap>
+            <FilterBoxWrap ref={filterRef}>
               <FilterBox onKeyPress={(e) => handleKeyPressSearch(e, search)}>
                 <tbody>
                   <tr>
@@ -1342,7 +1343,11 @@ const App = () => {
               <GridTitle>요약정보</GridTitle>
             </GridTitleContainer>
             <Grid
-              style={{ height: `calc(100% - 160.13px)` }}
+              style={{
+                height: `calc(100% - 65px - ${
+                  filterRef.current ? filterRef.current.offsetHeight : 0
+                }px)`,
+              }}
               data={process(
                 mainDataResult.data.map((row) => ({
                   ...row,

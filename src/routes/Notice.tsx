@@ -779,7 +779,7 @@ const App = () => {
           </tbody>
         </FilterBox>
       </FilterBoxWrap>
-      <GridContainerWrap height={"85%"}>
+      <GridContainerWrap height={"80%"}>
         <GridContainer width={isAdmin ? "25%" : `30%`}>
           <GridTitleContainer>
             <GridTitle>요약정보</GridTitle>

@@ -327,7 +327,6 @@ const Main: React.FC = () => {
               minHeight: "120px",
               height: "100%",
               maxHeight: "150px",
-              borderRadius: "10px",
               padding: "20px",
             }}
           >
