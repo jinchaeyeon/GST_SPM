@@ -423,9 +423,9 @@ const App = () => {
       // 디펜던시(화살표) 데이터
       const dependancyRows: TDependency[] = data.tables[2].Rows.filter(
         (row: any) => row.guid !== "" && row.parent_guid !== "",
-      ).map((row: any) => ({
+      ).map((row: any, idx: number) => ({
         ...row,
-        id: row.guid,
+        id: idx,
         predecessorId: row.parent_guid,
         successorId: row.guid,
         type: 0,
