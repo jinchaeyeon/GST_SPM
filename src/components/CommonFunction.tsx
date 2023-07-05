@@ -1009,3 +1009,21 @@ FROM BizGST.dbo.CR504T`;
 export const usersQueryStr = `SELECT user_id, user_name 
 FROM sysUserMaster 
 WHERE rtrchk <> 'Y'`;
+
+export const isWithinOneMonth = (dateString: string) => {
+  // dateString 형식은 "YYYYMMDD" 여야 합니다.
+
+  // 입력된 날짜를 Date 객체로 변환
+  const year = parseInt(dateString.substring(0, 4), 10);
+  const month = parseInt(dateString.substring(4, 6), 10) - 1; // 월은 0부터 시작합니다.
+  const day = parseInt(dateString.substring(6, 8), 10);
+  const inputDate = new Date(year, month, day);
+
+  // 현재 날짜와 한 달 전 날짜를 구합니다.
+  const currentDate = new Date();
+  const oneMonthAgo = new Date();
+  oneMonthAgo.setMonth(currentDate.getMonth() - 1);
+
+  // 입력된 날짜가 한 달 이내인지 확인합니다.
+  return inputDate >= oneMonthAgo && inputDate <= currentDate;
+};

@@ -45,6 +45,8 @@ import { useHistory } from "react-router-dom";
 import Loader from "../components/Loader";
 import QnaStateCell from "../components/Cells/QnaStateCell";
 import { Button } from "@progress/kendo-react-buttons";
+import Cookies from "js-cookie";
+import { convertDateToStr } from "../components/CommonFunction";
 
 const QUESTION_ITEM_KEY = "document_id";
 const MEETING_ITEM_KEY = "meetingnum";
@@ -109,6 +111,7 @@ const Main: React.FC = () => {
   const [projectDataResult, setProjectDataResult] = useState<DataResult>(
     process([], projectDataState),
   );
+  const [noticeSum, setNoticeSum] = useState(0);
 
   const [taskStatusResult, setTaskStatusResult] = useState({
     total: 0,
@@ -196,6 +199,7 @@ const Main: React.FC = () => {
 
   const search = () => {
     fetchHome();
+    fetchNotice();
   };
 
   const onQuestionSelectionChange = (event: GridSelectionChangeEvent) => {
@@ -292,6 +296,45 @@ const Main: React.FC = () => {
     history.push("/" + id);
   };
 
+  const fetchNotice = async () => {
+    let data: any;
+    const today = new Date();
+    const lastMonth = new Date(today);
+    lastMonth.setMonth(today.getMonth() - 1);
+
+    const para = {
+      para: `list?fromDate=${convertDateToStr(
+        lastMonth,
+      )}&toDate=${convertDateToStr(today)}&page=1&pageSize=1000`,
+    };
+
+    try {
+      data = await processApi<any>("notice-list", para);
+    } catch (error) {
+      data = null;
+    }
+
+    if (data.isSuccess === true) {
+      const totalRowCount = data.tables[0].TotalRowCount;
+      const rows = data.tables[0].Rows;
+
+      // 쿠키 사용하여 미확인 공지사항 필터링
+      const savedNoticesRaw = Cookies.get("readNotices");
+
+      if (savedNoticesRaw) {
+        const savedNotices = JSON.parse(savedNoticesRaw);
+        const fetchedNotcies = rows.map((row: any) => row.document_id);
+        const filteredArray = fetchedNotcies.filter(
+          (value: any) => !savedNotices.includes(value),
+        );
+
+        setNoticeSum(filteredArray.length);
+      } else {
+        setNoticeSum(totalRowCount);
+      }
+    }
+  };
+
   if (!isLoaded) {
     return <Loader />;
   }
@@ -364,10 +407,13 @@ const Main: React.FC = () => {
               <span>일</span>
             </p>
           </TextBox>
-          <TextBox>
+          <TextBox
+            style={{ cursor: "pointer" }}
+            onClick={() => moveMenu("Notice")}
+          >
             <p className="small">공지사항</p>
             <p className="large green">
-              {taskStatusResult.avg_reception_days}
+              {noticeSum}
               <span>건</span>
             </p>
           </TextBox>

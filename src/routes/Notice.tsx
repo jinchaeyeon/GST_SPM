@@ -31,6 +31,7 @@ import {
   convertDateToStr,
   dateformat2,
   handleKeyPressSearch,
+  isWithinOneMonth,
   toDate,
   UseParaPc,
 } from "../components/CommonFunction";
@@ -55,6 +56,7 @@ import { bytesToBase64 } from "byte-base64";
 import { IAttachmentData } from "../hooks/interfaces";
 import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
 import { useThemeSwitcher } from "react-css-theme-switcher";
+import Cookies from "js-cookie";
 
 const DraggableGridRowRender = (properties: any) => {
   const {
@@ -390,6 +392,23 @@ const App = () => {
 
       // Edior에 HTML & CSS 세팅
       setHtmlOnEditor(document);
+
+      const selectedRow = mainDataResult.data.find(
+        (item) => item[DATA_ITEM_KEY] === mainDataId,
+      );
+
+      // 한달 이내 작성된 데이터인 경우
+      if (selectedRow && isWithinOneMonth(selectedRow.notice_date)) {
+        // 조회한 공지사항 쿠키에 저장
+        const savedNoticesRaw = Cookies.get("readNotices");
+        const savedNotices = savedNoticesRaw ? JSON.parse(savedNoticesRaw) : [];
+        const updatedNotices = [...savedNotices, mainDataId];
+        const uniqueNotices = Array.from(new Set(updatedNotices));
+
+        Cookies.set("readNotices", JSON.stringify(uniqueNotices), {
+          expires: 30,
+        });
+      }
     } else {
       console.log("[에러발생]");
       console.log(data);
