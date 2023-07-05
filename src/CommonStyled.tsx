@@ -977,7 +977,7 @@ export const QnaPwBox = styled.div`
 type TTextBox = { type?: "Admin" | "General" };
 
 export const TextBox = styled.div<TTextBox>`
-  min-height: ${(props) => (props.type === "Admin" ? "50px" : "150px")};
+  min-height: ${(props) => (props.type === "Admin" ? "60px" : "150px")};
   height: 100%;
   display: flex;
   align-items: center;
@@ -1129,6 +1129,29 @@ export const AdminProjectBox = styled.div`
     font-size: 20px;
     font-weight: 500;
     margin-left: 30px;
+  }
+`;
+export const AdminCustSummaryBox = styled.div`
+  padding: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  .cust {
+    padding-top: 10px;
+    font-size: 16px;
+    font-weight: 500;
+  }
+  .cnt {
+    font-size: 20px;
+    font-weight: 500;
+    width: 30px;
+    height: 30px;
+    background-color: #ffd519;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 5px;
   }
 `;
 export const ScrollableContainer = styled.div`

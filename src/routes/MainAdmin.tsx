@@ -23,6 +23,7 @@ import {
   AdminQuestionBox,
   ScrollableContainer,
   AdminProjectBox,
+  AdminCustSummaryBox,
 } from "../CommonStyled";
 import { useRecoilState, useSetRecoilState } from "recoil";
 import { useApi } from "../hooks/api";
@@ -289,116 +290,79 @@ const Main: React.FC = () => {
         </ButtonContainer>
       </TitleContainer>
       <GridContainerWrap height="calc(100% - 80px)">
-        <GridContainer
-          width="20%"
-          style={{ gap: "15px", overflow: "overlay" }}
-          type="mainLeft"
-        >
-          <TextBox
-            style={{
-              minHeight: "120px",
-              height: "100%",
-              maxHeight: "150px",
-              padding: "20px",
-            }}
-          >
-            <div className="medium" style={{ marginTop: "0" }}>
-              <CurrentTime />
-            </div>
-          </TextBox>
-          <TextBox
-            type={"Admin"}
-            style={{ cursor: "pointer" }}
-            onClick={() => moveMenu("QnA")}
-          >
-            <p className="small">전체 미처리</p>
-            <p className="large gray">
-              {taskStatusResult.total}
-              <span>건</span>
-            </p>
-          </TextBox>
-          <TextBox
-            type={"Admin"}
-            style={{ cursor: "pointer" }}
-            onClick={() => moveMenu("QnA")}
-          >
-            <p className="small">접수 대기</p>
-            <p className="large dark-gray">
-              {taskStatusResult.wait}
-              <span>건</span>
-            </p>
-          </TextBox>
-          <TextBox
-            type={"Admin"}
-            style={{ cursor: "pointer" }}
-            onClick={() => moveMenu("QnA")}
-          >
-            <p className="small">진행중</p>
-            <p className="large yellow">
-              {taskStatusResult.progress}
-              <span>건</span>
-            </p>
-          </TextBox>
-          <TextBox
-            type={"Admin"}
-            style={{ cursor: "pointer" }}
-            onClick={() => moveMenu("QnA")}
-          >
-            <p className="small">예정일 초과</p>
-            <p className="large red">
-              {taskStatusResult.over}
-              <span>건</span>
-            </p>
-          </TextBox>
-
-          <GridContainer>
+        <GridContainer width="20%" type="mainLeft">
+          <GridContainer style={{ gap: "15px" }}>
+            <TextBox
+              style={{
+                minHeight: "120px",
+                height: "100%",
+                maxHeight: "150px",
+                padding: "20px",
+              }}
+            >
+              <div className="medium" style={{ marginTop: "0" }}>
+                <CurrentTime />
+              </div>
+            </TextBox>
+            <TextBox
+              type={"Admin"}
+              style={{ cursor: "pointer" }}
+              onClick={() => moveMenu("QnA")}
+            >
+              <p className="small">전체 미처리</p>
+              <p className="large gray">
+                {taskStatusResult.total}
+                <span>건</span>
+              </p>
+            </TextBox>
+            <TextBox
+              type={"Admin"}
+              style={{ cursor: "pointer" }}
+              onClick={() => moveMenu("QnA")}
+            >
+              <p className="small">접수 대기</p>
+              <p className="large dark-gray">
+                {taskStatusResult.wait}
+                <span>건</span>
+              </p>
+            </TextBox>
+            <TextBox
+              type={"Admin"}
+              style={{ cursor: "pointer" }}
+              onClick={() => moveMenu("QnA")}
+            >
+              <p className="small">진행중</p>
+              <p className="large yellow">
+                {taskStatusResult.progress}
+                <span>건</span>
+              </p>
+            </TextBox>
+            <TextBox
+              type={"Admin"}
+              style={{ cursor: "pointer" }}
+              onClick={() => moveMenu("QnA")}
+            >
+              <p className="small">예정일 초과</p>
+              <p className="large red">
+                {taskStatusResult.over}
+                <span>건</span>
+              </p>
+            </TextBox>
+          </GridContainer>
+          <GridContainer height="calc(100% - 420px)">
             <GridTitleContainer>
               <GridTitle theme={currentTheme}>업체별 현황</GridTitle>
             </GridTitleContainer>
-            <Grid
-              style={{ height: `300px` }}
-              data={process(
-                custSummaryDataResult.data.map((row) => ({
-                  ...row,
-                  [SELECTED_FIELD]:
-                    custSummarySelectedState[custSummaryIdGetter(row)],
-                })),
-                custSummaryDataState,
-              )}
-              {...custSummaryDataState}
-              onDataStateChange={onCustSummaryDataStateChange}
-              //선택기능
-              dataItemKey={CUST_SUMMARY_ITEM_KEY}
-              selectedField={SELECTED_FIELD}
-              selectable={{
-                enabled: true,
-                mode: "single",
-              }}
-              onSelectionChange={onCustSummarySelectionChange}
-              //정렬기능
-              sortable={true}
-              onSortChange={onCustSummarySortChange}
-              //컬럼순서조정
-              reorderable={true}
-              //컬럼너비조정
-              resizable={true}
-              //행 더블클릭
-              onRowDoubleClick={onCustSummaryRowDoubleClick}
-            >
-              <GridColumn
-                field="customer_name"
-                title="업체명"
-                footerCell={custSummaryTotalFooterCell}
-                width={180}
-              />
-              <GridColumn field="wait_count" title="대기" cell={CenterCell} />
-              <GridColumn
-                field="progress_count"
-                title="진행"
-                cell={CenterCell}
-              />
-              <GridColumn field="over_count" title="초과" cell={CenterCell} />
-            </Grid>
+            <ScrollableContainer>
+              {custSummaryDataResult.data
+                .sort((a, b) => b.progress_count - a.progress_count)
+                .map((item) => (
+                  <AdminCustSummaryBox>
+                    <div className="cust">{item.customer_name}</div>
+                    <div className="cnt">{item.progress_count}</div>
+                  </AdminCustSummaryBox>
+                ))}
+            </ScrollableContainer>
           </GridContainer>
         </GridContainer>
 
