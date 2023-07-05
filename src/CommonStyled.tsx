@@ -974,14 +974,19 @@ export const QnaPwBox = styled.div`
   }
 `;
 
-export const TextBox = styled.div`
-  min-height: 150px;
+type TTextBox = { type?: "Admin" | "General" };
+
+export const TextBox = styled.div<TTextBox>`
+  min-height: ${(props) => (props.type === "Admin" ? "50px" : "150px")};
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: rgb(245 245 245);
-  flex-direction: column;
+  background-color: rgb(245, 245, 245);
+  flex-direction: ${(props) => (props.type === "Admin" ? "row" : "column")};
+  justify-content: ${(props) =>
+    props.type === "Admin" ? "space-between" : null};
+  padding: ${(props) => (props.type === "Admin" ? "0 50px" : null)};
 
   p span {
     font-weight: 700;
@@ -999,8 +1004,10 @@ export const TextBox = styled.div`
     font-weight: 700;
   }
   .large {
-    font-size: 64px;
-    margin-top: 20px;
+    width: ${(props) => (props.type === "Admin" ? "100px" : null)};
+    text-align: ${(props) => (props.type === "Admin" ? "center" : null)};
+    font-size: ${(props) => (props.type === "Admin" ? "40px" : "64px")};
+    margin-top: ${(props) => (props.type === "Admin" ? "0" : "20px")};
     font-weight: 700;
   }
   .time {
@@ -1012,6 +1019,9 @@ export const TextBox = styled.div`
     margin: 0;
   }
 
+  .dark-gray {
+    color: #3a3a3a;
+  }
   .gray {
     color: #838383;
   }
@@ -1024,6 +1034,9 @@ export const TextBox = styled.div`
   .blue {
     color: #4b5ffa;
   }
+  .red {
+    color: #ff6358;
+  }
 `;
 
 type TSmallGnv = {
@@ -1035,6 +1048,115 @@ export const SmallGnv = styled.div<TSmallGnv>`
     props.theme === "dark" ? "solid 1px #454545" : "1px solid #ebebeb"};
   height: 100vh;
   @media (max-width: 768px) {
+    display: none;
+  }
+`;
+
+export const AdminQuestionBox = styled.div`
+  min-width: 600px;
+  padding: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  /* cursor: pointer; */
+
+  > div:nth-child(2) {
+    width: 400px;
+  }
+
+  .title {
+    font-size: 16px;
+    font-weight: 500;
+  }
+  .customer {
+    font-size: 14px;
+    padding-top: 10px;
+    font-weight: 400;
+  }
+  .status {
+    width: 62px;
+    height: 32px;
+    border-radius: 30px;
+    padding: 0 5px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #4cd180;
+    color: #fff;
+  }
+  .O {
+    background-color: #ff6358;
+  }
+  .N {
+    background-color: #838383;
+  }
+  .R {
+    background-color: #ffd519;
+  }
+`;
+export const AdminProjectBox = styled.div`
+  min-width: 600px;
+  padding: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+
+  .sub {
+    font-size: 14px;
+    font-weight: 400;
+  }
+
+  .custnm {
+    background-color: #7a76ce;
+    padding: 5px;
+    color: #fff;
+    border-radius: 5px;
+    display: inline-block;
+    white-space: normal;
+  }
+
+  .project {
+    padding-top: 5px;
+  }
+  .curr_title {
+    padding-top: 10px;
+    font-size: 16px;
+    font-weight: 500;
+  }
+  .days {
+    font-size: 20px;
+    font-weight: 500;
+    margin-left: 30px;
+  }
+`;
+export const ScrollableContainer = styled.div`
+  border: solid 1px #ebebeb;
+  border-radius: 10px;
+  padding: 10px;
+  position: relative;
+  height: 100%;
+  overflow: auto;
+  scrollbar-width: none; /* Firefox 64 and later */
+  -ms-overflow-style: none; /* Internet Explorer and Edge */
+
+  ::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 80px; /* control the height of the fade out effect */
+    background-image: linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0),
+      rgba(255, 255, 255, 1)
+    );
+    pointer-events: none; /* let users still interact with the content */
+  }
+
+  ::-webkit-scrollbar {
     display: none;
   }
 `;

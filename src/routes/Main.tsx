@@ -21,9 +21,9 @@ import {
   TitleContainer,
   Title,
 } from "../CommonStyled";
-import { useRecoilState } from "recoil";
+import { useRecoilState, useSetRecoilState } from "recoil";
 import { useApi } from "../hooks/api";
-import { filterValueState, loginResultState } from "../store/atoms";
+import { filterValueState, isLoading, loginResultState } from "../store/atoms";
 import { SELECTED_FIELD } from "../components/CommonString";
 import CenterCell from "../components/Cells/CenterCell";
 import { useThemeSwitcher } from "react-css-theme-switcher";
@@ -69,6 +69,7 @@ const Main: React.FC = () => {
   const questionIdGetter = getter(QUESTION_ITEM_KEY);
   const meetingIdGetter = getter(MEETING_ITEM_KEY);
   const projectIdGetter = getter(PROJECT_ITEM_KEY);
+  const setLoading = useSetRecoilState(isLoading);
 
   const processApi = useApi();
   const [loginResult, setLoginResult] = useRecoilState(loginResultState);
@@ -135,11 +136,13 @@ const Main: React.FC = () => {
   const fetchHome = async () => {
     let data: any;
 
+    setLoading(true);
     try {
       data = await processApi<any>("home-general");
     } catch (error) {
       data = null;
     }
+    setLoading(false);
 
     if (data !== null) {
       const {

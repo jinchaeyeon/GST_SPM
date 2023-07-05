@@ -1,4 +1,4 @@
-import { RecoilRoot, useRecoilValue } from "recoil";
+import { RecoilRoot, useRecoilState, useRecoilValue } from "recoil";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import React from "react";
 // import "./index.scss";
@@ -9,13 +9,14 @@ import AuthRoute from "./components/AuthRoute";
 import Login from "./routes/Login";
 import LoginAdmin from "./routes/LoginAdmin";
 import Main from "./routes/Main";
+import MainAdmin from "./routes/MainAdmin";
 import MeetingView from "./routes/MeetingView";
 import MeetingManagement from "./routes/MeetingManagement";
 import QnA from "./routes/QnA";
 import Notice from "./routes/Notice";
 import ProjectSchedule from "./routes/ProjectSchedule";
 
-import { isMobileMenuOpendState } from "./store/atoms";
+import { isMobileMenuOpendState, loginResultState } from "./store/atoms";
 import {
   IntlProvider,
   load,
@@ -209,6 +210,9 @@ const App: React.FC = () => {
 const AppInner: React.FC = () => {
   const isMobileMenuOpend = useRecoilValue(isMobileMenuOpendState);
 
+  const [loginResult] = useRecoilState(loginResultState);
+  const role = loginResult ? loginResult.role : "";
+  const isAdmin = role === "ADMIN";
   return (
     <>
       <GlobalStyle isMobileMenuOpend={isMobileMenuOpend} />
@@ -220,7 +224,11 @@ const AppInner: React.FC = () => {
               <Route path="/Admin" component={LoginAdmin} exact />
               <PanelBarNavContainer>
                 {/* 메인 홈 */}
-                <AuthRoute path="/Home" component={Main} exact />
+                {isAdmin ? (
+                  <AuthRoute path="/Home" component={MainAdmin} exact />
+                ) : (
+                  <AuthRoute path="/Home" component={Main} exact />
+                )}
 
                 {/* SPM */}
                 <AuthRoute path="/MeetingView" component={MeetingView} exact />

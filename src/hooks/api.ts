@@ -26,6 +26,7 @@ const domain: any = {
 
   // 홈화면
   "home-general": { action: "get", url: "api/spm/home/general" },
+  "home-manager": { action: "get", url: "api/spm/home/manager" },
 
   // 참조 업체 조회
   "customers-list": { action: "get", url: "api/spm/:para" },
