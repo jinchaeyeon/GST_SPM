@@ -382,7 +382,11 @@ const PanelBarNavContainer = (props: any) => {
     fetchLogout();
     resetLocalStorage();
     setIsMobileMenuOpend(false);
-    history.push("/");
+    if (isAdmin) {
+      history.push("/Admin");
+    } else {
+      history.push("/");
+    }
     // window.location.href = "/";
   };
 
@@ -593,9 +597,7 @@ const PanelBarNavContainer = (props: any) => {
         <Loading />
       </Wrapper>
       <Footer>
-        <div>
-          {!isAdmin && "[업무시간] 평일 09:00-18:00, 토요일 09:00-15:00"}
-        </div>
+        <div>{!isAdmin && "[업무시간] 평일 09:00-18:00"}</div>
         <div className="default">
           <div>
             {userName}({userId})

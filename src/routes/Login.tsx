@@ -4,7 +4,7 @@ import { KeyboardEvent, useCallback, useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
 import { passwordExpirationInfoState, loginResultState } from "../store/atoms";
 import { useApi } from "../hooks/api";
-import { useSetRecoilState } from "recoil";
+import { useRecoilState, useSetRecoilState } from "recoil";
 import { FormInput, FormComboBox, LoginFormInput } from "../components/Editors";
 import { LoginAppName, LoginBox, LoginImg, Logo } from "../CommonStyled";
 import { UseGetIp } from "../components/CommonFunction";
@@ -27,6 +27,14 @@ const Login: React.FC = () => {
   const setPwExpInfo = useSetRecoilState(passwordExpirationInfoState);
   const setLoading = useSetRecoilState(isLoading);
   const [isLoaded, setIsLoaded] = useState(false);
+  const accessToken = localStorage.getItem("accessToken");
+
+  useEffect(() => {
+    // token 저장되어있으면 홈화면으로 리다이렉션
+    if (accessToken) {
+      history.replace("/Home");
+    }
+  }, []);
 
   // Kendo Theme 적용하는데 간헐적으로 오류 발생하여 0.2초후 렌더링되도록 처리함
   useEffect(() => {
