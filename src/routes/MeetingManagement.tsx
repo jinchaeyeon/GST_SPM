@@ -1053,11 +1053,16 @@ const App = () => {
 
     let newRows = [...detailRows.data];
 
+    let maxMeetingSeq =
+      detailRows.total > 0
+        ? Math.max(...detailRows.data.map((item) => item.meetingseq))
+        : 0;
+
     if (selectedIndex !== -1) {
       // 선택된 행이 있을 경우, 해당 행 다음에 새 데이터 삽입
       newRows.splice(selectedIndex + 1, 0, {
         rowstatus: "N",
-        meetingseq: detailRows.total + 1,
+        meetingseq: maxMeetingSeq + 1,
         reqdt: null,
         finexpdt: null,
         cust_browserable: "Y",
@@ -1067,7 +1072,7 @@ const App = () => {
       // 선택된 행이 없을 경우, 배열의 끝에 새 데이터 추가
       newRows.push({
         rowstatus: "N",
-        meetingseq: detailRows.total + 1,
+        meetingseq: maxMeetingSeq + 1,
         reqdt: null,
         finexpdt: null,
         cust_browserable: "Y",
@@ -1230,6 +1235,122 @@ const App = () => {
   const handleFilterChange = (event: ComboBoxFilterChangeEvent) => {
     if (event) {
       setCustFilter(event.filter);
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
+    const targetElement = e.target as HTMLElement; // 타입 단언(Type Assertion) 사용
+
+    if (!targetElement.tagName || !targetElement.tagName.match(/(input)/i)) {
+      // input에 포커스 되어있을때만 실행
+      return;
+    }
+
+    // 클립보드 텍스트 가져오기
+    const clipboardData = e.clipboardData.getData("text");
+
+    // 엔터나 탭 포함 없으면 return
+    const hasTabOrNewLine =
+      clipboardData.includes("\t") || clipboardData.includes("\n");
+    if (!hasTabOrNewLine) {
+      return false;
+    }
+
+    // 엔터를 기준으로 행 나누기
+    const rows = clipboardData.split("\n");
+
+    // meetingseq 최대값 구하기
+    let maxMeetingSeq = Math.max(
+      ...detailRows.data.map((item) => item.meetingseq),
+    );
+
+    // 선택행의 키값과 인덱스 구하기
+    const selectedKey = Number(Object.keys(detailSelectedState)[0]);
+    const selectedIndex = detailRows.data.findIndex(
+      (row) => row[DETAIL_ITEM_KEY] === selectedKey,
+    );
+
+    // 복사하여 생성할 첫번째 행 선택
+    setDetailSelectedState({ [maxMeetingSeq + 1]: true });
+
+    const result: any[] = rows
+      .filter((row) => row)
+      .map((row, idx) => {
+        // 탭을 기준으로 나누기
+        const rowWithoutCR = row.replace(/\r/g, "");
+        const cells = rowWithoutCR.split("\t");
+
+        // 만약 cells에 값이 없을 경우, 원래 행의 데이터를 넣음
+        const index = selectedIndex + idx;
+        const rowData =
+          index >= 0 && index < detailRows.data.length
+            ? detailRows.data[index]
+            : {};
+        const {
+          contents = "",
+          finexpdt = null,
+          reqdt = null,
+          is_request = "",
+          cust_browserable = "",
+          value_code3 = null,
+          client_name = "",
+          client_finexpdt = null,
+        } = rowData;
+
+        return {
+          rowstatus: "N",
+          meetingseq: ++maxMeetingSeq,
+          contents: cells[0] ?? contents,
+          finexpdt: cells[1] ? parseDate(cells[1]) : finexpdt,
+          reqdt: cells[2] ? parseDate(cells[2]) : reqdt,
+          is_request: cells[3] ?? is_request,
+          cust_browserable: cells[4] ?? cust_browserable,
+          value_code3: cells[5] ?? value_code3,
+          client_name: cells[6] ?? client_name,
+          client_finexpdt: cells[7] ? parseDate(cells[7]) : client_finexpdt,
+        };
+      });
+
+    setDetailRows((prev) => {
+      let newRows = [...prev.data];
+      // 붙여넣기 행만큼 기존 행은 삭제하고, 기존 행 자리에 붙여넣기 된 행 삽입
+      newRows.splice(selectedIndex, result.length, ...result);
+
+      return {
+        data: newRows,
+        total: newRows.length,
+      };
+    });
+  };
+
+  const parseDate = (input: any) => {
+    // 값이 없는 경우 null 반환
+    if (!input) {
+      return null;
+    }
+
+    // 유효한 날짜 문자열 패턴 확인
+    const patterns = [
+      /^\d{4}-\d{2}-\d{2}$/,
+      /^\d{4}\d{2}\d{2}$/,
+      /^\d{4}\.\s?\d{2}\.\s?\d{2}$/,
+    ];
+
+    // 어느 패턴과도 일치하지 않으면 오늘의 날짜 반환
+    if (!patterns.some((pattern) => pattern.test(input))) {
+      return new Date();
+    }
+
+    // 입력을 Date 객체로 변환
+    const date = new Date(input);
+
+    // 유효한 날짜인지 확인
+    if (isNaN(date.getTime())) {
+      // 유효하지 않은 날짜인 경우 오늘의 날짜 반환
+      return new Date();
+    } else {
+      // 유효한 날짜인 경우 변환된 날짜 반환
+      return date;
     }
   };
 
@@ -1592,121 +1713,126 @@ const App = () => {
               </FormBoxWrap>
             )}
 
-            <Grid
+            <div
+              onPaste={handlePaste}
               style={{
                 height: isVisibleDetail
                   ? `calc(100% - 291.94px - 40px - 10px)`
                   : `calc(100% - 35px )`,
               }}
-              data={process(
-                detailRows.data.map((row) => ({
-                  ...row,
-                  [SELECTED_FIELD]: detailSelectedState[detailIdGetter(row)],
-                })),
-                detailRowsState,
-              )}
-              {...detailRowsState}
-              onDataStateChange={onDetailRowsStateChange}
-              //선택 기능
-              dataItemKey={DETAIL_ITEM_KEY}
-              selectedField={SELECTED_FIELD}
-              selectable={{
-                enabled: true,
-                mode: "single",
-              }}
-              onSelectionChange={onDetailSelectionChange}
-              //컬럼순서조정
-              reorderable={true}
-              //컬럼너비조정
-              resizable={true}
-              //incell 수정 기능
-              onItemChange={onDetailItemChange}
-              cellRender={customCellRender}
-              rowRender={customRowRender}
-              editField={EDIT_FIELD}
             >
-              <GridToolbar>
-                <Button
-                  themeColor={"primary"}
-                  fillMode={"outline"}
-                  icon="plus"
-                  onClick={addDetailRow}
+              <Grid
+                style={{ height: "100%" }}
+                data={process(
+                  detailRows.data.map((row) => ({
+                    ...row,
+                    [SELECTED_FIELD]: detailSelectedState[detailIdGetter(row)],
+                  })),
+                  detailRowsState,
+                )}
+                {...detailRowsState}
+                onDataStateChange={onDetailRowsStateChange}
+                //선택 기능
+                dataItemKey={DETAIL_ITEM_KEY}
+                selectedField={SELECTED_FIELD}
+                selectable={{
+                  enabled: true,
+                  mode: "single",
+                }}
+                onSelectionChange={onDetailSelectionChange}
+                //컬럼순서조정
+                reorderable={true}
+                //컬럼너비조정
+                resizable={true}
+                //incell 수정 기능
+                onItemChange={onDetailItemChange}
+                cellRender={customCellRender}
+                rowRender={customRowRender}
+                editField={EDIT_FIELD}
+              >
+                <GridToolbar>
+                  <Button
+                    themeColor={"primary"}
+                    fillMode={"outline"}
+                    icon="plus"
+                    onClick={addDetailRow}
+                  />
+                  <Button
+                    themeColor={"primary"}
+                    fillMode={"outline"}
+                    icon="minus"
+                    onClick={removeDetailRow}
+                  />
+                  <Button
+                    themeColor={"primary"}
+                    fillMode={"outline"}
+                    icon="chevron-up"
+                    onClick={upDetailRow}
+                  />
+                  <Button
+                    themeColor={"primary"}
+                    fillMode={"outline"}
+                    icon="chevron-down"
+                    onClick={downDetailRow}
+                  />
+                </GridToolbar>
+                <GridColumn
+                  field="rowstatus"
+                  title=" "
+                  width={40}
+                  editable={false}
                 />
-                <Button
-                  themeColor={"primary"}
-                  fillMode={"outline"}
-                  icon="minus"
-                  onClick={removeDetailRow}
+                <GridColumn
+                  field="contents"
+                  title="내용"
+                  width={500}
+                  footerCell={detailTotalFooterCell}
+                  cell={NameCell}
                 />
-                <Button
-                  themeColor={"primary"}
-                  fillMode={"outline"}
-                  icon="chevron-up"
-                  onClick={upDetailRow}
+                <GridColumn
+                  field="finexpdt"
+                  title="완료예정일"
+                  width={170}
+                  cell={DateCell}
                 />
-                <Button
-                  themeColor={"primary"}
-                  fillMode={"outline"}
-                  icon="chevron-down"
-                  onClick={downDetailRow}
+                <GridColumn
+                  field="reqdt"
+                  title="요청일"
+                  width={170}
+                  cell={DateCell}
                 />
-              </GridToolbar>
-              <GridColumn
-                field="rowstatus"
-                title=" "
-                width={40}
-                editable={false}
-              />
-              <GridColumn
-                field="contents"
-                title="내용"
-                width={500}
-                footerCell={detailTotalFooterCell}
-                cell={NameCell}
-              />
-              <GridColumn
-                field="finexpdt"
-                title="완료예정일"
-                width={170}
-                cell={DateCell}
-              />
-              <GridColumn
-                field="reqdt"
-                title="요청일"
-                width={170}
-                cell={DateCell}
-              />
-              <GridColumn
-                field="is_request"
-                title="요구사항"
-                width={120}
-                cell={CheckBoxCell}
-              />
-              <GridColumn
-                field="cust_browserable"
-                title="고객열람"
-                width={100}
-                cell={CheckBoxCell}
-              />
-              <GridColumn
-                field="value_code3"
-                title="Value 구분"
-                width={160}
-                cell={ValueCodesComboBoxCell}
-              />
-              <GridColumn
-                field="client_name"
-                title="고객담당자"
-                width={100}
-                cell={NameCell}
-              />
-              <GridColumn
-                field="client_finexpdt"
-                title="고객완료예정일"
-                width={170}
-                cell={DateCell}
-              />
-            </Grid>
+                <GridColumn
+                  field="is_request"
+                  title="요구사항"
+                  width={120}
+                  cell={CheckBoxCell}
+                />
+                <GridColumn
+                  field="cust_browserable"
+                  title="고객열람"
+                  width={100}
+                  cell={CheckBoxCell}
+                />
+                <GridColumn
+                  field="value_code3"
+                  title="Value 구분"
+                  width={160}
+                  cell={ValueCodesComboBoxCell}
+                />
+                <GridColumn
+                  field="client_name"
+                  title="고객담당자"
+                  width={100}
+                  cell={NameCell}
+                />
+                <GridColumn
+                  field="client_finexpdt"
+                  title="고객완료예정일"
+                  width={170}
+                  cell={DateCell}
+                />
+              </Grid>
+            </div>
           </GridContainer>
           <GridContainer width={`calc(40% - ${GAP}px)`}>
             <GridTitleContainer>
