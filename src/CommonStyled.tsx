@@ -895,7 +895,7 @@ export const TopTitle = styled.div`
   @media (max-width: 768px) {
     display: flex;
     position: fixed;
-    z-index: 999999;
+    z-index: 9;
     width: 100%;
     background-color: #fff;
   }

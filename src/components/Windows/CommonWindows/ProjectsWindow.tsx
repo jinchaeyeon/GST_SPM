@@ -250,7 +250,7 @@ const KendoWindow = ({ setVisible, setData, para }: IKendoWindow) => {
     );
 
     // 부모로 데이터 전달, 창 닫기
-    setData(rowData);
+    if (rowData) setData(rowData);
     onClose();
   };
 
