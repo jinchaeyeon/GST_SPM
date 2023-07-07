@@ -91,8 +91,8 @@ export const ButtonContainer = styled.div<TButtonContainer>`
     box-shadow: none;
   }
   .iot-btn.green {
-    background-color: #6fab41;
-    border-color: #6fab41;
+    background-color: #6cc56c;
+    border-color: #6cc56c;
   }
   .iot-btn.red {
     background-color: #ff4949;
@@ -748,7 +748,8 @@ export const Gnv = styled.div<TGnv>`
   @media (max-width: 768px) {
     display: ${(props) => (props.isMobileMenuOpend ? "block" : "none")};
     z-index: 10;
-    position: absolute;
+    position: fixed;
+    min-height: 100vh;
 
     h1 {
       display: none;
@@ -812,6 +813,7 @@ export const PageWrap = styled.div`
   @media (max-width: 768px) {
     min-height: auto;
     height: auto;
+    padding-top: 50px;
   }
 `;
 
@@ -892,6 +894,10 @@ export const TopTitle = styled.div`
   =========================================================================*/
   @media (max-width: 768px) {
     display: flex;
+    position: fixed;
+    z-index: 999999;
+    width: 100%;
+    background-color: #fff;
   }
 `;
 
@@ -899,7 +905,7 @@ type TModal = {
   isMobileMenuOpend: boolean;
 };
 export const Modal = styled.div<TModal>`
-  position: absolute;
+  position: fixed;
   z-index: 10;
   top: 0;
   left: 0;
@@ -987,6 +993,7 @@ export const TextBox = styled.div<TTextBox>`
   justify-content: ${(props) =>
     props.type === "Admin" ? "space-between" : null};
   padding: ${(props) => (props.type === "Admin" ? "0 50px" : null)};
+  border-radius: ${(props) => (props.type === "Admin" ? "10px" : null)};
 
   p span {
     font-weight: 700;
@@ -1012,8 +1019,9 @@ export const TextBox = styled.div<TTextBox>`
   }
   .time {
     text-align: center;
-    font-weight: 300;
-    line-height: 35px;
+    font-weight: 400;
+    line-height: 25px;
+    font-size: 20px;
   }
   .time span {
     margin: 0;
@@ -1026,7 +1034,7 @@ export const TextBox = styled.div<TTextBox>`
     color: #838383;
   }
   .green {
-    color: #4cd180;
+    color: #6cc56c;
   }
   .yellow {
     color: #ffd519;
@@ -1082,7 +1090,7 @@ export const AdminQuestionBox = styled.div`
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #4cd180;
+    background-color: #3a3a3a;
     color: #fff;
   }
   .O {
@@ -1092,7 +1100,18 @@ export const AdminQuestionBox = styled.div`
     background-color: #838383;
   }
   .R {
-    background-color: #ffd519;
+    background-color: #6cc56c;
+  }
+
+  @media (max-width: 768px) {
+    min-width: auto;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+
+    > div:nth-child(2) {
+      width: 100%;
+    }
   }
 `;
 export const AdminProjectBox = styled.div`
@@ -1130,6 +1149,17 @@ export const AdminProjectBox = styled.div`
     font-weight: 500;
     margin-left: 30px;
   }
+
+  @media (max-width: 768px) {
+    min-width: auto;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+
+    .days {
+      margin-left: 0;
+    }
+  }
 `;
 export const AdminCustSummaryBox = styled.div`
   padding: 10px;
@@ -1143,43 +1173,79 @@ export const AdminCustSummaryBox = styled.div`
     font-weight: 500;
   }
   .cnt {
-    font-size: 20px;
-    font-weight: 500;
-    width: 30px;
-    height: 30px;
-    background-color: #ffd519;
+    display: flex;
+  }
+  .cnt div {
     display: flex;
     align-items: center;
     justify-content: center;
+    font-size: 18px;
+    font-weight: 500;
+    width: 30px;
+    height: 30px;
     border-radius: 5px;
+    color: #fff;
+  }
+  .cnt .green {
+    background-color: #6cc56c;
+  }
+  .cnt .red {
+    margin-left: 10px;
+    background-color: #ff6358;
   }
 `;
-export const ScrollableContainer = styled.div`
+
+type TScrollableContainer = {
+  atBottom?: boolean;
+};
+
+export const ScrollableContainer = styled.div<TScrollableContainer>`
   border: solid 1px #ebebeb;
   border-radius: 10px;
   padding: 10px;
   position: relative;
   height: 100%;
-  overflow: auto;
-  scrollbar-width: none; /* Firefox 64 and later */
-  -ms-overflow-style: none; /* Internet Explorer and Edge */
+  overflow: hidden;
 
-  ::after {
+  .scroll-wrapper {
+    height: 100%;
+    overflow: auto;
+
+    /* Scrollbar styles */
+    ::-webkit-scrollbar {
+      width: 8px; /* Set the width of the scrollbar */
+    }
+
+    ::-webkit-scrollbar-track {
+      border-radius: 10px; /* Optional: Add border-radius to track */
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background-color: #dfdfdf; /* Set the color of the scroll thumb */
+      border-radius: 10px; /* Set the border-radius of the scroll thumb */
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background-color: #b6b6b6; /* Set the color when hovering */
+    }
+  }
+  /* ::after {
     content: "";
     position: absolute;
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 80px; /* control the height of the fade out effect */
+    height: 80px; /* control the height of the fade out effect 
     background-image: linear-gradient(
       to bottom,
       rgba(255, 255, 255, 0),
       rgba(255, 255, 255, 1)
     );
-    pointer-events: none; /* let users still interact with the content */
-  }
+    opacity: ${(props) => (props.atBottom ? 0 : 1)}; /* control the visibility 
+    pointer-events: none; /* let users still interact with the content 
+  } */
 
-  ::-webkit-scrollbar {
-    display: none;
+  @media (max-width: 768px) {
+    height: calc(100vh / 2 + 20px);
   }
 `;

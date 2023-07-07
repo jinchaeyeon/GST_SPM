@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from "react";
 import {
-  Grid,
-  GridColumn,
   GridDataStateChangeEvent,
   GridSelectionChangeEvent,
   GridFooterCellProps,
@@ -28,26 +26,11 @@ import {
 import { useRecoilState, useSetRecoilState } from "recoil";
 import { useApi } from "../hooks/api";
 import { filterValueState, isLoading, loginResultState } from "../store/atoms";
-import { SELECTED_FIELD } from "../components/CommonString";
-import CenterCell from "../components/Cells/CenterCell";
 import { useThemeSwitcher } from "react-css-theme-switcher";
-import {
-  Chart,
-  ChartCategoryAxis,
-  ChartCategoryAxisItem,
-  ChartLegend,
-  ChartSeries,
-  ChartSeriesItem,
-  ChartTitle,
-  ChartValueAxis,
-  ChartValueAxisItem,
-} from "@progress/kendo-react-charts";
 import "hammerjs";
 import CurrentTime from "../components/CurrentTime";
-import DateCell from "../components/Cells/DateCell";
 import { useHistory } from "react-router-dom";
 import Loader from "../components/Loader";
-import QnaStateCell from "../components/Cells/QnaStateCell";
 import { Button } from "@progress/kendo-react-buttons";
 import { dateformat2 } from "../components/CommonFunction";
 
@@ -291,37 +274,54 @@ const Main: React.FC = () => {
       </TitleContainer>
       <GridContainerWrap height="calc(100% - 80px)">
         <GridContainer width="20%" type="mainLeft">
-          <GridContainer style={{ gap: "15px" }}>
-            <TextBox
-              style={{
-                minHeight: "120px",
-                height: "100%",
-                maxHeight: "150px",
-                padding: "20px",
-              }}
-            >
-              <div className="medium" style={{ marginTop: "0" }}>
-                <CurrentTime />
-              </div>
-            </TextBox>
-            <TextBox
+          <TextBox
+            type={"Admin"}
+            style={{
+              minHeight: "120px",
+              height: "100%",
+              maxHeight: "150px",
+              padding: "20px",
+              justifyContent: "center",
+            }}
+          >
+            <div className="medium" style={{ marginTop: "0" }}>
+              <CurrentTime />
+            </div>
+          </TextBox>
+          {/* <TextBox
               type={"Admin"}
               style={{ cursor: "pointer" }}
               onClick={() => moveMenu("QnA")}
             >
-              <p className="small">전체 미처리</p>
+              <p className="small">전체 진행중</p>
               <p className="large gray">
                 {taskStatusResult.total}
                 <span>건</span>
               </p>
-            </TextBox>
+            </TextBox> */}
+
+          <GridTitleContainer>
+            <GridTitle theme={currentTheme}>전체 진행중</GridTitle>
+            <GridTitle theme={currentTheme}>
+              {taskStatusResult.total}
+              <span>건</span>
+            </GridTitle>
+          </GridTitleContainer>
+          <GridContainer
+            style={{
+              gap: "15px",
+              border: "solid 1px #ebebeb",
+              borderRadius: "10px",
+              padding: "10px",
+            }}
+          >
             <TextBox
               type={"Admin"}
               style={{ cursor: "pointer" }}
               onClick={() => moveMenu("QnA")}
             >
               <p className="small">접수 대기</p>
-              <p className="large dark-gray">
+              <p className="large gray">
                 {taskStatusResult.wait}
                 <span>건</span>
               </p>
@@ -332,7 +332,7 @@ const Main: React.FC = () => {
               onClick={() => moveMenu("QnA")}
             >
               <p className="small">진행중</p>
-              <p className="large yellow">
+              <p className="large green">
                 {taskStatusResult.progress}
                 <span>건</span>
               </p>
@@ -354,14 +354,20 @@ const Main: React.FC = () => {
               <GridTitle theme={currentTheme}>업체별 현황</GridTitle>
             </GridTitleContainer>
             <ScrollableContainer>
-              {custSummaryDataResult.data
-                .sort((a, b) => b.progress_count - a.progress_count)
-                .map((item) => (
-                  <AdminCustSummaryBox>
-                    <div className="cust">{item.customer_name}</div>
-                    <div className="cnt">{item.progress_count}</div>
-                  </AdminCustSummaryBox>
-                ))}
+              <div className="scroll-wrapper">
+                {custSummaryDataResult.data
+                  .sort((a, b) => b.progress_count - a.progress_count)
+                  .sort((a, b) => b.over_count - a.over_count)
+                  .map((item, idx) => (
+                    <AdminCustSummaryBox key={idx}>
+                      <div className="cust">{item.customer_name}</div>
+                      <div className="cnt">
+                        <div className="green">{item.progress_count}</div>
+                        <div className="red">{item.over_count}</div>
+                      </div>
+                    </AdminCustSummaryBox>
+                  ))}
+              </div>
             </ScrollableContainer>
           </GridContainer>
         </GridContainer>
@@ -371,35 +377,40 @@ const Main: React.FC = () => {
             <GridTitle theme={currentTheme}>문의 내용</GridTitle>
           </GridTitleContainer>
           <ScrollableContainer>
-            {questionDataResult.data.map((item) => (
-              <AdminQuestionBox onClick={() => onQuestionRowClick(item)}>
-                <div
-                  className={`status ${
-                    item.is_over === "Y" ? "O" : item.status
-                  }`}
+            <div className="scroll-wrapper">
+              {questionDataResult.data.map((item, idx) => (
+                <AdminQuestionBox
+                  key={idx}
+                  onClick={() => onQuestionRowClick(item)}
                 >
-                  {item.is_over === "Y"
-                    ? "초과" +
-                      (item.is_over === "Y" &&
-                        item.over_days &&
-                        " +" + item.over_days)
-                    : item.status === "N"
-                    ? "대기"
-                    : item.status === "R"
-                    ? "진행중"
-                    : item.status === "Y"
-                    ? "완료"
-                    : "보류"}
-                </div>
-                <div>
-                  <p className="title">{item.title}</p>
-                  <p className="customer">{item.customer_name}</p>
-                </div>
-                <div>
-                  <p>{dateformat2(item.request_date)}</p>
-                </div>
-              </AdminQuestionBox>
-            ))}
+                  <div
+                    className={`status ${
+                      item.is_over === "Y" ? "O" : item.status
+                    }`}
+                  >
+                    {item.is_over === "Y"
+                      ? "초과" +
+                        (item.is_over === "Y" &&
+                          item.over_days &&
+                          " +" + item.over_days)
+                      : item.status === "N"
+                      ? "대기"
+                      : item.status === "R"
+                      ? "진행중"
+                      : item.status === "Y"
+                      ? "완료"
+                      : "보류"}
+                  </div>
+                  <div>
+                    <p className="title">{item.title}</p>
+                    <p className="customer">{item.customer_name}</p>
+                  </div>
+                  <div>
+                    <p>{dateformat2(item.request_date)}</p>
+                  </div>
+                </AdminQuestionBox>
+              ))}
+            </div>
           </ScrollableContainer>
         </GridContainer>
         <GridContainer width="40%">
@@ -408,18 +419,23 @@ const Main: React.FC = () => {
           </GridTitleContainer>
 
           <ScrollableContainer>
-            {projectDataResult.data.map((item) => (
-              <AdminProjectBox onClick={() => onProjectRowClick(item)}>
-                <div>
-                  <div className="sub">
-                    <p className="custnm">{item.custnm}</p>
-                    <p className="project">{item.project}</p>
+            <div className="scroll-wrapper">
+              {projectDataResult.data.map((item, idx) => (
+                <AdminProjectBox
+                  key={idx}
+                  onClick={() => onProjectRowClick(item)}
+                >
+                  <div>
+                    <div className="sub">
+                      <p className="custnm">{item.custnm}</p>
+                      <p className="project">{item.project}</p>
+                    </div>
+                    <p className="curr_title">{item.curr_title}</p>
                   </div>
-                  <p className="curr_title">{item.curr_title}</p>
-                </div>
-                <div className="days">{item.days}</div>
-              </AdminProjectBox>
-            ))}
+                  <div className="days">{item.days}</div>
+                </AdminProjectBox>
+              ))}
+            </div>
           </ScrollableContainer>
         </GridContainer>
       </GridContainerWrap>
