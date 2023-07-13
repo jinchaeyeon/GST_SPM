@@ -45,6 +45,7 @@ import { TEditorHandle } from "../store/types";
 import { IAttachmentData } from "../hooks/interfaces";
 import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
 import CenterCell from "../components/Cells/CenterCell";
+import SignWindow from "../components/Windows/CommonWindows/SignWindow";
 
 const DATA_ITEM_KEY = "meetingnum";
 
@@ -56,7 +57,7 @@ const App = () => {
 
   const [attachmentsWindowVisible, setAttachmentsWindowVisible] =
     useState<boolean>(false);
-
+  const [signWindowVisible, setSignWindowVisible] = useState<boolean>(false);
   //조회조건 Input Change 함수 => 사용자가 Input에 입력한 값을 조회 파라미터로 세팅
   const filterInputChange = (e: DatePickerChangeEvent | InputChangeEvent) => {
     const { value, name = "" } = e.target;
@@ -83,7 +84,7 @@ const App = () => {
     sort: [],
   });
   const [mainDataResult, setMainDataResult] = useState<DataResult>(
-    process([], mainDataState),
+    process([], mainDataState)
   );
 
   const defaultDetailData = {
@@ -172,7 +173,7 @@ const App = () => {
 
     const para = {
       para: `list?fromDate=${convertDateToStr(
-        filters.fromDate,
+        filters.fromDate
       )}&toDate=${convertDateToStr(filters.toDate)}&custnm=${
         filters.custnm
       }&contents=${filters.contents}&findRowValue=${
@@ -197,7 +198,7 @@ const App = () => {
           // 데이터 저장 후 조회
           setSelectedState({ [filters.findRowValue]: true });
           const selectedRowData = rows.find(
-            (row: any) => row[DATA_ITEM_KEY] === filters.findRowValue,
+            (row: any) => row[DATA_ITEM_KEY] === filters.findRowValue
           );
           const id =
             selectedRowData["orgdiv"] + "_" + selectedRowData["meetingnum"];
@@ -480,7 +481,7 @@ const App = () => {
                 recdt: dateformat2(row.recdt),
                 [SELECTED_FIELD]: selectedState[idGetter(row)],
               })),
-              mainDataState,
+              mainDataState
             )}
             {...mainDataState}
             onDataStateChange={onMainDataStateChange}
@@ -531,6 +532,36 @@ const App = () => {
                       className="readonly"
                     />
                   </td>
+                  <th>제목</th>
+                  <td>
+                    <Input
+                      name="name"
+                      value={
+                        mainDataResult.data.filter(
+                          (item) =>
+                            item[DATA_ITEM_KEY] ==
+                            Object.getOwnPropertyNames(selectedState)[0]
+                        )[0] == undefined ? "" :
+                        mainDataResult.data.filter(
+                          (item) =>
+                            item[DATA_ITEM_KEY] ==
+                            Object.getOwnPropertyNames(selectedState)[0]
+                        )[0].title
+                      }
+                      className="readonly"
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <td colSpan={2}>
+                    <Button
+                      themeColor={"primary"}
+                      style={{ width: "100%" }}
+                      onClick={() => setSignWindowVisible(true)}
+                    >
+                      참석자 등록
+                    </Button>
+                  </td>
                   <th style={{ width: 0 }}>첨부파일</th>
                   <td style={{ width: "auto" }}>
                     <div className="filter-item-wrap">
@@ -560,7 +591,12 @@ const App = () => {
           <RichEditor id="refEditor" ref={refEditorRef} hideTools />
         </GridContainer>
       </GridContainerWrap>
-
+      {signWindowVisible && (
+          <SignWindow
+            setVisible={setSignWindowVisible}
+            number={detailData.meetingnum}
+          />
+        )}
       {attachmentsWindowVisible && (
         <AttachmentsWindow
           type="meeting"

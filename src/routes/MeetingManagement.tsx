@@ -96,6 +96,7 @@ import {
 } from "@progress/kendo-react-dropdowns";
 import NameCell from "../components/Cells/NameCell";
 import { useHistory } from "react-router-dom";
+import SignWindow from "../components/Windows/CommonWindows/SignWindow";
 
 const DATA_ITEM_KEY = "meetingnum";
 const DETAIL_ITEM_KEY = "meetingseq";
@@ -200,12 +201,13 @@ const App = () => {
 
   // 서버 업로드는 되었으나 DB에는 저장안된 첨부파일 리스트
   const [unsavedAttadatnums, setUnsavedAttadatnums] = useRecoilState(
-    unsavedAttadatnumsState,
+    unsavedAttadatnumsState
   );
 
   const [selectedDetailCustcd, setSelectedDetailCustcd] = useState("");
 
   const [custWindowVisible, setCustWindowVisible] = useState<boolean>(false);
+  const [signWindowVisible, setSignWindowVisible] = useState<boolean>(false);
 
   const [projectWindowVisible, setProjectWindowVisible] =
     useState<boolean>(false);
@@ -270,13 +272,13 @@ const App = () => {
     sort: [],
   });
   const [mainDataResult, setMainDataResult] = useState<DataResult>(
-    process([], mainDataState),
+    process([], mainDataState)
   );
   const [isVisibleDetail, setIsVisableDetail] = useState(true);
 
   const [detailData, setDetailData] = useState(defaultDetailData);
   const [detailRows, setDetailRows] = useState<DataResult>(
-    process([], detailRowsState),
+    process([], detailRowsState)
   );
 
   const [selectedState, setSelectedState] = useState<{
@@ -382,7 +384,7 @@ const App = () => {
   const fromDate = new Date(
     currentDate.getFullYear(),
     currentDate.getMonth() - 3,
-    currentDate.getDate(),
+    currentDate.getDate()
   );
 
   type TFilters = {
@@ -414,7 +416,7 @@ const App = () => {
 
     const para = {
       para: `list?fromDate=${convertDateToStr(
-        filters.fromDate,
+        filters.fromDate
       )}&toDate=${convertDateToStr(filters.toDate)}&custnm=${
         filters.custnm
       }&contents=${filters.contents}&findRowValue=${
@@ -447,7 +449,7 @@ const App = () => {
           });
 
           const selectedData = rows.find(
-            (row: any) => row[DATA_ITEM_KEY] === selectedMeetingnum,
+            (row: any) => row[DATA_ITEM_KEY] === selectedMeetingnum
           );
           if (!selectedData) return false;
 
@@ -573,7 +575,7 @@ const App = () => {
 
     const mainDataId = Object.getOwnPropertyNames(selectedState)[0];
     const selectedRowData = mainDataResult.data.find(
-      (item) => item[DATA_ITEM_KEY] === mainDataId,
+      (item) => item[DATA_ITEM_KEY] === mainDataId
     );
 
     const id = selectedRowData["orgdiv"] + "_" + selectedRowData["meetingnum"];
@@ -780,7 +782,7 @@ const App = () => {
       return false;
     }
     const selectedRow = mainDataResult.data.find(
-      (item) => item[DATA_ITEM_KEY] === mainDataId,
+      (item) => item[DATA_ITEM_KEY] === mainDataId
     );
 
     const id = selectedRow.orgdiv + "_" + selectedRow.meetingnum;
@@ -935,7 +937,7 @@ const App = () => {
         : {
             ...item,
             [EDIT_FIELD]: undefined,
-          },
+          }
     );
 
     setDetailRows((prev) => {
@@ -996,7 +998,7 @@ const App = () => {
       return false;
     }
     const selectedRow = mainDataResult.data.find(
-      (item) => item[DATA_ITEM_KEY] === mainDataId,
+      (item) => item[DATA_ITEM_KEY] === mainDataId
     );
 
     if (
@@ -1005,7 +1007,7 @@ const App = () => {
           selectedRow.custnm +
           " '" +
           selectedRow.title +
-          "']의 데이터를 삭제하시겠습니까?",
+          "']의 데이터를 삭제하시겠습니까?"
       )
     ) {
       return false;
@@ -1048,7 +1050,7 @@ const App = () => {
   const addDetailRow = () => {
     const selectedKey = Number(Object.keys(detailSelectedState)[0]);
     const selectedIndex = detailRows.data.findIndex(
-      (row) => row.meetingseq === selectedKey,
+      (row) => row.meetingseq === selectedKey
     );
 
     let newRows = [...detailRows.data];
@@ -1087,7 +1089,7 @@ const App = () => {
   const removeDetailRow = () => {
     const selectedKey = Object.keys(detailSelectedState)[0];
     const selectedIndex = detailRows.data.findIndex(
-      (row) => row.meetingseq.toString() === selectedKey,
+      (row) => row.meetingseq.toString() === selectedKey
     );
 
     if (selectedIndex !== -1) {
@@ -1118,7 +1120,7 @@ const App = () => {
   const upDetailRow = () => {
     const selectedKey = Object.keys(detailSelectedState)[0];
     const selectedIndex = detailRows.data.findIndex(
-      (row) => row.meetingseq.toString() === selectedKey,
+      (row) => row.meetingseq.toString() === selectedKey
     );
 
     if (selectedIndex > 0) {
@@ -1135,7 +1137,7 @@ const App = () => {
   const downDetailRow = () => {
     const selectedKey = Object.keys(detailSelectedState)[0];
     const selectedIndex = detailRows.data.findIndex(
-      (row) => row.meetingseq.toString() === selectedKey,
+      (row) => row.meetingseq.toString() === selectedKey
     );
 
     if (selectedIndex < detailRows.data.length - 1) {
@@ -1261,13 +1263,13 @@ const App = () => {
 
     // meetingseq 최대값 구하기
     let maxMeetingSeq = Math.max(
-      ...detailRows.data.map((item) => item.meetingseq),
+      ...detailRows.data.map((item) => item.meetingseq)
     );
 
     // 선택행의 키값과 인덱스 구하기
     const selectedKey = Number(Object.keys(detailSelectedState)[0]);
     const selectedIndex = detailRows.data.findIndex(
-      (row) => row[DETAIL_ITEM_KEY] === selectedKey,
+      (row) => row[DETAIL_ITEM_KEY] === selectedKey
     );
 
     // 복사하여 생성할 첫번째 행 선택
@@ -1471,7 +1473,7 @@ const App = () => {
                   recdt: dateformat2(row.recdt),
                   [SELECTED_FIELD]: selectedState[idGetter(row)],
                 })),
-                mainDataState,
+                mainDataState
               )}
               {...mainDataState}
               onDataStateChange={onMainDataStateChange}
@@ -1529,8 +1531,7 @@ const App = () => {
                           className="readonly"
                         />
                       </td>
-                      <th>업체 비공유</th>
-                      <td style={{ textAlign: "left" }}>
+                      <th>
                         <Checkbox
                           name="unshared"
                           value={detailData.unshared}
@@ -1540,7 +1541,13 @@ const App = () => {
                               unshared: !prev.unshared,
                             }))
                           }
+                          label="업체 비공유"
                         />
+                      </th>
+                      <td>
+                        <Button themeColor={"primary"} style={{width: "100%"}}  onClick={() => setSignWindowVisible(true)}>
+                          참석자 등록
+                        </Button>
                       </td>
                     </tr>
                     <tr>
@@ -1728,7 +1735,7 @@ const App = () => {
                     ...row,
                     [SELECTED_FIELD]: detailSelectedState[detailIdGetter(row)],
                   })),
-                  detailRowsState,
+                  detailRowsState
                 )}
                 {...detailRowsState}
                 onDataStateChange={onDetailRowsStateChange}
@@ -1870,6 +1877,12 @@ const App = () => {
             setVisible={setProjectWindowVisible}
             setData={setProjectData}
             para={{ cust_data: detailData.cust_data }}
+          />
+        )}
+        {signWindowVisible && (
+          <SignWindow
+            setVisible={setSignWindowVisible}
+            number={detailData.meetingnum}
           />
         )}
       </CodesContext.Provider>
