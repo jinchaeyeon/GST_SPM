@@ -477,7 +477,7 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
 
       setMainDataResult((prev) => ({
         data: newData,
-        total: prev.total - deletedMainRows.length,
+        total: prev.total - 1,
       }));
       setSelectedState({
         [data != undefined ? data[DATA_ITEM_KEY] : newData[0]]: true,
@@ -486,11 +486,12 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
   };
 
   const onAddClick = () => {
-    let array: any[] = [];
-    mainDataResult.data.map((item) => {
-      array.push(item.num);
-    });
-    var seq = Math.max(...array) + 1;
+    // let array: any[] = [];
+    // mainDataResult.data.map((item) => {
+    //   array.push(item.num);
+    // });
+    // var seq = Math.max(...array) + 1;
+    let seq = mainDataResult.total + deletedMainRows.length + 1;
 
     const newDataItem = {
       [DATA_ITEM_KEY]: seq,
@@ -661,7 +662,7 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
           </ButtonContainer>
         </GridTitleContainer>
         <Grid
-          style={{ height: "38vh" }}
+          style={{ minHeight: "35vh" }}
           data={process(
             mainDataResult.data.map((row) => ({
               ...row,
@@ -767,7 +768,7 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
             확인
           </Button>
           <Button themeColor={"primary"} fillMode={"outline"} onClick={onClose}>
-            취소
+            닫기
           </Button>
         </ButtonContainer>
       </BottomContainer>
