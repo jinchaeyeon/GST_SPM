@@ -1545,7 +1545,21 @@ const App = () => {
                         />
                       </th>
                       <td>
-                        <Button themeColor={"primary"} style={{width: "100%"}}  onClick={() => setSignWindowVisible(true)}>
+                        <Button
+                          themeColor={"primary"}
+                          style={{ width: "100%" }}
+                          onClick={() => {
+                            if(detailData.work_type == "N"){
+                              alert("회의록 저장 후 등록할 수 있습니다.")
+                            }
+                            else if(Object.getOwnPropertyNames(selectedState)[0] != undefined) {
+                              setSignWindowVisible(true)
+                            } 
+                            else {
+                              alert("선택된 데이터가 없습니다.")
+                            }
+                          }}
+                        >
                           참석자 등록
                         </Button>
                       </td>

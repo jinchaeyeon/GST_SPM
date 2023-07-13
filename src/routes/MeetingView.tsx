@@ -557,7 +557,13 @@ const App = () => {
                     <Button
                       themeColor={"primary"}
                       style={{ width: "100%" }}
-                      onClick={() => setSignWindowVisible(true)}
+                      onClick={() => {
+                        if(Object.getOwnPropertyNames(selectedState)[0] != undefined) {
+                          setSignWindowVisible(true)
+                        } else {
+                          alert("선택된 데이터가 없습니다.")
+                        }
+                      }}
                     >
                       참석자 등록
                     </Button>
