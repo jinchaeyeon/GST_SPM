@@ -50,6 +50,7 @@ import CheckBoxCell from "../../Cells/CheckBoxCell";
 import CheckBoxReadOnlyCell from "../../Cells/CheckBoxReadOnlyCell";
 
 let deletedMainRows: any[] = [];
+let temp = 0;
 
 type IWindow = {
   setVisible(t: boolean): void;
@@ -431,13 +432,14 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
     }
   };
 
-  let maxObjArr = mainDataResult.data.length < 2 ? (mainDataResult.data.length == 1 ? {num: 0} : {num: -1}) : mainDataResult.data.reduce( (prev, value) => {
-    return prev.num >= value.num ? prev : value
-  });
-
   const onAddClick = () => {
+    mainDataResult.data.map((item) => {
+      if(item.num > temp){
+        temp = item.num
+      }
+  })
     const newDataItem = {
-      [DATA_ITEM_KEY]: maxObjArr.num + 1,
+      [DATA_ITEM_KEY]: ++temp,
       is_lock: "N",
       rowstatus: "N",
       meetingnum: number,
