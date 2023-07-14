@@ -430,12 +430,12 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
       });
     }
   };
-  
+
+  let maxObjArr = mainDataResult.data.length < 2 ? (mainDataResult.data.length == 1 ? {num: 0} : {num: -1}) : mainDataResult.data.reduce( (prev, value) => {
+    return prev.num >= value.num ? prev : value
+  });
+
   const onAddClick = () => {
-    let maxObjArr = mainDataResult.data.reduce( (prev, value) => {
-      return prev.num >= value.num ? prev : value
-    });
-   
     const newDataItem = {
       [DATA_ITEM_KEY]: maxObjArr.num + 1,
       is_lock: "N",
