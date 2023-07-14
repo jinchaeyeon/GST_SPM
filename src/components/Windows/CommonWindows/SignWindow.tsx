@@ -1,11 +1,10 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import * as React from "react";
 import { Window, WindowMoveEvent } from "@progress/kendo-react-dialogs";
 import {
   Grid,
   GridColumn,
   GridFooterCellProps,
-  GridEvent,
   GridSelectionChangeEvent,
   getSelectedState,
   GridDataStateChangeEvent,
@@ -24,13 +23,10 @@ import {
 import { Iparameters } from "../../../store/types";
 import { Button } from "@progress/kendo-react-buttons";
 import {
-  chkScrollHandler,
   UseBizComponent,
   UseParaPc,
   UseGetValueFromSessionItem,
-  findMessage,
   UseMessages,
-  convertDateToStr,
 } from "../../CommonFunction";
 import { IWindowPosition } from "../../../hooks/interfaces";
 import {
@@ -39,7 +35,6 @@ import {
   EDIT_FIELD,
   COM_CODE_DEFAULT_VALUE,
 } from "../../CommonString";
-import NumberCell from "../../Cells/NumberCell";
 import {
   getGridItemChangedData,
   getQueryFromBizComponent,
@@ -55,13 +50,6 @@ import CheckBoxCell from "../../Cells/CheckBoxCell";
 import CheckBoxReadOnlyCell from "../../Cells/CheckBoxReadOnlyCell";
 
 let deletedMainRows: any[] = [];
-type TdataArr = {
-  rowstatus_s: string[];
-  badqty_s: string[];
-  badcd_s: string[];
-  badnum_s: string[];
-  badseq_s: string[];
-};
 
 type IWindow = {
   setVisible(t: boolean): void;
@@ -77,8 +65,7 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
   const userId = UseGetValueFromSessionItem("user_id");
   UseParaPc(setPc);
   const pathname: string = window.location.pathname.replace("/", "");
-  const [messagesData, setMessagesData] = React.useState<any>(null);
-  UseMessages(pathname, setMessagesData);
+
   const initialPageState = { skip: 0, take: PAGE_SIZE };
   const [page, setPage] = useState(initialPageState);
 
@@ -103,7 +90,7 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
   const [position, setPosition] = useState<IWindowPosition>({
     left: 300,
     top: 100,
-    width: 1000,
+    width: 1050,
     height: 800,
   });
   const DATA_ITEM_KEY = "num";
@@ -111,48 +98,6 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
   const [selectedState, setSelectedState] = useState<{
     [id: string]: boolean | number[];
   }>({});
-
-  const [bizComponentData, setBizComponentData] = useState<any>(null);
-  UseBizComponent(
-    "L_QC002",
-    //사용여부,
-    setBizComponentData
-  );
-  const [badcdListData, setBadcdListData] = React.useState([
-    COM_CODE_DEFAULT_VALUE,
-  ]);
-
-  useEffect(() => {
-    if (bizComponentData !== null) {
-      const badcdQueryStr = getQueryFromBizComponent(
-        bizComponentData.find((item: any) => item.bizComponentId === "L_QC002")
-      );
-
-      fetchQuery(badcdQueryStr, setBadcdListData);
-    }
-  }, [bizComponentData]);
-
-  const fetchQuery = useCallback(async (queryStr: string, setListData: any) => {
-    let data: any;
-
-    const bytes = require("utf8-bytes");
-    const convertedQueryStr = bytesToBase64(bytes(queryStr));
-
-    let query = {
-      query: convertedQueryStr,
-    };
-
-    try {
-      data = await processApi<any>("query", query);
-    } catch (error) {
-      data = null;
-    }
-
-    if (data.isSuccess === true) {
-      const rows = data.tables[0].Rows;
-      setListData(rows);
-    }
-  }, []);
 
   const handleMove = (event: WindowMoveEvent) => {
     setPosition({ ...position, left: event.left, top: event.top });
@@ -192,7 +137,7 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
     sign: "",
   });
 
-  let gridRef: any = React.useRef(null);
+  const gridRef = useRef<any>(null);
   //그리드 조회
   const fetchMainGrid = async (filters: any) => {
     let data: any;
@@ -226,12 +171,13 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
         signature:
           item.signature == "" ? "" : "data:image/png;base64," + item.signature,
       }));
+ 
       if (filters.find_row_value !== "") {
         // find_row_value 행으로 스크롤 이동
         if (gridRef.current) {
           const findRowIndex = rows.findIndex(
             (row: any) =>
-              row.orgdiv + "_" + row.meetingnum == filters.find_row_value
+              (row.meetingnum + "_" + (row.meetingseq).toString()) == filters.find_row_value
           );
           targetRowIndex = findRowIndex;
         }
@@ -259,7 +205,7 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
             ? rows[0]
             : rows.find(
                 (row: any) =>
-                  row.orgdiv + "_" + row.meetingnum == filters.find_row_value
+                (row.meetingnum + "_" + (row.meetingseq).toString()) == filters.find_row_value
               );
 
         setSelectedState({ [selectedRow[DATA_ITEM_KEY]]: true });
@@ -477,24 +423,21 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
 
       setMainDataResult((prev) => ({
         data: newData,
-        total: prev.total - 1,
+        total: newData.length,
       }));
       setSelectedState({
         [data != undefined ? data[DATA_ITEM_KEY] : newData[0]]: true,
       });
     }
   };
-
+  
   const onAddClick = () => {
-    // let array: any[] = [];
-    // mainDataResult.data.map((item) => {
-    //   array.push(item.num);
-    // });
-    // var seq = Math.max(...array) + 1;
-    let seq = mainDataResult.total + deletedMainRows.length + 1;
-
+    let maxObjArr = mainDataResult.data.reduce( (prev, value) => {
+      return prev.num >= value.num ? prev : value
+    });
+   
     const newDataItem = {
-      [DATA_ITEM_KEY]: seq,
+      [DATA_ITEM_KEY]: maxObjArr.num + 1,
       is_lock: "N",
       rowstatus: "N",
       meetingnum: number,
@@ -640,6 +583,7 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
       onMove={handleMove}
       onResize={handleResize}
       onClose={onClose}
+      modal={true}
     >
       <GridContainer height={`calc(50% - ${leftOverHeight}px)`}>
         <GridTitleContainer>
@@ -662,7 +606,7 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
           </ButtonContainer>
         </GridTitleContainer>
         <Grid
-          style={{ minHeight: "35vh" }}
+          style={{ height: "30vh" }}
           data={process(
             mainDataResult.data.map((row) => ({
               ...row,
@@ -693,6 +637,8 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
           take={page.take}
           pageable={true}
           onPageChange={pageChange}
+          ref={gridRef}
+          rowHeight={30}
           //정렬기능
           sortable={true}
           onSortChange={onMainSortChange}
@@ -716,7 +662,7 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
           <GridColumn
             field="name"
             title="이름"
-            width="150px"
+            width="200px"
             headerCell={RequiredHeader}
           />
           <GridColumn field="remarks" title="비고" width="350px" />
