@@ -87,11 +87,12 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
       ...event.page,
     });
   };
-
+  let deviceWidth = window.innerWidth;
+  let isMobile = deviceWidth <= 768;
   const [position, setPosition] = useState<IWindowPosition>({
     left: 300,
     top: 100,
-    width: 1050,
+    width: isMobile == true ? deviceWidth : 1050,
     height: 800,
   });
   const DATA_ITEM_KEY = "num";

@@ -874,12 +874,6 @@ const App = () => {
           </GridTitleContainer>
           <FormBoxWrap border>
             <FormBox>
-              <colgroup>
-                <col width={"10%"} />
-                <col width={"20%"} />
-                <col width={"10%"} />
-                <col width={"60%"} />
-              </colgroup>
               <tbody>
                 <tr>
                   <th>공지일자</th>
