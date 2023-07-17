@@ -79,14 +79,16 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
 
     setFilters((prev) => ({
       ...prev,
-      pgNum: page.skip / page.take + 1,
+      pgNum: Math.floor(page.skip / initialPageState.take) + 1,
       isSearch: true,
     }));
 
     setPage({
-      ...event.page,
+      skip: page.skip,
+      take: initialPageState.take,
     });
   };
+
   let deviceWidth = window.innerWidth;
   let isMobile = deviceWidth <= 768;
   const [position, setPosition] = useState<IWindowPosition>({
@@ -223,7 +225,11 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
                   filters.find_row_value
               );
 
-        setSelectedState({ [selectedRow[DATA_ITEM_KEY]]: true });
+        if (selectedRow != undefined) {
+          setSelectedState({ [selectedRow[DATA_ITEM_KEY]]: true });
+        } else {
+          setSelectedState({ [rows[0][DATA_ITEM_KEY]]: true });
+        }
       }
     } else {
       console.log("[오류 발생]");
@@ -466,22 +472,10 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
       } else {
         data = mainDataResult.data[Math.min(...Object) - 1];
       }
-      const isLastDataDeleted =
-        mainDataResult.data.length === 1 && filters.pgNum > 1;
-
-      if (isLastDataDeleted) {
-        setPage({
-          skip:
-            filters.pgNum == 1 || filters.pgNum == 0
-              ? 0
-              : PAGE_SIZE * (filters.pgNum - 2),
-          take: PAGE_SIZE,
-        });
-      }
 
       setMainDataResult((prev) => ({
         data: newData,
-        total: newData.length,
+        total: prev.total - Object.length,
       }));
       setSelectedState({
         [data != undefined ? data[DATA_ITEM_KEY] : newData[0]]: true,
@@ -515,6 +509,11 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
         total: prev.total + 1,
       };
     });
+    setPage((prev) => ({
+      ...prev,
+      skip: 0,
+      take: prev.take + 1,
+    }));
   };
 
   const onSave = async () => {
@@ -574,6 +573,32 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
           console.log("[오류 발생]");
           console.log(data);
           throw data.resultMessage;
+        } else {
+          const isLastDataDeleted =
+            mainDataResult.data.length == 0 && filters.pgNum > 1;
+            if (isLastDataDeleted) {
+              setPage({
+                skip:
+                  filters.pgNum == 1 || filters.pgNum == 0
+                    ? 0
+                    : PAGE_SIZE * (filters.pgNum - 2),
+                take: PAGE_SIZE,
+              });
+              setFilters((prev) => ({
+                ...prev,
+                find_row_value: "",
+                pgNum: prev.pgNum - 1 ,
+                isSearch: true,
+              }));
+            } else {
+              const datas = mainDataResult.data.filter((item) => item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0])[0];
+              setFilters((prev) => ({
+                ...prev,
+                find_row_value: datas.meetingnum + "_" + datas.meetingseq.toString(),
+                pgNum: prev.pgNum,
+                isSearch: true,
+              }));
+            }
         }
       }
 
@@ -621,9 +646,10 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
           console.log(data);
           throw data.resultMessage;
         } else {
+          const datas = mainDataResult.data.filter((item) => item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0])[0];
           setFilters((prev) => ({
             ...prev,
-            find_row_value: data.returnString,
+            find_row_value: datas.meetingnum + "_" + datas.meetingseq.toString(),
             isSearch: true,
           }));
         }
