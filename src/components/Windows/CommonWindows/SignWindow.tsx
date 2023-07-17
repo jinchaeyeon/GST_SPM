@@ -387,7 +387,21 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
             total: prev.total,
           };
         });
+      } else {
+        setTempResult((prev) => {
+          return {
+            data: mainDataResult.data,
+            total: prev.total,
+          };
+        });
       }
+    } else {
+      setTempResult((prev) => {
+        return {
+          data: mainDataResult.data,
+          total: prev.total,
+        };
+      });
     }
   };
 
@@ -576,29 +590,34 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
         } else {
           const isLastDataDeleted =
             mainDataResult.data.length == 0 && filters.pgNum > 1;
-            if (isLastDataDeleted) {
-              setPage({
-                skip:
-                  filters.pgNum == 1 || filters.pgNum == 0
-                    ? 0
-                    : PAGE_SIZE * (filters.pgNum - 2),
-                take: PAGE_SIZE,
-              });
-              setFilters((prev) => ({
-                ...prev,
-                find_row_value: "",
-                pgNum: prev.pgNum - 1 ,
-                isSearch: true,
-              }));
-            } else {
-              const datas = mainDataResult.data.filter((item) => item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0])[0];
-              setFilters((prev) => ({
-                ...prev,
-                find_row_value: datas.meetingnum + "_" + datas.meetingseq.toString(),
-                pgNum: prev.pgNum,
-                isSearch: true,
-              }));
-            }
+          if (isLastDataDeleted) {
+            setPage({
+              skip:
+                filters.pgNum == 1 || filters.pgNum == 0
+                  ? 0
+                  : PAGE_SIZE * (filters.pgNum - 2),
+              take: PAGE_SIZE,
+            });
+            setFilters((prev) => ({
+              ...prev,
+              find_row_value: "",
+              pgNum: prev.pgNum - 1,
+              isSearch: true,
+            }));
+          } else {
+            const datas = mainDataResult.data.filter(
+              (item) =>
+                item[DATA_ITEM_KEY] ==
+                Object.getOwnPropertyNames(selectedState)[0]
+            )[0];
+            setFilters((prev) => ({
+              ...prev,
+              find_row_value:
+                datas.meetingnum + "_" + datas.meetingseq.toString(),
+              pgNum: prev.pgNum,
+              isSearch: true,
+            }));
+          }
         }
       }
 
@@ -646,10 +665,15 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
           console.log(data);
           throw data.resultMessage;
         } else {
-          const datas = mainDataResult.data.filter((item) => item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0])[0];
+          const datas = mainDataResult.data.filter(
+            (item) =>
+              item[DATA_ITEM_KEY] ==
+              Object.getOwnPropertyNames(selectedState)[0]
+          )[0];
           setFilters((prev) => ({
             ...prev,
-            find_row_value: datas.meetingnum + "_" + datas.meetingseq.toString(),
+            find_row_value:
+              datas.meetingnum + "_" + datas.meetingseq.toString(),
             isSearch: true,
           }));
         }
