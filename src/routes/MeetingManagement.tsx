@@ -271,6 +271,9 @@ const App = () => {
   const [detailRowsState, setDetailRowsState] = useState<State>({
     sort: [],
   });
+  const [tempState, setTempState] = useState<State>({
+    sort: [],
+  });
   const [mainDataResult, setMainDataResult] = useState<DataResult>(
     process([], mainDataState)
   );
@@ -280,7 +283,9 @@ const App = () => {
   const [detailRows, setDetailRows] = useState<DataResult>(
     process([], detailRowsState)
   );
-
+  const [tempResult, setTempResult] = useState<DataResult>(
+    process([], tempState)
+  );
   const [selectedState, setSelectedState] = useState<{
     [id: string]: boolean | number[];
   }>({});
@@ -931,7 +936,6 @@ const App = () => {
       item[DETAIL_ITEM_KEY] === dataItem[DETAIL_ITEM_KEY]
         ? {
             ...item,
-            rowstatus: item.rowstatus === "N" ? "N" : "U",
             [EDIT_FIELD]: field,
           }
         : {
@@ -939,7 +943,12 @@ const App = () => {
             [EDIT_FIELD]: undefined,
           }
     );
-
+    setTempResult((prev) => {
+      return {
+        data: newData,
+        total: prev.total,
+      };
+    });
     setDetailRows((prev) => {
       return {
         data: newData,
@@ -949,17 +958,50 @@ const App = () => {
   };
 
   const exitEdit = () => {
-    const newData = detailRows.data.map((item) => ({
-      ...item,
-      [EDIT_FIELD]: undefined,
-    }));
-
-    setDetailRows((prev) => {
-      return {
-        data: newData,
-        total: prev.total,
-      };
-    });
+    if (tempResult.data != detailRows.data) {
+      const newData = detailRows.data.map((item) =>
+        item[DETAIL_ITEM_KEY] ==
+        Object.getOwnPropertyNames(detailSelectedState)[0]
+          ? {
+              ...item,
+              rowstatus: item.rowstatus === "N" ? "N" : "U",
+              [EDIT_FIELD]: undefined,
+            }
+          : {
+              ...item,
+              [EDIT_FIELD]: undefined,
+            }
+      );
+      setTempResult((prev) => {
+        return {
+          data: newData,
+          total: prev.total,
+        };
+      });
+      setDetailRows((prev) => {
+        return {
+          data: newData,
+          total: prev.total,
+        };
+      });
+    } else {
+      const newData = detailRows.data.map((item) => ({
+        ...item,
+        [EDIT_FIELD]: undefined,
+      }));
+      setTempResult((prev) => {
+        return {
+          data: newData,
+          total: prev.total,
+        };
+      });
+      setDetailRows((prev) => {
+        return {
+          data: newData,
+          total: prev.total,
+        };
+      });
+    }
   };
 
   const customCellRender = (td: any, props: any) => (
@@ -1127,7 +1169,26 @@ const App = () => {
       let newRows = [...detailRows.data];
       const item = newRows.splice(selectedIndex, 1)[0];
       newRows.splice(selectedIndex - 1, 0, item);
-      setDetailRows((prev) => process(newRows, detailRowsState));
+      const newDatas = newRows.map((item) =>
+        item[DETAIL_ITEM_KEY] == selectedKey
+          ? {
+              ...item,
+              rowstatus: item.rowstatus == "N" ? "N" : "U",
+              [EDIT_FIELD]: undefined,
+            }
+          : item[DETAIL_ITEM_KEY] === newRows[selectedIndex][DETAIL_ITEM_KEY]
+          ? {
+              ...item,
+              rowstatus: item.rowstatus == "N" ? "N" : "U",
+              [EDIT_FIELD]: undefined,
+            }
+          : {
+              ...item,
+              [EDIT_FIELD]: undefined,
+            }
+      );
+
+      setDetailRows((prev) => process(newDatas, detailRowsState));
     } else {
       console.log("Row is already at the top");
     }
@@ -1144,7 +1205,25 @@ const App = () => {
       let newRows = [...detailRows.data];
       const item = newRows.splice(selectedIndex, 1)[0];
       newRows.splice(selectedIndex + 1, 0, item);
-      setDetailRows((prev) => process(newRows, detailRowsState));
+      const newDatas = newRows.map((item) =>
+        item[DETAIL_ITEM_KEY] == selectedKey
+          ? {
+              ...item,
+              rowstatus: item.rowstatus == "N" ? "N" : "U",
+              [EDIT_FIELD]: undefined,
+            }
+          : item[DETAIL_ITEM_KEY] === newRows[selectedIndex][DETAIL_ITEM_KEY]
+          ? {
+              ...item,
+              rowstatus: item.rowstatus == "N" ? "N" : "U",
+              [EDIT_FIELD]: undefined,
+            }
+          : {
+              ...item,
+              [EDIT_FIELD]: undefined,
+            }
+      );
+      setDetailRows((prev) => process(newDatas, detailRowsState));
     } else {
       console.log("Row is already at the bottom");
     }
@@ -1549,14 +1628,15 @@ const App = () => {
                           themeColor={"primary"}
                           style={{ width: "100%" }}
                           onClick={() => {
-                            if(detailData.work_type == "N"){
-                              alert("회의록 저장 후 등록할 수 있습니다.")
-                            }
-                            else if(Object.getOwnPropertyNames(selectedState)[0] != undefined) {
-                              setSignWindowVisible(true)
-                            } 
-                            else {
-                              alert("선택된 데이터가 없습니다.")
+                            if (detailData.work_type == "N") {
+                              alert("회의록 저장 후 등록할 수 있습니다.");
+                            } else if (
+                              Object.getOwnPropertyNames(selectedState)[0] !=
+                              undefined
+                            ) {
+                              setSignWindowVisible(true);
+                            } else {
+                              alert("선택된 데이터가 없습니다.");
                             }
                           }}
                         >

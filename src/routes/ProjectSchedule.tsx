@@ -205,10 +205,15 @@ const App = () => {
   const [gridDataState, setGridDataState] = useState<State>({
     sort: [],
   });
+  const [tempState, setTempState] = useState<State>({
+    sort: [],
+  });
   const [gridData, setGridData] = useState<DataResult>(
-    process([], gridDataState),
+    process([], gridDataState)
   );
-
+  const [tempResult, setTempResult] = useState<DataResult>(
+    process([], tempState)
+  );
   const [gridSelectedState, setGridSelectedState] = useState<{
     [id: string]: boolean | number[];
   }>({});
@@ -375,6 +380,7 @@ const App = () => {
       setProjectsData(rows);
     }
   };
+
   const fetchProjectDetail = async (devmngnum: string) => {
     let data: any;
     const para = {
@@ -414,7 +420,7 @@ const App = () => {
           endStrig: dateformat2(row.end_time),
           progress: row.rate,
           isChild: true,
-        }),
+        })
       );
 
       // 일정항목과 일정을 합쳐서 하나의 Task 데이터로 만들고 데이터 순서 정렬
@@ -422,7 +428,7 @@ const App = () => {
 
       // 디펜던시(화살표) 데이터
       const dependancyRows: TDependency[] = data.tables[2].Rows.filter(
-        (row: any) => row.guid !== "" && row.parent_guid !== "",
+        (row: any) => row.guid !== "" && row.parent_guid !== ""
       ).map((row: any, idx: number) => ({
         ...row,
         id: idx,
@@ -432,6 +438,9 @@ const App = () => {
       }));
 
       setGridData(process(childRows, gridDataState));
+      if (Object.getOwnPropertyNames(gridSelectedState)[0] == undefined) {
+        setGridSelectedState({ [childRows[0].id]: true });
+      }
       setTask(taskRows);
       setDependency(dependancyRows);
 
@@ -670,6 +679,7 @@ const App = () => {
   };
 
   const search = () => {
+    setGridSelectedState({});
     fetchProjectList();
     if (!projectValue) {
       alert("프로젝트 명은 필수 입력값입니다.");
@@ -706,15 +716,19 @@ const App = () => {
       item[DATA_ITEM_KEY] === dataItem[DATA_ITEM_KEY]
         ? {
             ...item,
-            rowstatus: item.rowstatus === "N" ? "N" : "U",
             [EDIT_FIELD]: field,
           }
         : {
             ...item,
             [EDIT_FIELD]: undefined,
-          },
+          }
     );
-
+    setTempResult((prev) => {
+      return {
+        data: newData,
+        total: prev.total,
+      };
+    });
     setGridData((prev) => {
       return {
         data: newData,
@@ -724,17 +738,49 @@ const App = () => {
   };
 
   const exitEdit = () => {
-    const newData = gridData.data.map((item) => ({
-      ...item,
-      [EDIT_FIELD]: undefined,
-    }));
-
-    setGridData((prev) => {
-      return {
-        data: newData,
-        total: prev.total,
-      };
-    });
+    if (tempResult.data != gridData.data) {
+      const newData = gridData.data.map((item) =>
+        item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(gridSelectedState)[0]
+          ? {
+              ...item,
+              rowstatus: item.rowstatus === "N" ? "N" : "U",
+              [EDIT_FIELD]: undefined,
+            }
+          : {
+              ...item,
+              [EDIT_FIELD]: undefined,
+            }
+      );
+      setTempResult((prev) => {
+        return {
+          data: newData,
+          total: prev.total,
+        };
+      });
+      setGridData((prev) => {
+        return {
+          data: newData,
+          total: prev.total,
+        };
+      });
+    } else {
+      const newData = gridData.data.map((item) => ({
+        ...item,
+        [EDIT_FIELD]: undefined,
+      }));
+      setTempResult((prev) => {
+        return {
+          data: newData,
+          total: prev.total,
+        };
+      });
+      setGridData((prev) => {
+        return {
+          data: newData,
+          total: prev.total,
+        };
+      });
+    }
   };
 
   const customCellRender = (td: any, props: any) => (
@@ -761,26 +807,29 @@ const App = () => {
 
     const guid = uuidv4();
 
-    let newRows = [
-      {
-        rowstatus: "N",
-        [DATA_ITEM_KEY]: getUuidForString(guid),
-        guid,
-        start: new Date(),
-        end,
-        progress: 0,
-        client_finexpdt: null,
-      },
-      ...gridData.data,
-    ];
+    const newRows = {
+      rowstatus: "N",
+      [DATA_ITEM_KEY]: getUuidForString(guid),
+      guid,
+      start: new Date(),
+      end,
+      progress: 0,
+      client_finexpdt: null,
+    };
 
-    setGridData(process(newRows, gridDataState));
+    setGridSelectedState({ [newRows.id]: true });
+    setGridData((prev) => {
+      return {
+        data: [newRows, ...prev.data],
+        total: prev.total + 1,
+      };
+    });
   };
 
   const removeGridRow = () => {
     const selectedKey = Object.keys(gridSelectedState)[0];
     const selectedIndex = gridData.data.findIndex(
-      (row) => row[DATA_ITEM_KEY].toString() === selectedKey,
+      (row) => row[DATA_ITEM_KEY].toString() === selectedKey
     );
 
     if (selectedIndex !== -1) {
@@ -804,7 +853,7 @@ const App = () => {
       }
 
       const selectedData = gridData.data.find(
-        (item) => item[DATA_ITEM_KEY].toString() === selectedKey,
+        (item) => item[DATA_ITEM_KEY].toString() === selectedKey
       );
 
       deletedGridData.push(selectedData);
@@ -1041,10 +1090,10 @@ const App = () => {
   const onDependencyInserting = (e: DependencyInsertingEvent) => {
     const { predecessorId, successorId } = e.values;
     const successorData = task.find(
-      (item) => item[DATA_ITEM_KEY] === successorId,
+      (item) => item[DATA_ITEM_KEY] === successorId
     );
     const predecessorData = task.find(
-      (item) => item[DATA_ITEM_KEY] === predecessorId,
+      (item) => item[DATA_ITEM_KEY] === predecessorId
     );
 
     if (!successorData?.isChild || !predecessorData?.isChild) {
@@ -1263,7 +1312,7 @@ const App = () => {
                   ...row,
                   [SELECTED_FIELD]: gridSelectedState[gridIdGetter(row)],
                 })),
-                gridDataState,
+                gridDataState
               )}
               {...gridDataState}
               onDataStateChange={onGridDataStateChange}
@@ -1354,7 +1403,7 @@ const App = () => {
               <GridColumn
                 field="guid"
                 title="Guid"
-                width={150}
+                width={240}
                 editable={false}
               />
             </Grid>

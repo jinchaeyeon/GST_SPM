@@ -122,10 +122,15 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
   const [mainDataState, setMainDataState] = useState<State>({
     sort: [],
   });
+  const [tempState, setTempState] = useState<State>({
+    sort: [],
+  });
   const [mainDataResult, setMainDataResult] = useState<DataResult>(
     process([], mainDataState)
   );
-
+  const [tempResult, setTempResult] = useState<DataResult>(
+    process([], tempState)
+  );
   const [filters, setFilters] = useState({
     orgdiv: "01",
     meetingnum: number != undefined ? number : "",
@@ -170,16 +175,23 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
       const totalRowCnt = data.tables[0].TotalRowCount;
       const rows = data.tables[0].Rows.map((item: any) => ({
         ...item,
+        rowstatus:
+          item.rowstatus == null ||
+          item.rowstatus == "" ||
+          item.rowstatus == undefined
+            ? ""
+            : item.rowstatus,
         signature:
           item.signature == "" ? "" : "data:image/png;base64," + item.signature,
       }));
- 
+
       if (filters.find_row_value !== "") {
         // find_row_value 행으로 스크롤 이동
         if (gridRef.current) {
           const findRowIndex = rows.findIndex(
             (row: any) =>
-              (row.meetingnum + "_" + (row.meetingseq).toString()) == filters.find_row_value
+              row.meetingnum + "_" + row.meetingseq.toString() ==
+              filters.find_row_value
           );
           targetRowIndex = findRowIndex;
         }
@@ -207,7 +219,8 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
             ? rows[0]
             : rows.find(
                 (row: any) =>
-                (row.meetingnum + "_" + (row.meetingseq).toString()) == filters.find_row_value
+                  row.meetingnum + "_" + row.meetingseq.toString() ==
+                  filters.find_row_value
               );
 
         setSelectedState({ [selectedRow[DATA_ITEM_KEY]]: true });
@@ -311,12 +324,7 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
       item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
         ? {
             ...item,
-            rowstatus:
-              item.is_lock == true || item.is_lock == "Y"
-                ? ""
-                : item.rowstatus === "N"
-                ? "N"
-                : "U",
+            rowstatus: item.rowstatus == "N" ? item.rowstatus : "U",
             signature:
               item.is_lock == true || item.is_lock == "Y"
                 ? item.signature
@@ -326,7 +334,12 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
             ...item,
           }
     );
-
+    setTempResult((prev) => {
+      return {
+        data: newData,
+        total: prev.total,
+      };
+    });
     setMainDataResult((prev) => {
       return {
         data: newData,
@@ -336,7 +349,10 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
   }, [information]);
 
   const enterEdit3 = (dataItem: any, field: string) => {
-    if (field != "rowstatus" && !(dataItem.is_lock == "Y" || dataItem.is_lock == true)) {
+    if (
+      field != "rowstatus" &&
+      !(dataItem.is_lock == "Y" || dataItem.is_lock == true)
+    ) {
       let valid = true;
       if (field == "is_lock" && isAdmin == false) {
         valid = false;
@@ -346,7 +362,6 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
           item[DATA_ITEM_KEY] === dataItem[DATA_ITEM_KEY]
             ? {
                 ...item,
-                rowstatus: item.rowstatus === "N" ? "N" : "U",
                 [EDIT_FIELD]: field,
               }
             : {
@@ -354,7 +369,12 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
                 [EDIT_FIELD]: undefined,
               }
         );
-
+        setTempResult((prev) => {
+          return {
+            data: newData,
+            total: prev.total,
+          };
+        });
         setMainDataResult((prev) => {
           return {
             data: newData,
@@ -366,16 +386,49 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
   };
 
   const exitEdit3 = () => {
-    const newData = mainDataResult.data.map((item) => ({
-      ...item,
-      [EDIT_FIELD]: undefined,
-    }));
-    setMainDataResult((prev) => {
-      return {
-        data: newData,
-        total: prev.total,
-      };
-    });
+    if (tempResult.data != mainDataResult.data) {
+      const newData = mainDataResult.data.map((item) =>
+        item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
+          ? {
+              ...item,
+              rowstatus: item.rowstatus == "N" ? "N" : "U",
+              [EDIT_FIELD]: undefined,
+            }
+          : {
+              ...item,
+              [EDIT_FIELD]: undefined,
+            }
+      );
+      setTempResult((prev) => {
+        return {
+          data: newData,
+          total: prev.total,
+        };
+      });
+      setMainDataResult((prev) => {
+        return {
+          data: newData,
+          total: prev.total,
+        };
+      });
+    } else {
+      const newData = mainDataResult.data.map((item) => ({
+        ...item,
+        [EDIT_FIELD]: undefined,
+      }));
+      setTempResult((prev) => {
+        return {
+          data: newData,
+          total: prev.total,
+        };
+      });
+      setMainDataResult((prev) => {
+        return {
+          data: newData,
+          total: prev.total,
+        };
+      });
+    }
   };
 
   const onDeleteClick = (e: any) => {
@@ -418,10 +471,12 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
 
       if (isLastDataDeleted) {
         setPage({
-          skip: ((filters.pgNum == 1) || (filters.pgNum == 0)) ? 0: PAGE_SIZE * (filters.pgNum - 2),
+          skip:
+            filters.pgNum == 1 || filters.pgNum == 0
+              ? 0
+              : PAGE_SIZE * (filters.pgNum - 2),
           take: PAGE_SIZE,
         });
-
       }
 
       setMainDataResult((prev) => ({
@@ -436,10 +491,10 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
 
   const onAddClick = () => {
     mainDataResult.data.map((item) => {
-      if(item.num > temp){
-        temp = item.num
+      if (item.num > temp) {
+        temp = item.num;
       }
-  })
+    });
     const newDataItem = {
       [DATA_ITEM_KEY]: ++temp,
       is_lock: "N",
@@ -614,12 +669,6 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
           data={process(
             mainDataResult.data.map((row) => ({
               ...row,
-              rowstatus:
-                row.rowstatus == null ||
-                row.rowstatus == "" ||
-                row.rowstatus == undefined
-                  ? ""
-                  : row.rowstatus,
               [SELECTED_FIELD]: selectedState[idGetter(row)], //선택된 데이터
             })),
             mainDataState

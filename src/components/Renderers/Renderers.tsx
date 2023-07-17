@@ -89,7 +89,7 @@ export const RowRender = (props: any) => {
   const trProps = {
     ...props.tr.props,
     onBlur: () => {
-      //props.exitEdit();
+      props.exitEdit();
     },
   };
   return React.cloneElement(props.tr, { ...trProps }, props.tr.props.children);
