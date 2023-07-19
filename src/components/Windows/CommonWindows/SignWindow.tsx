@@ -116,6 +116,7 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
   };
 
   const onClose = () => {
+    deletedMainRows = [];
     setVisible(false);
   };
 
@@ -192,7 +193,7 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
         if (gridRef.current) {
           const findRowIndex = rows.findIndex(
             (row: any) =>
-              row.meetingnum + "_" + row.meetingseq.toString() ==
+              row.meetingseq.toString() ==
               filters.find_row_value
           );
           targetRowIndex = findRowIndex;
@@ -221,7 +222,7 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
             ? rows[0]
             : rows.find(
                 (row: any) =>
-                  row.meetingnum + "_" + row.meetingseq.toString() ==
+                  row.meetingseq.toString() ==
                   filters.find_row_value
               );
 
@@ -452,48 +453,50 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
   };
 
   const onDeleteClick = (e: any) => {
-    if (
-      mainDataResult.data.filter(
-        (item) => item.num == Object.getOwnPropertyNames(selectedState)[0]
-      )[0].is_lock == "Y" ||
-      mainDataResult.data.filter(
-        (item) => item.num == Object.getOwnPropertyNames(selectedState)[0]
-      )[0].is_lock == true
-    ) {
-      alert("해당 행은 수정 잠금이 설정되어있습니다. ");
-    } else {
-      let newData: any[] = [];
-      let Object: any[] = [];
-      let Object2: any[] = [];
-      let data;
-
-      mainDataResult.data.forEach((item: any, index: number) => {
-        if (!selectedState[item[DATA_ITEM_KEY]]) {
-          newData.push(item);
-          Object2.push(index);
-        } else {
-          const newData2 = {
-            ...item,
-            rowstatus: "D",
-          };
-          Object.push(index);
-          deletedMainRows.push(newData2);
-        }
-      });
-
-      if (Math.min(...Object) < Math.min(...Object2)) {
-        data = mainDataResult.data[Math.min(...Object2)];
+    if (mainDataResult.data.length > 0) {
+      if (
+        mainDataResult.data.filter(
+          (item) => item.num == Object.getOwnPropertyNames(selectedState)[0]
+        )[0].is_lock == "Y" ||
+        mainDataResult.data.filter(
+          (item) => item.num == Object.getOwnPropertyNames(selectedState)[0]
+        )[0].is_lock == true
+      ) {
+        alert("해당 행은 수정 잠금이 설정되어있습니다. ");
       } else {
-        data = mainDataResult.data[Math.min(...Object) - 1];
-      }
+        let newData: any[] = [];
+        let Object: any[] = [];
+        let Object2: any[] = [];
+        let data;
 
-      setMainDataResult((prev) => ({
-        data: newData,
-        total: prev.total - Object.length,
-      }));
-      setSelectedState({
-        [data != undefined ? data[DATA_ITEM_KEY] : newData[0]]: true,
-      });
+        mainDataResult.data.forEach((item: any, index: number) => {
+          if (!selectedState[item[DATA_ITEM_KEY]]) {
+            newData.push(item);
+            Object2.push(index);
+          } else {
+            const newData2 = {
+              ...item,
+              rowstatus: "D",
+            };
+            Object.push(index);
+            deletedMainRows.push(newData2);
+          }
+        });
+
+        if (Math.min(...Object) < Math.min(...Object2)) {
+          data = mainDataResult.data[Math.min(...Object2)];
+        } else {
+          data = mainDataResult.data[Math.min(...Object) - 1];
+        }
+
+        setMainDataResult((prev) => ({
+          data: newData,
+          total: prev.total - Object.length,
+        }));
+        setSelectedState({
+          [data != undefined ? data[DATA_ITEM_KEY] : newData[0]]: true,
+        });
+      }
     }
   };
 
@@ -613,7 +616,9 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
             setFilters((prev) => ({
               ...prev,
               find_row_value:
-                datas.meetingnum + "_" + datas.meetingseq.toString(),
+                datas != undefined
+                  ? data.returnString
+                  : "",
               pgNum: prev.pgNum,
               isSearch: true,
             }));
@@ -673,7 +678,9 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
           setFilters((prev) => ({
             ...prev,
             find_row_value:
-              datas.meetingnum + "_" + datas.meetingseq.toString(),
+              datas != undefined
+                ? data.returnString
+                : "",
             isSearch: true,
           }));
         }
