@@ -49,6 +49,7 @@ import dateFieldsZh from "cldr-dates-full/main/zh/dateFields.json";
 import timeZoneNamesZh from "cldr-dates-full/main/zh/timeZoneNames.json";
 
 import koMessages from "./store/cultures/ko.json";
+import ProjectMaster from "./routes/ProjectMaster";
 
 load(
   likelySubtags,
@@ -242,6 +243,11 @@ const AppInner: React.FC = () => {
                 <AuthRoute
                   path="/ProjectSchedule"
                   component={ProjectSchedule}
+                  exact
+                />
+                                <AuthRoute
+                  path="/ProjectMaster"
+                  component={ProjectMaster}
                   exact
                 />
               </PanelBarNavContainer>

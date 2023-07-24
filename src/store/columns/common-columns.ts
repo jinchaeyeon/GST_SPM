@@ -42,14 +42,52 @@ export const projectItemsColumns = [
 export const dateTypeColumns = [
   {
     field: "name",
-    header: "일자구분",
     width: 150,
   },
 ];
+
+
+export const dataTypeColumns = [
+  {
+    field: "code_name",
+    width: 150,
+  },
+];
+
+export const dataTypeColumns2 = [
+  {
+    field: "sub_code",
+    header: "code",
+    width: 150,
+  },
+  {
+    field: "code_name",
+    header: "name",
+    width: 150,
+  },
+];
+
+
 export const userColumns = [
   {
+    field: "user_id",
+    header: "사번",
+    width: 100,
+  },
+  {
     field: "user_name",
-    header: "담당자명",
+    header: "성명",
+    width: 150,
+  },
+];
+
+export const custTypeColumns = [
+  {
+    field: "custcd",
+    width: 100,
+  },
+  {
+    field: "custnm",
     width: 150,
   },
 ];

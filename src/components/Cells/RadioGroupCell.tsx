@@ -8,6 +8,7 @@ import { RADIO_GROUP_DEFAULT_DATA } from "../CommonString";
 
 interface CustomCellProps extends GridCellProps {
   bizComponentData: any;
+  disabled? : boolean;
 }
 const RadioGroupCell = (props: CustomCellProps) => {
   const {
@@ -17,6 +18,7 @@ const RadioGroupCell = (props: CustomCellProps) => {
     field = "",
     render,
     onChange,
+    disabled = false,
     bizComponentData,
   } = props;
 
@@ -51,6 +53,7 @@ const RadioGroupCell = (props: CustomCellProps) => {
         data={newRadioGroup}
         layout={"horizontal"}
         value={value}
+        disabled={disabled}
         onChange={onChangeHandle}
       />
     </td>
