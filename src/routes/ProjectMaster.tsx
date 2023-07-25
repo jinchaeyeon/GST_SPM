@@ -211,7 +211,9 @@ const ValueCodeCell = (props: GridCellProps) => {
 
 const ListRadioCell = (props: GridCellProps) => {
   const { listRadioItems } = useContext(ListRadioContext);
-
+  if (props.rowType === "groupHeader") {
+    return null;
+  }
   return listRadioItems ? (
     <RadioGroupCell bizComponentData={listRadioItems} {...props} />
   ) : (
@@ -3043,6 +3045,53 @@ const App = () => {
     setDataResult: setSubDataResult2,
   };
 
+  const CustomCheckBoxCell5 = (props: GridCellProps) => {
+    const { ariaColumnIndex, columnIndex, dataItem, field } = props;
+
+    if (props.rowType === "groupHeader") {
+      return null;
+    }
+
+    const handleChange = () => {
+      if(field != undefined){
+        const newData = subDataResult.map((items) =>
+        items.value == dataItem.group_menu_name
+          ? {
+              ...items,
+              items: items.items.map((item: any) =>
+                item[SUB_DATA_ITEM_KEY] === dataItem[SUB_DATA_ITEM_KEY]
+                  ? {
+                      ...item,
+                      rowstatus: item.rowstatus == "N" ? "N" : "U",
+                      [field]:
+                      typeof item[field] == "boolean"
+                        ? !item[field]
+                        : item[field] == "Y"
+                        ? false
+                        : true,
+                      [EDIT_FIELD]: field,
+                    }
+                  : {
+                      ...item,
+                      [EDIT_FIELD]: undefined,
+                    }
+              ),
+            }
+          : items
+        );
+  
+        setSubDataResult(newData);
+        setTempResult(newData);
+      }
+    };
+
+    return (
+      <td style={{ textAlign: "center" }}>
+        <Checkbox value={dataItem[field == undefined ? "" : field]} onClick={handleChange}></Checkbox>
+      </td> 
+    );
+  };
+
   return (
     <>
       <TitleContainer>
@@ -3560,6 +3609,8 @@ const App = () => {
                               ...item,
                               items: item.items.map((row: any) => ({
                                 ...row,
+                                useyn : row.useyn == "Y" ? true : row.useyn == "N" ? false : row.useyn,
+                                CustSignyn: row.CustSignyn == "Y" ? true : row.CustSignyn == "N" ? false : row.CustSignyn,
                                 [SELECTED_FIELD]:
                                   selectedsubDataState[idGetter2(row)], //선택된 데이터
                               })),
@@ -3731,7 +3782,7 @@ const App = () => {
                               field="useyn"
                               title="사용여부"
                               width={80}
-                              cell={CheckBoxCell}
+                              cell={CustomCheckBoxCell5}
                             />
                             <GridColumn
                               field="remark"
@@ -3753,7 +3804,7 @@ const App = () => {
                               field="CustSignyn"
                               title="업체사인"
                               width={80}
-                              cell={CheckBoxCell}
+                              cell={CustomCheckBoxCell5}
                             />
                           </Grid>
                         </UserContext.Provider>
