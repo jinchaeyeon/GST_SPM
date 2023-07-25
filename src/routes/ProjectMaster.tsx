@@ -3644,6 +3644,7 @@ const App = () => {
                             groupable={true}
                             onExpandChange={onExpandChange}
                             expandField="expanded"
+                            lockGroups={true}
                           >
                             <GridColumn
                               field="rowstatus"
