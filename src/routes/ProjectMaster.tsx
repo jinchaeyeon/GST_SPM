@@ -5,12 +5,12 @@ import {
   process,
   State,
   filterBy,
+  GroupDescriptor,
+  groupBy,
+  GroupResult,
 } from "@progress/kendo-data-query";
 import { Button } from "@progress/kendo-react-buttons";
-import {
-  DatePicker,
-  DatePickerChangeEvent,
-} from "@progress/kendo-react-dateinputs";
+import { DatePicker } from "@progress/kendo-react-dateinputs";
 import {
   getSelectedState,
   Grid,
@@ -18,27 +18,18 @@ import {
   GridCellProps,
   GridColumn,
   GridDataStateChangeEvent,
-  GridEvent,
+  GridExpandChangeEvent,
   GridFooterCellProps,
   GridItemChangeEvent,
   GridPageChangeEvent,
   GridSelectionChangeEvent,
-  GridToolbar,
 } from "@progress/kendo-react-grid";
-import {
-  Checkbox,
-  CheckboxChangeEvent,
-  Input,
-  InputChangeEvent,
-  TextArea,
-} from "@progress/kendo-react-inputs";
+import { Checkbox, Input, TextArea } from "@progress/kendo-react-inputs";
 import { bytesToBase64 } from "byte-base64";
 import React, {
   useState,
-  CSSProperties,
   useRef,
   useEffect,
-  useCallback,
   createContext,
   useContext,
 } from "react";
@@ -58,18 +49,14 @@ import {
   TitleContainer,
 } from "../CommonStyled";
 import {
-  chkScrollHandler,
   convertDateToStr,
-  dateformat2,
   getGridItemChangedData,
-  getYn,
   handleKeyPressSearch,
-  toDate,
   UseParaPc,
-  getCodeFromValue,
-  extractDownloadFilename,
   isValidDate,
   dateformat,
+  rowsWithSelectedDataResult,
+  getGroupGridItemChangedData,
 } from "../components/CommonFunction";
 import {
   DEFAULT_ATTDATNUMS,
@@ -78,7 +65,6 @@ import {
   PAGE_SIZE,
   SELECTED_FIELD,
 } from "../components/CommonString";
-import RichEditor from "../components/RichEditor";
 import { useApi } from "../hooks/api";
 import {
   deletedAttadatnumsState,
@@ -86,24 +72,25 @@ import {
   loginResultState,
   unsavedAttadatnumsState,
 } from "../store/atoms";
-import { Iparameters, TEditorHandle } from "../store/types";
-import { IAttachmentData, ICustData, IPrjData } from "../hooks/interfaces";
-import ProjectsWindow from "../components/Windows/CommonWindows/ProjectsWindow";
+import { Iparameters } from "../store/types";
+import { IAttachmentData, ICustData } from "../hooks/interfaces";
+import ValueBoxWindow from "../components/Windows/CommonWindows/ValueBoxWindow";
 import CustomersWindow from "../components/Windows/CommonWindows/CustomersWindow";
 import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
 import CenterCell from "../components/Cells/CenterCell";
 import { CellRender, RowRender } from "../components/Renderers/Renderers";
+import {
+  CellRender as CellRender2,
+  RowRender as RowRender2,
+} from "../components/Renderers/GroupRenderers";
 import CheckBoxCell from "../components/Cells/CheckBoxCell";
 import DateCell from "../components/Cells/DateCell";
 import ComboBoxCell from "../components/Cells/ComboBoxCell";
 import {
-  ComboBoxChangeEvent,
   ComboBoxFilterChangeEvent,
   MultiColumnComboBox,
 } from "@progress/kendo-react-dropdowns";
-import NameCell from "../components/Cells/NameCell";
 import { useHistory } from "react-router-dom";
-import SignWindow from "../components/Windows/CommonWindows/SignWindow";
 import {
   dateTypeColumns,
   custTypeColumns,
@@ -114,12 +101,29 @@ import {
 import NumberCell from "../components/Cells/NumberCell";
 import ProgressCell from "../components/Cells/ProgressCell";
 import RadioGroupCell from "../components/Cells/RadioGroupCell";
+import { TabStrip, TabStripTab } from "@progress/kendo-react-layout";
+import RequiredHeader from "../components/RequiredHeader";
+import ValueBoxWindow2 from "../components/Windows/CommonWindows/ValueBoxWindow2";
+import {
+  setExpandedState,
+  setGroupIds,
+} from "@progress/kendo-react-data-tools";
 
 const DATA_ITEM_KEY = "devmngnum";
 const SUB_DATA_ITEM_KEY = "devmngseq";
+const SUB_DATA_ITEM_KEY2 = "idx";
 
 let targetRowIndex: null | number = null;
+let deletedRows: any[] = [];
+let temp = 0;
+let temp2 = 0;
+const processWithGroups = (data: any[], group: GroupDescriptor[]) => {
+  const newDataState = groupBy(data, group);
 
+  setGroupIds({ data: newDataState, group: group });
+
+  return newDataState;
+};
 const datetypeQueryStr = `SELECT 'A' as code, '사업시작일(계약일)' as name
 UNION ALL
 SELECT 'B' as code, '완료일' as name
@@ -240,7 +244,7 @@ const UserCell = (props: GridCellProps) => {
     <td />
   );
 };
-
+const initialGroup: GroupDescriptor[] = [{ field: "group_menu_name" }];
 const App = () => {
   const processApi = useApi();
   const setLoading = useSetRecoilState(isLoading);
@@ -248,17 +252,62 @@ const App = () => {
   const userId = loginResult ? loginResult.userId : "";
   const [pc, setPc] = useState("");
   UseParaPc(setPc);
+  const [tabSelected, setTabSelected] = React.useState(0);
+  const [group, setGroup] = React.useState(initialGroup);
+  // 삭제할 첨부파일 리스트를 담는 함수
+  const setDeletedAttadatnums = useSetRecoilState(deletedAttadatnumsState);
+
+  // 서버 업로드는 되었으나 DB에는 저장안된 첨부파일 리스트
+  const [unsavedAttadatnums, setUnsavedAttadatnums] = useRecoilState(
+    unsavedAttadatnumsState
+  );
   const idGetter = getter(DATA_ITEM_KEY);
   const idGetter2 = getter(SUB_DATA_ITEM_KEY);
+  const idGetter3 = getter(SUB_DATA_ITEM_KEY2);
   const history = useHistory();
   const filterRef = useRef<HTMLDivElement>(null);
   const [filter, setFilter] = React.useState<FilterDescriptor>();
+  const [filter2, setFilter2] = React.useState<FilterDescriptor>();
+  const [filter3, setFilter3] = React.useState<FilterDescriptor>();
+  const [filter4, setFilter4] = React.useState<FilterDescriptor>();
+  const [filter5, setFilter5] = React.useState<FilterDescriptor>();
+  const [filter6, setFilter6] = React.useState<FilterDescriptor>();
+  const [filter7, setFilter7] = React.useState<FilterDescriptor>();
   const handleFilterChange = (event: ComboBoxFilterChangeEvent) => {
     if (event) {
       setFilter(event.filter);
     }
   };
-
+  const handleFilterChange2 = (event: ComboBoxFilterChangeEvent) => {
+    if (event) {
+      setFilter2(event.filter);
+    }
+  };
+  const handleFilterChange3 = (event: ComboBoxFilterChangeEvent) => {
+    if (event) {
+      setFilter3(event.filter);
+    }
+  };
+  const handleFilterChange4 = (event: ComboBoxFilterChangeEvent) => {
+    if (event) {
+      setFilter4(event.filter);
+    }
+  };
+  const handleFilterChange5 = (event: ComboBoxFilterChangeEvent) => {
+    if (event) {
+      setFilter5(event.filter);
+    }
+  };
+  const handleFilterChange6 = (event: ComboBoxFilterChangeEvent) => {
+    if (event) {
+      setFilter6(event.filter);
+    }
+  };
+  const handleFilterChange7 = (event: ComboBoxFilterChangeEvent) => {
+    if (event) {
+      setFilter7(event.filter);
+    }
+  };
   const initialPageState = { skip: 0, take: PAGE_SIZE };
   const [page, setPage] = useState(initialPageState);
   const [workType, setWorkType] = useState("N");
@@ -266,24 +315,43 @@ const App = () => {
     sort: [],
   });
   const [subDataState, setSubDataState] = useState<State>({
+    group: [
+      {
+        field: "group_category_name",
+      },
+    ],
     sort: [],
   });
-  const [tempState, setTempState] = useState<State>({
+  const [subDataState2, setSubDataState2] = useState<State>({
     sort: [],
   });
+  const [tempState2, setTempState2] = useState<State>({
+    sort: [],
+  });
+  const [collapsedState, setCollapsedState] = React.useState<string[]>([]);
   const [mainDataResult, setMainDataResult] = useState<DataResult>(
     process([], mainDataState)
   );
-  const [subDataResult, setSubDataResult] = useState<DataResult>(
-    process([], subDataState)
+  const [subDataResult, setSubDataResult] = useState<GroupResult[]>(
+    processWithGroups([], initialGroup)
   );
-  const [tempResult, setTempResult] = useState<DataResult>(
-    process([], tempState)
+  const [subDataTotal, setSubDataTotal] = useState<number>(0);
+  const [subDataResult2, setSubDataResult2] = useState<DataResult>(
+    process([], subDataState2)
+  );
+  const [tempResult, setTempResult] = useState<GroupResult[]>(
+    processWithGroups([], initialGroup)
+  );
+  const [tempResult2, setTempResult2] = useState<DataResult>(
+    process([], tempState2)
   );
   const [selectedState, setSelectedState] = useState<{
     [id: string]: boolean | number[];
   }>({});
   const [selectedsubDataState, setSelectedsubDataState] = useState<{
+    [id: string]: boolean | number[];
+  }>({});
+  const [selectedsubDataState2, setSelectedsubDataState2] = useState<{
     [id: string]: boolean | number[];
   }>({});
   let gridRef: any = useRef(null);
@@ -356,10 +424,18 @@ const App = () => {
     const { value } = e.target;
     const name = e.target.props.name ?? "";
 
-    setInformation((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    if (name == "custnm") {
+      setInformation((prev) => ({
+        ...prev,
+        [name]: value,
+        custcd: value.custcd,
+      }));
+    } else {
+      setInformation((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
   };
 
   const search = () => {
@@ -371,6 +447,13 @@ const App = () => {
     ) {
       alert("필수항목을 입력해주세요");
     } else {
+      temp = 0;
+      temp2 = 0;
+      deletedRows = [];
+      // DB에 저장안된 첨부파일 서버에서 삭제
+      if (unsavedAttadatnums.attdatnums.length > 0)
+        setDeletedAttadatnums(unsavedAttadatnums);
+
       setPage(initialPageState); // 페이지 초기화
       setFilters((prev) => ({
         ...prev,
@@ -390,12 +473,23 @@ const App = () => {
   const [custWindowVisible, setCustWindowVisible] = useState<boolean>(false);
   const [attachmentsWindowVisible, setAttachmentsWindowVisible] =
     useState<boolean>(false);
+  const [valueboxWindowVisible, setValueBoxWindowVisible] =
+    useState<boolean>(false);
+  const [valueboxWindowVisible2, setValueBoxWindowVisible2] =
+    useState<boolean>(false);
   const onCustWndClick = () => {
     setCustWindowVisible(true);
   };
   const onAttachmentsWndClick = () => {
     setAttachmentsWindowVisible(true);
   };
+  const onValueBoxWndClick = () => {
+    setValueBoxWindowVisible(true);
+  };
+  const onValueBoxWndClick2 = () => {
+    setValueBoxWindowVisible2(true);
+  };
+
   const setCustData = (data: ICustData) => {
     setInformation((prev) => ({
       ...prev,
@@ -403,7 +497,78 @@ const App = () => {
       custnm: { custcd: data.custcd, custnm: data.custnm },
     }));
   };
+
+  const setValueBox = (data: any) => {
+    subDataResult.map((items) => {
+      items.items.map((item: any) => {
+        if (item[SUB_DATA_ITEM_KEY] > temp) {
+          temp = item[SUB_DATA_ITEM_KEY];
+        }
+      });
+    });
+    let newData: any[] = [];
+    data.map((item: any) => {
+      let newDataItem = {
+        [SUB_DATA_ITEM_KEY]: ++temp,
+        pgmid: item.code,
+        pgmnm: item.name,
+        value_code3: item.itemlvl3,
+        devdiv: "02",
+        prgrate: 0,
+        listyn: "A",
+        lvl: "B",
+        stdscore: 0,
+        modrate: 0,
+        fnscore: 0,
+        exptime: 0,
+        devperson: userId,
+        devstrdt: new Date(),
+        finexpdt: new Date(),
+        findt: "",
+        chkperson: "",
+        chkdt: "",
+        finamt: 0,
+        discscor: 0,
+        remark: "",
+        useyn: "Y",
+        DesignEstTime: new Date(),
+        DesignExphh: 0,
+        DesignExpmm: 0,
+        DesignStartDate: new Date(),
+        DesignEndEstDate: "",
+        DesignEndDate: "",
+        CustCheckDate: "",
+        CustSignyn: "N",
+        indicator: userId,
+        CustPerson: "",
+        rowstatus: "N",
+        groupId: "module",
+        group_menu_name: "",
+      };
+
+      newData.push(newDataItem);
+    });
+    subDataResult.map((items) => {
+      items.items.forEach((item: any, index: number) => {
+        newData.push(item);
+      });
+    });
+
+    setSubDataTotal(subDataTotal + 1);
+    const newDataState = processWithGroups(newData, group);
+    setSubDataResult(newDataState);
+    setSelectedsubDataState({
+      [newData[newData.length - 1][SUB_DATA_ITEM_KEY]]: true,
+    });
+  };
+
   const getAttachmentsData = (data: IAttachmentData) => {
+    if (!information.attdatnum) {
+      setUnsavedAttadatnums((prev) => ({
+        type: "project",
+        attdatnums: [...prev.attdatnums, ...[data.attdatnum]],
+      }));
+    }
     setInformation((prev) => ({
       ...prev,
       attdatnum: data.attdatnum,
@@ -518,7 +683,9 @@ const App = () => {
         "@p_devmngnum": "",
         "@p_code": "",
         "@p_name": "",
-        // "@p_find_row_value": filters.find_row_value,
+        "@p_find_row_value": filters.find_row_value,
+        "@p_type": "",
+        "@p_service_id": "",
       },
     };
     try {
@@ -615,7 +782,12 @@ const App = () => {
               user_id: selectedRow.pjtperson,
               user_name: pjtperson == undefined ? "" : pjtperson.user_name,
             },
-            progress_status: selectedRow.progress_status,
+            progress_status:
+              selectedRow.progress_status == "Y"
+                ? true
+                : selectedRow.progress_status == "N"
+                ? false
+                : selectedRow.progress_status,
             project: selectedRow.project,
             recdt: isValidDate(selectedRow.recdt)
               ? new Date(dateformat(selectedRow.recdt))
@@ -677,7 +849,12 @@ const App = () => {
               user_id: rows[0].pjtperson,
               user_name: pjtperson == undefined ? "" : pjtperson.user_name,
             },
-            progress_status: rows[0].progress_status,
+            progress_status:
+              rows[0].progress_status == "Y"
+                ? true
+                : rows[0].progress_status == "N"
+                ? false
+                : rows[0].progress_status,
             project: rows[0].project,
             recdt: isValidDate(rows[0].recdt)
               ? new Date(dateformat(rows[0].recdt))
@@ -720,13 +897,20 @@ const App = () => {
             user_id: userId,
             user_name: pjtperson == undefined ? "" : pjtperson.user_name,
           },
-          progress_status: "N",
+          progress_status: false,
           project: "",
           recdt: new Date(),
           remark: "",
           revperson: "",
         });
-        setSubDataResult(process([], subDataState));
+        const newDataState = processWithGroups([], group);
+        setSubDataResult(newDataState);
+        setSubDataResult2((prev) => {
+          return {
+            data: [],
+            total: 0,
+          };
+        });
         setWorkType("N");
       }
     } else {
@@ -774,6 +958,8 @@ const App = () => {
         "@p_devmngnum": subfilters.devmngnum,
         "@p_code": "",
         "@p_name": "",
+        "@p_type": "",
+        "@p_service_id": "",
         // "@p_find_row_value": filters.find_row_value,
       },
     };
@@ -784,28 +970,59 @@ const App = () => {
     }
 
     if (data.isSuccess === true) {
+      let idx = 0;
       const totalRowCnt = data.tables[0].TotalRowCount;
-      const rows = data.tables[0].Rows;
-
-      setSubDataResult((prev) => {
+      const rows = data.tables[0].Rows.map((row: any) => {
         return {
-          data: rows,
-          total: totalRowCnt,
+          ...row,
+          groupId: row.module + "module",
+          group_menu_name: row.module,
+          idx: idx++,
         };
       });
 
+      if (tabSelected == 0) {
+        const newDataState = processWithGroups(rows, group);
+        setSubDataTotal(totalRowCnt);
+        setSubDataResult(newDataState);
+      } else {
+        setSubDataResult2((prev) => {
+          return {
+            data: rows,
+            total: totalRowCnt,
+          };
+        });
+      }
+
       if (totalRowCnt > 0) {
-        const selectedRow =
-          subfilters.find_row_value == ""
-            ? rows[0]
-            : rows.find(
-                (row: any) =>
-                  row[SUB_DATA_ITEM_KEY] == subfilters.find_row_value
-              );
-        if (selectedRow != undefined) {
-          setSelectedsubDataState({ [selectedRow[SUB_DATA_ITEM_KEY]]: true });
+        if (tabSelected == 0) {
+          const selectedRow =
+            subfilters.find_row_value == ""
+              ? rows[0]
+              : rows.find(
+                  (row: any) =>
+                    row[SUB_DATA_ITEM_KEY] == subfilters.find_row_value
+                );
+          if (selectedRow != undefined) {
+            setSelectedsubDataState({ [selectedRow[SUB_DATA_ITEM_KEY]]: true });
+          } else {
+            setSelectedsubDataState({ [rows[0][SUB_DATA_ITEM_KEY]]: true });
+          }
         } else {
-          setSelectedsubDataState({ [rows[0][SUB_DATA_ITEM_KEY]]: true });
+          const selectedRow =
+            subfilters.find_row_value == ""
+              ? rows[0]
+              : rows.find(
+                  (row: any) =>
+                    row[SUB_DATA_ITEM_KEY2] == subfilters.find_row_value
+                );
+          if (selectedRow != undefined) {
+            setSelectedsubDataState2({
+              [selectedRow[SUB_DATA_ITEM_KEY2]]: true,
+            });
+          } else {
+            setSelectedsubDataState2({ [rows[0][SUB_DATA_ITEM_KEY2]]: true });
+          }
         }
       }
     } else {
@@ -1074,12 +1291,19 @@ const App = () => {
   const onSubSortChange = (e: any) => {
     setSubDataState((prev) => ({ ...prev, sort: e.sort }));
   };
+  const onSubSortChange2 = (e: any) => {
+    setSubDataState2((prev) => ({ ...prev, sort: e.sort }));
+  };
   const onMainDataStateChange = (event: GridDataStateChangeEvent) => {
     setMainDataState(event.dataState);
   };
   const onSubDataStateChange = (event: GridDataStateChangeEvent) => {
     setSubDataState(event.dataState);
   };
+  const onSubDataStateChange2 = (event: GridDataStateChangeEvent) => {
+    setSubDataState2(event.dataState);
+  };
+
   //메인 그리드 선택 이벤트 => 디테일 그리드 조회
   const onSelectionChange = (event: GridSelectionChangeEvent) => {
     const newSelectedState = getSelectedState({
@@ -1091,6 +1315,9 @@ const App = () => {
 
     const selectedIdx = event.startRowIndex;
     const selectedRowData = event.dataItems[selectedIdx];
+    // DB에 저장안된 첨부파일 서버에서 삭제
+    if (unsavedAttadatnums.attdatnums.length > 0)
+      setDeletedAttadatnums(unsavedAttadatnums);
 
     setSubFilters((prev) => ({
       ...prev,
@@ -1098,7 +1325,7 @@ const App = () => {
       pgNum: 1,
       isSearch: true,
     }));
- 
+
     const pjtmanager: any = usersData.find(
       (item: any) => item.user_name == selectedRowData.pjtmanager
     );
@@ -1147,7 +1374,12 @@ const App = () => {
         user_id: pjtperson == undefined ? "" : pjtperson.user_id,
         user_name: selectedRowData.pjtperson,
       },
-      progress_status: selectedRowData.progress_status,
+      progress_status:
+        selectedRowData.progress_status == "Y"
+          ? true
+          : selectedRowData.progress_status == "N"
+          ? false
+          : selectedRowData.progress_status,
       project: selectedRowData.project,
       recdt: isValidDate(selectedRowData.recdt)
         ? new Date(dateformat(selectedRowData.recdt))
@@ -1168,6 +1400,15 @@ const App = () => {
     setSelectedsubDataState(newSelectedState);
   };
 
+  const onSubSelectionChange2 = (event: GridSelectionChangeEvent) => {
+    const newSelectedState = getSelectedState({
+      event,
+      selectedState: selectedsubDataState2,
+      dataItemKey: SUB_DATA_ITEM_KEY2,
+    });
+    setSelectedsubDataState2(newSelectedState);
+  };
+
   //그리드 푸터
   const mainTotalFooterCell = (props: GridFooterCellProps) => {
     var parts = mainDataResult.total.toString().split(".");
@@ -1183,7 +1424,7 @@ const App = () => {
     );
   };
   const subTotalFooterCell = (props: GridFooterCellProps) => {
-    var parts = subDataResult.total.toString().split(".");
+    var parts = subDataTotal.toString().split(".");
     return (
       <td
         colSpan={props.colSpan}
@@ -1192,7 +1433,26 @@ const App = () => {
         {...{ [GRID_COL_INDEX_ATTRIBUTE]: 1 }}
       >
         총
-        {subDataResult.total == -1
+        {subDataTotal == -1
+          ? 0
+          : parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",") +
+            (parts[1] ? "." + parts[1] : "")}
+        건
+      </td>
+    );
+  };
+
+  const subTotalFooterCell2 = (props: GridFooterCellProps) => {
+    var parts = subDataResult2.total.toString().split(".");
+    return (
+      <td
+        colSpan={props.colSpan}
+        className={"k-grid-footer-sticky"}
+        style={props.style}
+        {...{ [GRID_COL_INDEX_ATTRIBUTE]: 1 }}
+      >
+        총
+        {subDataResult2.total == -1
           ? 0
           : parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",") +
             (parts[1] ? "." + parts[1] : "")}
@@ -1258,13 +1518,985 @@ const App = () => {
         user_id: userId,
         user_name: pjtperson == undefined ? "" : pjtperson.user_name,
       },
-      progress_status: "N",
+      progress_status: false,
       project: "",
       recdt: new Date(),
       remark: "",
       revperson: "",
     });
+    setSubDataTotal(0);
+    const newDataState = processWithGroups([], group);
+    setSubDataResult(newDataState);
     setWorkType("N");
+  };
+
+  const newData = setExpandedState({
+    data: subDataResult,
+    collapsedIds: collapsedState,
+  });
+
+  const onExpandChange = React.useCallback(
+    (event: GridExpandChangeEvent) => {
+      const item = event.dataItem;
+
+      if (item.groupId) {
+        const collapsedIds = !event.value
+          ? [...collapsedState, item.groupId]
+          : collapsedState.filter((groupId) => groupId != item.groupId);
+        setCollapsedState(collapsedIds);
+      }
+    },
+    [collapsedState]
+  );
+
+  const Delete = () => {
+    if (!window.confirm("삭제하시겠습니까?")) {
+      return false;
+    }
+    if (mainDataResult.data.length == 0) {
+      alert("데이터가 없습니다");
+    } else {
+      // 첨부파일 서버에서 삭제
+      if (unsavedAttadatnums.attdatnums.length > 0) {
+        // DB 저장안된 첨부파일
+        setDeletedAttadatnums(unsavedAttadatnums);
+      } else if (information.attdatnum || information.attdatnum_private) {
+        // DB 저장된 첨부파일
+        setDeletedAttadatnums({
+          type: "project",
+          attdatnums: [information.attdatnum, information.attdatnum_private],
+        });
+      }
+
+      const data = mainDataResult.data.filter(
+        (item) =>
+          item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
+      )[0];
+
+      setParaDataDeleted((prev) => ({
+        ...prev,
+        work_type: "D",
+        devmngnum: data.devmngnum,
+      }));
+    }
+  };
+
+  const Save = () => {
+    type TRowsArr = {
+      row_status: string[];
+      devmngseq_s: string[];
+      pgmid_s: string[];
+      pgmnm_s: string[];
+      value_code3: string[];
+      devdiv_s: string[];
+      prgrate_s: string[];
+      listyn_s: string[];
+      lvl_s: string[];
+      modrate_s: string[];
+      fnscore_s: string[];
+      exptime_s: string[];
+
+      devperson_s: string[];
+      devstrdt_s: string[];
+      finexpdt_s: string[];
+      findt_s: string[];
+      chkperson_s: string[];
+      chkdt_s: string[];
+      finamt_s: string[];
+      discscore_s: string[];
+      remark_s: string[];
+      useyn_s: string[];
+
+      DesignEstTime_s: string[];
+      DesignExphh_s: string[];
+      DesignExpmm_s: string[];
+      DesignStartDate_s: string[];
+      DesignEndEstDate_s: string[];
+      DesignEndDate_s: string[];
+      CustCheckDate_s: string[];
+      CustSignyn_s: string[];
+      indicator_s: string[];
+      CustPerson_s: string[];
+    };
+    type TRowsArr2 = {
+      row_status: string[];
+      guid: string[];
+      sort_order: string[];
+      date: string[];
+      title: string[];
+      finyn: string[];
+      is_monitoring: string[];
+    };
+
+    let rowsArr: TRowsArr = {
+      row_status: [],
+      devmngseq_s: [],
+      pgmid_s: [],
+      pgmnm_s: [],
+      value_code3: [],
+      devdiv_s: [],
+      prgrate_s: [],
+      listyn_s: [],
+      lvl_s: [],
+      modrate_s: [],
+      fnscore_s: [],
+      exptime_s: [],
+
+      devperson_s: [],
+      devstrdt_s: [],
+      finexpdt_s: [],
+      findt_s: [],
+      chkperson_s: [],
+      chkdt_s: [],
+      finamt_s: [],
+      discscore_s: [],
+      remark_s: [],
+      useyn_s: [],
+
+      DesignEstTime_s: [],
+      DesignExphh_s: [],
+      DesignExpmm_s: [],
+      DesignStartDate_s: [],
+      DesignEndEstDate_s: [],
+      DesignEndDate_s: [],
+      CustCheckDate_s: [],
+      CustSignyn_s: [],
+      indicator_s: [],
+      CustPerson_s: [],
+    };
+    let rowsArr2: TRowsArr2 = {
+      row_status: [],
+      guid: [],
+      sort_order: [],
+      date: [],
+      title: [],
+      finyn: [],
+      is_monitoring: [],
+    };
+
+    if (
+      parseDate(convertDateToStr(information.recdt)) == "" ||
+      information.custnm == "" ||
+      information.pjtmanager == "" ||
+      information.pjtperson == "" ||
+      parseDate(convertDateToStr(information.cotracdt)) == "" ||
+      parseDate(convertDateToStr(information.finexpdt)) == ""
+    ) {
+      alert("필수항목을 채워주세요.");
+    } else {
+      let dataItem: any[] = [];
+      subDataResult.map((items) => {
+        items.items.forEach((item: any, index: number) => {
+          if (
+            (item.rowstatus === "N" || item.rowstatus === "U") &&
+            item.rowstatus !== undefined
+          ) {
+            dataItem.push(item);
+          }
+        });
+      });
+      if (tabSelected == 0) {
+        dataItem.forEach((item: any) => {
+          const {
+            rowstatus,
+            devmngseq,
+            pgmid,
+            pgmnm,
+            value_code3,
+            devdiv,
+            prgrate,
+            listyn,
+            lvl,
+            modrate,
+            fnscore,
+            exptime,
+            devperson,
+            devstrdt,
+            finexpdt,
+            findt,
+            chkperson,
+            chkdt,
+            finamt,
+            discscore,
+            remark,
+            useyn,
+            DesignEstTime,
+            DesignExphh,
+            DesignExpmm,
+            DesignStartDate,
+            DesignEndEstDate,
+            DesignEndDate,
+            CustCheckDate,
+            CustSignyn,
+            indicator,
+            CustPerson,
+          } = item;
+
+          rowsArr.row_status.push(rowstatus);
+          rowsArr.devmngseq_s.push(devmngseq);
+          rowsArr.pgmid_s.push(pgmid);
+          rowsArr.pgmnm_s.push(pgmnm);
+          rowsArr.value_code3.push(value_code3);
+          rowsArr.devdiv_s.push(devdiv);
+          rowsArr.prgrate_s.push(prgrate);
+          rowsArr.listyn_s.push(listyn);
+          rowsArr.lvl_s.push(lvl);
+          rowsArr.modrate_s.push(modrate);
+          rowsArr.fnscore_s.push(fnscore);
+          rowsArr.exptime_s.push(exptime);
+
+          rowsArr.devperson_s.push(devperson);
+          rowsArr.devstrdt_s.push(
+            devstrdt.length > 8 ? devstrdt : convertDateToStr(devstrdt)
+          );
+          rowsArr.finexpdt_s.push(
+            finexpdt.length > 8 ? finexpdt : convertDateToStr(finexpdt)
+          );
+          rowsArr.findt_s.push(
+            findt.length > 8 ? findt : convertDateToStr(findt)
+          );
+          rowsArr.chkperson_s.push(chkperson);
+          rowsArr.chkdt_s.push(
+            chkdt.length > 8 ? chkdt : convertDateToStr(chkdt)
+          );
+          rowsArr.finamt_s.push(finamt);
+          rowsArr.discscore_s.push(discscore);
+          rowsArr.remark_s.push(remark);
+          rowsArr.useyn_s.push(
+            useyn == true ? "Y" : useyn == false ? "N" : useyn
+          );
+
+          rowsArr.DesignEstTime_s.push(
+            DesignEstTime.length > 8
+              ? DesignEstTime
+              : convertDateToStr(DesignEstTime)
+          );
+          rowsArr.DesignExphh_s.push(DesignExphh);
+          rowsArr.DesignExpmm_s.push(DesignExpmm);
+          rowsArr.DesignStartDate_s.push(
+            DesignStartDate.length > 8
+              ? DesignStartDate
+              : convertDateToStr(DesignStartDate)
+          );
+          rowsArr.DesignEndEstDate_s.push(
+            DesignEndEstDate.length > 8
+              ? DesignEndEstDate
+              : convertDateToStr(DesignEndEstDate)
+          );
+          rowsArr.DesignEndDate_s.push(
+            DesignEndDate.length > 8
+              ? DesignEndDate
+              : convertDateToStr(DesignEndDate)
+          );
+          rowsArr.CustCheckDate_s.push(
+            CustCheckDate.length > 8
+              ? CustCheckDate
+              : convertDateToStr(CustCheckDate)
+          );
+          rowsArr.CustSignyn_s.push(
+            CustSignyn == true ? "Y" : CustSignyn == false ? "N" : CustSignyn
+          );
+          rowsArr.indicator_s.push(indicator);
+          rowsArr.CustPerson_s.push(CustPerson);
+        });
+
+        deletedRows.forEach((item: any) => {
+          const {
+            rowstatus,
+            devmngseq,
+            pgmid,
+            pgmnm,
+            value_code3,
+            devdiv,
+            prgrate,
+            listyn,
+            lvl,
+            modrate,
+            fnscore,
+            exptime,
+            devperson,
+            devstrdt,
+            finexpdt,
+            findt,
+            chkperson,
+            chkdt,
+            finamt,
+            discscore,
+            remark,
+            useyn,
+            DesignEstTime,
+            DesignExphh,
+            DesignExpmm,
+            DesignStartDate,
+            DesignEndEstDate,
+            DesignEndDate,
+            CustCheckDate,
+            CustSignyn,
+            indicator,
+            CustPerson,
+          } = item;
+
+          rowsArr.row_status.push(rowstatus);
+          rowsArr.devmngseq_s.push(devmngseq);
+          rowsArr.pgmid_s.push(pgmid);
+          rowsArr.pgmnm_s.push(pgmnm);
+          rowsArr.value_code3.push(value_code3);
+          rowsArr.devdiv_s.push(devdiv);
+          rowsArr.prgrate_s.push(prgrate);
+          rowsArr.listyn_s.push(listyn);
+          rowsArr.lvl_s.push(lvl);
+          rowsArr.modrate_s.push(modrate);
+          rowsArr.fnscore_s.push(fnscore);
+          rowsArr.exptime_s.push(exptime);
+
+          rowsArr.devperson_s.push(devperson);
+          rowsArr.devstrdt_s.push(
+            devstrdt.length > 8 ? devstrdt : convertDateToStr(devstrdt)
+          );
+          rowsArr.finexpdt_s.push(
+            finexpdt.length > 8 ? finexpdt : convertDateToStr(finexpdt)
+          );
+          rowsArr.findt_s.push(
+            findt.length > 8 ? findt : convertDateToStr(findt)
+          );
+          rowsArr.chkperson_s.push(chkperson);
+          rowsArr.chkdt_s.push(
+            chkdt.length > 8 ? chkdt : convertDateToStr(chkdt)
+          );
+          rowsArr.finamt_s.push(finamt);
+          rowsArr.discscore_s.push(discscore);
+          rowsArr.remark_s.push(remark);
+          rowsArr.useyn_s.push(
+            useyn == true ? "Y" : useyn == false ? "N" : useyn
+          );
+
+          rowsArr.DesignEstTime_s.push(
+            DesignEstTime.length > 8
+              ? DesignEstTime
+              : convertDateToStr(DesignEstTime)
+          );
+          rowsArr.DesignExphh_s.push(DesignExphh);
+          rowsArr.DesignExpmm_s.push(DesignExpmm);
+          rowsArr.DesignStartDate_s.push(
+            DesignStartDate.length > 8
+              ? DesignStartDate
+              : convertDateToStr(DesignStartDate)
+          );
+          rowsArr.DesignEndEstDate_s.push(
+            DesignEndEstDate.length > 8
+              ? DesignEndEstDate
+              : convertDateToStr(DesignEndEstDate)
+          );
+          rowsArr.DesignEndDate_s.push(
+            DesignEndDate.length > 8
+              ? DesignEndDate
+              : convertDateToStr(DesignEndDate)
+          );
+          rowsArr.CustCheckDate_s.push(
+            CustCheckDate.length > 8
+              ? CustCheckDate
+              : convertDateToStr(CustCheckDate)
+          );
+          rowsArr.CustSignyn_s.push(
+            CustSignyn == true ? "Y" : CustSignyn == false ? "N" : CustSignyn
+          );
+          rowsArr.indicator_s.push(indicator);
+          rowsArr.CustPerson_s.push(CustPerson);
+        });
+
+        setParaData({
+          work_type: workType,
+          devmngnum: information.devmngnum,
+          custcd: information.custcd,
+          number: information.number,
+          project: information.project,
+          recdt:
+            information.recdt == null
+              ? ""
+              : convertDateToStr(information.recdt),
+          cotracdt:
+            information.cotracdt == null
+              ? ""
+              : convertDateToStr(information.cotracdt),
+          finexpdt:
+            information.finexpdt == null
+              ? ""
+              : convertDateToStr(information.finexpdt),
+          compl_chk_date:
+            information.compl_chk_date == null
+              ? ""
+              : convertDateToStr(information.compl_chk_date),
+          findt:
+            information.findt == null
+              ? ""
+              : convertDateToStr(information.findt),
+          pjtmanager:
+            information.pjtmanager == "" ? "" : information.pjtmanager.user_id,
+          pjtperson:
+            information.pjtperson == "" ? "" : information.pjtperson.user_id,
+          remark: information.remark,
+          attdatnum: information.attdatnum,
+          midchkdt:
+            information.midchkdt == null
+              ? ""
+              : convertDateToStr(information.midchkdt),
+          finchkdt:
+            information.finchkdt == null
+              ? ""
+              : convertDateToStr(information.finchkdt),
+          progress_status:
+            information.progress_status == true
+              ? "Y"
+              : information.progress_status == false
+              ? "N"
+              : information.progress_status,
+          revperson: information.revperson,
+
+          row_status: rowsArr.row_status.join("|"),
+          devmngseq_s: rowsArr.devmngseq_s.join("|"),
+          pgmid_s: rowsArr.pgmid_s.join("|"),
+          pgmnm_s: rowsArr.pgmnm_s.join("|"),
+          value_code3: rowsArr.value_code3.join("|"),
+          devdiv_s: rowsArr.devdiv_s.join("|"),
+          prgrate_s: rowsArr.prgrate_s.join("|"),
+          listyn_s: rowsArr.listyn_s.join("|"),
+          lvl_s: rowsArr.lvl_s.join("|"),
+          modrate_s: rowsArr.modrate_s.join("|"),
+          fnscore_s: rowsArr.fnscore_s.join("|"),
+          exptime_s: rowsArr.exptime_s.join("|"),
+
+          devperson_s: rowsArr.devperson_s.join("|"),
+          devstrdt_s: rowsArr.devstrdt_s.join("|"),
+          finexpdt_s: rowsArr.finexpdt_s.join("|"),
+          findt_s: rowsArr.findt_s.join("|"),
+          chkperson_s: rowsArr.chkperson_s.join("|"),
+          chkdt_s: rowsArr.chkdt_s.join("|"),
+          finamt_s: rowsArr.finamt_s.join("|"),
+          discscore_s: rowsArr.discscore_s.join("|"),
+          remark_s: rowsArr.remark_s.join("|"),
+          useyn_s: rowsArr.useyn_s.join("|"),
+
+          DesignEstTime_s: rowsArr.DesignEstTime_s.join("|"),
+          DesignExphh_s: rowsArr.DesignExphh_s.join("|"),
+          DesignExpmm_s: rowsArr.DesignExpmm_s.join("|"),
+          DesignStartDate_s: rowsArr.DesignStartDate_s.join("|"),
+          DesignEndEstDate_s: rowsArr.DesignEndEstDate_s.join("|"),
+          DesignEndDate_s: rowsArr.DesignEndDate_s.join("|"),
+          CustCheckDate_s: rowsArr.CustCheckDate_s.join("|"),
+          CustSignyn_s: rowsArr.CustSignyn_s.join("|"),
+          indicator_s: rowsArr.indicator_s.join("|"),
+          CustPerson_s: rowsArr.CustPerson_s.join("|"),
+
+          guid: "",
+          sort_order: "",
+          date: "",
+          title: "",
+          finyn: "",
+          is_monitoring: "",
+        });
+      } else {
+        let valid = true;
+        subDataResult2.data.map((item: any) => {
+          if (
+            (item.title == "" ||
+              parseDate(convertDateToStr(item.date)) == "") &&
+            valid == true
+          ) {
+            valid = false;
+            alert("필수값을 입력해주세요.");
+          }
+        });
+
+        if (valid == true) {
+          subDataResult2.data.forEach((item: any) => {
+            const { date, finyn, guid, is_monitoring, sort_order, title } =
+              item;
+
+            rowsArr2.guid.push(guid);
+            rowsArr2.sort_order.push(sort_order);
+            rowsArr2.date.push(date.length > 8 ? date : convertDateToStr(date));
+            rowsArr2.title.push(title);
+            rowsArr2.finyn.push(
+              finyn == true ? "Y" : finyn == false ? "N" : finyn
+            );
+            rowsArr2.is_monitoring.push(
+              is_monitoring == true
+                ? "Y"
+                : is_monitoring == false
+                ? "N"
+                : is_monitoring
+            );
+          });
+
+          setParaData({
+            work_type: workType,
+            devmngnum: information.devmngnum,
+            custcd: information.custcd,
+            number: information.number,
+            project: information.project,
+            recdt:
+              information.recdt == null
+                ? ""
+                : convertDateToStr(information.recdt),
+            cotracdt:
+              information.cotracdt == null
+                ? ""
+                : convertDateToStr(information.cotracdt),
+            finexpdt:
+              information.finexpdt == null
+                ? ""
+                : convertDateToStr(information.finexpdt),
+            compl_chk_date:
+              information.compl_chk_date == null
+                ? ""
+                : convertDateToStr(information.compl_chk_date),
+            findt:
+              information.findt == null
+                ? ""
+                : convertDateToStr(information.findt),
+            pjtmanager:
+              information.pjtmanager == ""
+                ? ""
+                : information.pjtmanager.user_id,
+            pjtperson:
+              information.pjtperson == "" ? "" : information.pjtperson.user_id,
+            remark: information.remark,
+            attdatnum: information.attdatnum,
+            midchkdt:
+              information.midchkdt == null
+                ? ""
+                : convertDateToStr(information.midchkdt),
+            finchkdt:
+              information.finchkdt == null
+                ? ""
+                : convertDateToStr(information.finchkdt),
+            progress_status:
+              information.progress_status == true
+                ? "Y"
+                : information.progress_status == false
+                ? "N"
+                : information.progress_status,
+            revperson: information.revperson,
+
+            row_status: "",
+            devmngseq_s: "",
+            pgmid_s: "",
+            pgmnm_s: "",
+            value_code3: "",
+            devdiv_s: "",
+            prgrate_s: "",
+            listyn_s: "",
+            lvl_s: "",
+            modrate_s: "",
+            fnscore_s: "",
+            exptime_s: "",
+
+            devperson_s: "",
+            devstrdt_s: "",
+            finexpdt_s: "",
+            findt_s: "",
+            chkperson_s: "",
+            chkdt_s: "",
+            finamt_s: "",
+            discscore_s: "",
+            remark_s: "",
+            useyn_s: "",
+
+            DesignEstTime_s: "",
+            DesignExphh_s: "",
+            DesignExpmm_s: "",
+            DesignStartDate_s: "",
+            DesignEndEstDate_s: "",
+            DesignEndDate_s: "",
+            CustCheckDate_s: "",
+            CustSignyn_s: "",
+            indicator_s: "",
+            CustPerson_s: "",
+
+            guid: rowsArr2.guid.join("|"),
+            sort_order: rowsArr2.sort_order.join("|"),
+            date: rowsArr2.date.join("|"),
+            title: rowsArr2.title.join("|"),
+            finyn: rowsArr2.finyn.join("|"),
+            is_monitoring: rowsArr2.is_monitoring.join("|"),
+          });
+        }
+      }
+    }
+  };
+
+  //프로시저 파라미터 초기값
+  const [paraData, setParaData] = useState({
+    work_type: "",
+    devmngnum: "",
+    custcd: "",
+    number: "",
+    project: "",
+    recdt: "",
+    cotracdt: "",
+    finexpdt: "",
+    compl_chk_date: "",
+    findt: "",
+    pjtmanager: "",
+    pjtperson: "",
+    remark: "",
+    attdatnum: "",
+    midchkdt: "",
+    finchkdt: "",
+    progress_status: "",
+    revperson: "",
+
+    row_status: "",
+    devmngseq_s: "",
+    pgmid_s: "",
+    pgmnm_s: "",
+    value_code3: "",
+    devdiv_s: "",
+    prgrate_s: "",
+    listyn_s: "",
+    lvl_s: "",
+    modrate_s: "",
+    fnscore_s: "",
+    exptime_s: "",
+
+    devperson_s: "",
+    devstrdt_s: "",
+    finexpdt_s: "",
+    findt_s: "",
+    chkperson_s: "",
+    chkdt_s: "",
+    finamt_s: "",
+    discscore_s: "",
+    remark_s: "",
+    useyn_s: "",
+
+    DesignEstTime_s: "",
+    DesignExphh_s: "",
+    DesignExpmm_s: "",
+    DesignStartDate_s: "",
+    DesignEndEstDate_s: "",
+    DesignEndDate_s: "",
+    CustCheckDate_s: "",
+    CustSignyn_s: "",
+    indicator_s: "",
+    CustPerson_s: "",
+
+    guid: "",
+    sort_order: "",
+    date: "",
+    title: "",
+    finyn: "",
+    is_monitoring: "",
+  });
+
+  //추가, 수정 프로시저 파라미터
+  const para: Iparameters = {
+    procedureName: "pw6_sav_project_master",
+    pageNumber: 1,
+    pageSize: 10,
+    parameters: {
+      "@p_work_type": paraData.work_type,
+      "@p_devmngnum": paraData.devmngnum,
+      "@p_custcd": paraData.custcd,
+      "@p_number": paraData.number,
+      "@p_project": paraData.project,
+      "@p_recdt": paraData.recdt,
+      "@p_cotracdt": paraData.cotracdt,
+      "@p_finexpdt": paraData.finexpdt,
+      "@p_compl_chk_date": paraData.compl_chk_date,
+      "@p_findt": paraData.findt,
+      "@p_pjtmanager": paraData.pjtmanager,
+      "@p_pjtperson": paraData.pjtperson,
+      "@p_remark": paraData.remark,
+      "@p_attdatnum": paraData.attdatnum,
+      "@p_midchkdt": paraData.midchkdt,
+      "@p_finchkdt": paraData.finchkdt,
+      "@p_progress_status": paraData.progress_status,
+      "@p_revperson": paraData.revperson,
+
+      "@p_row_status": paraData.row_status,
+      "@p_devmngseq_s": paraData.devmngseq_s,
+      "@p_pgmid_s": paraData.pgmid_s,
+      "@p_pgmnm_s": paraData.pgmnm_s,
+      "@p_value_code3_s": paraData.value_code3,
+      "@p_devdiv_s": paraData.devdiv_s,
+      "@p_prgrate_s": paraData.prgrate_s,
+      "@p_listyn_s": paraData.listyn_s,
+      "@p_lvl_s": paraData.lvl_s,
+      "@p_modrate_s": paraData.modrate_s,
+      "@p_fnscore_s": paraData.fnscore_s,
+      "@p_exptime_s": paraData.exptime_s,
+
+      "@p_devperson_s": paraData.devperson_s,
+      "@p_devstrdt_s": paraData.devstrdt_s,
+      "@p_finexpdt_s": paraData.finexpdt_s,
+      "@p_findt_s": paraData.findt_s,
+      "@p_chkperson_s": paraData.chkperson_s,
+      "@p_chkdt_s": paraData.chkdt_s,
+      "@p_finamt_s": paraData.finamt_s,
+      "@p_discscore_s": paraData.discscore_s,
+      "@p_remark_s": paraData.remark_s,
+      "@p_useyn_s": paraData.useyn_s,
+
+      "@p_DesignEstTime_s": paraData.DesignEstTime_s,
+      "@p_DesignExphh_s": paraData.DesignExphh_s,
+      "@p_DesignExpmm_s": paraData.DesignExpmm_s,
+      "@p_DesignStartDate_s": paraData.DesignStartDate_s,
+      "@p_DesignEndEstDate_s": paraData.DesignEndEstDate_s,
+      "@p_DesignEndDate_s": paraData.DesignEndDate_s,
+      "@p_CustCheckDate_s": paraData.CustCheckDate_s,
+      "@p_CustSignyn_s": paraData.CustSignyn_s,
+      "@p_indicator_s": paraData.indicator_s,
+      "@p_CustPerson_s": paraData.CustPerson_s,
+
+      /* CR508T */
+      "@p_guid": paraData.guid,
+      "@p_sort_order": paraData.sort_order,
+      "@p_date": paraData.date,
+      "@p_title": paraData.title,
+      "@p_finyn": paraData.finyn,
+      "@p_is_monitoring": paraData.is_monitoring,
+
+      "@p_id": userId,
+      "@p_pc": pc,
+
+      "@p_sub_code": "",
+      "@p_sub_code_name": "",
+      "@p_sub_use_yn": "",
+      "@p_sub_memo": "",
+    },
+  };
+
+  //삭제 프로시저 초기값
+  const [paraDataDeleted, setParaDataDeleted] = useState({
+    work_type: "",
+    devmngnum: "",
+  });
+
+  //삭제 프로시저 파라미터
+  const paraDeleted: Iparameters = {
+    procedureName: "pw6_sav_project_master",
+    pageNumber: 1,
+    pageSize: 10,
+    parameters: {
+      "@p_work_type": paraDataDeleted.work_type,
+      "@p_devmngnum": paraDataDeleted.devmngnum,
+      "@p_custcd": "",
+      "@p_number": 0,
+      "@p_project": "",
+      "@p_recdt": "",
+      "@p_cotracdt": "",
+      "@p_finexpdt": "",
+      "@p_compl_chk_date": "",
+      "@p_findt": "",
+      "@p_pjtmanager": "",
+      "@p_pjtperson": "",
+      "@p_remark": "",
+      "@p_attdatnum": "",
+      "@p_midchkdt": "",
+      "@p_finchkdt": "",
+      "@p_progress_status": "",
+      "@p_revperson": "",
+
+      "@p_row_status": "",
+      "@p_devmngseq_s": "",
+      "@p_pgmid_s": "",
+      "@p_pgmnm_s": "",
+      "@p_value_code3_s": "",
+      "@p_devdiv_s": "",
+      "@p_prgrate_s": "",
+      "@p_listyn_s": "",
+      "@p_lvl_s": "",
+      "@p_modrate_s": "",
+      "@p_fnscore_s": "",
+      "@p_exptime_s": "",
+
+      "@p_devperson_s": "",
+      "@p_devstrdt_s": "",
+      "@p_finexpdt_s": "",
+      "@p_findt_s": "",
+      "@p_chkperson_s": "",
+      "@p_chkdt_s": "",
+      "@p_finamt_s": "",
+      "@p_discscore_s": "",
+      "@p_remark_s": "",
+      "@p_useyn_s": "",
+
+      "@p_DesignEstTime_s": "",
+      "@p_DesignExphh_s": "",
+      "@p_DesignExpmm_s": "",
+      "@p_DesignStartDate_s": "",
+      "@p_DesignEndEstDate_s": "",
+      "@p_DesignEndDate_s": "",
+      "@p_CustCheckDate_s": "",
+      "@p_CustSignyn_s": "",
+      "@p_indicator_s": "",
+      "@p_CustPerson_s": "",
+
+      /* CR508T */
+      "@p_guid": "",
+      "@p_sort_order": "",
+      "@p_date": "",
+      "@p_title": "",
+      "@p_finyn": "",
+      "@p_is_monitoring": "",
+
+      "@p_id": userId,
+      "@p_pc": pc,
+
+      "@p_sub_code": "",
+      "@p_sub_code_name": "",
+      "@p_sub_use_yn": "",
+      "@p_sub_memo": "",
+    },
+  };
+
+  useEffect(() => {
+    if (paraDataDeleted.work_type === "D") fetchToDelete();
+  }, [paraDataDeleted]);
+
+  useEffect(() => {
+    if (paraData.work_type != "") fetchToSave();
+  }, [paraData]);
+
+  const fetchToDelete = async () => {
+    let data: any;
+
+    try {
+      data = await processApi<any>("procedure", paraDeleted);
+    } catch (error) {
+      data = null;
+    }
+
+    if (data.isSuccess === true) {
+      const isLastDataDeleted =
+        mainDataResult.data.length === 1 && filters.pgNum > 1;
+      const findRowIndex = mainDataResult.data.findIndex(
+        (row: any) =>
+          row[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
+      );
+      if (isLastDataDeleted) {
+        setPage({
+          skip:
+            filters.pgNum == 1 || filters.pgNum == 0
+              ? 0
+              : PAGE_SIZE * (filters.pgNum - 2),
+          take: PAGE_SIZE,
+        });
+        setFilters((prev) => ({
+          ...prev,
+          find_row_value: "",
+          pgNum: isLastDataDeleted ? prev.pgNum - 1 : prev.pgNum,
+          isSearch: true,
+        }));
+      } else {
+        setFilters((prev) => ({
+          ...prev,
+          find_row_value:
+            mainDataResult.data[findRowIndex == 0 ? 1 : findRowIndex - 1][
+              DATA_ITEM_KEY
+            ],
+          pgNum: isLastDataDeleted ? prev.pgNum - 1 : prev.pgNum,
+          isSearch: true,
+        }));
+      }
+    } else {
+      console.log("[오류 발생]");
+      console.log(data);
+      alert("[" + data.statusCode + "] " + data.resultMessage);
+    }
+
+    paraDataDeleted.work_type = ""; //초기화
+    paraDataDeleted.devmngnum = "";
+  };
+
+  const fetchToSave = async () => {
+    let data: any;
+
+    try {
+      data = await processApi<any>("procedure", para);
+    } catch (error) {
+      data = null;
+    }
+
+    if (data.isSuccess === true) {
+      deletedRows = [];
+      setParaData({
+        work_type: "",
+        devmngnum: "",
+        custcd: "",
+        number: "",
+        project: "",
+        recdt: "",
+        cotracdt: "",
+        finexpdt: "",
+        compl_chk_date: "",
+        findt: "",
+        pjtmanager: "",
+        pjtperson: "",
+        remark: "",
+        attdatnum: "",
+        midchkdt: "",
+        finchkdt: "",
+        progress_status: "",
+        revperson: "",
+
+        row_status: "",
+        devmngseq_s: "",
+        pgmid_s: "",
+        pgmnm_s: "",
+        value_code3: "",
+        devdiv_s: "",
+        prgrate_s: "",
+        listyn_s: "",
+        lvl_s: "",
+        modrate_s: "",
+        fnscore_s: "",
+        exptime_s: "",
+
+        devperson_s: "",
+        devstrdt_s: "",
+        finexpdt_s: "",
+        findt_s: "",
+        chkperson_s: "",
+        chkdt_s: "",
+        finamt_s: "",
+        discscore_s: "",
+        remark_s: "",
+        useyn_s: "",
+
+        DesignEstTime_s: "",
+        DesignExphh_s: "",
+        DesignExpmm_s: "",
+        DesignStartDate_s: "",
+        DesignEndEstDate_s: "",
+        DesignEndDate_s: "",
+        CustCheckDate_s: "",
+        CustSignyn_s: "",
+        indicator_s: "",
+        CustPerson_s: "",
+
+        guid: "",
+        sort_order: "",
+        date: "",
+        title: "",
+        finyn: "",
+        is_monitoring: "",
+      });
+      // unsaved 첨부파일 초기화
+      setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
+      setFilters((prev) => ({
+        ...prev,
+        find_row_value: data.returnString,
+        isSearch: true,
+      }));
+    } else {
+      console.log("[오류 발생]");
+      console.log(data);
+      alert(data.resultMessage);
+    }
+
+    paraData.work_type = "";
   };
 
   useEffect(() => {
@@ -1290,8 +2522,7 @@ const App = () => {
   }, [usersData]);
 
   const onItemChange = (event: GridItemChangeEvent) => {
-    setSubDataState((prev) => ({ ...prev, sort: [] }));
-    getGridItemChangedData(
+    getGroupGridItemChangedData(
       event,
       subDataResult,
       setSubDataResult,
@@ -1299,8 +2530,18 @@ const App = () => {
     );
   };
 
+  const onItemChange2 = (event: GridItemChangeEvent) => {
+    setSubDataState2((prev) => ({ ...prev, sort: [] }));
+    getGridItemChangedData(
+      event,
+      subDataResult2,
+      setSubDataResult2,
+      SUB_DATA_ITEM_KEY2
+    );
+  };
+
   const customCellRender = (td: any, props: any) => (
-    <CellRender
+    <CellRender2
       originalProps={props}
       td={td}
       enterEdit={enterEdit}
@@ -1309,7 +2550,7 @@ const App = () => {
   );
 
   const customRowRender = (tr: any, props: any) => (
-    <RowRender
+    <RowRender2
       originalProps={props}
       tr={tr}
       exitEdit={exitEdit}
@@ -1317,10 +2558,90 @@ const App = () => {
     />
   );
 
+  const customCellRender2 = (td: any, props: any) => (
+    <CellRender
+      originalProps={props}
+      td={td}
+      enterEdit={enterEdit2}
+      editField={EDIT_FIELD}
+    />
+  );
+
+  const customRowRender2 = (tr: any, props: any) => (
+    <RowRender
+      originalProps={props}
+      tr={tr}
+      exitEdit={exitEdit2}
+      editField={EDIT_FIELD}
+    />
+  );
+
   const enterEdit = (dataItem: any, field: string) => {
-    if (field != "rowstatus") {
-      const newData = subDataResult.data.map((item) =>
-        item[SUB_DATA_ITEM_KEY] === dataItem[SUB_DATA_ITEM_KEY]
+    if (field != "rowstatus" && field != "stdscore") {
+      const newData = subDataResult.map((items) =>
+        items.value == dataItem.group_menu_name
+          ? {
+              ...items,
+              items: items.items.map((item: any) =>
+                item[SUB_DATA_ITEM_KEY] === dataItem[SUB_DATA_ITEM_KEY]
+                  ? {
+                      ...item,
+                      [EDIT_FIELD]: field,
+                    }
+                  : {
+                      ...item,
+                      [EDIT_FIELD]: undefined,
+                    }
+              ),
+            }
+          : items
+      );
+      setSubDataResult(newData);
+      setTempResult(newData);
+    } else {
+      setTempResult(subDataResult);
+    }
+  };
+
+  const exitEdit = () => {
+    if (tempResult != subDataResult) {
+      const newData = subDataResult.map((items) => ({
+        ...items,
+        items: items.items.map((item: any) =>
+          item[SUB_DATA_ITEM_KEY] ==
+          Object.getOwnPropertyNames(selectedsubDataState)[0]
+            ? {
+                ...item,
+                rowstatus: item.rowstatus == "N" ? "N" : "U",
+                [EDIT_FIELD]: undefined,
+              }
+            : {
+                ...item,
+                [EDIT_FIELD]: undefined,
+              }
+        ),
+      }));
+
+      setSubDataResult(newData);
+      setTempResult(newData);
+    } else {
+      const newData = subDataResult.map((items) => ({
+        ...items,
+        items: items.items.map((item: any) => ({
+          ...item,
+          [EDIT_FIELD]: undefined,
+        })),
+      }));
+
+      setSubDataResult(newData);
+      setTempResult(newData);
+    }
+  };
+
+  const enterEdit2 = (dataItem: any, field: string) => {
+    if (field != "rowstatus" && field != "user_name") {
+      const newData = subDataResult2.data.map((item) =>
+        item[SUB_DATA_ITEM_KEY2] === dataItem[SUB_DATA_ITEM_KEY2]
           ? {
               ...item,
               [EDIT_FIELD]: field,
@@ -1330,33 +2651,33 @@ const App = () => {
               [EDIT_FIELD]: undefined,
             }
       );
-      setTempResult((prev) => {
+      setTempResult2((prev) => {
         return {
           data: newData,
           total: prev.total,
         };
       });
-      setSubDataResult((prev) => {
+      setSubDataResult2((prev) => {
         return {
           data: newData,
           total: prev.total,
         };
       });
     } else {
-      setTempResult((prev) => {
+      setTempResult2((prev) => {
         return {
-          data: subDataResult.data,
+          data: subDataResult2.data,
           total: prev.total,
         };
       });
     }
   };
 
-  const exitEdit = () => {
-    if (tempResult.data != subDataResult.data) {
-      const newData = subDataResult.data.map((item) =>
-        item[SUB_DATA_ITEM_KEY] ==
-        Object.getOwnPropertyNames(selectedsubDataState)[0]
+  const exitEdit2 = () => {
+    if (tempResult2.data != subDataResult2.data) {
+      const newData = subDataResult2.data.map((item) =>
+        item[SUB_DATA_ITEM_KEY2] ==
+        Object.getOwnPropertyNames(selectedsubDataState2)[0]
           ? {
               ...item,
               rowstatus: item.rowstatus == "N" ? "N" : "U",
@@ -1367,30 +2688,30 @@ const App = () => {
               [EDIT_FIELD]: undefined,
             }
       );
-      setTempResult((prev) => {
+      setTempResult2((prev) => {
         return {
           data: newData,
           total: prev.total,
         };
       });
-      setSubDataResult((prev) => {
+      setSubDataResult2((prev) => {
         return {
           data: newData,
           total: prev.total,
         };
       });
     } else {
-      const newData = subDataResult.data.map((item) => ({
+      const newData = subDataResult2.data.map((item) => ({
         ...item,
         [EDIT_FIELD]: undefined,
       }));
-      setTempResult((prev) => {
+      setTempResult2((prev) => {
         return {
           data: newData,
           total: prev.total,
         };
       });
-      setSubDataResult((prev) => {
+      setSubDataResult2((prev) => {
         return {
           data: newData,
           total: prev.total,
@@ -1399,14 +2720,325 @@ const App = () => {
     }
   };
 
+  const onAddClick = () => {
+    subDataResult.map((items) => {
+      items.items.map((item: any) => {
+        if (item[SUB_DATA_ITEM_KEY] > temp) {
+          temp = item[SUB_DATA_ITEM_KEY];
+        }
+      });
+    });
+
+    const newDataItem = {
+      [SUB_DATA_ITEM_KEY]: ++temp,
+      pgmid: "",
+      pgmnm: "",
+      value_code3: "",
+      devdiv: "02",
+      prgrate: 0,
+      listyn: "A",
+      lvl: "B",
+      stdscore: 0,
+      modrate: 0,
+      fnscore: 0,
+      exptime: 0,
+      devperson: userId,
+      devstrdt: new Date(),
+      finexpdt: new Date(),
+      findt: "",
+      chkperson: "",
+      chkdt: "",
+      finamt: 0,
+      discscor: 0,
+      remark: "",
+      useyn: "Y",
+      DesignEstTime: new Date(),
+      DesignExphh: 0,
+      DesignExpmm: 0,
+      DesignStartDate: new Date(),
+      DesignEndEstDate: "",
+      DesignEndDate: "",
+      CustCheckDate: "",
+      CustSignyn: "N",
+      indicator: userId,
+      CustPerson: "",
+      rowstatus: "N",
+      groupId: "module",
+      group_menu_name: "",
+    };
+    let newData: any[] = [];
+    newData.push(newDataItem);
+    subDataResult.map((items) => {
+      items.items.forEach((item: any, index: number) => {
+        newData.push(item);
+      });
+    });
+
+    setSubDataTotal(subDataTotal + 1);
+    const newDataState = processWithGroups(newData, group);
+    setSubDataResult(newDataState);
+    setSelectedsubDataState({ [newDataItem[SUB_DATA_ITEM_KEY]]: true });
+  };
+
+  const onRemoveClick = () => {
+    //삭제 안 할 데이터 newData에 push, 삭제 데이터 deletedRows에 push
+    let newData: any[] = [];
+    let Object: any[] = [];
+    let Object2: any[] = [];
+    let indexs: any[] = [];
+    let data: any;
+    subDataResult.map((items, index2) => {
+      items.items.forEach((item: any, index: number) => {
+        if (!selectedsubDataState[item[SUB_DATA_ITEM_KEY]]) {
+          newData.push(item);
+          Object2.push(index);
+        } else {
+          const newData2 = {
+            ...item,
+            rowstatus: "D",
+          };
+          Object.push(index);
+          if (Math.min(...indexs) == index2) {
+            indexs.push(100000000000); //최소값안걸리게 셋팅
+          } else {
+            indexs.push(index2);
+          }
+          deletedRows.push(newData2);
+        }
+      });
+    });
+    const minIndex = indexs.findIndex((item) => item == Math.min(...indexs));
+    if (Object[minIndex] == 0 && Math.min(...indexs) == 0) {
+      if (subDataResult[minIndex].items[minIndex + 1] == undefined) {
+        data = subDataResult[minIndex + 1].items[minIndex]; //그룹사라져서 다음그룹
+      } else {
+        data = subDataResult[minIndex].items[minIndex + 1]; //그룹내첫번쨰
+      }
+    } else if (Object[minIndex] == 0) {
+      data =
+        subDataResult[Math.min(...indexs) - 1].items[
+          subDataResult[Math.min(...indexs) - 1].items.length - 1
+        ]; //전그룹 마지막
+    } else {
+      data = subDataResult[indexs[minIndex]].items[Object[minIndex] - 1];
+    }
+    setSubDataTotal(subDataTotal - Object.length);
+
+    const newDataState = processWithGroups(newData, group);
+    setSubDataResult(newDataState);
+    setSelectedsubDataState({
+      [data != undefined ? data[SUB_DATA_ITEM_KEY] : newData[0]]: true,
+    });
+  };
+
+  const handleSelectTab = (e: any) => {
+    setTabSelected(e.selected);
+
+    if (e.selected == 0) {
+      setSubFilters((prev) => ({
+        ...prev,
+        workType: "detail",
+        pgNum: 1,
+        isSearch: true,
+      }));
+    } else if (e.selected == 1) {
+      setSubFilters((prev) => ({
+        ...prev,
+        workType: "main_schedule",
+        pgNum: 1,
+        isSearch: true,
+      }));
+    }
+    deletedRows = [];
+  };
+
+  const onAddClick2 = () => {
+    subDataResult2.data.map((item) => {
+      if (item[SUB_DATA_ITEM_KEY2] > temp2) {
+        temp2 = item[SUB_DATA_ITEM_KEY2];
+      }
+    });
+    const newDataItem = {
+      [SUB_DATA_ITEM_KEY2]: ++temp2,
+      sort_order: temp2,
+      date: new Date(),
+      devmngnum: subFilters.devmngnum,
+      finyn: "N",
+      guid: "",
+      is_monitoring: "Y",
+      orgdiv: "01",
+      title: "",
+      user_name: usersData.find((items: any) => items.user_id == userId)
+        ?.user_name,
+      rowstatus: "N",
+    };
+
+    setSubDataResult2((prev) => {
+      return {
+        data: [...prev.data, newDataItem],
+        total: prev.total + 1,
+      };
+    });
+    setSelectedsubDataState2({ [newDataItem[SUB_DATA_ITEM_KEY2]]: true });
+  };
+
+  const onRemoveClick2 = () => {
+    //삭제 안 할 데이터 newData에 push, 삭제 데이터 deletedRows에 push
+    let newData: any[] = [];
+    let Object: any[] = [];
+    let Object2: any[] = [];
+    let data;
+    subDataResult2.data.forEach((item: any, index: number) => {
+      if (!selectedsubDataState2[item[SUB_DATA_ITEM_KEY2]]) {
+        newData.push(item);
+        Object2.push(index);
+      } else {
+        const newData2 = {
+          ...item,
+          rowstatus: "D",
+        };
+        Object.push(index);
+        deletedRows.push(newData2);
+      }
+    });
+
+    if (Math.min(...Object) < Math.min(...Object2)) {
+      data = subDataResult2.data[Math.min(...Object2)];
+    } else {
+      data = subDataResult2.data[Math.min(...Object) - 1];
+    }
+
+    //newData 생성
+    setSubDataResult2((prev) => ({
+      data: newData,
+      total: prev.total - Object.length,
+    }));
+    setSelectedsubDataState2({
+      [data != undefined ? data[SUB_DATA_ITEM_KEY2] : newData[0]]: true,
+    });
+  };
+
+  type TDataInfo = {
+    DATA_ITEM_KEY: string;
+    selectedState: {
+      [id: string]: boolean | number[];
+    };
+    dataResult: DataResult;
+    setDataResult: (p: any) => any;
+  };
+
+  type TArrowBtnClick = {
+    direction: string;
+    dataInfo: TDataInfo;
+  };
+
+  const onArrowsBtnClick = (para: TArrowBtnClick) => {
+    const { direction, dataInfo } = para;
+    const { DATA_ITEM_KEY, selectedState, dataResult, setDataResult } =
+      dataInfo;
+    const selectedField = Object.getOwnPropertyNames(selectedState)[0];
+
+    const rowData = dataResult.data.find(
+      (row) => row[DATA_ITEM_KEY] == selectedField
+    );
+
+    const rowIndex = dataResult.data.findIndex(
+      (row) => row[DATA_ITEM_KEY] == selectedField
+    );
+
+    if (rowIndex === -1) {
+      alert("이동시킬 행을 선택해주세요.");
+      return false;
+    }
+
+    if (!(rowIndex == 0 && direction === "UP")) {
+      const newData = dataResult.data.map((item: any) => ({
+        ...item,
+        [EDIT_FIELD]: undefined,
+      }));
+      let replaceData = 0;
+      if (direction === "UP" && rowIndex != 0) {
+        replaceData = dataResult.data[rowIndex - 1].sort_order;
+      } else {
+        replaceData = dataResult.data[rowIndex + 1].sort_order;
+      }
+
+      newData.splice(rowIndex, 1);
+      newData.splice(rowIndex + (direction === "UP" ? -1 : 1), 0, rowData);
+      if (direction === "UP" && rowIndex != 0) {
+        const newDatas = newData.map((item) =>
+          item[DATA_ITEM_KEY] === rowData[DATA_ITEM_KEY]
+            ? {
+                ...item,
+                sort_order: replaceData,
+                rowstatus: item.rowstatus === "N" ? "N" : "U",
+                [EDIT_FIELD]: undefined,
+              }
+            : item[DATA_ITEM_KEY] ===
+              dataResult.data[rowIndex - 1][DATA_ITEM_KEY]
+            ? {
+                ...item,
+                rowstatus: item.rowstatus === "N" ? "N" : "U",
+                sort_order: rowData.sort_order,
+                [EDIT_FIELD]: undefined,
+              }
+            : {
+                ...item,
+                [EDIT_FIELD]: undefined,
+              }
+        );
+
+        setDataResult((prev: any) => {
+          return {
+            data: newDatas,
+            total: prev.total,
+          };
+        });
+      } else {
+        const newDatas = newData.map((item) =>
+          item[DATA_ITEM_KEY] === rowData[DATA_ITEM_KEY]
+            ? {
+                ...item,
+                rowstatus: item.rowstatus === "N" ? "N" : "U",
+                sort_order: replaceData,
+                [EDIT_FIELD]: undefined,
+              }
+            : item[DATA_ITEM_KEY] ===
+              dataResult.data[rowIndex + 1][DATA_ITEM_KEY]
+            ? {
+                ...item,
+                rowstatus: item.rowstatus === "N" ? "N" : "U",
+                sort_order: rowData.sort_order,
+                [EDIT_FIELD]: undefined,
+              }
+            : {
+                ...item,
+                [EDIT_FIELD]: undefined,
+              }
+        );
+
+        setDataResult((prev: any) => {
+          return {
+            data: newDatas,
+            total: prev.total,
+          };
+        });
+      }
+    }
+  };
+
+  const arrowBtnClickPara = {
+    DATA_ITEM_KEY: SUB_DATA_ITEM_KEY2,
+    selectedState: selectedsubDataState2,
+    dataResult: subDataResult2,
+    setDataResult: setSubDataResult2,
+  };
+
   return (
     <>
       <TitleContainer>
         <Title>프로젝트 마스터</Title>
         <ButtonContainer>
-          <Button onClick={Add} icon="file-add" themeColor={"primary"}>
-            신규
-          </Button>
           <Button onClick={search} icon="search" themeColor={"primary"}>
             조회
           </Button>
@@ -1475,8 +3107,8 @@ const App = () => {
                     <MultiColumnComboBox
                       name="progress_status"
                       data={
-                        filter
-                          ? filterBy(progressStatusData, filter)
+                        filter2
+                          ? filterBy(progressStatusData, filter2)
                           : progressStatusData
                       }
                       value={filters.progress_status}
@@ -1485,7 +3117,7 @@ const App = () => {
                       onChange={filterComboBoxChange}
                       className="required"
                       filterable={true}
-                      onFilterChange={handleFilterChange}
+                      onFilterChange={handleFilterChange2}
                     />
                   </td>
                   <th>프로젝트</th>
@@ -1503,26 +3135,28 @@ const App = () => {
                   <td>
                     <MultiColumnComboBox
                       name="status"
-                      data={filter ? filterBy(StatusData, filter) : StatusData}
+                      data={
+                        filter3 ? filterBy(StatusData, filter3) : StatusData
+                      }
                       value={filters.status}
                       columns={dateTypeColumns}
                       textField={"name"}
                       onChange={filterComboBoxChange}
                       filterable={true}
-                      onFilterChange={handleFilterChange}
+                      onFilterChange={handleFilterChange3}
                     />
                   </td>
                   <th>사업진행담당</th>
                   <td>
                     <MultiColumnComboBox
                       name="pjt_person"
-                      data={filter ? filterBy(usersData, filter) : usersData}
+                      data={filter4 ? filterBy(usersData, filter4) : usersData}
                       value={filters.pjt_person}
                       columns={userColumns}
                       textField={"user_name"}
                       onChange={filterComboBoxChange}
                       filterable={true}
-                      onFilterChange={handleFilterChange}
+                      onFilterChange={handleFilterChange4}
                     />
                   </td>
                 </tr>
@@ -1618,6 +3252,27 @@ const App = () => {
         <GridContainer width={`calc(65% - ${GAP}px)`}>
           <GridTitleContainer>
             <GridTitle>기본정보</GridTitle>
+            <ButtonContainer>
+              <Button onClick={Add} icon="file-add" themeColor={"primary"}>
+                신규
+              </Button>
+              <Button
+                onClick={Delete}
+                fillMode={"outline"}
+                icon="delete"
+                themeColor={"primary"}
+              >
+                삭제
+              </Button>
+              <Button
+                onClick={Save}
+                fillMode={"outline"}
+                icon="save"
+                themeColor={"primary"}
+              >
+                저장
+              </Button>
+            </ButtonContainer>
           </GridTitleContainer>
           <FormBoxWrap border={true}>
             <FormBox>
@@ -1695,7 +3350,7 @@ const App = () => {
                     <MultiColumnComboBox
                       name="custnm"
                       data={
-                        filter ? filterBy(custListData, filter) : custListData
+                        filter5 ? filterBy(custListData, filter5) : custListData
                       }
                       value={information.custnm}
                       columns={custTypeColumns}
@@ -1703,35 +3358,35 @@ const App = () => {
                       onChange={ComboBoxChange}
                       className="required"
                       filterable={true}
-                      onFilterChange={handleFilterChange}
+                      onFilterChange={handleFilterChange5}
                     />
                   </td>
                   <th>담당PM</th>
                   <td>
                     <MultiColumnComboBox
                       name="pjtmanager"
-                      data={filter ? filterBy(usersData, filter) : usersData}
+                      data={filter6 ? filterBy(usersData, filter6) : usersData}
                       value={information.pjtmanager}
                       columns={userColumns}
                       textField={"user_name"}
                       onChange={ComboBoxChange}
                       className="required"
                       filterable={true}
-                      onFilterChange={handleFilterChange}
+                      onFilterChange={handleFilterChange6}
                     />
                   </td>
                   <th>사업진행담당</th>
                   <td>
                     <MultiColumnComboBox
                       name="pjtperson"
-                      data={filter ? filterBy(usersData, filter) : usersData}
+                      data={filter7 ? filterBy(usersData, filter7) : usersData}
                       value={information.pjtperson}
                       columns={userColumns}
                       textField={"user_name"}
                       onChange={ComboBoxChange}
                       className="required"
                       filterable={true}
-                      onFilterChange={handleFilterChange}
+                      onFilterChange={handleFilterChange7}
                     />
                   </td>
                 </tr>
@@ -1803,7 +3458,6 @@ const App = () => {
                   <td>
                     <Input
                       name="files"
-                      type="text"
                       value={information.files}
                       className="readonly"
                     />
@@ -1842,224 +3496,389 @@ const App = () => {
               </tbody>
             </FormBox>
           </FormBoxWrap>
-          <GridTitleContainer>
-            <GridTitle>상세정보</GridTitle>
-          </GridTitleContainer>
-          <DevContext.Provider value={{ devdivItems: devdivItems }}>
-            <ValueCodeContext.Provider
-              value={{ valuecodeItems: valuecodeItems }}
-            >
-              <ListRadioContext.Provider
-                value={{ listRadioItems: listRadioItems }}
-              >
-                <LvlContext.Provider value={{ lvlItems: lvlItems }}>
-                  <UserContext.Provider value={{ usersData: usersData }}>
-                    <Grid
-                      style={{ height: "47.7vh" }}
-                      data={process(
-                        subDataResult.data.map((row) => ({
-                          ...row,
-                          rowstatus:
-                            row.rowstatus == null ||
-                            row.rowstatus == "" ||
-                            row.rowstatus == undefined
-                              ? ""
-                              : row.rowstatus,
-                          [SELECTED_FIELD]:
-                            selectedsubDataState[idGetter2(row)],
-                        })),
-                        subDataState
-                      )}
-                      {...subDataState}
-                      onDataStateChange={onSubDataStateChange}
-                      //선택 기능
-                      dataItemKey={SUB_DATA_ITEM_KEY}
-                      selectedField={SELECTED_FIELD}
-                      selectable={{
-                        enabled: true,
-                        mode: "single",
-                      }}
-                      onSelectionChange={onSubSelectionChange}
-                      //스크롤 조회 기능
-                      fixedScroll={true}
-                      total={subDataResult.total}
-                      //정렬기능
-                      sortable={true}
-                      onSortChange={onSubSortChange}
-                      //컬럼순서조정
-                      reorderable={true}
-                      //컬럼너비조정
-                      resizable={true}
-                      onItemChange={onItemChange}
-                      cellRender={customCellRender}
-                      rowRender={customRowRender}
-                      editField={EDIT_FIELD}
+          <TabStrip
+            style={{ width: "100%" }}
+            selected={tabSelected}
+            onSelect={handleSelectTab}
+          >
+            <TabStripTab title="상세정보">
+              <GridContainer>
+                <GridTitleContainer>
+                  <GridTitle>상세정보</GridTitle>
+                  <ButtonContainer>
+                    <Button
+                      onClick={onValueBoxWndClick}
+                      themeColor={"primary"}
+                      icon="folder"
                     >
-                      <GridColumn
-                        field="rowstatus"
-                        title=" "
-                        width="45px"
-                        locked={true}
-                      />
-                      <GridColumn
-                        field="pgmid"
-                        title="폼ID"
-                        width={120}
-                        footerCell={subTotalFooterCell}
-                        locked={true}
-                      />
-                      <GridColumn
-                        field="pgmnm"
-                        title="메뉴명"
-                        width={150}
-                        locked={true}
-                      />
-                      <GridColumn
-                        field="devdiv"
-                        title="개발구분"
-                        width={120}
-                        cell={DevdivCell}
-                      />
-                      <GridColumn
-                        field="value_code3"
-                        title="Value 구분"
-                        width={120}
-                        cell={ValueCodeCell}
-                      />
-                      <GridColumn
-                        field="prgrate"
-                        title="진행률"
-                        width={100}
-                        cell={ProgressCell}
-                      />
-                      <GridColumn
-                        field="listyn"
-                        title="LIST포함여부"
-                        width={180}
-                        cell={ListRadioCell}
-                      />
-                      <GridColumn
-                        field="lvl"
-                        title="난이도"
-                        width={120}
-                        cell={LvlCell}
-                      />
-                      <GridColumn
-                        field="stdscore"
-                        title="개발표준점수"
-                        width={100}
-                        cell={NumberCell}
-                      />
-                      <GridColumn
-                        field="modrate"
-                        title="수정률"
-                        width={100}
-                        cell={NumberCell}
-                      />
-                      <GridColumn
-                        field="fnscore"
-                        title="기능점수"
-                        width={100}
-                        cell={NumberCell}
-                      />
-                      <GridColumn
-                        field="indicator"
-                        title="설계자"
-                        width={120}
-                        cell={UserCell}
-                      />
-                      <GridColumn
-                        field="devperson"
-                        title="개발담당자"
-                        width={120}
-                        cell={UserCell}
-                      />
-                      <GridColumn
-                        field="DesignEstTime"
-                        title="설계예정일"
-                        width={120}
-                        cell={DateCell}
-                      />
-                      <GridColumn
-                        field="exptime"
-                        title="개발예상시간"
-                        width={100}
-                        cell={NumberCell}
-                      />
-                      <GridColumn
-                        field="DesignStartDate"
-                        title="설계시작일"
-                        width={120}
-                        cell={DateCell}
-                      />
-                      <GridColumn
-                        field="DesignEndDate"
-                        title="설계완료일"
-                        width={120}
-                        cell={DateCell}
-                      />
-                      <GridColumn
-                        field="devstrdt"
-                        title="개발시작일"
-                        width={120}
-                        cell={DateCell}
-                      />
-                      <GridColumn
-                        field="finexpdt"
-                        title="완료예정일"
-                        width={120}
-                        cell={DateCell}
-                      />
-                      <GridColumn
-                        field="findt"
-                        title="완료일"
-                        width={120}
-                        cell={DateCell}
-                      />
-                      <GridColumn
-                        field="chkperson"
-                        title="확인담당자"
-                        width={120}
-                        cell={UserCell}
-                      />
-                      <GridColumn
-                        field="chkdt"
-                        title="확인일"
-                        width={120}
-                        cell={DateCell}
-                      />
-                      <GridColumn
-                        field="useyn"
-                        title="사용여부"
-                        width={80}
-                        cell={CheckBoxCell}
-                      />
-                      <GridColumn field="remark" title="비고" width={200} />
-                      <GridColumn
-                        field="CustCheckDate"
-                        title="검수일자"
-                        width={120}
-                        cell={DateCell}
-                      />
-                      <GridColumn
-                        field="CustPerson"
-                        title="업체담당자"
-                        width={120}
-                      />
-                      <GridColumn
-                        field="CustSignyn"
-                        title="업체사인"
-                        width={80}
-                        cell={CheckBoxCell}
-                      />
-                    </Grid>
-                  </UserContext.Provider>
-                </LvlContext.Provider>
-              </ListRadioContext.Provider>
-            </ValueCodeContext.Provider>
-          </DevContext.Provider>
+                      ValueBox 참조
+                    </Button>
+                    <Button
+                      onClick={onValueBoxWndClick2}
+                      fillMode="outline"
+                      themeColor={"primary"}
+                      icon="folder"
+                    >
+                      Value 구분 관리
+                    </Button>
+                    <Button
+                      onClick={onAddClick}
+                      themeColor={"primary"}
+                      icon="plus"
+                      title="행 추가"
+                    ></Button>
+                    <Button
+                      onClick={onRemoveClick}
+                      fillMode="outline"
+                      themeColor={"primary"}
+                      icon="minus"
+                      title="행 삭제"
+                    ></Button>
+                  </ButtonContainer>
+                </GridTitleContainer>
+                <DevContext.Provider value={{ devdivItems: devdivItems }}>
+                  <ValueCodeContext.Provider
+                    value={{ valuecodeItems: valuecodeItems }}
+                  >
+                    <ListRadioContext.Provider
+                      value={{ listRadioItems: listRadioItems }}
+                    >
+                      <LvlContext.Provider value={{ lvlItems: lvlItems }}>
+                        <UserContext.Provider value={{ usersData: usersData }}>
+                          <Grid
+                            style={{ height: "40.3vh" }}
+                            data={newData.map((item) => ({
+                              ...item,
+                              items: item.items.map((row: any) => ({
+                                ...row,
+                                [SELECTED_FIELD]:
+                                  selectedsubDataState[idGetter2(row)], //선택된 데이터
+                              })),
+                            }))}
+                            {...subDataState}
+                            onDataStateChange={onSubDataStateChange}
+                            //선택 기능
+                            dataItemKey={SUB_DATA_ITEM_KEY}
+                            selectedField={SELECTED_FIELD}
+                            selectable={{
+                              enabled: true,
+                              mode: "single",
+                            }}
+                            onSelectionChange={onSubSelectionChange}
+                            //스크롤 조회 기능
+                            fixedScroll={true}
+                            total={subDataTotal}
+                            //정렬기능
+                            sortable={true}
+                            onSortChange={onSubSortChange}
+                            //컬럼순서조정
+                            reorderable={true}
+                            //컬럼너비조정
+                            resizable={true}
+                            onItemChange={onItemChange}
+                            cellRender={customCellRender}
+                            rowRender={customRowRender}
+                            editField={EDIT_FIELD}
+                            //그룹기능
+                            group={group}
+                            groupable={true}
+                            onExpandChange={onExpandChange}
+                            expandField="expanded"
+                          >
+                            <GridColumn
+                              field="rowstatus"
+                              title=" "
+                              width="45px"
+                              locked={true}
+                            />
+                            <GridColumn
+                              field="pgmid"
+                              title="폼ID"
+                              width={120}
+                              footerCell={subTotalFooterCell}
+                              locked={true}
+                            />
+                            <GridColumn
+                              field="pgmnm"
+                              title="메뉴명"
+                              width={150}
+                              locked={true}
+                            />
+                            <GridColumn
+                              field="devdiv"
+                              title="개발구분"
+                              width={120}
+                              cell={DevdivCell}
+                            />
+                            <GridColumn
+                              field="value_code3"
+                              title="Value 구분"
+                              width={120}
+                              cell={ValueCodeCell}
+                            />
+                            <GridColumn
+                              field="prgrate"
+                              title="진행률"
+                              width={100}
+                              cell={ProgressCell}
+                            />
+                            <GridColumn
+                              field="listyn"
+                              title="LIST포함여부"
+                              width={180}
+                              cell={ListRadioCell}
+                            />
+                            <GridColumn
+                              field="lvl"
+                              title="난이도"
+                              width={120}
+                              cell={LvlCell}
+                            />
+                            <GridColumn
+                              field="stdscore"
+                              title="개발표준점수"
+                              width={100}
+                              cell={NumberCell}
+                            />
+                            <GridColumn
+                              field="modrate"
+                              title="수정률"
+                              width={100}
+                              cell={NumberCell}
+                            />
+                            <GridColumn
+                              field="fnscore"
+                              title="기능점수"
+                              width={100}
+                              cell={NumberCell}
+                            />
+                            <GridColumn
+                              field="indicator"
+                              title="설계자"
+                              width={120}
+                              cell={UserCell}
+                            />
+                            <GridColumn
+                              field="devperson"
+                              title="개발담당자"
+                              width={120}
+                              cell={UserCell}
+                            />
+                            <GridColumn
+                              field="DesignEstTime"
+                              title="설계예정일"
+                              width={120}
+                              cell={DateCell}
+                            />
+                            <GridColumn
+                              field="exptime"
+                              title="개발예상시간"
+                              width={100}
+                              cell={NumberCell}
+                            />
+                            <GridColumn
+                              field="DesignStartDate"
+                              title="설계시작일"
+                              width={120}
+                              cell={DateCell}
+                            />
+                            <GridColumn
+                              field="DesignEndDate"
+                              title="설계완료일"
+                              width={120}
+                              cell={DateCell}
+                            />
+                            <GridColumn
+                              field="devstrdt"
+                              title="개발시작일"
+                              width={120}
+                              cell={DateCell}
+                            />
+                            <GridColumn
+                              field="finexpdt"
+                              title="완료예정일"
+                              width={120}
+                              cell={DateCell}
+                            />
+                            <GridColumn
+                              field="findt"
+                              title="완료일"
+                              width={120}
+                              cell={DateCell}
+                            />
+                            <GridColumn
+                              field="chkperson"
+                              title="확인담당자"
+                              width={120}
+                              cell={UserCell}
+                            />
+                            <GridColumn
+                              field="chkdt"
+                              title="확인일"
+                              width={120}
+                              cell={DateCell}
+                            />
+                            <GridColumn
+                              field="useyn"
+                              title="사용여부"
+                              width={80}
+                              cell={CheckBoxCell}
+                            />
+                            <GridColumn
+                              field="remark"
+                              title="비고"
+                              width={200}
+                            />
+                            <GridColumn
+                              field="CustCheckDate"
+                              title="검수일자"
+                              width={120}
+                              cell={DateCell}
+                            />
+                            <GridColumn
+                              field="CustPerson"
+                              title="업체담당자"
+                              width={120}
+                            />
+                            <GridColumn
+                              field="CustSignyn"
+                              title="업체사인"
+                              width={80}
+                              cell={CheckBoxCell}
+                            />
+                          </Grid>
+                        </UserContext.Provider>
+                      </LvlContext.Provider>
+                    </ListRadioContext.Provider>
+                  </ValueCodeContext.Provider>
+                </DevContext.Provider>
+              </GridContainer>
+            </TabStripTab>
+            <TabStripTab title="주요일정">
+              <GridTitleContainer>
+                <GridTitle>주요일정</GridTitle>
+                <ButtonContainer>
+                  <Button
+                    onClick={onAddClick2}
+                    themeColor={"primary"}
+                    icon="plus"
+                    title="행 추가"
+                  ></Button>
+                  <Button
+                    onClick={onRemoveClick2}
+                    fillMode="outline"
+                    themeColor={"primary"}
+                    icon="minus"
+                    title="행 삭제"
+                  ></Button>
+                  <Button
+                    onClick={() =>
+                      onArrowsBtnClick({
+                        direction: "UP",
+                        dataInfo: arrowBtnClickPara,
+                      })
+                    }
+                    fillMode="outline"
+                    themeColor={"primary"}
+                    icon="chevron-up"
+                    title="행 위로 이동"
+                  ></Button>
+                  <Button
+                    onClick={() =>
+                      onArrowsBtnClick({
+                        direction: "DOWN",
+                        dataInfo: arrowBtnClickPara,
+                      })
+                    }
+                    fillMode="outline"
+                    themeColor={"primary"}
+                    icon="chevron-down"
+                    title="행 아래로 이동"
+                  ></Button>
+                </ButtonContainer>
+              </GridTitleContainer>
+              <Grid
+                style={{ height: "40.3vh" }}
+                data={process(
+                  subDataResult2.data.map((row) => ({
+                    ...row,
+                    rowstatus:
+                      row.rowstatus == null ||
+                      row.rowstatus == "" ||
+                      row.rowstatus == undefined
+                        ? ""
+                        : row.rowstatus,
+                    [SELECTED_FIELD]: selectedsubDataState2[idGetter3(row)],
+                  })),
+                  subDataState2
+                )}
+                {...subDataState2}
+                onDataStateChange={onSubDataStateChange2}
+                //선택 기능
+                dataItemKey={SUB_DATA_ITEM_KEY2}
+                selectedField={SELECTED_FIELD}
+                selectable={{
+                  enabled: true,
+                  mode: "single",
+                }}
+                onSelectionChange={onSubSelectionChange2}
+                //스크롤 조회 기능
+                fixedScroll={true}
+                total={subDataResult2.total}
+                //정렬기능
+                sortable={true}
+                onSortChange={onSubSortChange2}
+                //컬럼순서조정
+                reorderable={true}
+                //컬럼너비조정
+                resizable={true}
+                onItemChange={onItemChange2}
+                cellRender={customCellRender2}
+                rowRender={customRowRender2}
+                editField={EDIT_FIELD}
+              >
+                <GridColumn field="rowstatus" title=" " width="45px" />
+                <GridColumn
+                  field="date"
+                  title="일자"
+                  width={120}
+                  cell={DateCell}
+                  footerCell={subTotalFooterCell2}
+                  headerCell={RequiredHeader}
+                />
+                <GridColumn
+                  field="title"
+                  title="제목"
+                  width={612}
+                  headerCell={RequiredHeader}
+                />
+                <GridColumn
+                  field="is_monitoring"
+                  title="모니터링"
+                  width={80}
+                  cell={CheckBoxCell}
+                />
+                <GridColumn field="user_name" title="작성자" width={120} />
+                <GridColumn
+                  field="finyn"
+                  title="완료"
+                  width={80}
+                  cell={CheckBoxCell}
+                />
+              </Grid>
+            </TabStripTab>
+          </TabStrip>
         </GridContainer>
       </GridContainerWrap>
+      {valueboxWindowVisible && (
+        <ValueBoxWindow
+          setVisible={setValueBoxWindowVisible}
+          setData={setValueBox}
+        />
+      )}
+      {valueboxWindowVisible2 && (
+        <ValueBoxWindow2 setVisible={setValueBoxWindowVisible2} />
+      )}
       {custWindowVisible && (
         <CustomersWindow
           setVisible={setCustWindowVisible}

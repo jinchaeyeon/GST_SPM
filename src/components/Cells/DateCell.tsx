@@ -1,4 +1,4 @@
-import { DatePicker } from "@progress/kendo-react-dateinputs";
+import { DatePicker, DatePickerChangeEvent } from "@progress/kendo-react-dateinputs";
 import { GridCellProps } from "@progress/kendo-react-grid";
 import { convertDateToStr, dateformat2 } from "../CommonFunction";
 import Calendars from "../Calendars/Calendar";
@@ -24,7 +24,7 @@ const DateCell = (props: GridCellProps) => {
 
   const value = field && dataItem[field] ? dataItem[field] : null;
 
-  const onDateChange = (e: any) => {
+  const onDateChange = (e: DatePickerChangeEvent) => {
     if (onChange) {
       onChange({
         dataIndex: 0,
@@ -52,6 +52,7 @@ const DateCell = (props: GridCellProps) => {
           onChange={onDateChange}
           calendar={Calendars}
           placeholder=""
+          show={true}
         />
       ) : typeof value === "object" ? (
         dateformat2(convertDateToStr(value))

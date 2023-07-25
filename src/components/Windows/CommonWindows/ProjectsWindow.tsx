@@ -105,7 +105,6 @@ const KendoWindow = ({ setVisible, setData, para }: IKendoWindow) => {
   const filterRadioChange = (e: any) => {
     const { name, value } = e;
 
-    console.log("e");
     console.log(e);
     setFilters((prev) => ({
       ...prev,
@@ -146,7 +145,7 @@ const KendoWindow = ({ setVisible, setData, para }: IKendoWindow) => {
   const [usersData, setUsersData] = useState([]);
 
   const [mainDataResult, setMainDataResult] = useState<DataResult>(
-    process([], mainDataState),
+    process([], mainDataState)
   );
 
   const from_date = new Date(); // 현재 날짜와 시간을 가져옵니다.
@@ -188,6 +187,8 @@ const KendoWindow = ({ setVisible, setData, para }: IKendoWindow) => {
       "@p_devmngnum": filters.devmngnum,
       "@p_code": filters.code,
       "@p_name": filters.name,
+      "@p_type": "",
+      "@p_service_id": "",
     },
   };
 
@@ -248,7 +249,7 @@ const KendoWindow = ({ setVisible, setData, para }: IKendoWindow) => {
 
   const onConfirmClick = (props: any) => {
     const rowData = mainDataResult.data.find(
-      (row: any) => row[DATA_ITEM_KEY] === Object.keys(selectedState)[0],
+      (row: any) => row[DATA_ITEM_KEY] === Object.keys(selectedState)[0]
     );
 
     // 부모로 데이터 전달, 창 닫기
@@ -488,7 +489,7 @@ const KendoWindow = ({ setVisible, setData, para }: IKendoWindow) => {
               pjtmanager: getUserName(row.pjtmanager),
               is_finished: row.is_finished === "Y" ? "●" : "",
             })),
-            mainDataState,
+            mainDataState
           )}
           onDataStateChange={onMainDataStateChange}
           {...mainDataState}
