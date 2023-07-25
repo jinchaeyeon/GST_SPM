@@ -2369,36 +2369,45 @@ const App = () => {
     }
 
     if (data.isSuccess === true) {
-      const isLastDataDeleted =
-        mainDataResult.data.length === 1 && filters.pgNum > 1;
-      const findRowIndex = mainDataResult.data.findIndex(
-        (row: any) =>
-          row[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
-      );
-      if (isLastDataDeleted) {
-        setPage({
-          skip:
-            filters.pgNum == 1 || filters.pgNum == 0
-              ? 0
-              : PAGE_SIZE * (filters.pgNum - 2),
-          take: PAGE_SIZE,
-        });
+      if (mainDataResult.data.length === 1 && filters.pgNum == 1) {
         setFilters((prev) => ({
           ...prev,
           find_row_value: "",
-          pgNum: isLastDataDeleted ? prev.pgNum - 1 : prev.pgNum,
+          pgNum: 1,
           isSearch: true,
         }));
       } else {
-        setFilters((prev) => ({
-          ...prev,
-          find_row_value:
-            mainDataResult.data[findRowIndex == 0 ? 1 : findRowIndex - 1][
-              DATA_ITEM_KEY
-            ],
-          pgNum: isLastDataDeleted ? prev.pgNum - 1 : prev.pgNum,
-          isSearch: true,
-        }));
+        const isLastDataDeleted =
+          mainDataResult.data.length === 1 && filters.pgNum > 1;
+        const findRowIndex = mainDataResult.data.findIndex(
+          (row: any) =>
+            row[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
+        );
+        if (isLastDataDeleted) {
+          setPage({
+            skip:
+              filters.pgNum == 1 || filters.pgNum == 0
+                ? 0
+                : PAGE_SIZE * (filters.pgNum - 2),
+            take: PAGE_SIZE,
+          });
+          setFilters((prev) => ({
+            ...prev,
+            find_row_value: "",
+            pgNum: isLastDataDeleted ? prev.pgNum - 1 : prev.pgNum,
+            isSearch: true,
+          }));
+        } else {
+          setFilters((prev) => ({
+            ...prev,
+            find_row_value:
+              mainDataResult.data[findRowIndex == 0 ? 1 : findRowIndex - 1][
+                DATA_ITEM_KEY
+              ],
+            pgNum: isLastDataDeleted ? prev.pgNum - 1 : prev.pgNum,
+            isSearch: true,
+          }));
+        }
       }
     } else {
       console.log("[오류 발생]");
