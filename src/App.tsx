@@ -50,6 +50,7 @@ import timeZoneNamesZh from "cldr-dates-full/main/zh/timeZoneNames.json";
 
 import koMessages from "./store/cultures/ko.json";
 import ProjectMaster from "./routes/ProjectMaster";
+import Record from "./routes/Record";
 
 load(
   likelySubtags,
@@ -70,7 +71,7 @@ load(
   numbersZh,
   caGregorianZh,
   dateFieldsZh,
-  timeZoneNamesZh,
+  timeZoneNamesZh
 );
 
 loadMessages(koMessages, "ko-KR");
@@ -245,11 +246,12 @@ const AppInner: React.FC = () => {
                   component={ProjectSchedule}
                   exact
                 />
-                                <AuthRoute
+                <AuthRoute
                   path="/ProjectMaster"
                   component={ProjectMaster}
                   exact
                 />
+                <AuthRoute path="/Record" component={Record} exact />
               </PanelBarNavContainer>
             </Switch>
           </Router>

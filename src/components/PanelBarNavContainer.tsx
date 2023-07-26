@@ -67,8 +67,12 @@ const paths = [
     index: ".4",
   },
   {
+    path: "/Record",
+    index: "5",
+  },
+  {
     path: "/MeetingManagement",
-    index: ".5",
+    index: ".6",
   },
 ];
 
@@ -83,7 +87,7 @@ const PanelBarNavContainer = (props: any) => {
   }, [token]);
   const [menus, setMenus] = useRecoilState(menusState);
   const [isMobileMenuOpend, setIsMobileMenuOpend] = useRecoilState(
-    isMobileMenuOpendState,
+    isMobileMenuOpendState
   );
   const [isMenuOpend, setIsMenuOpend] = useRecoilState(isMenuOpendState);
   const companyCode = loginResult ? loginResult.companyCode : "";
@@ -106,12 +110,12 @@ const PanelBarNavContainer = (props: any) => {
 
   // 삭제할 첨부파일 리스트를 담는 함수
   const [deletedAttadatnums, setDeletedAttadatnums] = useRecoilState(
-    deletedAttadatnumsState,
+    deletedAttadatnumsState
   );
 
   // 서버 업로드는 되었으나 DB에는 저장안된 첨부파일 리스트
   const [unsavedAttadatnums, setUnsavedAttadatnums] = useRecoilState(
-    unsavedAttadatnumsState,
+    unsavedAttadatnumsState
   );
 
   const [previousRoute, setPreviousRoute] = useState("");
@@ -125,7 +129,7 @@ const PanelBarNavContainer = (props: any) => {
 
   // 반응형 처리
   const [clientWidth, setClientWidth] = useState(
-    document.documentElement.getBoundingClientRect().width,
+    document.documentElement.getBoundingClientRect().width
   );
   useEffect(() => {
     const handleWindowResize = () => {
@@ -465,7 +469,7 @@ const PanelBarNavContainer = (props: any) => {
         }
       });
     },
-    [],
+    []
   );
 
   // 첨부파일 삭제
@@ -473,7 +477,7 @@ const PanelBarNavContainer = (props: any) => {
     if (deletedAttadatnums.type && deletedAttadatnums.attdatnums.length > 0) {
       fetchToDeletedAttachment(
         deletedAttadatnums.type,
-        deletedAttadatnums.attdatnums,
+        deletedAttadatnums.attdatnums
       );
 
       // 초기화
@@ -513,7 +517,8 @@ const PanelBarNavContainer = (props: any) => {
                   title={"회의록 관리"}
                   route="/MeetingManagement"
                 />
-                                <PanelBarItem
+                <PanelBarItem title={"처리일지"} route="/Record" />
+                <PanelBarItem
                   title={"프로젝트 마스터"}
                   route="/ProjectMaster"
                 />

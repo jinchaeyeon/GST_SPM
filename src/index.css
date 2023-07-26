@@ -94,6 +94,27 @@ div.k-animation-container {
   z-index: 10100 !important; /* 버그 : 메뉴바가 window 위로 올라오는 현상 수정  */
 }
 
+ul.required,
+ul.required:hover,
+ul.required.k-hover,
+span.required,
+span.required:hover,
+span.required.k-hover,
+input.required,
+input.required:hover,
+input.required.k-hover,
+.k-daterangepicker.required input {
+  background-color: #fff0ef;
+}
+.k-daterangepicker.required,
+.k-daterangepicker.required:hover {
+  background-color: unset;
+}
+ul.readonly,
+span.readonly,
+input.readonly {
+  background-color: #efefef;
+}
 
 .k-radio-label {
   font-size: 14px;
