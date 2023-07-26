@@ -47393,7 +47393,7 @@ kendo-card-footer {
     border-style: solid;
     border-color: inherit;
     white-space: normal;
-    display: flex;
+    display: none;
     align-items: center;
     position: relative;
     flex-wrap: wrap;
@@ -47402,20 +47402,20 @@ kendo-card-footer {
 .k-grouping-header::before {
     content: "";
     height: calc(1em + 10px);
-    display: inline-block;
+    display: none;
     vertical-align: middle;
 }
 
 .k-grouping-header .k-chip-list {
     flex-grow: 0;
-    display: contents;
+    display: none;
 }
 
 .k-grouping-header > .k-grouping-drop-container {
     flex-grow: 1;
     padding-block: 8px;
     margin-block: -8px;
-    display: inline-flex;
+    display: none;
     align-self: stretch;
     align-items: center;
 }
