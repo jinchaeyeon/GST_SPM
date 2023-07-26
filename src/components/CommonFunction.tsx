@@ -21,6 +21,7 @@ import messageKoKr from "../store/cultures/Messages.ko-KR.json";
 import {
   DataResult,
   GroupDescriptor,
+  GroupResult,
   getter,
   groupBy,
 } from "@progress/kendo-data-query";
@@ -987,7 +988,7 @@ export const resetLocalStorage = () => {
 
 // Grouped된 DataResult 데이터를 selectedState를 포함해서 일반적인 Array 형태로 변환하여 반환
 export const rowsWithSelectedDataResult = (
-  dataResult: DataResult,
+  dataResult: GroupResult[],
   selectedState: {
     [id: string]: boolean | number[];
   },
@@ -995,7 +996,7 @@ export const rowsWithSelectedDataResult = (
 ) => {
   const idGetter = getter(DATA_ITEM_KEY);
   const newData: any = [];
-  dataResult.data.forEach((data) => {
+  dataResult.forEach((data) => {
     data.items.forEach((item: any) => {
       newData.push({
         ...item,
@@ -1008,10 +1009,10 @@ export const rowsWithSelectedDataResult = (
 };
 
 // Grouped된 DataResult 데이터를 일반적인 Array 형태로 반환
-export const rowsOfDataResult = (prevDataResult: DataResult) => {
+export const rowsOfDataResult = (prevDataResult: GroupResult[]) => {
   let prevRows: any[] = [];
-  if (prevDataResult.data.length !== 0) {
-    prevDataResult.data.forEach((data: any) => {
+  if (prevDataResult.length !== 0) {
+    prevDataResult.forEach((data: any) => {
       data.items.forEach((item: any) => {
         prevRows.push(item);
       });
