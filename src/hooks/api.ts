@@ -18,6 +18,9 @@ const domain: any = {
   "meeting-save": { action: "post", url: "api/spm/meeting" },
   "meeting-delete": { action: "delete", url: "api/spm/meeting/:id" },
 
+  // 처리일지
+  document: { action: "get", url: "api/spm/:para" },
+
   // 공지사항
   "notice-list": { action: "get", url: "api/spm/notice/:para" },
   "notice-detail": { action: "get", url: "api/spm/notice/:id" },
@@ -241,6 +244,7 @@ export const useApi = () => {
           console.error(message);
           throw message;
       }
+
       return (
         p
           //.then((response: any) => resolve(response.data))
@@ -332,5 +336,5 @@ axiosInstance.interceptors.response.use(
     }
     // 오류 발생 시 오류 내용 출력 후 요청 거절
     return Promise.reject(error);
-  },
+  }
 );

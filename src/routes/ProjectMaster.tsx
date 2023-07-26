@@ -21,7 +21,6 @@ import {
   GridExpandChangeEvent,
   GridFooterCellProps,
   GridItemChangeEvent,
-  GridPageChangeEvent,
   GridRowDoubleClickEvent,
   GridSelectionChangeEvent,
 } from "@progress/kendo-react-grid";
@@ -4006,7 +4005,7 @@ const App = () => {
                   <GridColumn
                     field="title"
                     title="제목"
-                    width={612}
+                    width={1205}
                     headerCell={RequiredHeader}
                   />
                   <GridColumn
