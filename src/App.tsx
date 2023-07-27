@@ -51,6 +51,7 @@ import timeZoneNamesZh from "cldr-dates-full/main/zh/timeZoneNames.json";
 import koMessages from "./store/cultures/ko.json";
 import ProjectMaster from "./routes/ProjectMaster";
 import Record from "./routes/Record";
+import Task_Order from "./routes/Task_Order";
 
 load(
   likelySubtags,
@@ -246,6 +247,7 @@ const AppInner: React.FC = () => {
                   component={ProjectSchedule}
                   exact
                 />
+                <AuthRoute path="/Task_Order" component={Task_Order} exact />
                 <AuthRoute path="/Record" component={Record} exact />
                 <AuthRoute
                   path="/ProjectMaster"

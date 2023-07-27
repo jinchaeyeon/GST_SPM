@@ -71,12 +71,16 @@ const paths = [
     index: ".5",
   },
   {
-    path: "/Record",
+    path: "/Task_Order",
     index: ".6",
   },
   {
-    path: "/ProjectMaster",
+    path: "/Record",
     index: ".7",
+  },
+  {
+    path: "/ProjectMaster",
+    index: ".8",
   },
 ];
 
@@ -521,7 +525,8 @@ const PanelBarNavContainer = (props: any) => {
                   title={"회의록 관리"}
                   route="/MeetingManagement"
                 />
-                <PanelBarItem title={"처리일지"} route="/Record" />
+                <PanelBarItem title={"업무 지시"} route="/Task_Order" />
+                <PanelBarItem title={"처리일지 작성"} route="/Record" />
                 <PanelBarItem
                   title={"프로젝트 마스터"}
                   route="/ProjectMaster"

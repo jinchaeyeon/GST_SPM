@@ -88,6 +88,8 @@ import ComboBoxCell from "../components/Cells/ComboBoxCell";
 import {
   ComboBoxFilterChangeEvent,
   MultiColumnComboBox,
+  MultiSelect,
+  MultiSelectChangeEvent,
 } from "@progress/kendo-react-dropdowns";
 import { useHistory } from "react-router-dom";
 import {
@@ -141,8 +143,7 @@ SELECT 'N' as code, '미진행' as name
 UNION ALL
 SELECT '%' as code, '전체' as name`;
 
-const statusQueryStr = `SELECT '%' as code, '전체' as name
-UNION ALL
+const statusQueryStr = `
 SELECT 'Y' as code, '완료' as name
 UNION ALL
 SELECT 'N' as code, '미완료' as name`;
@@ -275,7 +276,7 @@ const App = () => {
   const [filter4, setFilter4] = React.useState<FilterDescriptor>();
   const [filter5, setFilter5] = React.useState<FilterDescriptor>();
   const [filter6, setFilter6] = React.useState<FilterDescriptor>();
-  const [filter7, setFilter7] = React.useState<FilterDescriptor>();
+
   const handleFilterChange = (event: ComboBoxFilterChangeEvent) => {
     if (event) {
       setFilter(event.filter);
@@ -304,11 +305,6 @@ const App = () => {
   const handleFilterChange6 = (event: ComboBoxFilterChangeEvent) => {
     if (event) {
       setFilter6(event.filter);
-    }
-  };
-  const handleFilterChange7 = (event: ComboBoxFilterChangeEvent) => {
-    if (event) {
-      setFilter7(event.filter);
     }
   };
   const [workType, setWorkType] = useState("N");
@@ -397,6 +393,16 @@ const App = () => {
     setFilters((prev) => ({
       ...prev,
       [name]: value,
+    }));
+  };
+
+  const filterMultiSelectChange = (event: MultiSelectChangeEvent) => {
+    const values = event.value;
+    const name = event.target.props.name ?? "";
+
+    setFilters((prev) => ({
+      ...prev,
+      [name]: values,
     }));
   };
 
@@ -588,7 +594,7 @@ const App = () => {
     custnm: "",
     progress_status: { code: "%", name: "전체" },
     project: "",
-    status: { code: "N", name: "미완료" },
+    status: [{ code: "N", name: "미완료" }],
     pjt_person: { user_id: "", user_name: "" },
     findRowValue: "",
     pgSize: PAGE_SIZE,
@@ -637,6 +643,13 @@ const App = () => {
     let data: any;
     setLoading(true);
 
+    const status =
+      filters.status.length === 0
+        ? "Y|N"  // 미선택시 => 0 전체
+        : filters.status.length === 1
+        ? filters.status[0].code // 1개만 선택시 => 선택된 값 (ex. 1 대기)
+        : "Y|N" //  2개 이상 선택시 => 전체
+
     //조회조건 파라미터
     const parameters: Iparameters = {
       procedureName: "pw6_sel_project_master",
@@ -651,12 +664,7 @@ const App = () => {
         "@p_customer_name": filters.custnm,
         "@p_pjt_person":
           filters.pjt_person != null ? filters.pjt_person.user_id : "",
-        "@p_status":
-          filters.status != null
-            ? filters.status.code == "%"
-              ? "Y|N"
-              : filters.status.code
-            : "",
+        "@p_status": status,
         "@p_project": filters.project,
         "@p_progress_status": filters.progress_status.code,
         "@p_devmngnum": "",
@@ -905,6 +913,12 @@ const App = () => {
   const fetchSubGrid = async (subfilters: any) => {
     let data: any;
     setLoading(true);
+    const status =
+    filters.status.length === 0
+      ? "Y|N"  // 미선택시 => 0 전체
+      : filters.status.length === 1
+      ? filters.status[0].code // 1개만 선택시 => 선택된 값 (ex. 1 대기)
+      : "Y|N" //  2개 이상 선택시 => 전체
     //조회조건 파라미터
     const parameters: Iparameters = {
       procedureName: "pw6_sel_project_master",
@@ -919,12 +933,7 @@ const App = () => {
         "@p_customer_name": "",
         "@p_pjt_person":
           filters.pjt_person != null ? filters.pjt_person.user_id : "",
-        "@p_status":
-          filters.status != null
-            ? filters.status.code == "%"
-              ? "Y|N"
-              : filters.status.code
-            : "",
+        "@p_status": status,
         "@p_project": filters.project,
         "@p_progress_status": filters.progress_status.code,
         "@p_devmngnum": subfilters.devmngnum,
@@ -3364,17 +3373,13 @@ const App = () => {
                     <tr>
                       <th>완료여부</th>
                       <td>
-                        <MultiColumnComboBox
+                        <MultiSelect
                           name="status"
-                          data={
-                            filter3 ? filterBy(StatusData, filter3) : StatusData
-                          }
+                          data={StatusData}
+                          onChange={filterMultiSelectChange}
                           value={filters.status}
-                          columns={dateTypeColumns}
-                          textField={"name"}
-                          onChange={filterComboBoxChange}
-                          filterable={true}
-                          onFilterChange={handleFilterChange3}
+                          textField="name"
+                          dataItemKey="code"
                         />
                       </td>
                     </tr>
@@ -3384,14 +3389,14 @@ const App = () => {
                         <MultiColumnComboBox
                           name="pjt_person"
                           data={
-                            filter4 ? filterBy(usersData, filter4) : usersData
+                            filter3 ? filterBy(usersData, filter3) : usersData
                           }
                           value={filters.pjt_person}
                           columns={userColumns}
                           textField={"user_name"}
                           onChange={filterComboBoxChange}
                           filterable={true}
-                          onFilterChange={handleFilterChange4}
+                          onFilterChange={handleFilterChange3}
                         />
                       </td>
                     </tr>
@@ -3577,8 +3582,8 @@ const App = () => {
                       <MultiColumnComboBox
                         name="custnm"
                         data={
-                          filter5
-                            ? filterBy(custListData, filter5)
+                          filter4
+                            ? filterBy(custListData, filter4)
                             : custListData
                         }
                         value={information.custnm}
@@ -3587,7 +3592,7 @@ const App = () => {
                         onChange={ComboBoxChange}
                         className="required"
                         filterable={true}
-                        onFilterChange={handleFilterChange5}
+                        onFilterChange={handleFilterChange4}
                       />
                     </td>
                     <th>담당PM</th>
@@ -3595,7 +3600,7 @@ const App = () => {
                       <MultiColumnComboBox
                         name="pjtmanager"
                         data={
-                          filter6 ? filterBy(usersData, filter6) : usersData
+                          filter5 ? filterBy(usersData, filter5) : usersData
                         }
                         value={information.pjtmanager}
                         columns={userColumns}
@@ -3603,7 +3608,7 @@ const App = () => {
                         onChange={ComboBoxChange}
                         className="required"
                         filterable={true}
-                        onFilterChange={handleFilterChange6}
+                        onFilterChange={handleFilterChange5}
                       />
                     </td>
                     <th>사업진행담당</th>
@@ -3611,7 +3616,7 @@ const App = () => {
                       <MultiColumnComboBox
                         name="pjtperson"
                         data={
-                          filter7 ? filterBy(usersData, filter7) : usersData
+                          filter6 ? filterBy(usersData, filter6) : usersData
                         }
                         value={information.pjtperson}
                         columns={userColumns}
@@ -3619,7 +3624,7 @@ const App = () => {
                         onChange={ComboBoxChange}
                         className="required"
                         filterable={true}
-                        onFilterChange={handleFilterChange7}
+                        onFilterChange={handleFilterChange6}
                       />
                     </td>
                   </tr>
