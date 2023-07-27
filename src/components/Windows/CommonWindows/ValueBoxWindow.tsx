@@ -272,14 +272,14 @@ const KendoWindow = ({ setVisible, setData }: IKendoWindow) => {
         setMainDataResult((prev) => {
           return {
             data: rows,
-            total: totalRowCnt,
+             total: totalRowCnt == -1 ? 0 : totalRowCnt,,
           };
         });
       } else {
         setMainDataResult((prev) => {
           return {
             data: rows,
-            total: totalRowCnt,
+             total: totalRowCnt == -1 ? 0 : totalRowCnt,,
           };
         });
       }
@@ -345,7 +345,7 @@ const KendoWindow = ({ setVisible, setData }: IKendoWindow) => {
       setSubDataResult((prev) => {
         return {
           data: rows,
-          total: totalRowCnt,
+           total: totalRowCnt == -1 ? 0 : totalRowCnt,,
         };
       });
 

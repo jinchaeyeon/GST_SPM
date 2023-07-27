@@ -192,7 +192,7 @@ const KendoWindow = ({
       setDetailDataResult(() => {
         return {
           data: [...rows],
-          total: totalRowCnt,
+           total: totalRowCnt == -1 ? 0 : totalRowCnt,,
         };
       });
     }
@@ -219,7 +219,7 @@ const KendoWindow = ({
       setDetailDataResult2(() => {
         return {
           data: [...rows],
-          total: totalRowCnt,
+           total: totalRowCnt == -1 ? 0 : totalRowCnt,,
         };
       });
     }

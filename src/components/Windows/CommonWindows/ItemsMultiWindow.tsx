@@ -172,7 +172,7 @@ const ItemsMultiWindow = ({ setVisible, setData }: IWindow) => {
         setMainDataResult((prev) => {
           return {
             data: [...prev.data, ...rows],
-            total: totalRowCnt,
+             total: totalRowCnt == -1 ? 0 : totalRowCnt,,
           };
         });
       }

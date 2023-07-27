@@ -314,7 +314,7 @@ const App = () => {
           setSelectedState({ [filters.findRowValue]: true });
           setMainDataResult({
             data: rows,
-            total: totalRowCnt,
+             total: totalRowCnt == -1 ? 0 : totalRowCnt,,
           });
         } else if (filters.isReset) {
           // 일반 데이터 조회
@@ -322,14 +322,14 @@ const App = () => {
           setSelectedState({ [firstRowData[DATA_ITEM_KEY]]: true });
           setMainDataResult({
             data: rows,
-            total: totalRowCnt,
+             total: totalRowCnt == -1 ? 0 : totalRowCnt,,
           });
         } else {
           // 스크롤하여 다른 페이지 조회
           setMainDataResult((prev) => {
             return {
               data: [...prev.data, ...rows],
-              total: totalRowCnt,
+               total: totalRowCnt == -1 ? 0 : totalRowCnt,,
             };
           });
         }
@@ -443,7 +443,7 @@ const App = () => {
       setAllCustData((prev) => {
         return {
           data: rows,
-          total: totalRowCnt,
+           total: totalRowCnt == -1 ? 0 : totalRowCnt,,
         };
       });
     }

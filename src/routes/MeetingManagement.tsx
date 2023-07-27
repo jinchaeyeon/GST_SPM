@@ -450,7 +450,7 @@ const App = () => {
           setSelectedState({ [selectedMeetingnum]: true });
           setMainDataResult({
             data: rows,
-            total: totalRowCnt,
+             total: totalRowCnt == -1 ? 0 : totalRowCnt,,
           });
 
           const selectedData = rows.find(
@@ -504,7 +504,7 @@ const App = () => {
           // 일반 데이터 조회
           setMainDataResult({
             data: rows,
-            total: totalRowCnt,
+             total: totalRowCnt == -1 ? 0 : totalRowCnt,,
           });
 
           const firstRowData = rows[0];
@@ -557,7 +557,7 @@ const App = () => {
           setMainDataResult((prev) => {
             return {
               data: [...prev.data, ...rows],
-              total: totalRowCnt,
+               total: totalRowCnt == -1 ? 0 : totalRowCnt,,
             };
           });
         }

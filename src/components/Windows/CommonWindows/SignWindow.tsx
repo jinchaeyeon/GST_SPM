@@ -190,7 +190,7 @@ const SignWindow = ({ setVisible, orgdiv, number }: IWindow) => {
       setMainDataResult((prev) => {
         return {
           data: rows,
-          total: totalRowCnt,
+           total: totalRowCnt == -1 ? 0 : totalRowCnt,
         };
       });
       if (totalRowCnt > 0) {
