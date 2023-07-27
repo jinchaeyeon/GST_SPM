@@ -14,6 +14,7 @@ import {
   TitleContainer,
 } from "../CommonStyled";
 import {
+  deletedAttadatnumsState,
   isLoading,
   loginResultState,
   unsavedAttadatnumsState,
@@ -81,6 +82,7 @@ import RichEditor from "../components/RichEditor";
 import { TabStrip, TabStripTab } from "@progress/kendo-react-layout";
 import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
 import { IAttachmentData } from "../hooks/interfaces";
+import AnswerWindow from "../components/Windows/CommonWindows/AnswerWindow";
 
 const workTypeQueryStr = `select sub_code, code_name FROM comCodeMaster where group_code = 'CR004'`;
 
@@ -326,7 +328,10 @@ const App = () => {
   const [unsavedAttadatnums, setUnsavedAttadatnums] = useRecoilState(
     unsavedAttadatnumsState
   );
-
+  // 삭제할 첨부파일 리스트를 담는 함수
+  const [deletedAttadatnums, setDeletedAttadatnums] = useRecoilState(
+    deletedAttadatnumsState
+  );
   const [tabSelected, setTabSelected] = useState(0);
   const handleSelectTab = (e: any) => {
     setTabSelected(e.selected);
@@ -396,6 +401,11 @@ const App = () => {
     useState<boolean>(false);
   const onAttWndClick2 = () => {
     setAttachmentsWindowVisible2(true);
+  };
+  const [answerWindowVisible, setAnswerWindowVisible] =
+  useState<boolean>(false);
+  const onAnswerWndClick = () => {
+    setAnswerWindowVisible(true);
   };
   let gridRef: any = useRef(null);
   let gridRef2: any = useRef(null);
@@ -1064,9 +1074,9 @@ const App = () => {
 
     const selectedIdx = event.startRowIndex;
     const selectedRowData = event.dataItems[selectedIdx];
-    // // DB에 저장안된 첨부파일 서버에서 삭제
-    // if (unsavedAttadatnums.attdatnums.length > 0)
-    //   setDeletedAttadatnums(unsavedAttadatnums);
+    // DB에 저장안된 첨부파일 서버에서 삭제
+    if (unsavedAttadatnums.attdatnums.length > 0)
+      setDeletedAttadatnums(unsavedAttadatnums);
 
     fetchDocument(
       "Task",
@@ -1134,9 +1144,9 @@ const App = () => {
     } else {
       temp = 0;
       deletedRows = [];
-      // DB에 저장안된 첨부파일 서버에서 삭제
-      // if (unsavedAttadatnums.attdatnums.length > 0)
-      //   setDeletedAttadatnums(unsavedAttadatnums);
+      //DB에 저장안된 첨부파일 서버에서 삭제
+      if (unsavedAttadatnums.attdatnums.length > 0)
+        setDeletedAttadatnums(unsavedAttadatnums);
 
       setPage(initialPageState); // 페이지 초기화
       setTabSelected(0);
@@ -1503,6 +1513,12 @@ const App = () => {
   const [files2, setFiles2] = useState<string>("");
 
   useEffect(() => {
+    if (attdatnum != "" && attdatnum != undefined && attdatnum != null) {
+      setUnsavedAttadatnums((prev) => ({
+        type: "record",
+        attdatnums: [...prev.attdatnums, ...[attdatnum]],
+      }));
+    }
     const newData = mainDataResult.data.map((item) =>
       item[DATA_ITEM_KEY] ==
       parseInt(Object.getOwnPropertyNames(selectedState)[0])
@@ -1525,6 +1541,12 @@ const App = () => {
   }, [attdatnum, files]);
 
   useEffect(() => {
+    if (attdatnum2 != "" && attdatnum2 != undefined && attdatnum2 != null) {
+      setUnsavedAttadatnums((prev) => ({
+        type: "record",
+        attdatnums: [...prev.attdatnums, ...[attdatnum2]],
+      }));
+    }
     const newData = subDataResult.data.map((item) =>
       item[SUB_DATA_ITEM_KEY] ==
       parseInt(Object.getOwnPropertyNames(selectedsubDataState)[0])
@@ -1550,7 +1572,6 @@ const App = () => {
     type TRowsArr = {
       row_status: string[];
       datnum_s: string[];
-      docunum_s: string[];
       processing_date_s: string[];
       title_s: string[];
       contents_s: string[];
@@ -1561,16 +1582,11 @@ const App = () => {
       usemm_s: string[];
       asfinyn_s: string[];
       attdatnum_s: string[];
-
-      ref_key_s: string[];
-      devmngnum_s: string[];
-      devmngseq_s: string[];
     };
 
     let rowsArr: TRowsArr = {
       row_status: [],
       datnum_s: [],
-      docunum_s: [],
       processing_date_s: [],
       title_s: [],
       contents_s: [],
@@ -1581,10 +1597,6 @@ const App = () => {
       usemm_s: [],
       asfinyn_s: [],
       attdatnum_s: [],
-
-      ref_key_s: [],
-      devmngnum_s: [],
-      devmngseq_s: [],
     };
 
     let valid = true;
@@ -1602,7 +1614,7 @@ const App = () => {
       alert("필수항목을 채워주세요.");
     } else {
       let dataItem: any[] = [];
-      console.log(subDataResult)
+
       subDataResult.data.map((item) => {
         if (
           (item.rowstatus === "N" || item.rowstatus === "U") &&
@@ -1616,7 +1628,6 @@ const App = () => {
         const {
           rowstatus = "",
           datnum = "",
-          docunum = "",
           processing_date = "",
           title = "",
           contents = "",
@@ -1625,17 +1636,12 @@ const App = () => {
           person = "",
           use_hour = "",
           use_minute = "",
-          asfinyn = "",
+          is_finished = "",
           attdatnum = "",
-
-          ref_key = "",
-          devmngnum = "",
-          devmngseq = "",
         } = item;
 
         rowsArr.row_status.push(rowstatus);
         rowsArr.datnum_s.push(datnum);
-        rowsArr.docunum_s.push(docunum);
         rowsArr.processing_date_s.push(
           processing_date.length > 8
             ? processing_date
@@ -1649,20 +1655,15 @@ const App = () => {
         rowsArr.usehh_s.push(use_hour == "" ? 0 : use_hour);
         rowsArr.usemm_s.push(use_minute == "" ? 0 : use_minute);
         rowsArr.asfinyn_s.push(
-          asfinyn == true ? "Y" : asfinyn == false ? "N" : asfinyn
+          is_finished == true ? "Y" : is_finished == false ? "N" : is_finished
         );
         rowsArr.attdatnum_s.push(attdatnum);
-
-        rowsArr.ref_key_s.push(ref_key);
-        rowsArr.devmngnum_s.push(devmngnum);
-        rowsArr.devmngseq_s.push(devmngseq);
       });
 
       deletedRows.forEach((item: any) => {
         const {
             rowstatus = "",
             datnum = "",
-            docunum = "",
             processing_date = "",
             title = "",
             contents = "",
@@ -1671,17 +1672,12 @@ const App = () => {
             person = "",
             use_hour = "",
             use_minute = "",
-            asfinyn = "",
+            is_finished = "",
             attdatnum = "",
-  
-            ref_key = "",
-            devmngnum = "",
-            devmngseq = "",
           } = item;
   
           rowsArr.row_status.push(rowstatus);
           rowsArr.datnum_s.push(datnum);
-          rowsArr.docunum_s.push(docunum);
           rowsArr.processing_date_s.push(
             processing_date.length > 8
               ? processing_date
@@ -1695,20 +1691,19 @@ const App = () => {
           rowsArr.usehh_s.push(use_hour == "" ? 0 : use_hour);
           rowsArr.usemm_s.push(use_minute == "" ? 0 : use_minute);
           rowsArr.asfinyn_s.push(
-            asfinyn == true ? "Y" : asfinyn == false ? "N" : asfinyn
+            is_finished == true ? "Y" : is_finished == false ? "N" : is_finished
           );
           rowsArr.attdatnum_s.push(attdatnum);
-  
-          rowsArr.ref_key_s.push(ref_key);
-          rowsArr.devmngnum_s.push(devmngnum);
-          rowsArr.devmngseq_s.push(devmngseq);
       });
-
+      const data = mainDataResult.data.filter(
+        (item) =>
+          item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
+      )[0];
       setParaData({
         work_type: "SAVE",
         row_status: rowsArr.row_status.join("|"),
         datnum_s: rowsArr.datnum_s.join("|"),
-        docunum_s: rowsArr.docunum_s.join("|"),
+        docunum_s: data.docunum,
         processing_date_s: rowsArr.processing_date_s.join("|"),
         title_s: rowsArr.title_s.join("|"),
         contents_s: rowsArr.contents_s.join("|"),
@@ -1720,9 +1715,9 @@ const App = () => {
         asfinyn_s: rowsArr.asfinyn_s.join("|"),
         attdatnum_s: rowsArr.attdatnum_s.join("|"),
   
-        ref_key_s: rowsArr.ref_key_s.join("|"),
-        devmngnum_s: rowsArr.devmngnum_s.join("|"),
-        devmngseq_s: rowsArr.devmngseq_s.join("|"),
+        ref_key_s: data.ref_key,
+        devmngnum_s: data.ref_key,
+        devmngseq_s: data.ref_seq,
       });
     }
   };
@@ -1790,7 +1785,7 @@ const App = () => {
     } catch (error) {
       data = null;
     }
-    console.log(para)
+  
     if (data.isSuccess === true) {
       deletedRows = [];
       setParaData({
@@ -2280,6 +2275,7 @@ const App = () => {
                 disabled={tabSelected == 2 ? false : true}
                 themeColor={"primary"}
                 fillMode={"outline"}
+                // onClick={onAnswerWndClick}  AnswerWindow팝업
               >
                 수정
               </Button>
@@ -2878,6 +2874,24 @@ const App = () => {
           }
           permission={{ upload: false, download: true, delete: false }}
           type={"answer"}
+        />
+      )}
+      {answerWindowVisible && (
+        <AnswerWindow
+          setVisible={setAnswerWindowVisible}
+          para={
+            mainDataResult.data.filter(
+              (item) =>
+                item[DATA_ITEM_KEY] ==
+                Object.getOwnPropertyNames(selectedState)[0]
+            )[0] == undefined
+              ? []
+              : mainDataResult.data.filter(
+                  (item) =>
+                    item[DATA_ITEM_KEY] ==
+                    Object.getOwnPropertyNames(selectedState)[0]
+                )[0]
+          }
         />
       )}
     </>

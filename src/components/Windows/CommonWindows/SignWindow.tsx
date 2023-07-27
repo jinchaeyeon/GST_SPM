@@ -550,7 +550,7 @@ const SignWindow = ({ setVisible, orgdiv, number }: IWindow) => {
             "@p_signature": "",
             "@p_remarks": "",
             "@p_is_lock": "",
-            "@p_form_id": "pw6_sav_check_signature",
+            "@p_form_id": "SPM WEB",
             "@p_id": userId,
             "@p_pc": pc,
           },
@@ -621,7 +621,7 @@ const SignWindow = ({ setVisible, orgdiv, number }: IWindow) => {
                 : item.is_lock == false
                 ? "N"
                 : item.is_lock,
-            "@p_form_id": "pw6_sav_check_signature",
+            "@p_form_id": "SPM WEB",
             "@p_id": userId,
             "@p_pc": pc,
           },
@@ -678,7 +678,7 @@ const SignWindow = ({ setVisible, orgdiv, number }: IWindow) => {
                 : item.is_lock == false
                 ? "N"
                 : item.is_lock,
-            "@p_form_id": "pw6_sav_check_signature",
+            "@p_form_id": "SPM WEB",
             "@p_id": userId,
             "@p_pc": pc,
           },
