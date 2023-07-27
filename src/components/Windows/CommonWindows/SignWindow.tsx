@@ -54,40 +54,23 @@ let temp = 0;
 
 type IWindow = {
   setVisible(t: boolean): void;
+  orgdiv: string;
   number: string;
 };
 const topHeight = 10;
 const bottomHeight = 55;
 const leftOverHeight = (topHeight + bottomHeight) / 2;
 let targetRowIndex: null | number = null;
-const SignWindow = ({ setVisible, number }: IWindow) => {
+const SignWindow = ({ setVisible, orgdiv, number }: IWindow) => {
   const setLoading = useSetRecoilState(isLoading);
   const [pc, setPc] = useState("");
   const userId = UseGetValueFromSessionItem("user_id");
   UseParaPc(setPc);
   const pathname: string = window.location.pathname.replace("/", "");
 
-  const initialPageState = { skip: 0, take: PAGE_SIZE };
-  const [page, setPage] = useState(initialPageState);
-
   const [loginResult] = useRecoilState(loginResultState);
   const role = loginResult ? loginResult.role : "";
   const isAdmin = role === "ADMIN";
-
-  const pageChange = (event: GridPageChangeEvent) => {
-    const { page } = event;
-
-    setFilters((prev) => ({
-      ...prev,
-      pgNum: Math.floor(page.skip / initialPageState.take) + 1,
-      isSearch: true,
-    }));
-
-    setPage({
-      skip: page.skip,
-      take: initialPageState.take,
-    });
-  };
 
   let deviceWidth = window.innerWidth;
   let isMobile = deviceWidth <= 768;
@@ -135,7 +118,7 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
     process([], tempState)
   );
   const [filters, setFilters] = useState({
-    orgdiv: "01",
+    orgdiv: orgdiv != undefined ? orgdiv : "",
     meetingnum: number != undefined ? number : "",
     isSearch: true,
     find_row_value: "",
@@ -193,17 +176,11 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
         if (gridRef.current) {
           const findRowIndex = rows.findIndex(
             (row: any) =>
-              row.meetingseq.toString() ==
+              row.reference_key + "_" + row.seq ==
               filters.find_row_value
           );
           targetRowIndex = findRowIndex;
         }
-
-        // find_row_value 데이터가 존재하는 페이지로 설정
-        setPage({
-          skip: PAGE_SIZE * (data.pageNumber - 1),
-          take: PAGE_SIZE,
-        });
       } else {
         // 첫번째 행으로 스크롤 이동
         if (gridRef.current) {
@@ -222,7 +199,7 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
             ? rows[0]
             : rows.find(
                 (row: any) =>
-                  row.meetingseq.toString() ==
+                  row.reference_key + "_" + row.seq ==
                   filters.find_row_value
               );
 
@@ -501,19 +478,20 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
   };
 
   const onAddClick = () => {
+
     mainDataResult.data.map((item) => {
       if (item.num > temp) {
         temp = item.num;
       }
     });
+
     const newDataItem = {
       [DATA_ITEM_KEY]: ++temp,
       is_lock: "N",
       rowstatus: "N",
-      meetingnum: number,
-      meetingseq: 0,
+      reference_key: orgdiv+"_"+ number,
+      seq: 0,
       name: "",
-      orgdiv: "01",
       part: "",
       remarks: "",
       signature: "",
@@ -526,21 +504,22 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
         total: prev.total + 1,
       };
     });
-    setPage((prev) => ({
-      ...prev,
-      skip: 0,
-      take: prev.take + 1,
-    }));
   };
 
   const onSave = async () => {
     const dataItem = mainDataResult.data.filter((item: any) => {
       return (
-        (item.rowstatus === "N" || item.rowstatus === "U") &&
+        (item.rowstatus === "N") &&
         item.rowstatus !== undefined
       );
     });
-    if (dataItem.length === 0 && deletedMainRows.length === 0) return false;
+    const dataItem2 = mainDataResult.data.filter((item: any) => {
+      return (
+        (item.rowstatus === "U") &&
+        item.rowstatus !== undefined
+      );
+    });
+    if (dataItem.length === 0 && dataItem2.length === 0 && deletedMainRows.length === 0) return false;
 
     //검증
     let valid = true;
@@ -559,20 +538,19 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
     try {
       for (const item of deletedMainRows) {
         const para: Iparameters = {
-          procedureName: "pw6_sav_meeting_attendee",
+          procedureName: "pw6_sav_check_signature",
           pageNumber: 1,
           pageSize: 10,
           parameters: {
             "@p_work_type": "D",
-            "@p_orgdiv": item.orgdiv,
-            "@p_meetingnum": item.meetingnum,
-            "@p_meetingseq": item.meetingseq,
+            "@p_reference_key": item.reference_key,
+            "@p_seq": item.seq,
             "@p_part": "",
             "@p_name": "",
             "@p_signature": "",
             "@p_remarks": "",
             "@p_is_lock": "",
-            "@p_form_id": "pw6_sav_meeting_attendee",
+            "@p_form_id": "pw6_sav_check_signature",
             "@p_id": userId,
             "@p_pc": pc,
           },
@@ -594,17 +572,10 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
           const isLastDataDeleted =
             mainDataResult.data.length == 0 && filters.pgNum > 1;
           if (isLastDataDeleted) {
-            setPage({
-              skip:
-                filters.pgNum == 1 || filters.pgNum == 0
-                  ? 0
-                  : PAGE_SIZE * (filters.pgNum - 2),
-              take: PAGE_SIZE,
-            });
             setFilters((prev) => ({
               ...prev,
               find_row_value: "",
-              pgNum: prev.pgNum - 1,
+              pgNum: prev.pgNum,
               isSearch: true,
             }));
           } else {
@@ -628,16 +599,15 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
 
       deletedMainRows = [];
 
-      for (const item of dataItem) {
+      for (const item of dataItem2) {
         const para: Iparameters = {
-          procedureName: "pw6_sav_meeting_attendee",
+          procedureName: "pw6_sav_check_signature",
           pageNumber: 1,
           pageSize: 10,
           parameters: {
-            "@p_work_type": item.rowstatus,
-            "@p_orgdiv": item.orgdiv,
-            "@p_meetingnum": item.meetingnum,
-            "@p_meetingseq": item.meetingseq,
+            "@p_work_type": "U",
+            "@p_reference_key": item.reference_key,
+            "@p_seq": item.seq,
             "@p_part": item.part,
             "@p_name": item.name,
             "@p_signature":
@@ -651,7 +621,64 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
                 : item.is_lock == false
                 ? "N"
                 : item.is_lock,
-            "@p_form_id": "pw6_sav_meeting_attendee",
+            "@p_form_id": "pw6_sav_check_signature",
+            "@p_id": userId,
+            "@p_pc": pc,
+          },
+        };
+
+        let data: any;
+
+        try {
+          data = await processApi<any>("procedure", para);
+        } catch (error) {
+          data = null;
+        }
+
+        if (data.isSuccess !== true) {
+          console.log("[오류 발생]");
+          console.log(data);
+          throw data.resultMessage;
+        } else {
+          const datas = mainDataResult.data.filter(
+            (item) =>
+              item[DATA_ITEM_KEY] ==
+              Object.getOwnPropertyNames(selectedState)[0]
+          )[0];
+          setFilters((prev) => ({
+            ...prev,
+            find_row_value:
+              datas != undefined
+                ? data.returnString
+                : "",
+            isSearch: true,
+          }));
+        }
+      }
+
+      for (const item of dataItem) {
+        const para: Iparameters = {
+          procedureName: "pw6_sav_check_signature",
+          pageNumber: 1,
+          pageSize: 10,
+          parameters: {
+            "@p_work_type": "N",
+            "@p_reference_key": item.reference_key,
+            "@p_seq": item.seq,
+            "@p_part": item.part,
+            "@p_name": item.name,
+            "@p_signature":
+              item.signature != undefined && item.signature != ""
+                ? item.signature.replace("data:image/png;base64,", "")
+                : "",
+            "@p_remarks": item.remarks,
+            "@p_is_lock":
+              item.is_lock == true
+                ? "Y"
+                : item.is_lock == false
+                ? "N"
+                : item.is_lock,
+            "@p_form_id": "pw6_sav_check_signature",
             "@p_id": userId,
             "@p_pc": pc,
           },
@@ -743,12 +770,7 @@ const SignWindow = ({ setVisible, number }: IWindow) => {
           //스크롤 조회기능
           fixedScroll={true}
           total={mainDataResult.total}
-          skip={page.skip}
-          take={page.take}
-          pageable={true}
-          onPageChange={pageChange}
           ref={gridRef}
-          rowHeight={30}
           //정렬기능
           sortable={true}
           onSortChange={onMainSortChange}

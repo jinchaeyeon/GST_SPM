@@ -1976,6 +1976,7 @@ const App = () => {
         {signWindowVisible && (
           <SignWindow
             setVisible={setSignWindowVisible}
+            orgdiv={detailData.orgdiv}
             number={detailData.meetingnum}
           />
         )}

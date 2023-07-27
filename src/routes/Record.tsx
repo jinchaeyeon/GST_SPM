@@ -20,6 +20,7 @@ import {
 } from "../store/atoms";
 import { useRecoilState, useSetRecoilState } from "recoil";
 import {
+    UseParaPc,
   convertDateToStr,
   extractDownloadFilename,
   getGridItemChangedData,
@@ -46,6 +47,7 @@ import {
   process,
 } from "@progress/kendo-data-query";
 import {
+    DEFAULT_ATTDATNUMS,
   EDIT_FIELD,
   GAP,
   PAGE_SIZE,
@@ -317,6 +319,9 @@ const App = () => {
   const setLoading = useSetRecoilState(isLoading);
   const userId = loginResult ? loginResult.userId : "";
   const userName = loginResult ? loginResult.userName : "";
+  const [pc, setPc] = useState("");
+  UseParaPc(setPc);
+  
   // 서버 업로드는 되었으나 DB에는 저장안된 첨부파일 리스트
   const [unsavedAttadatnums, setUnsavedAttadatnums] = useRecoilState(
     unsavedAttadatnumsState
@@ -1525,8 +1530,8 @@ const App = () => {
       parseInt(Object.getOwnPropertyNames(selectedsubDataState)[0])
         ? {
             ...item,
-            attdatnum: attdatnum,
-            files: files,
+            attdatnum: attdatnum2,
+            files: files2,
           }
         : {
             ...item,
@@ -1541,6 +1546,289 @@ const App = () => {
     });
   }, [attdatnum2, files2]);
 
+  const saveProject = () => {
+    type TRowsArr = {
+      row_status: string[];
+      datnum_s: string[];
+      docunum_s: string[];
+      processing_date_s: string[];
+      title_s: string[];
+      contents_s: string[];
+      value_code3_s: string[];
+      kind1_s: string[];
+      person_s: string[];
+      usehh_s: string[];
+      usemm_s: string[];
+      asfinyn_s: string[];
+      attdatnum_s: string[];
+
+      ref_key_s: string[];
+      devmngnum_s: string[];
+      devmngseq_s: string[];
+    };
+
+    let rowsArr: TRowsArr = {
+      row_status: [],
+      datnum_s: [],
+      docunum_s: [],
+      processing_date_s: [],
+      title_s: [],
+      contents_s: [],
+      value_code3_s: [],
+      kind1_s: [],
+      person_s: [],
+      usehh_s: [],
+      usemm_s: [],
+      asfinyn_s: [],
+      attdatnum_s: [],
+
+      ref_key_s: [],
+      devmngnum_s: [],
+      devmngseq_s: [],
+    };
+
+    let valid = true;
+    subDataResult.data.map((item) => {
+      if (
+        parseDate(convertDateToStr(item.processing_date)) == "" ||
+        item.kind1 == "" ||
+        item.title == ""
+      ) {
+        valid = false;
+      }
+    });
+
+    if (valid != true) {
+      alert("필수항목을 채워주세요.");
+    } else {
+      let dataItem: any[] = [];
+      console.log(subDataResult)
+      subDataResult.data.map((item) => {
+        if (
+          (item.rowstatus === "N" || item.rowstatus === "U") &&
+          item.rowstatus !== undefined
+        ) {
+          dataItem.push(item);
+        }
+      });
+
+      dataItem.forEach((item: any) => {
+        const {
+          rowstatus = "",
+          datnum = "",
+          docunum = "",
+          processing_date = "",
+          title = "",
+          contents = "",
+          value_code3 = "",
+          kind1 = "",
+          person = "",
+          use_hour = "",
+          use_minute = "",
+          asfinyn = "",
+          attdatnum = "",
+
+          ref_key = "",
+          devmngnum = "",
+          devmngseq = "",
+        } = item;
+
+        rowsArr.row_status.push(rowstatus);
+        rowsArr.datnum_s.push(datnum);
+        rowsArr.docunum_s.push(docunum);
+        rowsArr.processing_date_s.push(
+          processing_date.length > 8
+            ? processing_date
+            : convertDateToStr(processing_date)
+        );
+        rowsArr.title_s.push(title);
+        rowsArr.contents_s.push(contents);
+        rowsArr.value_code3_s.push(value_code3);
+        rowsArr.kind1_s.push(kind1);
+        rowsArr.person_s.push(person);
+        rowsArr.usehh_s.push(use_hour == "" ? 0 : use_hour);
+        rowsArr.usemm_s.push(use_minute == "" ? 0 : use_minute);
+        rowsArr.asfinyn_s.push(
+          asfinyn == true ? "Y" : asfinyn == false ? "N" : asfinyn
+        );
+        rowsArr.attdatnum_s.push(attdatnum);
+
+        rowsArr.ref_key_s.push(ref_key);
+        rowsArr.devmngnum_s.push(devmngnum);
+        rowsArr.devmngseq_s.push(devmngseq);
+      });
+
+      deletedRows.forEach((item: any) => {
+        const {
+            rowstatus = "",
+            datnum = "",
+            docunum = "",
+            processing_date = "",
+            title = "",
+            contents = "",
+            value_code3 = "",
+            kind1 = "",
+            person = "",
+            use_hour = "",
+            use_minute = "",
+            asfinyn = "",
+            attdatnum = "",
+  
+            ref_key = "",
+            devmngnum = "",
+            devmngseq = "",
+          } = item;
+  
+          rowsArr.row_status.push(rowstatus);
+          rowsArr.datnum_s.push(datnum);
+          rowsArr.docunum_s.push(docunum);
+          rowsArr.processing_date_s.push(
+            processing_date.length > 8
+              ? processing_date
+              : convertDateToStr(processing_date)
+          );
+          rowsArr.title_s.push(title);
+          rowsArr.contents_s.push(contents);
+          rowsArr.value_code3_s.push(value_code3);
+          rowsArr.kind1_s.push(kind1);
+          rowsArr.person_s.push(person);
+          rowsArr.usehh_s.push(use_hour == "" ? 0 : use_hour);
+          rowsArr.usemm_s.push(use_minute == "" ? 0 : use_minute);
+          rowsArr.asfinyn_s.push(
+            asfinyn == true ? "Y" : asfinyn == false ? "N" : asfinyn
+          );
+          rowsArr.attdatnum_s.push(attdatnum);
+  
+          rowsArr.ref_key_s.push(ref_key);
+          rowsArr.devmngnum_s.push(devmngnum);
+          rowsArr.devmngseq_s.push(devmngseq);
+      });
+
+      setParaData({
+        work_type: "SAVE",
+        row_status: rowsArr.row_status.join("|"),
+        datnum_s: rowsArr.datnum_s.join("|"),
+        docunum_s: rowsArr.docunum_s.join("|"),
+        processing_date_s: rowsArr.processing_date_s.join("|"),
+        title_s: rowsArr.title_s.join("|"),
+        contents_s: rowsArr.contents_s.join("|"),
+        value_code3_s: rowsArr.value_code3_s.join("|"),
+        kind1_s: rowsArr.kind1_s.join("|"),
+        person_s: rowsArr.person_s.join("|"),
+        usehh_s: rowsArr.usehh_s.join("|"),
+        usemm_s: rowsArr.usemm_s.join("|"),
+        asfinyn_s: rowsArr.asfinyn_s.join("|"),
+        attdatnum_s: rowsArr.attdatnum_s.join("|"),
+  
+        ref_key_s: rowsArr.ref_key_s.join("|"),
+        devmngnum_s: rowsArr.devmngnum_s.join("|"),
+        devmngseq_s: rowsArr.devmngseq_s.join("|"),
+      });
+    }
+  };
+
+  //프로시저 파라미터 초기값
+  const [paraData, setParaData] = useState({
+    work_type: "",
+    row_status: "",
+    datnum_s: "",
+    docunum_s: "",
+    processing_date_s: "",
+    title_s: "",
+    contents_s: "",
+    value_code3_s: "",
+    kind1_s: "",
+    person_s: "",
+    usehh_s: "",
+    usemm_s: "",
+    asfinyn_s: "",
+    attdatnum_s: "",
+
+    ref_key_s: "",
+    devmngnum_s: "",
+    devmngseq_s: "",
+  });
+
+  //추가, 수정 프로시저 파라미터
+  const para: Iparameters = {
+    procedureName: "pw6_sav_record",
+    pageNumber: 1,
+    pageSize: 10,
+    parameters: {
+      "@p_work_type": paraData.work_type,
+      "@p_row_status": paraData.row_status,
+      "@p_datnum": paraData.datnum_s,
+      "@p_docunum": paraData.docunum_s,
+      "@p_processing_date": paraData.processing_date_s,
+      "@p_title": paraData.title_s,
+      "@p_contents": paraData.contents_s,
+      "@p_value_code3": paraData.value_code3_s,
+      "@p_kind1": paraData.kind1_s,
+      "@p_person": paraData.person_s,
+      "@p_usehh": paraData.usehh_s,
+      "@p_usemm": paraData.usemm_s,
+      "@p_asfinyn": paraData.asfinyn_s,
+      "@p_attdatnum": paraData.attdatnum_s,
+      "@p_ref_key": paraData.ref_key_s,
+      "@p_devmngnum": paraData.devmngnum_s,
+      "@p_devmngseq": paraData.devmngseq_s,
+
+      "@p_id": userId,
+      "@p_pc": pc,
+    },
+  };
+
+  useEffect(() => {
+    if (paraData.work_type != "") fetchToSave();
+  }, [paraData]);
+
+  const fetchToSave = async () => {
+    let data: any;
+
+    try {
+      data = await processApi<any>("procedure", para);
+    } catch (error) {
+      data = null;
+    }
+    console.log(para)
+    if (data.isSuccess === true) {
+      deletedRows = [];
+      setParaData({
+        work_type: "",
+        row_status: "",
+        datnum_s: "",
+        docunum_s: "",
+        processing_date_s: "",
+        title_s: "",
+        contents_s: "",
+        value_code3_s: "",
+        kind1_s: "",
+        person_s: "",
+        usehh_s: "",
+        usemm_s: "",
+        asfinyn_s: "",
+        attdatnum_s: "",
+    
+        ref_key_s: "",
+        devmngnum_s: "",
+        devmngseq_s: "",
+      });
+      // unsaved 첨부파일 초기화
+      setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
+      setFilters((prev) => ({
+        ...prev,
+        find_row_value: Object.getOwnPropertyNames(selectedState)[0],
+        isSearch: true,
+      }));
+    } else {
+      console.log("[오류 발생]");
+      console.log(data);
+      alert(data.resultMessage);
+    }
+
+    paraData.work_type = "";
+  };
+
   return (
     <>
       <TitleContainer>
@@ -1550,7 +1838,7 @@ const App = () => {
             themeColor={"primary"}
             fillMode={"outline"}
             icon="save"
-            //onClick={saveProject}
+            onClick={saveProject}
           >
             저장
           </Button>
