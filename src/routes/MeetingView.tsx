@@ -611,6 +611,7 @@ const App = () => {
           setData={getAttachmentsData}
           para={detailData.attdatnum}
           permission={{ upload: false, download: true, delete: false }}
+          modal={true}
         />
       )}
     </>

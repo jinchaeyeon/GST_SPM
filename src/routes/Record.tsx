@@ -23,6 +23,7 @@ import { useRecoilState, useSetRecoilState } from "recoil";
 import {
     UseParaPc,
   convertDateToStr,
+  dateformat2,
   extractDownloadFilename,
   getGridItemChangedData,
   handleKeyPressSearch,
@@ -244,6 +245,7 @@ const FilesCell = (props: GridCellProps) => {
           para={dataItem.attdatnum}
           permission={{ upload: false, download: true, delete: false }}
           type={"record"}
+          modal={true}
         />
       )}
     </>
@@ -309,6 +311,7 @@ const FilesCell2 = (props: GridCellProps) => {
           para={dataItem.attdatnum}
           permission={{ upload: true, download: true, delete: true }}
           type={"record"}
+          modal={true}
         />
       )}
     </>
@@ -348,7 +351,7 @@ const App = () => {
     } else if (e.selected == 1) {
       fetchDocument("Question", selectedRowData.reception_document_id);
     } else if (e.selected == 2) {
-      fetchDocument("Answer", selectedRowData.reception_document_id);
+      fetchDocument("Answer", selectedRowData.answer_document_id);
     } else if (e.selected == 3) {
       fetchDocument("Meeting", selectedRowData.meeting_document_id);
     }
@@ -853,7 +856,7 @@ const App = () => {
           } else if (tabSelected == 1) {
             fetchDocument("Question", selectedRow.reception_document_id);
           } else if (tabSelected == 2) {
-            fetchDocument("Answer", selectedRow.reception_document_id);
+            fetchDocument("Answer", selectedRow.answer_document_id);
           } else if (tabSelected == 3) {
             fetchDocument("Meeting", selectedRow.meeting_document_id);
           }
@@ -872,7 +875,7 @@ const App = () => {
           } else if (tabSelected == 1) {
             fetchDocument("Question", rows[0].reception_document_id);
           } else if (tabSelected == 2) {
-            fetchDocument("Answer", rows[0].reception_document_id);
+            fetchDocument("Answer", rows[0].answer_document_id);
           } else if (tabSelected == 3) {
             fetchDocument("Meeting", rows[0].meeting_document_id);
           }
@@ -1369,41 +1372,45 @@ const App = () => {
         temp = item[SUB_DATA_ITEM_KEY];
       }
     });
-    const data = mainDataResult.data.filter(
-      (item) =>
-        item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
-    )[0];
-
-    const newDataItem = {
-      [SUB_DATA_ITEM_KEY]: ++temp,
-      attach_exists: "N",
-      attdatnum: "",
-      contents: data.contents,
-      customer_code: data.custcd,
-      customer_name: data.custnm,
-      datnum: "",
-      devmngnum: data.ref_key,
-      devmngseq: data.ref_seq,
-      docunum: data.docunum,
-      is_finished: "N",
-      kind1: "C05",
-      person: data.person,
-      processing_date: new Date(),
-      ref_key: data.ref_key,
-      title: "[A/S 처리] " + data.remark,
-      use_hour: 0,
-      use_minute: 0,
-      value_code3: data.value_code3,
-      rowstatus: "N",
-    };
-
-    setSubDataResult((prev) => {
-      return {
-        data: [newDataItem, ...prev.data],
-        total: prev.total + 1,
+    if(mainDataResult.total < 1) {
+      alert("데이터가 없습니다.");
+    } else {
+      const data = mainDataResult.data.filter(
+        (item) =>
+          item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
+      )[0];
+  
+      const newDataItem = {
+        [SUB_DATA_ITEM_KEY]: ++temp,
+        attach_exists: "N",
+        attdatnum: "",
+        contents: data.contents,
+        customer_code: data.custcd,
+        customer_name: data.custnm,
+        datnum: "",
+        devmngnum: data.ref_key,
+        devmngseq: data.ref_seq,
+        docunum: data.docunum,
+        is_finished: "N",
+        kind1: "C05",
+        person: data.person,
+        processing_date: new Date(),
+        ref_key: data.ref_key,
+        title: "[A/S 처리] " + data.remark,
+        use_hour: 0,
+        use_minute: 0,
+        value_code3: data.value_code3,
+        rowstatus: "N",
       };
-    });
-    setSelectedsubDataState({ [newDataItem[SUB_DATA_ITEM_KEY]]: true });
+  
+      setSubDataResult((prev) => {
+        return {
+          data: [newDataItem, ...prev.data],
+          total: prev.total + 1,
+        };
+      });
+      setSelectedsubDataState({ [newDataItem[SUB_DATA_ITEM_KEY]]: true });
+    }
   };
 
   const onRemoveClick = () => {
@@ -1446,64 +1453,67 @@ const App = () => {
     let response: any;
     setLoading(true);
 
-    const datas = mainDataResult.data.filter(
-      (item) =>
-        item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
-    )[0];
-
-    function ids() {
-      let id = ["", ""];
-      if (tabSelected == 0) {
-        id[0] = "Task";
-        id[1] = datas.orgdiv + "_" + datas.docunum;
-      } else if (tabSelected == 1) {
-        id[0] = "Question";
-        id[1] = datas.reception_document_id;
-      } else if (tabSelected == 2) {
-        id[0] = "Answer";
-        id[1] = datas.reception_document_id;
-      } else if (tabSelected == 3) {
-        id[0] = "Meeting";
-        id[1] = datas.meeting_document_id;
+    if(mainDataResult.total < 1) {
+      alert("데이터가 없습니다.")
+    } else {
+      const datas = mainDataResult.data.filter(
+        (item) =>
+          item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
+      )[0];
+  
+      function ids() {
+        let id = ["", ""];
+        if (tabSelected == 0) {
+          id[0] = "Task";
+          id[1] = datas.orgdiv + "_" + datas.docunum;
+        } else if (tabSelected == 1) {
+          id[0] = "Question";
+          id[1] = datas.reception_document_id;
+        } else if (tabSelected == 2) {
+          id[0] = "Answer";
+          id[1] = datas.answer_document_id;
+        } else if (tabSelected == 3) {
+          id[0] = "Meeting";
+          id[1] = datas.meeting_document_id;
+        }
+        return id;
       }
-      return id;
+  
+      const para = {
+        para: "doc?type=" + ids()[0] + "&id=" + ids()[1],
+      };
+  
+      try {
+        response = await processApi<any>("doc-download", para);
+      } catch (error) {
+        response = null;
+      }
+  
+      if (response !== null) {
+        const blob = new Blob([response.data]);
+        // 특정 타입을 정의해야 경우에는 옵션을 사용해 MIME 유형을 정의 할 수 있습니다.
+        // const blob = new Blob([this.content], {type: 'text/plain'})
+  
+        // blob을 사용해 객체 URL을 생성합니다.
+        const fileObjectUrl = window.URL.createObjectURL(blob);
+  
+        // blob 객체 URL을 설정할 링크를 만듭니다.
+        const link = document.createElement("a");
+        link.href = fileObjectUrl;
+        link.style.display = "none";
+  
+        // 다운로드 파일 이름을 지정 할 수 있습니다.
+        // 일반적으로 서버에서 전달해준 파일 이름은 응답 Header의 Content-Disposition에 설정됩니다.
+        link.download = extractDownloadFilename(response);
+  
+        // 링크를 body에 추가하고 강제로 click 이벤트를 발생시켜 파일 다운로드를 실행시킵니다.
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+  
+        // 다운로드가 끝난 리소스(객체 URL)를 해제합니다
+      }
     }
-
-    const para = {
-      para: "doc?type=" + ids()[0] + "&id=" + ids()[1],
-    };
-
-    try {
-      response = await processApi<any>("doc-download", para);
-    } catch (error) {
-      response = null;
-    }
-
-    if (response !== null) {
-      const blob = new Blob([response.data]);
-      // 특정 타입을 정의해야 경우에는 옵션을 사용해 MIME 유형을 정의 할 수 있습니다.
-      // const blob = new Blob([this.content], {type: 'text/plain'})
-
-      // blob을 사용해 객체 URL을 생성합니다.
-      const fileObjectUrl = window.URL.createObjectURL(blob);
-
-      // blob 객체 URL을 설정할 링크를 만듭니다.
-      const link = document.createElement("a");
-      link.href = fileObjectUrl;
-      link.style.display = "none";
-
-      // 다운로드 파일 이름을 지정 할 수 있습니다.
-      // 일반적으로 서버에서 전달해준 파일 이름은 응답 Header의 Content-Disposition에 설정됩니다.
-      link.download = extractDownloadFilename(response);
-
-      // 링크를 body에 추가하고 강제로 click 이벤트를 발생시켜 파일 다운로드를 실행시킵니다.
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-
-      // 다운로드가 끝난 리소스(객체 URL)를 해제합니다
-    }
-
     setLoading(false);
   };
 
@@ -1569,99 +1579,64 @@ const App = () => {
   }, [attdatnum2, files2]);
 
   const saveProject = () => {
-    type TRowsArr = {
-      row_status: string[];
-      datnum_s: string[];
-      processing_date_s: string[];
-      title_s: string[];
-      contents_s: string[];
-      value_code3_s: string[];
-      kind1_s: string[];
-      person_s: string[];
-      usehh_s: string[];
-      usemm_s: string[];
-      asfinyn_s: string[];
-      attdatnum_s: string[];
-    };
-
-    let rowsArr: TRowsArr = {
-      row_status: [],
-      datnum_s: [],
-      processing_date_s: [],
-      title_s: [],
-      contents_s: [],
-      value_code3_s: [],
-      kind1_s: [],
-      person_s: [],
-      usehh_s: [],
-      usemm_s: [],
-      asfinyn_s: [],
-      attdatnum_s: [],
-    };
-
-    let valid = true;
-    subDataResult.data.map((item) => {
-      if (
-        parseDate(convertDateToStr(item.processing_date)) == "" ||
-        item.kind1 == "" ||
-        item.title == ""
-      ) {
-        valid = false;
-      }
-    });
-
-    if (valid != true) {
-      alert("필수항목을 채워주세요.");
-    } else {
-      let dataItem: any[] = [];
-
+    if(mainDataResult.total > 0) {
+      type TRowsArr = {
+        row_status: string[];
+        datnum_s: string[];
+        processing_date_s: string[];
+        title_s: string[];
+        contents_s: string[];
+        value_code3_s: string[];
+        kind1_s: string[];
+        person_s: string[];
+        usehh_s: string[];
+        usemm_s: string[];
+        asfinyn_s: string[];
+        attdatnum_s: string[];
+      };
+  
+      let rowsArr: TRowsArr = {
+        row_status: [],
+        datnum_s: [],
+        processing_date_s: [],
+        title_s: [],
+        contents_s: [],
+        value_code3_s: [],
+        kind1_s: [],
+        person_s: [],
+        usehh_s: [],
+        usemm_s: [],
+        asfinyn_s: [],
+        attdatnum_s: [],
+      };
+  
+      let valid = true;
       subDataResult.data.map((item) => {
         if (
-          (item.rowstatus === "N" || item.rowstatus === "U") &&
-          item.rowstatus !== undefined
+          parseDate(convertDateToStr(item.processing_date)) == "" ||
+          item.kind1 == "" ||
+          item.title == ""
         ) {
-          dataItem.push(item);
+          valid = false;
         }
       });
-
-      dataItem.forEach((item: any) => {
-        const {
-          rowstatus = "",
-          datnum = "",
-          processing_date = "",
-          title = "",
-          contents = "",
-          value_code3 = "",
-          kind1 = "",
-          person = "",
-          use_hour = "",
-          use_minute = "",
-          is_finished = "",
-          attdatnum = "",
-        } = item;
-
-        rowsArr.row_status.push(rowstatus);
-        rowsArr.datnum_s.push(datnum);
-        rowsArr.processing_date_s.push(
-          processing_date.length > 8
-            ? processing_date
-            : convertDateToStr(processing_date)
-        );
-        rowsArr.title_s.push(title);
-        rowsArr.contents_s.push(contents);
-        rowsArr.value_code3_s.push(value_code3);
-        rowsArr.kind1_s.push(kind1);
-        rowsArr.person_s.push(person);
-        rowsArr.usehh_s.push(use_hour == "" ? 0 : use_hour);
-        rowsArr.usemm_s.push(use_minute == "" ? 0 : use_minute);
-        rowsArr.asfinyn_s.push(
-          is_finished == true ? "Y" : is_finished == false ? "N" : is_finished
-        );
-        rowsArr.attdatnum_s.push(attdatnum);
-      });
-
-      deletedRows.forEach((item: any) => {
-        const {
+  
+      if (valid != true) {
+        alert("필수항목을 채워주세요.");
+      } else {
+        let dataItem: any[] = [];
+  
+        subDataResult.data.map((item) => {
+          if (
+            (item.rowstatus === "N" || item.rowstatus === "U") &&
+            item.rowstatus !== undefined
+          ) {
+            dataItem.push(item);
+          }
+        });
+  
+        dataItem.forEach((item: any) => {
+          const {
             rowstatus = "",
             datnum = "",
             processing_date = "",
@@ -1694,31 +1669,68 @@ const App = () => {
             is_finished == true ? "Y" : is_finished == false ? "N" : is_finished
           );
           rowsArr.attdatnum_s.push(attdatnum);
-      });
-      const data = mainDataResult.data.filter(
-        (item) =>
-          item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
-      )[0];
-      setParaData({
-        work_type: "SAVE",
-        row_status: rowsArr.row_status.join("|"),
-        datnum_s: rowsArr.datnum_s.join("|"),
-        docunum_s: data.docunum,
-        processing_date_s: rowsArr.processing_date_s.join("|"),
-        title_s: rowsArr.title_s.join("|"),
-        contents_s: rowsArr.contents_s.join("|"),
-        value_code3_s: rowsArr.value_code3_s.join("|"),
-        kind1_s: rowsArr.kind1_s.join("|"),
-        person_s: rowsArr.person_s.join("|"),
-        usehh_s: rowsArr.usehh_s.join("|"),
-        usemm_s: rowsArr.usemm_s.join("|"),
-        asfinyn_s: rowsArr.asfinyn_s.join("|"),
-        attdatnum_s: rowsArr.attdatnum_s.join("|"),
+        });
   
-        ref_key_s: data.ref_key,
-        devmngnum_s: data.ref_key,
-        devmngseq_s: data.ref_seq,
-      });
+        deletedRows.forEach((item: any) => {
+          const {
+              rowstatus = "",
+              datnum = "",
+              processing_date = "",
+              title = "",
+              contents = "",
+              value_code3 = "",
+              kind1 = "",
+              person = "",
+              use_hour = "",
+              use_minute = "",
+              is_finished = "",
+              attdatnum = "",
+            } = item;
+    
+            rowsArr.row_status.push(rowstatus);
+            rowsArr.datnum_s.push(datnum);
+            rowsArr.processing_date_s.push(
+              processing_date.length > 8
+                ? processing_date
+                : convertDateToStr(processing_date)
+            );
+            rowsArr.title_s.push(title);
+            rowsArr.contents_s.push(contents);
+            rowsArr.value_code3_s.push(value_code3);
+            rowsArr.kind1_s.push(kind1);
+            rowsArr.person_s.push(person);
+            rowsArr.usehh_s.push(use_hour == "" ? 0 : use_hour);
+            rowsArr.usemm_s.push(use_minute == "" ? 0 : use_minute);
+            rowsArr.asfinyn_s.push(
+              is_finished == true ? "Y" : is_finished == false ? "N" : is_finished
+            );
+            rowsArr.attdatnum_s.push(attdatnum);
+        });
+        const data = mainDataResult.data.filter(
+          (item) =>
+            item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
+        )[0];
+        setParaData({
+          work_type: "SAVE",
+          row_status: rowsArr.row_status.join("|"),
+          datnum_s: rowsArr.datnum_s.join("|"),
+          docunum_s: data.docunum,
+          processing_date_s: rowsArr.processing_date_s.join("|"),
+          title_s: rowsArr.title_s.join("|"),
+          contents_s: rowsArr.contents_s.join("|"),
+          value_code3_s: rowsArr.value_code3_s.join("|"),
+          kind1_s: rowsArr.kind1_s.join("|"),
+          person_s: rowsArr.person_s.join("|"),
+          usehh_s: rowsArr.usehh_s.join("|"),
+          usemm_s: rowsArr.usemm_s.join("|"),
+          asfinyn_s: rowsArr.asfinyn_s.join("|"),
+          attdatnum_s: rowsArr.attdatnum_s.join("|"),
+    
+          ref_key_s: data.ref_key,
+          devmngnum_s: data.ref_key,
+          devmngseq_s: data.ref_seq,
+        });
+      }
     }
   };
 
@@ -2275,7 +2287,7 @@ const App = () => {
                 disabled={tabSelected == 2 ? false : true}
                 themeColor={"primary"}
                 fillMode={"outline"}
-                // onClick={onAnswerWndClick}  AnswerWindow팝업
+                onClick={onAnswerWndClick} 
               >
                 수정
               </Button>
@@ -2505,7 +2517,7 @@ const App = () => {
               }
             >
               <GridContainer style={{ height: "78vh" }}>
-                <RichEditor id="refEditor3" ref={docEditorRef3} hideTools />
+                <RichEditor id="docEditor3" ref={docEditorRef3} hideTools />
                 <FormBoxWrap border={true}>
                   <FormBox>
                     <tbody>
@@ -2609,13 +2621,13 @@ const App = () => {
                                   Object.getOwnPropertyNames(selectedState)[0]
                               )[0] == undefined
                                 ? ""
-                                : mainDataResult.data.filter(
+                                : dateformat2(mainDataResult.data.filter(
                                     (item) =>
                                       item[DATA_ITEM_KEY] ==
                                       Object.getOwnPropertyNames(
                                         selectedState
                                       )[0]
-                                  )[0].meeting_reqdt
+                                  )[0].meeting_reqdt)
                             }
                             className="readonly"
                           />
@@ -2632,13 +2644,13 @@ const App = () => {
                                   Object.getOwnPropertyNames(selectedState)[0]
                               )[0] == undefined
                                 ? ""
-                                : mainDataResult.data.filter(
+                                : dateformat2(mainDataResult.data.filter(
                                     (item) =>
                                       item[DATA_ITEM_KEY] ==
                                       Object.getOwnPropertyNames(
                                         selectedState
                                       )[0]
-                                  )[0].meeting_finexpdt
+                                  )[0].meeting_finexpdt)
                             }
                             className="readonly"
                           />
@@ -2680,13 +2692,13 @@ const App = () => {
                                   Object.getOwnPropertyNames(selectedState)[0]
                               )[0] == undefined
                                 ? ""
-                                : mainDataResult.data.filter(
+                                : dateformat2(mainDataResult.data.filter(
                                     (item) =>
                                       item[DATA_ITEM_KEY] ==
                                       Object.getOwnPropertyNames(
                                         selectedState
                                       )[0]
-                                  )[0].meeting_client_finexpdt
+                                  )[0].meeting_client_finexpdt)
                             }
                             className="readonly"
                           />
@@ -2714,13 +2726,13 @@ const App = () => {
                                   Object.getOwnPropertyNames(selectedState)[0]
                               )[0] == undefined
                                 ? ""
-                                : mainDataResult.data.filter(
+                                : dateformat2(mainDataResult.data.filter(
                                     (item) =>
                                       item[DATA_ITEM_KEY] ==
                                       Object.getOwnPropertyNames(
                                         selectedState
                                       )[0]
-                                  )[0].meeting_date
+                                  )[0].meeting_date)
                             }
                             className="readonly"
                           />
@@ -2854,6 +2866,7 @@ const App = () => {
           }
           permission={{ upload: false, download: true, delete: false }}
           type={"question"}
+          modal={true}
         />
       )}
       {attachmentsWindowVisible2 && (
@@ -2874,6 +2887,7 @@ const App = () => {
           }
           permission={{ upload: false, download: true, delete: false }}
           type={"answer"}
+          modal={true}
         />
       )}
       {answerWindowVisible && (

@@ -533,7 +533,7 @@ const App = () => {
       });
     });
 
-    setSubDataTotal(subDataTotal + 1);
+    setSubDataTotal(subDataTotal + data.length);
     const newDataState = processWithGroups(newData, group);
     setSubDataResult(newDataState);
     setSelectedsubDataState({
@@ -2774,48 +2774,52 @@ const App = () => {
     let Object2: any[] = [];
     let indexs: any[] = [];
     let data: any;
-    subDataResult.map((items, index2) => {
-      items.items.forEach((item: any, index: number) => {
-        if (!selectedsubDataState[item[SUB_DATA_ITEM_KEY]]) {
-          newData.push(item);
-          Object2.push(index);
-        } else {
-          const newData2 = {
-            ...item,
-            rowstatus: "D",
-          };
-          Object.push(index);
-          if (Math.min(...indexs) == index2) {
-            indexs.push(100000000000); //최소값안걸리게 셋팅
+    if(subDataTotal != 0) {
+      subDataResult.map((items, index2) => {
+        items.items.forEach((item: any, index: number) => {
+          if (!selectedsubDataState[item[SUB_DATA_ITEM_KEY]]) {
+            newData.push(item);
+            Object2.push(index);
           } else {
-            indexs.push(index2);
+            const newData2 = {
+              ...item,
+              rowstatus: "D",
+            };
+            Object.push(index);
+            if (Math.min(...indexs) == index2) {
+              indexs.push(100000000000); //최소값안걸리게 셋팅
+            } else {
+              indexs.push(index2);
+            }
+            deletedRows.push(newData2);
           }
-          deletedRows.push(newData2);
-        }
+        });
       });
-    });
-    const minIndex = indexs.findIndex((item) => item == Math.min(...indexs));
-    if (Object[minIndex] == 0 && Math.min(...indexs) == 0) {
-      if (subDataResult[minIndex].items[minIndex + 1] == undefined) {
-        data = subDataResult[minIndex + 1].items[minIndex]; //그룹사라져서 다음그룹
+      const minIndex = indexs.findIndex((item) => item == Math.min(...indexs));
+      if ((Object[minIndex] == 0 && Math.min(...indexs) == 0) && subDataTotal != 1) {
+        if (subDataResult[minIndex].items[minIndex + 1] == undefined) {
+          data = subDataResult[minIndex + 1].items[minIndex]; //그룹사라져서 다음그룹
+        } else {
+          data = subDataResult[minIndex].items[minIndex + 1]; //그룹내첫번쨰
+        }
+      } else if (Object[minIndex] == 0 && subDataTotal != 1) {
+        data =
+          subDataResult[Math.min(...indexs) - 1].items[
+            subDataResult[Math.min(...indexs) - 1].items.length - 1
+          ]; //전그룹 마지막
       } else {
-        data = subDataResult[minIndex].items[minIndex + 1]; //그룹내첫번쨰
+        data = subDataResult[indexs[minIndex]].items[Object[minIndex] - 1];
       }
-    } else if (Object[minIndex] == 0) {
-      data =
-        subDataResult[Math.min(...indexs) - 1].items[
-          subDataResult[Math.min(...indexs) - 1].items.length - 1
-        ]; //전그룹 마지막
+      setSubDataTotal(subDataTotal - Object.length);
+  
+      const newDataState = processWithGroups(newData, group);
+      setSubDataResult(newDataState);
+      setSelectedsubDataState({
+        [data != undefined ? data[SUB_DATA_ITEM_KEY] : newData[0]]: true,
+      });
     } else {
-      data = subDataResult[indexs[minIndex]].items[Object[minIndex] - 1];
-    }
-    setSubDataTotal(subDataTotal - Object.length);
-
-    const newDataState = processWithGroups(newData, group);
-    setSubDataResult(newDataState);
-    setSelectedsubDataState({
-      [data != undefined ? data[SUB_DATA_ITEM_KEY] : newData[0]]: true,
-    });
+      alert("데이터가 없습니다");
+    } 
   };
 
   const handleSelectTab = (e: any) => {
@@ -2839,81 +2843,84 @@ const App = () => {
     deletedRows = [];
   };
   const handleSelectAllTab = (e: any) => {
-    if (e.selected == 1) {
-      const selectedRowData = mainDataResult.data.filter(
-        (item) =>
-          item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
-      )[0];
-
-      setSubFilters((prev) => ({
-        ...prev,
-        devmngnum: selectedRowData.devmngnum,
-        pgNum: 1,
-        isSearch: true,
-      }));
-
-      const pjtmanager: any = usersData.find(
-        (item: any) => item.user_id == selectedRowData.pjtmanager
-      );
-
-      const pjtperson: any = usersData.find(
-        (item: any) => item.user_id == selectedRowData.pjtperson
-      );
-      setInformation({
-        attdatnum: selectedRowData.attdatnum,
-        attdatnum_exists: selectedRowData.attdatnum_exists,
-        compl_chk_date: isValidDate(selectedRowData.compl_chk_date)
-          ? new Date(dateformat(selectedRowData.compl_chk_date))
-          : null,
-        cotracdt: isValidDate(selectedRowData.cotracdt)
-          ? new Date(dateformat(selectedRowData.cotracdt))
-          : null,
-        custcd: selectedRowData.custcd,
-        custnm: {
+    if(workType != "N") {
+      if (e.selected == 1) {
+        const selectedRowData = mainDataResult.data.filter(
+          (item) =>
+            item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
+        )[0];
+  
+        setSubFilters((prev) => ({
+          ...prev,
+          devmngnum: selectedRowData.devmngnum,
+          pgNum: 1,
+          isSearch: true,
+        }));
+  
+        const pjtmanager: any = usersData.find(
+          (item: any) => item.user_id == selectedRowData.pjtmanager
+        );
+  
+        const pjtperson: any = usersData.find(
+          (item: any) => item.user_id == selectedRowData.pjtperson
+        );
+        setInformation({
+          attdatnum: selectedRowData.attdatnum,
+          attdatnum_exists: selectedRowData.attdatnum_exists,
+          compl_chk_date: isValidDate(selectedRowData.compl_chk_date)
+            ? new Date(dateformat(selectedRowData.compl_chk_date))
+            : null,
+          cotracdt: isValidDate(selectedRowData.cotracdt)
+            ? new Date(dateformat(selectedRowData.cotracdt))
+            : null,
           custcd: selectedRowData.custcd,
-          custnm: selectedRowData.custnm,
-        },
-        devmngnum: selectedRowData.devmngnum,
-        estnum: selectedRowData.estnum,
-        files: selectedRowData.files,
-        finchkdt: isValidDate(selectedRowData.finchkdt)
-          ? new Date(dateformat(selectedRowData.finchkdt))
-          : null,
-        findt: isValidDate(selectedRowData.findt)
-          ? new Date(dateformat(selectedRowData.findt))
-          : null,
-        finexpdt: isValidDate(selectedRowData.finexpdt)
-          ? new Date(dateformat(selectedRowData.finexpdt))
-          : null,
-        is_finished: selectedRowData.is_finished,
-        midchkdt: isValidDate(selectedRowData.midchkdt)
-          ? new Date(dateformat(selectedRowData.midchkdt))
-          : null,
-        number: selectedRowData.number,
-        ordnum: selectedRowData.ordnum,
-        pgmdiv: selectedRowData.pgmdiv,
-        pjtmanager: {
-          user_id: selectedRowData.pjtmanager,
-          user_name: pjtmanager == undefined ? "" : pjtmanager.user_name,
-        },
-        pjtperson: {
-          user_id: selectedRowData.pjtperson,
-          user_name: pjtperson == undefined ? "" : pjtperson.user_name,
-        },
-        progress_status:
-          selectedRowData.progress_status == "Y"
-            ? true
-            : selectedRowData.progress_status == "N"
-            ? false
-            : selectedRowData.progress_status,
-        project: selectedRowData.project,
-        recdt: isValidDate(selectedRowData.recdt)
-          ? new Date(dateformat(selectedRowData.recdt))
-          : null,
-        remark: selectedRowData.remark,
-        revperson: selectedRowData.revperson,
-      });
+          custnm: {
+            custcd: selectedRowData.custcd,
+            custnm: selectedRowData.custnm,
+          },
+          devmngnum: selectedRowData.devmngnum,
+          estnum: selectedRowData.estnum,
+          files: selectedRowData.files,
+          finchkdt: isValidDate(selectedRowData.finchkdt)
+            ? new Date(dateformat(selectedRowData.finchkdt))
+            : null,
+          findt: isValidDate(selectedRowData.findt)
+            ? new Date(dateformat(selectedRowData.findt))
+            : null,
+          finexpdt: isValidDate(selectedRowData.finexpdt)
+            ? new Date(dateformat(selectedRowData.finexpdt))
+            : null,
+          is_finished: selectedRowData.is_finished,
+          midchkdt: isValidDate(selectedRowData.midchkdt)
+            ? new Date(dateformat(selectedRowData.midchkdt))
+            : null,
+          number: selectedRowData.number,
+          ordnum: selectedRowData.ordnum,
+          pgmdiv: selectedRowData.pgmdiv,
+          pjtmanager: {
+            user_id: selectedRowData.pjtmanager,
+            user_name: pjtmanager == undefined ? "" : pjtmanager.user_name,
+          },
+          pjtperson: {
+            user_id: selectedRowData.pjtperson,
+            user_name: pjtperson == undefined ? "" : pjtperson.user_name,
+          },
+          progress_status:
+            selectedRowData.progress_status == "Y"
+              ? true
+              : selectedRowData.progress_status == "N"
+              ? false
+              : selectedRowData.progress_status,
+          project: selectedRowData.project,
+          recdt: isValidDate(selectedRowData.recdt)
+            ? new Date(dateformat(selectedRowData.recdt))
+            : null,
+          remark: selectedRowData.remark,
+          revperson: selectedRowData.revperson,
+        });
+      }
     }
+    
     setAllTabSelected(e.selected);
   };
   const onAddClick2 = () => {
@@ -3404,7 +3411,7 @@ const App = () => {
             </GridContainer>
           </GridContainerWrap>
         </TabStripTab>
-        <TabStripTab title="기본정보">
+        <TabStripTab title="기본정보" disabled={mainDataResult.total < 1 ? (workType == "N" ? false: true) : false}>
           <GridContainer>
             <GridTitleContainer>
               <GridTitle>기본정보</GridTitle>
@@ -4049,6 +4056,7 @@ const App = () => {
           setData={getAttachmentsData}
           para={information.attdatnum}
           type={"project"}
+          modal={true}
         />
       )}
     </>

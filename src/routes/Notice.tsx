@@ -1069,6 +1069,7 @@ const App = () => {
               ? undefined
               : { upload: false, download: true, delete: false }
           }
+          modal={true}
         />
       )}
     </>

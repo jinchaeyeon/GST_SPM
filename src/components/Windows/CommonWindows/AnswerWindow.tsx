@@ -1,21 +1,27 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as React from "react";
 import { Window, WindowMoveEvent } from "@progress/kendo-react-dialogs";
 import { useApi } from "../../../hooks/api";
 import {
   BottomContainer,
   ButtonContainer,
+  ButtonInGridInput,
   FormBox,
   FormBoxWrap,
+  GridContainer,
+  GridTitle,
+  GridTitleContainer,
 } from "../../../CommonStyled";
 import { Button } from "@progress/kendo-react-buttons";
-import { UseParaPc, UseGetValueFromSessionItem } from "../../CommonFunction";
-import { IWindowPosition } from "../../../hooks/interfaces";
+import { UseParaPc, UseGetValueFromSessionItem, dateformat2 } from "../../CommonFunction";
+import { IAttachmentData, IWindowPosition } from "../../../hooks/interfaces";
 import { useRecoilState, useSetRecoilState } from "recoil";
-import { isLoading, loginResultState } from "../../../store/atoms";
+import { isLoading, loginResultState, unsavedAttadatnumsState } from "../../../store/atoms";
 import { Input } from "@progress/kendo-react-inputs";
-
-let deletedMainRows: any[] = [];
+import { TEditorHandle } from "../../../store/types";
+import RichEditor from "../../RichEditor";
+import AttachmentsWindow from "../CommonWindows/AttachmentsWindow";
+import { DEFAULT_ATTDATNUMS } from "../../CommonString";
 
 interface IAnswer {
   accpdt: string;
@@ -81,22 +87,18 @@ type IWindow = {
 };
 
 const SignWindow = ({ setVisible, para }: IWindow) => {
-  console.log(para);
   const setLoading = useSetRecoilState(isLoading);
-  const [pc, setPc] = useState("");
-  const userId = UseGetValueFromSessionItem("user_id");
-  UseParaPc(setPc);
-  const pathname: string = window.location.pathname.replace("/", "");
-
-  const [loginResult] = useRecoilState(loginResultState);
-  const role = loginResult ? loginResult.role : "";
   let deviceWidth = window.innerWidth;
   let isMobile = deviceWidth <= 768;
+  // 서버 업로드는 되었으나 DB에는 저장안된 첨부파일 리스트
+  const [unsavedAttadatnums, setUnsavedAttadatnums] = useRecoilState(
+    unsavedAttadatnumsState
+  );
   const [position, setPosition] = useState<IWindowPosition>({
     left: 300,
     top: 100,
     width: isMobile == true ? deviceWidth : 1050,
-    height: 800,
+    height: 850,
   });
 
   const handleMove = (event: WindowMoveEvent) => {
@@ -112,7 +114,7 @@ const SignWindow = ({ setVisible, para }: IWindow) => {
   };
 
   const onClose = () => {
-    deletedMainRows = [];
+    setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
     setVisible(false);
   };
 
@@ -160,7 +162,7 @@ const SignWindow = ({ setVisible, para }: IWindow) => {
         orgdiv: para.orgdiv,
         person: para.person,
         progress_status: para.progress_status,
-        recdt: para.recdt,
+        recdt: dateformat2(para.recdt),
         reception_attdatnum: para.reception_attdatnum,
         reception_document_id: para.reception_document_id,
         reception_files: para.reception_files,
@@ -177,8 +179,64 @@ const SignWindow = ({ setVisible, para }: IWindow) => {
         update_userid: para.update_userid,
         value_code3: para.value_code3,
       });
+      fetchDocument(para.answer_document_id);
     }
   }, [para]);
+
+  const fetchDocument = async (ref_key: string) => {
+    let data: any;
+    setLoading(true);
+
+    const para = {
+      para: `document?type=Answer&id=${ref_key}`,
+    };
+
+    try {
+      data = await processApi<any>("document", para);
+    } catch (error) {
+      data = null;
+    }
+
+    if (data.document !== null) {
+      const reference = data.document;
+      if (refEditorRef.current) {
+        refEditorRef.current.setHtml(reference);
+      }
+
+    } else {
+      console.log("[에러발생]");
+      console.log(data);
+
+      if (refEditorRef.current) {
+        refEditorRef.current.setHtml("");
+      }
+    }
+    setLoading(false);
+  };
+
+  const refEditorRef = useRef<TEditorHandle>(null);
+  const [attachmentsWindowVisible, setAttachmentsWindowVisible] =
+    useState<boolean>(false);
+
+  const onAttWndClick = () => {
+    setAttachmentsWindowVisible(true);
+  };
+
+  const getAttachmentsData = (data: IAttachmentData) => {
+    if (!Information.attdatnum) {
+      setUnsavedAttadatnums((prev) => ({
+        type: "record",
+        attdatnums: [...prev.attdatnums, ...[data.attdatnum]],
+      }));
+    }
+    setInformation((prev) => ({
+      ...prev,
+      answer_attdatnum: data.attdatnum,
+      answer_files:
+        data.original_name +
+        (data.rowCount > 1 ? " 등 " + String(data.rowCount) + "건" : ""),
+    }));
+  };
 
   const [Information, setInformation] = useState<{ [name: string]: any }>({
     accpdt: "",
@@ -239,79 +297,139 @@ const SignWindow = ({ setVisible, para }: IWindow) => {
   });
 
   return (
-    <Window
-      title={"답변 작성"}
-      width={position.width}
-      height={position.height}
-      onMove={handleMove}
-      onResize={handleResize}
-      onClose={onClose}
-      modal={true}
-    >
-      <FormBoxWrap>
-        <FormBox>
-          <tbody>
-            <tr>
-              <th style={{ width: "5%" }}>업체명</th>
-              <td>
-                <Input
-                  name="remark"
-                  type="text"
-                  value={Information.custnm}
-                  className="readonly"
-                />
-              </td>
-              <th style={{ width: "5%" }}>제목</th>
-              <td colSpan={3}>
-                <Input
-                  name="title"
-                  type="text"
-                  value={Information.title}
-                  className="readonly"
-                />
-              </td>
-            </tr>
-            <tr>
-            <th style={{ width: "5%" }}>작성자</th>
-              <td>
-                <Input
-                  name="custperson"
-                  type="text"
-                  value={Information.custperson}
-                  className="readonly"
-                />
-              </td>
-              <th style={{ width: "5%" }}>연락처</th>
-              <td>
-                <Input
-                  name="custperson"
-                  type="text"
-                  value={Information.custperson}
-                  className="readonly"
-                />
-              </td>
-              <th style={{ width: "5%" }}>요청일</th>
-              <td>
-                <Input
-                  name="recdt"
-                  type="text"
-                  value={Information.recdt}
-                  className="readonly"
-                />
-              </td>
-            </tr>
-          </tbody>
-        </FormBox>
-      </FormBoxWrap>
-      <BottomContainer>
-        <ButtonContainer>
-          <Button themeColor={"primary"}>확인</Button>
-          <Button themeColor={"primary"} fillMode={"outline"} onClick={onClose}>
-            취소
-          </Button>
-        </ButtonContainer>
-      </BottomContainer>
-    </Window>
+    <>
+      <Window
+        title={"답변 작성"}
+        width={position.width}
+        height={position.height}
+        onMove={handleMove}
+        onResize={handleResize}
+        onClose={onClose}
+        modal={true}
+      >
+        <GridTitleContainer>
+          <GridTitle>문의 정보</GridTitle>
+        </GridTitleContainer>
+        <FormBoxWrap border={true}>
+          <FormBox>
+            <tbody>
+              <tr>
+                <th style={{ width: "5%" }}>업체명</th>
+                <td>
+                  <Input
+                    name="remark"
+                    type="text"
+                    value={Information.custnm}
+                    className="readonly"
+                  />
+                </td>
+                <th style={{ width: "5%" }}>제목</th>
+                <td colSpan={3}>
+                  <Input
+                    name="title"
+                    type="text"
+                    value={Information.title}
+                    className="readonly"
+                  />
+                </td>
+              </tr>
+              <tr>
+                <th style={{ width: "5%" }}>작성자</th>
+                <td>
+                  <Input
+                    name="custperson"
+                    type="text"
+                    value={Information.custperson}
+                    className="readonly"
+                  />
+                </td>
+                <th style={{ width: "5%" }}>연락처</th>
+                <td>
+                  <Input
+                    name="custperson"
+                    type="text"
+                    value={Information.custperson}
+                    className="readonly"
+                  />
+                </td>
+                <th style={{ width: "5%" }}>요청일</th>
+                <td>
+                  <Input
+                    name="recdt"
+                    type="text"
+                    value={Information.recdt}
+                    className="readonly"
+                  />
+                </td>
+              </tr>
+            </tbody>
+          </FormBox>
+        </FormBoxWrap>
+        <GridContainer height={`calc(100% - 210px)`}>
+          <GridTitleContainer>
+            <GridTitle>답변 내용</GridTitle>
+          </GridTitleContainer>
+          <RichEditor id="refEditor" ref={refEditorRef} />
+          <FormBoxWrap border={true}>
+            <FormBox>
+              <tbody>
+                <tr>
+                  <th style={{ width: "5%" }}>첨부파일</th>
+                  <td>
+                    <Input
+                      name="answer_files"
+                      type="text"
+                      value={Information.answer_files}
+                      className="readonly"
+                    />
+                    <ButtonInGridInput>
+                      <Button
+                        onClick={onAttWndClick}
+                        icon="more-horizontal"
+                        fillMode="flat"
+                      />
+                    </ButtonInGridInput>
+                  </td>
+                </tr>
+              </tbody>
+            </FormBox>
+          </FormBoxWrap>
+        </GridContainer>
+        <BottomContainer>
+          <ButtonContainer>
+            <Button themeColor={"primary"}>확인</Button>
+            <Button
+              themeColor={"primary"}
+              fillMode={"outline"}
+              onClick={onClose}
+            >
+              취소
+            </Button>
+          </ButtonContainer>
+          <ButtonContainer>
+            <Button fillMode={"outline"} themeColor={"primary"} icon="delete">
+              삭제
+            </Button>
+            <Button
+              themeColor={"primary"}
+              fillMode={"outline"}
+              icon={"file-word"}
+            >
+              다운로드
+            </Button>
+          </ButtonContainer>
+        </BottomContainer>
+      </Window>
+      {attachmentsWindowVisible && (
+        <AttachmentsWindow
+          setVisible={setAttachmentsWindowVisible}
+          setData={getAttachmentsData}
+          para={Information != undefined ? Information.answer_attdatnum : ""}
+          permission={{ upload: true, download: true, delete: true }}
+          type={"answer"}
+        />
+      )}
+    </>
   );
 };
 

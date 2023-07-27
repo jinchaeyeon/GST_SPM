@@ -1949,6 +1949,7 @@ const App = () => {
             setVisible={setAttachmentsWindowVisiblePr}
             setData={getAttachmentsDataPr}
             para={detailData.attdatnum_private}
+            modal={true}
           />
         )}
         {attachmentsWindowVisiblePb && (
@@ -1957,6 +1958,7 @@ const App = () => {
             setVisible={setAttachmentsWindowVisiblePb}
             setData={getAttachmentsDataPb}
             para={detailData.attdatnum}
+            modal={true}
           />
         )}
         {custWindowVisible && (

@@ -1279,6 +1279,7 @@ const App = () => {
           setData={getAttachmentsDataQ}
           para={detailData.attdatnum}
           permission={{ upload: !isAdmin, download: true, delete: !isAdmin }}
+          modal={true}
         />
       )}
       {attachmentsWindowVisibleA && (
@@ -1288,6 +1289,7 @@ const App = () => {
           setData={getAttachmentsDataA}
           para={detailData.answer_attdatnum}
           permission={{ upload: false, download: true, delete: false }}
+          modal={true}
         />
       )}
     </>
