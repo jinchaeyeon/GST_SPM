@@ -246,12 +246,12 @@ const AppInner: React.FC = () => {
                   component={ProjectSchedule}
                   exact
                 />
+                <AuthRoute path="/Record" component={Record} exact />
                 <AuthRoute
                   path="/ProjectMaster"
                   component={ProjectMaster}
                   exact
                 />
-                <AuthRoute path="/Record" component={Record} exact />
               </PanelBarNavContainer>
             </Switch>
           </Router>

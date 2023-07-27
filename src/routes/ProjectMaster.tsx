@@ -679,11 +679,11 @@ const App = () => {
 
       if (filters.find_row_value != "") {
         // find_row_value 행으로 스크롤 이동
-          const findRowIndex = rows.findIndex(
-            (row: any) => row[DATA_ITEM_KEY] == filters.find_row_value
-          );
+        const findRowIndex = rows.findIndex(
+          (row: any) => row[DATA_ITEM_KEY] == filters.find_row_value
+        );
 
-          targetRowIndex = findRowIndex;
+        targetRowIndex = findRowIndex;
       } else {
         // 첫번째 행으로 스크롤 이동
         if (gridRef.current) {
@@ -2774,7 +2774,7 @@ const App = () => {
     let Object2: any[] = [];
     let indexs: any[] = [];
     let data: any;
-    if(subDataTotal != 0) {
+    if (subDataTotal != 0) {
       subDataResult.map((items, index2) => {
         items.items.forEach((item: any, index: number) => {
           if (!selectedsubDataState[item[SUB_DATA_ITEM_KEY]]) {
@@ -2796,7 +2796,11 @@ const App = () => {
         });
       });
       const minIndex = indexs.findIndex((item) => item == Math.min(...indexs));
-      if ((Object[minIndex] == 0 && Math.min(...indexs) == 0) && subDataTotal != 1) {
+      if (
+        Object[minIndex] == 0 &&
+        Math.min(...indexs) == 0 &&
+        subDataTotal != 1
+      ) {
         if (subDataResult[minIndex].items[minIndex + 1] == undefined) {
           data = subDataResult[minIndex + 1].items[minIndex]; //그룹사라져서 다음그룹
         } else {
@@ -2811,7 +2815,7 @@ const App = () => {
         data = subDataResult[indexs[minIndex]].items[Object[minIndex] - 1];
       }
       setSubDataTotal(subDataTotal - Object.length);
-  
+
       const newDataState = processWithGroups(newData, group);
       setSubDataResult(newDataState);
       setSelectedsubDataState({
@@ -2819,7 +2823,7 @@ const App = () => {
       });
     } else {
       alert("데이터가 없습니다");
-    } 
+    }
   };
 
   const handleSelectTab = (e: any) => {
@@ -2843,24 +2847,24 @@ const App = () => {
     deletedRows = [];
   };
   const handleSelectAllTab = (e: any) => {
-    if(workType != "N") {
+    if (workType != "N") {
       if (e.selected == 1) {
         const selectedRowData = mainDataResult.data.filter(
           (item) =>
             item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
         )[0];
-  
+
         setSubFilters((prev) => ({
           ...prev,
           devmngnum: selectedRowData.devmngnum,
           pgNum: 1,
           isSearch: true,
         }));
-  
+
         const pjtmanager: any = usersData.find(
           (item: any) => item.user_id == selectedRowData.pjtmanager
         );
-  
+
         const pjtperson: any = usersData.find(
           (item: any) => item.user_id == selectedRowData.pjtperson
         );
@@ -2920,7 +2924,7 @@ const App = () => {
         });
       }
     }
-    
+
     setAllTabSelected(e.selected);
   };
   const onAddClick2 = () => {
@@ -3021,79 +3025,155 @@ const App = () => {
       alert("이동시킬 행을 선택해주세요.");
       return false;
     }
+    if (direction === "UP") {
+      if (rowIndex != 0) {
+        const newData = dataResult.data.map((item: any) => ({
+          ...item,
+          [EDIT_FIELD]: undefined,
+        }));
+        let replaceData = 0;
+        if (direction === "UP" && rowIndex != 0) {
+          replaceData = dataResult.data[rowIndex - 1].sort_order;
+        } else {
+          replaceData = dataResult.data[rowIndex + 1].sort_order;
+        }
 
-    if (!(rowIndex == 0 && direction === "UP")) {
-      const newData = dataResult.data.map((item: any) => ({
-        ...item,
-        [EDIT_FIELD]: undefined,
-      }));
-      let replaceData = 0;
-      if (direction === "UP" && rowIndex != 0) {
-        replaceData = dataResult.data[rowIndex - 1].sort_order;
-      } else {
-        replaceData = dataResult.data[rowIndex + 1].sort_order;
+        newData.splice(rowIndex, 1);
+        newData.splice(rowIndex + (direction === "UP" ? -1 : 1), 0, rowData);
+        if (direction === "UP" && rowIndex != 0) {
+          const newDatas = newData.map((item) =>
+            item[DATA_ITEM_KEY] === rowData[DATA_ITEM_KEY]
+              ? {
+                  ...item,
+                  sort_order: replaceData,
+                  rowstatus: item.rowstatus === "N" ? "N" : "U",
+                  [EDIT_FIELD]: undefined,
+                }
+              : item[DATA_ITEM_KEY] ===
+                dataResult.data[rowIndex - 1][DATA_ITEM_KEY]
+              ? {
+                  ...item,
+                  rowstatus: item.rowstatus === "N" ? "N" : "U",
+                  sort_order: rowData.sort_order,
+                  [EDIT_FIELD]: undefined,
+                }
+              : {
+                  ...item,
+                  [EDIT_FIELD]: undefined,
+                }
+          );
+
+          setDataResult((prev: any) => {
+            return {
+              data: newDatas,
+              total: prev.total,
+            };
+          });
+        } else {
+          const newDatas = newData.map((item) =>
+            item[DATA_ITEM_KEY] === rowData[DATA_ITEM_KEY]
+              ? {
+                  ...item,
+                  rowstatus: item.rowstatus === "N" ? "N" : "U",
+                  sort_order: replaceData,
+                  [EDIT_FIELD]: undefined,
+                }
+              : item[DATA_ITEM_KEY] ===
+                dataResult.data[rowIndex + 1][DATA_ITEM_KEY]
+              ? {
+                  ...item,
+                  rowstatus: item.rowstatus === "N" ? "N" : "U",
+                  sort_order: rowData.sort_order,
+                  [EDIT_FIELD]: undefined,
+                }
+              : {
+                  ...item,
+                  [EDIT_FIELD]: undefined,
+                }
+          );
+
+          setDataResult((prev: any) => {
+            return {
+              data: newDatas,
+              total: prev.total,
+            };
+          });
+        }
       }
+    } else {
+      if (rowIndex != dataResult.total) {
+        const newData = dataResult.data.map((item: any) => ({
+          ...item,
+          [EDIT_FIELD]: undefined,
+        }));
+        let replaceData = 0;
+        if (direction === "UP" && rowIndex != 0) {
+          replaceData = dataResult.data[rowIndex - 1].sort_order;
+        } else {
+          replaceData = dataResult.data[rowIndex + 1].sort_order;
+        }
 
-      newData.splice(rowIndex, 1);
-      newData.splice(rowIndex + (direction === "UP" ? -1 : 1), 0, rowData);
-      if (direction === "UP" && rowIndex != 0) {
-        const newDatas = newData.map((item) =>
-          item[DATA_ITEM_KEY] === rowData[DATA_ITEM_KEY]
-            ? {
-                ...item,
-                sort_order: replaceData,
-                rowstatus: item.rowstatus === "N" ? "N" : "U",
-                [EDIT_FIELD]: undefined,
-              }
-            : item[DATA_ITEM_KEY] ===
-              dataResult.data[rowIndex - 1][DATA_ITEM_KEY]
-            ? {
-                ...item,
-                rowstatus: item.rowstatus === "N" ? "N" : "U",
-                sort_order: rowData.sort_order,
-                [EDIT_FIELD]: undefined,
-              }
-            : {
-                ...item,
-                [EDIT_FIELD]: undefined,
-              }
-        );
+        newData.splice(rowIndex, 1);
+        newData.splice(rowIndex + (direction === "UP" ? -1 : 1), 0, rowData);
+        if (direction === "UP" && rowIndex != 0) {
+          const newDatas = newData.map((item) =>
+            item[DATA_ITEM_KEY] === rowData[DATA_ITEM_KEY]
+              ? {
+                  ...item,
+                  sort_order: replaceData,
+                  rowstatus: item.rowstatus === "N" ? "N" : "U",
+                  [EDIT_FIELD]: undefined,
+                }
+              : item[DATA_ITEM_KEY] ===
+                dataResult.data[rowIndex - 1][DATA_ITEM_KEY]
+              ? {
+                  ...item,
+                  rowstatus: item.rowstatus === "N" ? "N" : "U",
+                  sort_order: rowData.sort_order,
+                  [EDIT_FIELD]: undefined,
+                }
+              : {
+                  ...item,
+                  [EDIT_FIELD]: undefined,
+                }
+          );
 
-        setDataResult((prev: any) => {
-          return {
-            data: newDatas,
-            total: prev.total,
-          };
-        });
-      } else {
-        const newDatas = newData.map((item) =>
-          item[DATA_ITEM_KEY] === rowData[DATA_ITEM_KEY]
-            ? {
-                ...item,
-                rowstatus: item.rowstatus === "N" ? "N" : "U",
-                sort_order: replaceData,
-                [EDIT_FIELD]: undefined,
-              }
-            : item[DATA_ITEM_KEY] ===
-              dataResult.data[rowIndex + 1][DATA_ITEM_KEY]
-            ? {
-                ...item,
-                rowstatus: item.rowstatus === "N" ? "N" : "U",
-                sort_order: rowData.sort_order,
-                [EDIT_FIELD]: undefined,
-              }
-            : {
-                ...item,
-                [EDIT_FIELD]: undefined,
-              }
-        );
+          setDataResult((prev: any) => {
+            return {
+              data: newDatas,
+              total: prev.total,
+            };
+          });
+        } else {
+          const newDatas = newData.map((item) =>
+            item[DATA_ITEM_KEY] === rowData[DATA_ITEM_KEY]
+              ? {
+                  ...item,
+                  rowstatus: item.rowstatus === "N" ? "N" : "U",
+                  sort_order: replaceData,
+                  [EDIT_FIELD]: undefined,
+                }
+              : item[DATA_ITEM_KEY] ===
+                dataResult.data[rowIndex + 1][DATA_ITEM_KEY]
+              ? {
+                  ...item,
+                  rowstatus: item.rowstatus === "N" ? "N" : "U",
+                  sort_order: rowData.sort_order,
+                  [EDIT_FIELD]: undefined,
+                }
+              : {
+                  ...item,
+                  [EDIT_FIELD]: undefined,
+                }
+          );
 
-        setDataResult((prev: any) => {
-          return {
-            data: newDatas,
-            total: prev.total,
-          };
-        });
+          setDataResult((prev: any) => {
+            return {
+              data: newDatas,
+              total: prev.total,
+            };
+          });
+        }
       }
     }
   };
@@ -3411,7 +3491,12 @@ const App = () => {
             </GridContainer>
           </GridContainerWrap>
         </TabStripTab>
-        <TabStripTab title="기본정보" disabled={mainDataResult.total < 1 ? (workType == "N" ? false: true) : false}>
+        <TabStripTab
+          title="기본정보"
+          disabled={
+            mainDataResult.total < 1 ? (workType == "N" ? false : true) : false
+          }
+        >
           <GridContainer>
             <GridTitleContainer>
               <GridTitle>기본정보</GridTitle>

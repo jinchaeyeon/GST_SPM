@@ -702,6 +702,9 @@ const App = () => {
   const [selectedsubDataState, setSelectedsubDataState] = useState<{
     [id: string]: boolean | number[];
   }>({});
+
+  const [isVisibleDetail, setIsVisableDetail] = useState(true);
+
   type TFilters = {
     workType: string;
     date_type: any;
@@ -2004,6 +2007,7 @@ const App = () => {
             </FilterBox>
           </FilterBoxWrap>
         </GridContainer>
+        {isVisibleDetail && (
         <GridContainer width={`calc(43% - ${GAP}px)`}>
           <FilesContext.Provider
             value={{
@@ -2269,9 +2273,15 @@ const App = () => {
             </TypeContext.Provider>
           </FilesContext2.Provider>
         </GridContainer>
-        <GridContainer width={`calc(35% - ${GAP}px)`}>
+        )}
+        <GridContainer width={isVisibleDetail ? `calc(35% - ${GAP}px)` : `calc(78% - ${GAP}px)`}>
           <GridTitleContainer>
-            <GridTitle>상세정보</GridTitle>
+            <GridTitle>            <Button
+                themeColor={"primary"}
+                fillMode={"flat"}
+                icon={isVisibleDetail ? "chevron-left" : "chevron-right"}
+                onClick={() => setIsVisableDetail((prev) => !prev)}
+              ></Button>상세정보</GridTitle>
             <ButtonContainer>
               <Button
                 icon={"file-word"}

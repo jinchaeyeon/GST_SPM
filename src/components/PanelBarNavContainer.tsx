@@ -67,12 +67,16 @@ const paths = [
     index: ".4",
   },
   {
-    path: "/Record",
-    index: "5",
+    path: "/MeetingManagement",
+    index: ".5",
   },
   {
-    path: "/MeetingManagement",
+    path: "/Record",
     index: ".6",
+  },
+  {
+    path: "/ProjectMaster",
+    index: ".7",
   },
 ];
 

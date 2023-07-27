@@ -244,7 +244,7 @@ const KendoWindow = ({ setVisible }: IKendoWindow) => {
   );
 
   const enterEdit = (dataItem: any, field: string) => {
-    if (!(field == "code" && dataItem.rowstatus != "N")) {
+    if (!(field == "code" && dataItem.rowstatus != "N") && field != "rowstatus") {
       const newData = mainDataResult.data.map((item) =>
         item[DATA_ITEM_KEY] === dataItem[DATA_ITEM_KEY]
           ? {
