@@ -281,7 +281,7 @@ const Badwindow = ({ workType, setVisible, setData, renum }: IWindow) => {
       setMainDataResult((prev) => {
         return {
           data: rows,
-           total: totalRowCnt == -1 ? 0 : totalRowCnt,,
+           total: totalRowCnt == -1 ? 0 : totalRowCnt,
         };
       });
     }

@@ -593,7 +593,7 @@ const KendoWindow = ({ setVisible }: TKendoWindow) => {
         setWordDataResult((prev) => {
           return {
             data: [...prev.data, ...rows],
-             total: totalRowCnt == -1 ? 0 : totalRowCnt,,
+             total: totalRowCnt == -1 ? 0 : totalRowCnt,
           };
         });
     } else {

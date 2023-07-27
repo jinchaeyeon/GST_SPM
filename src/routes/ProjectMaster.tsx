@@ -694,7 +694,7 @@ const App = () => {
       setMainDataResult((prev) => {
         return {
           data: rows,
-           total: totalRowCnt == -1 ? 0 : totalRowCnt,,
+           total: totalRowCnt == -1 ? 0 : totalRowCnt,
         };
       });
 
@@ -961,7 +961,7 @@ const App = () => {
         setSubDataResult2((prev) => {
           return {
             data: rows,
-             total: totalRowCnt == -1 ? 0 : totalRowCnt, == -1 ? 0 : totalRowCnt,
+             total: totalRowCnt == -1 ? 0 : totalRowCnt,
           };
         });
       }
