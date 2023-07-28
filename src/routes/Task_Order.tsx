@@ -1,8 +1,11 @@
 import { Button } from "@progress/kendo-react-buttons";
 import {
   ButtonContainer,
+  ButtonInGridInput,
   FilterBox,
   FilterBoxWrap,
+  FormBox,
+  FormBoxWrap,
   GridContainer,
   GridContainerWrap,
   GridTitle,
@@ -12,7 +15,7 @@ import {
 } from "../CommonStyled";
 import { useApi } from "../hooks/api";
 import { TabStrip, TabStripTab } from "@progress/kendo-react-layout";
-import { useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import {
   ComboBoxFilterChangeEvent,
   MultiColumnComboBox,
@@ -42,9 +45,10 @@ import { Input } from "@progress/kendo-react-inputs";
 import { bytesToBase64 } from "byte-base64";
 import { useRecoilState, useSetRecoilState } from "recoil";
 import { isLoading, loginResultState } from "../store/atoms";
-import { Iparameters } from "../store/types";
+import { Iparameters, TEditorHandle } from "../store/types";
 import {
   Grid,
+  GridCellProps,
   GridColumn,
   GridDataStateChangeEvent,
   GridFooterCellProps,
@@ -54,6 +58,113 @@ import {
 } from "@progress/kendo-react-grid";
 import CheckBoxReadOnlyCell from "../components/Cells/CheckBoxReadOnlyCell";
 import DateCell from "../components/Cells/DateCell";
+import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
+import RichEditor from "../components/RichEditor";
+import TaskOrderWindow from "../components/Windows/CommonWindows/TaskOrderWindow";
+
+const StatusContext = createContext<{
+  statusListData: any[];
+}>({
+  statusListData: [],
+});
+
+const StatusCell = (props: GridCellProps) => {
+  const { statusListData } = useContext(StatusContext);
+  const data = props.dataItem;
+
+  const styles =
+    data.status == "진행중" ? (
+      <span
+        className="k-icon k-i-circle k-icon-xxl"
+        style={{ color: "yellow", marginLeft: "-6px", marginRight: "-2px" }}
+      ></span>
+    ) : data.status == "완료" ? (
+      <span
+        className="k-icon k-i-checkmark-circle k-icon-lg"
+        style={{ color: "green", marginRight: "5px" }}
+      ></span>
+    ) : data.status == "보류" ? (
+      <span
+        className="k-icon k-i-minus k-icon-lg"
+        style={{ marginRight: "5px" }}
+      ></span>
+    ) : (
+      <span
+        className="k-icon k-i-circle k-icon-xxl"
+        style={{ color: "gray", marginLeft: "-6px", marginRight: "-2px" }}
+      ></span>
+    );
+  return statusListData ? (
+    <td>
+      {styles}
+      <span>{data.status}</span>
+    </td>
+  ) : (
+    <td />
+  );
+};
+
+const FilesContext = createContext<{
+  reception_attach_number: string;
+}>({
+  reception_attach_number: "",
+});
+
+const FilesCell = (props: GridCellProps) => {
+  const {
+    ariaColumnIndex,
+    columnIndex,
+    dataItem,
+    field = "",
+    render,
+    onChange,
+    className = "",
+  } = props;
+  const { reception_attach_number } = useContext(FilesContext);
+
+  const [attachmentsWindowVisible, setAttachmentsWindowVisible] =
+    useState<boolean>(false);
+
+  const onAttWndClick2 = () => {
+    setAttachmentsWindowVisible(true);
+  };
+
+  return (
+    <>
+      <td
+        className={className}
+        aria-colindex={ariaColumnIndex}
+        data-grid-col-index={columnIndex}
+        style={{ position: "relative" }}
+      >
+        <div style={{ textAlign: "center", marginRight: "10px" }}>
+          {dataItem.reception_attach_exists == "Y" ? (
+            <span className="k-icon k-i-file k-icon-lg"></span>
+          ) : (
+            ""
+          )}
+        </div>
+        <ButtonInGridInput>
+          <Button
+            name="reception_attach_number"
+            onClick={onAttWndClick2}
+            icon="more-horizontal"
+            fillMode="flat"
+          />
+        </ButtonInGridInput>
+      </td>
+      {attachmentsWindowVisible && (
+        <AttachmentsWindow
+          setVisible={setAttachmentsWindowVisible}
+          para={dataItem.reception_attach_number}
+          permission={{ upload: false, download: true, delete: false }}
+          type={"task"}
+          modal={true}
+        />
+      )}
+    </>
+  );
+};
 
 const valueCodeQueryStr = `select sub_code, code_name
 from comCodeMaster
@@ -136,6 +247,7 @@ const App = () => {
   const [tabSelected, setTabSelected] = useState(0);
   const handleSelectTab = (e: any) => {
     setTabSelected(e.selected);
+    setIsVisableDetail(true);
   };
 
   //조회조건 Input Change 함수 => 사용자가 Input에 입력한 값을 조회 파라미터로 세팅
@@ -177,10 +289,10 @@ const App = () => {
   const [usersData, setUsersData] = useState<any[]>([]);
   const [receptionTypeData, setReceptionTypeData] = useState<any[]>([]);
   const statusListData: any[] = [
-    { sub_code: "Wait", code_name: "대기", code : "N"},
-    { sub_code: "Progress", code_name: "진행중", code : "R"},
-    { sub_code: "Hold", code_name: "보류", code : "H"},
-    { sub_code: "Finish", code_name: "완료" ,code : "Y"},
+    { sub_code: "Wait", code_name: "대기", code: "N" },
+    { sub_code: "Progress", code_name: "진행중", code: "R" },
+    { sub_code: "Hold", code_name: "보류", code: "H" },
+    { sub_code: "Finish", code_name: "완료", code: "Y" },
   ];
 
   const [mainDataState, setMainDataState] = useState<State>({
@@ -309,9 +421,9 @@ const App = () => {
     value_code3: { sub_code: "", code_name: "" },
     contents: "",
     status: [
-        { sub_code: "Wait", code_name: "대기", code : "N"},
-        { sub_code: "Progress", code_name: "진행중", code : "R"},
-        { sub_code: "Hold", code_name: "보류", code : "H"},
+      { sub_code: "Wait", code_name: "대기", code: "N" },
+      { sub_code: "Progress", code_name: "진행중", code: "R" },
+      { sub_code: "Hold", code_name: "보류", code: "H" },
     ],
     reception_person: { user_id: "", user_name: "" },
     receptionist: { user_id: "", user_name: "" },
@@ -380,17 +492,16 @@ const App = () => {
     } catch (error) {
       data = null;
     }
-    console.log(parameters);
-    console.log(data);
+
     if (data.isSuccess === true) {
       const totalRowCnt = data.tables[0].TotalRowCount;
       const rows = data.tables[0].Rows;
 
-      if (filters.find_row_value !== "") {
+      if (filters.findRowValue !== "") {
         // find_row_value 행으로 스크롤 이동
         if (gridRef.current) {
           const findRowIndex = rows.findIndex(
-            (row: any) => row[DATA_ITEM_KEY] == filters.find_row_value
+            (row: any) => row[DATA_ITEM_KEY] == filters.findRowValue
           );
           targetRowIndex = findRowIndex;
         }
@@ -416,61 +527,23 @@ const App = () => {
 
       if (totalRowCnt > 0) {
         const selectedRow =
-          filters.find_row_value == ""
+          filters.findRowValue == ""
             ? rows[0]
             : rows.find(
-                (row: any) => row[DATA_ITEM_KEY] == filters.find_row_value
+                (row: any) => row[DATA_ITEM_KEY] == filters.findRowValue
               );
 
         if (selectedRow != undefined) {
           setSelectedState({ [selectedRow[DATA_ITEM_KEY]]: true });
 
-          //   if (tabSelected == 0) {
-          //     fetchDocument(
-          //       "Task",
-          //       selectedRow.orgdiv + "_" + selectedRow.docunum
-          //     );
-          //   } else if (tabSelected == 1) {
-          //     fetchDocument("Question", selectedRow.reception_document_id);
-          //   } else if (tabSelected == 2) {
-          //     fetchDocument("Answer", selectedRow.answer_document_id);
-          //   } else if (tabSelected == 3) {
-          //     fetchDocument("Meeting", selectedRow.meeting_document_id);
-          //   }
-
-          //   setSubFilters((prev) => ({
-          //     ...prev,
-          //     docunum: selectedRow.docunum,
-          //     isSearch: true,
-          //     pgNum: 1,
-          //   }));
+          fetchDocument("Question", selectedRow.document_id);
         } else {
           setSelectedState({ [rows[0][DATA_ITEM_KEY]]: true });
 
-          //   if (tabSelected == 0) {
-          //     fetchDocument("Task", rows[0].orgdiv + "_" + rows[0].docunum);
-          //   } else if (tabSelected == 1) {
-          //     fetchDocument("Question", rows[0].reception_document_id);
-          //   } else if (tabSelected == 2) {
-          //     fetchDocument("Answer", rows[0].answer_document_id);
-          //   } else if (tabSelected == 3) {
-          //     fetchDocument("Meeting", rows[0].meeting_document_id);
-          //   }
-
-          //   setSubFilters((prev) => ({
-          //     ...prev,
-          //     docunum: rows[0].docunum,
-          //     isSearch: true,
-          //     pgNum: 1,
-          //   }));
+          fetchDocument("Question", rows[0].document_id);
         }
       } else {
-        // setSubDataResult((prev) => {
-        //   return {
-        //     data: [],
-        //     total: 0,
-        //   };
-        // });
+        fetchDocument("", "");
       }
     } else {
       console.log("[오류 발생]");
@@ -488,11 +561,42 @@ const App = () => {
     setLoading(false);
   };
 
+  const fetchDocument = async (type: string, ref_key: string) => {
+    let data: any;
+    setLoading(true);
+
+    if (type == "") {
+      setHtmlOnEditor({ document: "" });
+    } else {
+      const para = {
+        para: `document?type=${type}&id=${ref_key}`,
+      };
+
+      try {
+        data = await processApi<any>("document", para);
+      } catch (error) {
+        data = null;
+      }
+
+      if (data !== null) {
+        const document = data.document;
+        setHtmlOnEditor({ document });
+      } else {
+        console.log("[에러발생]");
+        console.log(data);
+
+        setHtmlOnEditor({ document: "" });
+      }
+    }
+
+    setLoading(false);
+  };
+
   useEffect(() => {
     if (filters.isSearch) {
       const _ = require("lodash");
       const deepCopiedFilters = _.cloneDeep(filters);
-      setFilters((prev) => ({ ...prev, find_row_value: "", isSearch: false })); // 한번만 조회되도록
+      setFilters((prev) => ({ ...prev, findRowValue: "", isSearch: false })); // 한번만 조회되도록
       fetchMainGrid(deepCopiedFilters);
     }
   }, [filters]);
@@ -521,24 +625,10 @@ const App = () => {
     });
     setSelectedState(newSelectedState);
 
-    // const selectedIdx = event.startRowIndex;
-    // const selectedRowData = event.dataItems[selectedIdx];
-    // // DB에 저장안된 첨부파일 서버에서 삭제
-    // if (unsavedAttadatnums.attdatnums.length > 0)
-    //   setDeletedAttadatnums(unsavedAttadatnums);
+    const selectedIdx = event.startRowIndex;
+    const selectedRowData = event.dataItems[selectedIdx];
 
-    // fetchDocument(
-    //   "Task",
-    //   selectedRowData.orgdiv + "_" + selectedRowData.docunum
-    // );
-
-    // setSubFilters((prev) => ({
-    //   ...prev,
-    //   docunum: selectedRowData.docunum,
-    //   pgNum: 1,
-    //   isSearch: true,
-    // }));
-    // setTabSelected(0);
+    fetchDocument("Question", selectedRowData.document_id);
   };
 
   const search = () => {
@@ -549,18 +639,12 @@ const App = () => {
     ) {
       alert("필수항목을 입력해주세요");
     } else {
-      //   temp = 0;
-      //   deletedRows = [];
-      //   //DB에 저장안된 첨부파일 서버에서 삭제
-      //   if (unsavedAttadatnums.attdatnums.length > 0)
-      //     setDeletedAttadatnums(unsavedAttadatnums);
       setPage(initialPageState); // 페이지 초기화
-      //   setTabSelected(0);
-      //   setHtmlOnEditor({ document: "" });
+      setHtmlOnEditor({ document: "" });
       setFilters((prev) => ({
         ...prev,
         pgNum: 1,
-        find_row_value: "",
+        findRowValue: "",
         isSearch: true,
       }));
     }
@@ -610,20 +694,54 @@ const App = () => {
       </td>
     );
   };
+  const [isVisibleDetail, setIsVisableDetail] = useState(true);
 
+  const [reception_attach_number, setReception_attach_number] =
+    useState<string>("");
+  const [attachmentsWindowVisible, setAttachmentsWindowVisible] =
+    useState<boolean>(false);
+  const onAttWndClick = () => {
+    setAttachmentsWindowVisible(true);
+  };
+  const [TaskOrderWindowVisible, setTaskOrderWindowVisible] =
+    useState<boolean>(false);
+  const onTaskOrderWndClick = () => {
+    if (
+      mainDataResult.data.filter(
+        (item) =>
+          item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
+      )[0] != undefined
+    ) {
+      setTaskOrderWindowVisible(true);
+    } else {
+      alert("데이터가 없습니다.");
+    }
+  };
+  const docEditorRef = useRef<TEditorHandle>(null);
+  const setHtmlOnEditor = ({ document }: { document: string }) => {
+    if (docEditorRef.current) {
+      docEditorRef.current.updateEditable(true);
+      docEditorRef.current.setHtml(document);
+      docEditorRef.current.updateEditable(false);
+    }
+  };
   return (
     <>
       <TitleContainer>
         <Title>업무 지시</Title>
         <ButtonContainer>
-          <Button
-            themeColor={"primary"}
-            fillMode={"outline"}
-            icon="save"
-            //onClick={saveProject}
-          >
-            저장
-          </Button>
+          {tabSelected == 3 ? (
+            <Button
+              themeColor={"primary"}
+              fillMode={"outline"}
+              icon="save"
+              //onClick={saveProject}
+            >
+              저장
+            </Button>
+          ) : (
+            ""
+          )}
           <Button onClick={search} icon="search" themeColor={"primary"}>
             조회
           </Button>
@@ -631,7 +749,7 @@ const App = () => {
       </TitleContainer>
       <GridContainerWrap height={"90vh"}>
         <TabStrip
-          style={{ width: "100%", height: `85.5vh` }}
+          style={{ width: "100%", height: `90vh` }}
           selected={tabSelected}
           onSelect={handleSelectTab}
         >
@@ -812,127 +930,316 @@ const App = () => {
                 </FilterBoxWrap>
               </GridContainer>
               <GridContainer width={`calc(78% - ${GAP}px)`}>
-                <GridContainer>
-                  <GridTitleContainer>
-                    <GridTitle>문의접수 리스트</GridTitle>
-                  </GridTitleContainer>
-                  <Grid
-                    style={{ height: `40vh` }}
-                    data={process(
-                      mainDataResult.data.map((row) => ({
-                        ...row,
-                        reception_person: usersData.find(
-                          (items: any) => items.user_id == row.reception_person
-                        )?.user_name,
-                        value_code3: valuecodeItems.find(
-                          (items: any) => items.sub_code == row.value_code3
-                        )?.code_name,
-                        reception_type: statusListData.find(
-                            (items: any) => items.code == row.reception_type
-                          )?.code_name,
-                        [SELECTED_FIELD]: selectedState[idGetter(row)],
-                      })),
-                      mainDataState
-                    )}
-                    {...mainDataState}
-                    onDataStateChange={onMainDataStateChange}
-                    //선택 기능
-                    dataItemKey={DATA_ITEM_KEY}
-                    selectedField={SELECTED_FIELD}
-                    selectable={{
-                      enabled: true,
-                      mode: "single",
+                {isVisibleDetail && (
+                  <StatusContext.Provider
+                    value={{
+                      statusListData: statusListData,
                     }}
-                    onSelectionChange={onSelectionChange}
-                    //스크롤 조회 기능
-                    fixedScroll={true}
-                    total={mainDataResult.total}
-                    skip={page.skip}
-                    take={page.take}
-                    pageable={true}
-                    onPageChange={pageChange}
-                    //원하는 행 위치로 스크롤 기능
-                    ref={gridRef}
-                    rowHeight={30}
-                    //정렬기능
-                    sortable={true}
-                    onSortChange={onMainSortChange}
-                    //컬럼순서조정
-                    reorderable={true}
-                    //컬럼너비조정
-                    resizable={true}
                   >
-                    <GridColumn
-                      field="status"
-                      title="상태"
-                      width={120}
-                      footerCell={mainTotalFooterCell}
-                    />
-                    <GridColumn
-                      field="exists_task"
-                      title="지시"
-                      width={80}
-                      cell={CheckBoxReadOnlyCell}
-                    />
-                    <GridColumn
-                      field="is_finish"
-                      title="처리"
-                      width={80}
-                      cell={CheckBoxReadOnlyCell}
-                    />
-                    <GridColumn
-                      field="request_date"
-                      title="요청일"
-                      width={120}
-                      cell={DateCell}
-                    />
-                    <GridColumn
-                      field="be_finished_date"
-                      title="완료예정일"
-                      width={120}
-                      cell={DateCell}
-                    />
-                    <GridColumn
-                      field="customer_name"
-                      title="업체명"
-                      width={150}
-                    />
-                    <GridColumn
-                      field="reception_person"
-                      title="접수자"
-                      width={120}
-                    />
-                    <GridColumn field="title" title="제목" width={300} />
-                    <GridColumn field="reception_attach_files" title="접수 첨부" width={120} />
-                    <GridColumn field="user_name" title="문의자" width={120} />
-                    <GridColumn
-                      field="user_tel"
-                      title="연락처"
-                      width={150}
-                    />
-                    <GridColumn
-                      field="value_code3"
-                      title="Value구분"
-                      width={100}
-                    />
-                    <GridColumn
-                      field="reception_type"
-                      title="접수 구분"
-                      width={120}
-                    />
-                    <GridColumn
-                      field="reception_date"
-                      title="접수일"
-                      width={120}
-                      cell={DateCell}
-                    />
-                  </Grid>
+                    <FilesContext.Provider
+                      value={{
+                        reception_attach_number: reception_attach_number,
+                      }}
+                    >
+                      <GridContainer>
+                        <GridTitleContainer>
+                          <GridTitle>문의접수 리스트</GridTitle>
+                          <ButtonContainer>
+                            <Button
+                              icon={"pencil"}
+                              name="task_order"
+                              onClick={onTaskOrderWndClick}
+                              themeColor={"primary"}
+                            >
+                              업무지시
+                            </Button>
+                          </ButtonContainer>
+                        </GridTitleContainer>
+                        <Grid
+                          style={{ height: `35vh` }}
+                          data={process(
+                            mainDataResult.data.map((row) => ({
+                              ...row,
+                              reception_person: usersData.find(
+                                (items: any) =>
+                                  items.user_id == row.reception_person
+                              )?.user_name,
+                              value_code3: valuecodeItems.find(
+                                (items: any) =>
+                                  items.sub_code == row.value_code3
+                              )?.code_name,
+                              status: statusListData.find(
+                                (items: any) => items.code == row.status
+                              )?.code_name,
+                              reception_type: receptionTypeData.find(
+                                (items: any) =>
+                                  items.sub_code == row.reception_type
+                              )?.code_name,
+                              [SELECTED_FIELD]: selectedState[idGetter(row)],
+                            })),
+                            mainDataState
+                          )}
+                          {...mainDataState}
+                          onDataStateChange={onMainDataStateChange}
+                          //선택 기능
+                          dataItemKey={DATA_ITEM_KEY}
+                          selectedField={SELECTED_FIELD}
+                          selectable={{
+                            enabled: true,
+                            mode: "single",
+                          }}
+                          onSelectionChange={onSelectionChange}
+                          //스크롤 조회 기능
+                          fixedScroll={true}
+                          total={mainDataResult.total}
+                          skip={page.skip}
+                          take={page.take}
+                          pageable={true}
+                          onPageChange={pageChange}
+                          //원하는 행 위치로 스크롤 기능
+                          ref={gridRef}
+                          rowHeight={30}
+                          //정렬기능
+                          sortable={true}
+                          onSortChange={onMainSortChange}
+                          //컬럼순서조정
+                          reorderable={true}
+                          //컬럼너비조정
+                          resizable={true}
+                        >
+                          <GridColumn
+                            field="status"
+                            title="상태"
+                            width={120}
+                            footerCell={mainTotalFooterCell}
+                            cell={StatusCell}
+                          />
+                          <GridColumn
+                            field="exists_task"
+                            title="지시"
+                            width={80}
+                            cell={CheckBoxReadOnlyCell}
+                          />
+                          <GridColumn
+                            field="is_finish"
+                            title="처리"
+                            width={80}
+                            cell={CheckBoxReadOnlyCell}
+                          />
+                          <GridColumn
+                            field="request_date"
+                            title="요청일"
+                            width={120}
+                            cell={DateCell}
+                          />
+                          <GridColumn
+                            field="be_finished_date"
+                            title="완료예정일"
+                            width={120}
+                            cell={DateCell}
+                          />
+                          <GridColumn
+                            field="customer_name"
+                            title="업체명"
+                            width={200}
+                          />
+                          <GridColumn
+                            field="reception_person"
+                            title="접수자"
+                            width={120}
+                          />
+                          <GridColumn field="title" title="제목" width={300} />
+                          <GridColumn
+                            field="reception_attach_number"
+                            title="접수 첨부"
+                            width={100}
+                            cell={FilesCell}
+                          />
+                          <GridColumn
+                            field="user_name"
+                            title="문의자"
+                            width={120}
+                          />
+                          <GridColumn
+                            field="user_tel"
+                            title="연락처"
+                            width={150}
+                          />
+                          <GridColumn
+                            field="value_code3"
+                            title="Value구분"
+                            width={100}
+                          />
+                          <GridColumn
+                            field="reception_type"
+                            title="접수 구분"
+                            width={120}
+                          />
+                          <GridColumn
+                            field="reception_date"
+                            title="접수일"
+                            width={120}
+                            cell={DateCell}
+                          />
+                        </Grid>
+                      </GridContainer>
+                    </FilesContext.Provider>
+                  </StatusContext.Provider>
+                )}
+                <GridContainer
+                  style={{
+                    marginTop: isVisibleDetail ? "10px" : "",
+                    height: isVisibleDetail ? "42.5vh" : "82vh",
+                  }}
+                >
+                  <GridTitleContainer>
+                    <GridTitle>
+                      <Button
+                        themeColor={"primary"}
+                        fillMode={"flat"}
+                        icon={isVisibleDetail ? "chevron-up" : "chevron-down"}
+                        onClick={() => setIsVisableDetail((prev) => !prev)}
+                      ></Button>
+                      고객 문의 내용
+                    </GridTitle>
+                    {isVisibleDetail ? (
+                      ""
+                    ) : (
+                      <ButtonContainer>
+                        <Button
+                          icon={"pencil"}
+                          name="task_order"
+                          onClick={onTaskOrderWndClick}
+                          themeColor={"primary"}
+                        >
+                          업무지시
+                        </Button>
+                      </ButtonContainer>
+                    )}
+                  </GridTitleContainer>
+                  <FormBoxWrap border={true}>
+                    <FormBox>
+                      <tbody>
+                        <tr>
+                          <th style={{ width: "5%" }}>문의 제목</th>
+                          <td>
+                            <Input
+                              name="title"
+                              type="text"
+                              value={
+                                mainDataResult.data.filter(
+                                  (item) =>
+                                    item[DATA_ITEM_KEY] ==
+                                    Object.getOwnPropertyNames(selectedState)[0]
+                                )[0] == undefined
+                                  ? ""
+                                  : mainDataResult.data.filter(
+                                      (item) =>
+                                        item[DATA_ITEM_KEY] ==
+                                        Object.getOwnPropertyNames(
+                                          selectedState
+                                        )[0]
+                                    )[0].title
+                              }
+                              className="readonly"
+                            />
+                          </td>
+                        </tr>
+                      </tbody>
+                    </FormBox>
+                  </FormBoxWrap>
+                  <RichEditor id="docEditor" ref={docEditorRef} hideTools />
+                  <FormBoxWrap border={true}>
+                    <FormBox>
+                      <tbody>
+                        <tr>
+                          <th style={{ width: "5%" }}>첨부파일</th>
+                          <td>
+                            <Input
+                              name="files"
+                              type="text"
+                              value={
+                                mainDataResult.data.filter(
+                                  (item) =>
+                                    item[DATA_ITEM_KEY] ==
+                                    Object.getOwnPropertyNames(selectedState)[0]
+                                )[0] == undefined
+                                  ? ""
+                                  : mainDataResult.data.filter(
+                                      (item) =>
+                                        item[DATA_ITEM_KEY] ==
+                                        Object.getOwnPropertyNames(
+                                          selectedState
+                                        )[0]
+                                    )[0].files
+                              }
+                              className="readonly"
+                            />
+                            <ButtonInGridInput>
+                              <Button
+                                onClick={onAttWndClick}
+                                icon="more-horizontal"
+                                fillMode="flat"
+                              />
+                            </ButtonInGridInput>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </FormBox>
+                  </FormBoxWrap>
                 </GridContainer>
               </GridContainer>
             </GridContainerWrap>
           </TabStripTab>
         </TabStrip>
       </GridContainerWrap>
+      {attachmentsWindowVisible && (
+        <AttachmentsWindow
+          setVisible={setAttachmentsWindowVisible}
+          para={
+            mainDataResult.data.filter(
+              (item) =>
+                item[DATA_ITEM_KEY] ==
+                Object.getOwnPropertyNames(selectedState)[0]
+            )[0] == undefined
+              ? ""
+              : mainDataResult.data.filter(
+                  (item) =>
+                    item[DATA_ITEM_KEY] ==
+                    Object.getOwnPropertyNames(selectedState)[0]
+                )[0].attdatnum
+          }
+          permission={{ upload: false, download: true, delete: false }}
+          type={"question"}
+          modal={true}
+        />
+      )}
+      {TaskOrderWindowVisible && (
+        <TaskOrderWindow
+          setVisible={setTaskOrderWindowVisible}
+          para={
+            mainDataResult.data.filter(
+              (item) =>
+                item[DATA_ITEM_KEY] ==
+                Object.getOwnPropertyNames(selectedState)[0]
+            )[0] == undefined
+              ? {}
+              : mainDataResult.data.filter(
+                  (item) =>
+                    item[DATA_ITEM_KEY] ==
+                    Object.getOwnPropertyNames(selectedState)[0]
+                )[0]
+          }
+          type={"접수"}
+          reload={() => {
+            setFilters((prev) => ({
+              ...prev,
+              findRowValue: Object.getOwnPropertyNames(selectedState)[0],
+              isSearch: true,
+            }));
+          }}
+        />
+      )}
     </>
   );
 };

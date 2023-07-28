@@ -750,7 +750,7 @@ const App = () => {
     contents: "",
     orderer: { user_id: "", user_name: "" },
     worker: { user_id: userId, user_name: userName },
-    type: [{ name: "접수" },{ name: "프로젝트" },{ name: "회의록" },{ name: "미참조" }],
+    type: [{  code: 1, name: "접수" },{  code: 2,name: "프로젝트" },{ code: 3,name: "회의록" },{ code: 4,name: "미참조" }],
     findRowValue: "",
     pgSize: PAGE_SIZE,
     pgNum: 1,
@@ -913,6 +913,7 @@ const App = () => {
             total: 0,
           };
         });
+        fetchDocument("", "");
       }
     } else {
       console.log("[오류 발생]");
@@ -934,25 +935,30 @@ const App = () => {
     let data: any;
     setLoading(true);
 
-    const para = {
-      para: `document?type=${type}&id=${ref_key}`,
-    };
-
-    try {
-      data = await processApi<any>("document", para);
-    } catch (error) {
-      data = null;
-    }
-
-    if (data.document !== null) {
-      const document = data.document;
-      setHtmlOnEditor({ document });
-    } else {
-      console.log("[에러발생]");
-      console.log(data);
-
+    if(type == "")  {
       setHtmlOnEditor({ document: "" });
+    } else {
+      const para = {
+        para: `document?type=${type}&id=${ref_key}`,
+      };
+  
+      try {
+        data = await processApi<any>("document", para);
+      } catch (error) {
+        data = null;
+      }
+  
+      if (data !== null) {
+        const document = data.document;
+        setHtmlOnEditor({ document });
+      } else {
+        console.log("[에러발생]");
+        console.log(data);
+  
+        setHtmlOnEditor({ document: "" });
+      }
     }
+   
     setLoading(false);
   };
 
@@ -1283,7 +1289,7 @@ const App = () => {
               [EDIT_FIELD]: undefined,
             }
       );
-      setSubDataResult((prev) => {
+      setMainDataResult((prev) => {
         return {
           data: newData,
           total: prev.total,

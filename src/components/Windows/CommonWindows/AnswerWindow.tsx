@@ -197,7 +197,7 @@ const SignWindow = ({ setVisible, para }: IWindow) => {
       data = null;
     }
 
-    if (data.document !== null) {
+    if (data !== null) {
       const reference = data.document;
       if (refEditorRef.current) {
         refEditorRef.current.setHtml(reference);

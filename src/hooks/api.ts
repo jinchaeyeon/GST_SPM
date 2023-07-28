@@ -19,7 +19,10 @@ const domain: any = {
   "meeting-delete": { action: "delete", url: "api/spm/meeting/:id" },
 
   // 처리일지
-  document: { action: "get", url: "api/spm/:para" },
+  "document": { action: "get", url: "api/spm/:para" },
+
+  //업무지시
+  "taskorder-save": { action: "post", url: "api/spm/meeting" },
 
   // 공지사항
   "notice-list": { action: "get", url: "api/spm/notice/:para" },
