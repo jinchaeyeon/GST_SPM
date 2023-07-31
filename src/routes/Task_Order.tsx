@@ -41,7 +41,7 @@ import {
 } from "../store/columns/common-columns";
 import { GAP, PAGE_SIZE, SELECTED_FIELD } from "../components/CommonString";
 import CommonDateRangePicker from "../components/DateRangePicker/CommonDateRangePicker";
-import { Input } from "@progress/kendo-react-inputs";
+import { Input, RadioGroup } from "@progress/kendo-react-inputs";
 import { bytesToBase64 } from "byte-base64";
 import { useRecoilState, useSetRecoilState } from "recoil";
 import { isLoading, loginResultState } from "../store/atoms";
@@ -61,6 +61,9 @@ import DateCell from "../components/Cells/DateCell";
 import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
 import RichEditor from "../components/RichEditor";
 import TaskOrderWindow from "../components/Windows/CommonWindows/TaskOrderWindow";
+import ProgressCell from "../components/Cells/ProgressCell";
+import RadioGroupCell from "../components/Cells/RadioGroupCell";
+import NumberCell from "../components/Cells/NumberCell";
 
 const StatusContext = createContext<{
   statusListData: any[];
@@ -180,7 +183,42 @@ WHERE a.group_code = 'BA097'
 AND use_yn = 'Y'`;
 
 const DATA_ITEM_KEY = "document_id";
+const DATA_ITEM_KEY2 = "find_key";
 let targetRowIndex: null | number = null;
+let targetRowIndex2: null | number = null;
+
+const ListRadioContext = createContext<{
+  listRadioItems: any;
+}>({
+  listRadioItems: {},
+});
+
+const ListRadioCell = (props: GridCellProps) => {
+  const {
+    ariaColumnIndex,
+    columnIndex,
+    dataItem,
+    field = "",
+    render,
+    onChange,
+  } = props;
+  const { listRadioItems } = useContext(ListRadioContext);
+  let newRadioGroup = listRadioItems.data.Rows.map((column: any) => ({
+    value: column.code,
+    label: column.caption,
+  }));
+  return listRadioItems ? (
+    <td aria-colindex={ariaColumnIndex} data-grid-col-index={columnIndex}>
+      <RadioGroup
+        data={newRadioGroup}
+        layout={"horizontal"}
+        value={dataItem[field]}
+      />
+    </td>
+  ) : (
+    <td />
+  );
+};
 
 const App = () => {
   const processApi = useApi();
@@ -189,10 +227,13 @@ const App = () => {
   const userId = loginResult ? loginResult.userId : "";
   const userName = loginResult ? loginResult.userName : "";
   let gridRef: any = useRef(null);
+  let gridRef2: any = useRef(null);
   const idGetter = getter(DATA_ITEM_KEY);
+  const idGetter2 = getter(DATA_ITEM_KEY2);
 
   const initialPageState = { skip: 0, take: PAGE_SIZE };
   const [page, setPage] = useState(initialPageState);
+  const [page2, setPage2] = useState(initialPageState);
   const pageChange = (event: GridPageChangeEvent) => {
     const { page } = event;
 
@@ -203,6 +244,21 @@ const App = () => {
     }));
 
     setPage({
+      skip: page.skip,
+      take: initialPageState.take,
+    });
+  };
+
+  const pageChange2 = (event: GridPageChangeEvent) => {
+    const { page } = event;
+
+    setFilters((prev) => ({
+      ...prev,
+      pgNum: Math.floor(page.skip / initialPageState.take) + 1,
+      isSearch: true,
+    }));
+
+    setPage2({
       skip: page.skip,
       take: initialPageState.take,
     });
@@ -279,56 +335,49 @@ const App = () => {
   const handleSelectTab = (e: any) => {
     setTabSelected(e.selected);
     if (e.selected == 0) {
-        setFilters({
-            workType: "received",
-            date_type: { sub_code: "A", code_name: "요청일" },
-            fromDate: fromDate,
-            toDate: new Date(),
-            custnm: "",
-            value_code3: { sub_code: "", code_name: "" },
-            contents: "",
-            status: [
-              { sub_code: "Wait", code_name: "대기", code: "N" },
-              { sub_code: "Progress", code_name: "진행중", code: "R" },
-              { sub_code: "Hold", code_name: "보류", code: "H" },
-            ],
-            reception_person: { user_id: "", user_name: "" },
-            receptionist: { user_id: "", user_name: "" },
-            worker: { user_id: userId, user_name: userName },
-            reception_type: { sub_code: "", code_name: "" },
-            user_name: { user_id: "", user_name: "" },
-            findRowValue: "",
-            pgSize: PAGE_SIZE,
-            pgNum: 1,
-            isSearch: true,
-        })
-      const selectedRow = mainDataResult.data.filter(
-        (item) =>
-          item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
-      )[0];
-      fetchDocument("Question", selectedRow.document_id);
-    } else if(e.selected == 1) {
-        setFilters({
-            workType: "project",
-            date_type: { sub_code: "A", code_name: "사업시작일(계약일)" },
-            fromDate: fromDate,
-            toDate: new Date(),
-            custnm: "",
-            value_code3: { sub_code: "", code_name: "" },
-            contents: "",
-            status: [
-                { sub_code: "N", code_name: "미완료", code: "N" },
-            ],
-            reception_person: { user_id: "", user_name: "" },
-            receptionist: { user_id: "", user_name: "" },
-            worker: { user_id: userId, user_name: userName },
-            reception_type: { sub_code: "", code_name: "" },
-            user_name: { user_id: "", user_name: "" },
-            findRowValue: "",
-            pgSize: PAGE_SIZE,
-            pgNum: 1,
-            isSearch: true,
-        })
+      setFilters({
+        workType: "received",
+        date_type: { sub_code: "A", code_name: "요청일" },
+        fromDate: fromDate,
+        toDate: new Date(),
+        custnm: "",
+        value_code3: { sub_code: "", code_name: "" },
+        contents: "",
+        status: [
+          { sub_code: "Wait", code_name: "대기", code: "N" },
+          { sub_code: "Progress", code_name: "진행중", code: "R" },
+          { sub_code: "Hold", code_name: "보류", code: "H" },
+        ],
+        reception_person: { user_id: "", user_name: "" },
+        receptionist: { user_id: "", user_name: "" },
+        worker: { user_id: userId, user_name: userName },
+        reception_type: { sub_code: "", code_name: "" },
+        user_name: { user_id: "", user_name: "" },
+        findRowValue: "",
+        pgSize: PAGE_SIZE,
+        pgNum: 1,
+        isSearch: true,
+      });
+    } else if (e.selected == 1) {
+      setFilters({
+        workType: "project",
+        date_type: { sub_code: "A", code_name: "사업시작일(계약일)" },
+        fromDate: fromDate,
+        toDate: new Date(),
+        custnm: "",
+        value_code3: { sub_code: "", code_name: "" },
+        contents: "",
+        status: [{ sub_code: "N", code_name: "미완료", code: "N" }],
+        reception_person: { user_id: "", user_name: "" },
+        receptionist: { user_id: "", user_name: "" },
+        worker: { user_id: userId, user_name: userName },
+        reception_type: { sub_code: "", code_name: "" },
+        user_name: { user_id: "", user_name: "" },
+        findRowValue: "",
+        pgSize: PAGE_SIZE,
+        pgNum: 1,
+        isSearch: true,
+      });
     }
     setIsVisableDetail(true);
   };
@@ -376,6 +425,21 @@ const App = () => {
     { sub_code: "E", code_name: "사업종료일" },
     { sub_code: "%", code_name: "전체" },
   ];
+  const [lvlItems, setlvlItems] = useState([
+    {
+      sub_code: "A",
+      code_name: "상",
+    },
+    {
+      sub_code: "B",
+      code_name: "중",
+    },
+    {
+      sub_code: "C",
+      code_name: "하",
+    },
+  ]);
+
   const [valuecodeItems, setValuecodeItems] = useState<any[]>([]);
   const [usersData, setUsersData] = useState<any[]>([]);
   const [receptionTypeData, setReceptionTypeData] = useState<any[]>([]);
@@ -385,6 +449,21 @@ const App = () => {
     { sub_code: "Hold", code_name: "보류", code: "H" },
     { sub_code: "Finish", code_name: "완료", code: "Y" },
   ];
+  const [listRadioItems, setListRadioItems] = useState({
+    data: {
+      Rows: [
+        {
+          code: "A",
+          caption: "포함",
+        },
+        {
+          code: "B",
+          caption: "추가",
+        },
+      ],
+    },
+  });
+
   const statusListData2: any[] = [
     { sub_code: "Y", code_name: "완료", code: "Y" },
     { sub_code: "N", code_name: "미완료", code: "N" },
@@ -392,10 +471,19 @@ const App = () => {
   const [mainDataState, setMainDataState] = useState<State>({
     sort: [],
   });
+  const [mainDataState2, setMainDataState2] = useState<State>({
+    sort: [],
+  });
   const [mainDataResult, setMainDataResult] = useState<DataResult>(
     process([], mainDataState)
   );
+  const [mainDataResult2, setMainDataResult2] = useState<DataResult>(
+    process([], mainDataState2)
+  );
   const [selectedState, setSelectedState] = useState<{
+    [id: string]: boolean | number[];
+  }>({});
+  const [selectedState2, setSelectedState2] = useState<{
     [id: string]: boolean | number[];
   }>({});
 
@@ -563,7 +651,8 @@ const App = () => {
         "@p_to_date": convertDateToStr(filters.toDate),
         "@p_customer_code": "",
         "@p_customer_name": filters.custnm,
-        "@p_user_name": "",
+        "@p_user_name":
+          filters.user_name != null ? filters.user_name.user_id : "",
         "@p_contents": filters.contents,
         "@p_reception_type":
           filters.reception_type != null ? filters.reception_type.sub_code : "",
@@ -657,11 +746,126 @@ const App = () => {
     setLoading(false);
   };
 
+  //그리드 데이터 조회
+  const fetchMainGrid2 = async (filters: any) => {
+    let data: any;
+    setLoading(true);
+
+    const status =
+      filters.status.length == 0
+        ? "Y|N"
+        : filters.status.length == 1
+        ? filters.status[0].sub_code
+        : getName(filters.status);
+
+    //조회조건 파라미터
+    const parameters: Iparameters = {
+      procedureName: "pw6_sel_task_order",
+      pageNumber: filters.pgNum,
+      pageSize: filters.pgSize,
+      parameters: {
+        "@p_work_type": filters.workType,
+        "@p_date_type": filters.date_type.sub_code,
+        "@p_from_date": convertDateToStr(filters.fromDate),
+        "@p_to_date": convertDateToStr(filters.toDate),
+        "@p_customer_code": "",
+        "@p_customer_name": filters.custnm,
+        "@p_user_name":
+          filters.user_name != null ? filters.user_name.user_id : "",
+        "@p_contents": filters.contents,
+        "@p_reception_type":
+          filters.reception_type != null ? filters.reception_type.sub_code : "",
+        "@p_value_code3":
+          filters.value_code3 != null ? filters.value_code3.sub_code : "",
+        "@p_reception_person":
+          filters.reception_person != null
+            ? filters.reception_person.user_id
+            : "",
+        "@p_worker": filters.worker != null ? filters.worker.user_id : "",
+        "@p_receptionist":
+          filters.receptionist != null ? filters.receptionist.user_id : "",
+        "@p_status": status,
+        "@p_check": "",
+        "@p_ref_type": "",
+        "@p_ref_key": "",
+        "@p_ref_seq": 0,
+      },
+    };
+    try {
+      data = await processApi<any>("procedure", parameters);
+    } catch (error) {
+      data = null;
+    }
+    console.log(data);
+    if (data.isSuccess === true) {
+      const totalRowCnt = data.tables[0].TotalRowCount;
+      const rows = data.tables[0].Rows;
+
+      if (filters.findRowValue !== "") {
+        // find_row_value 행으로 스크롤 이동
+        if (gridRef2.current) {
+          const findRowIndex = rows.findIndex(
+            (row: any) => row[DATA_ITEM_KEY2] == filters.findRowValue
+          );
+          targetRowIndex2 = findRowIndex;
+        }
+
+        // find_row_value 데이터가 존재하는 페이지로 설정
+        setPage2({
+          skip: PAGE_SIZE * (data.pageNumber - 1),
+          take: PAGE_SIZE,
+        });
+      } else {
+        // 첫번째 행으로 스크롤 이동
+        if (gridRef2.current) {
+          targetRowIndex2 = 0;
+        }
+      }
+
+      setMainDataResult2((prev) => {
+        return {
+          data: rows,
+          total: totalRowCnt == -1 ? 0 : totalRowCnt,
+        };
+      });
+
+      if (totalRowCnt > 0) {
+        const selectedRow =
+          filters.findRowValue == ""
+            ? rows[0]
+            : rows.find(
+                (row: any) => row[DATA_ITEM_KEY2] == filters.findRowValue
+              );
+
+        if (selectedRow != undefined) {
+          setSelectedState2({ [selectedRow[DATA_ITEM_KEY2]]: true });
+        } else {
+          setSelectedState2({ [rows[0][DATA_ITEM_KEY2]]: true });
+        }
+      } else {
+        fetchDocument("", "");
+      }
+    } else {
+      console.log("[오류 발생]");
+      console.log(data);
+    }
+    // 필터 isSearch false처리, pgNum 세팅
+    setFilters((prev) => ({
+      ...prev,
+      pgNum:
+        data && data.hasOwnProperty("pageNumber")
+          ? data.pageNumber
+          : prev.pgNum,
+      isSearch: false,
+    }));
+    setLoading(false);
+  };
+
   const fetchDocument = async (type: string, ref_key: string) => {
     let data: any;
     setLoading(true);
 
-    if (type == "") {
+    if (type == "" || ref_key == "") {
       setHtmlOnEditor({ document: "" });
     } else {
       const para = {
@@ -693,10 +897,10 @@ const App = () => {
       const _ = require("lodash");
       const deepCopiedFilters = _.cloneDeep(filters);
       setFilters((prev) => ({ ...prev, findRowValue: "", isSearch: false })); // 한번만 조회되도록
-      if(tabSelected == 0) {
+      if (tabSelected == 0) {
         fetchMainGrid(deepCopiedFilters);
-      } else if(tabSelected == 1) {
-
+      } else if (tabSelected == 1) {
+        fetchMainGrid2(deepCopiedFilters);
       }
     }
   }, [filters]);
@@ -709,12 +913,25 @@ const App = () => {
     }
   }, [mainDataResult]);
 
+  //메인 그리드 데이터 변경 되었을 때
+  useEffect(() => {
+    if (targetRowIndex2 !== null && gridRef2.current) {
+      gridRef2.current.scrollIntoView({ rowIndex: targetRowIndex2 });
+      targetRowIndex2 = null;
+    }
+  }, [mainDataResult2]);
+
   const onMainSortChange = (e: any) => {
     setMainDataState((prev) => ({ ...prev, sort: e.sort }));
   };
-
+  const onMainSortChange2 = (e: any) => {
+    setMainDataState2((prev) => ({ ...prev, sort: e.sort }));
+  };
   const onMainDataStateChange = (event: GridDataStateChangeEvent) => {
     setMainDataState(event.dataState);
+  };
+  const onMainDataStateChange2 = (event: GridDataStateChangeEvent) => {
+    setMainDataState2(event.dataState);
   };
 
   const onSelectionChange = (event: GridSelectionChangeEvent) => {
@@ -730,7 +947,14 @@ const App = () => {
 
     fetchDocument("Question", selectedRowData.document_id);
   };
-
+  const onSelectionChange2 = (event: GridSelectionChangeEvent) => {
+    const newSelectedState = getSelectedState({
+      event,
+      selectedState: selectedState2,
+      dataItemKey: DATA_ITEM_KEY2,
+    });
+    setSelectedState2(newSelectedState);
+  };
   const search = () => {
     if (
       filters.date_type == null ||
@@ -740,6 +964,7 @@ const App = () => {
       alert("필수항목을 입력해주세요");
     } else {
       setPage(initialPageState); // 페이지 초기화
+      setPage2(initialPageState); // 페이지 초기화
       setHtmlOnEditor({ document: "" });
       setFilters((prev) => ({
         ...prev,
@@ -794,6 +1019,21 @@ const App = () => {
       </td>
     );
   };
+
+  const mainTotalFooterCell2 = (props: GridFooterCellProps) => {
+    var parts = mainDataResult2.total.toString().split(".");
+    return (
+      <td colSpan={props.colSpan} style={props.style}>
+        총
+        {mainDataResult2.total == -1
+          ? 0
+          : parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",") +
+            (parts[1] ? "." + parts[1] : "")}
+        건
+      </td>
+    );
+  };
+
   const [isVisibleDetail, setIsVisableDetail] = useState(true);
 
   const [reception_attach_number, setReception_attach_number] =
@@ -805,6 +1045,8 @@ const App = () => {
   };
   const [TaskOrderWindowVisible, setTaskOrderWindowVisible] =
     useState<boolean>(false);
+  const [TaskOrderWindowVisible2, setTaskOrderWindowVisible2] =
+    useState<boolean>(false);
   const onTaskOrderWndClick = () => {
     if (
       mainDataResult.data.filter(
@@ -813,6 +1055,18 @@ const App = () => {
       )[0] != undefined
     ) {
       setTaskOrderWindowVisible(true);
+    } else {
+      alert("데이터가 없습니다.");
+    }
+  };
+  const onTaskOrderWndClick2 = () => {
+    if (
+      mainDataResult2.data.filter(
+        (item) =>
+          item[DATA_ITEM_KEY2] == Object.getOwnPropertyNames(selectedState2)[0]
+      )[0] != undefined
+    ) {
+      setTaskOrderWindowVisible2(true);
     } else {
       alert("데이터가 없습니다.");
     }
@@ -1457,161 +1711,234 @@ const App = () => {
                 </FilterBoxWrap>
               </GridContainer>
               <GridContainer width={`calc(85% - ${GAP}px)`}>
-                  <StatusContext.Provider
-                    value={{
-                      statusListData: statusListData,
-                    }}
-                  >
-                    <FilesContext.Provider
-                      value={{
-                        reception_attach_number: reception_attach_number,
-                      }}
-                    >
-                      <GridContainer>
-                        <GridTitleContainer>
-                          <GridTitle>프로젝트 상세 항목 리스트</GridTitle>
-                          <ButtonContainer>
-                            <Button
-                              icon={"pencil"}
-                              name="task_order"
-                              onClick={onTaskOrderWndClick}
-                              themeColor={"primary"}
-                            >
-                              업무지시
-                            </Button>
-                          </ButtonContainer>
-                        </GridTitleContainer>
-                        <Grid
-                          style={{ height: `78vh` }}
-                          data={process(
-                            mainDataResult.data.map((row) => ({
-                              ...row,
-                              reception_person: usersData.find(
-                                (items: any) =>
-                                  items.user_id == row.reception_person
-                              )?.user_name,
-                              value_code3: valuecodeItems.find(
-                                (items: any) =>
-                                  items.sub_code == row.value_code3
-                              )?.code_name,
-                              status: statusListData.find(
-                                (items: any) => items.code == row.status
-                              )?.code_name,
-                              reception_type: receptionTypeData.find(
-                                (items: any) =>
-                                  items.sub_code == row.reception_type
-                              )?.code_name,
-                              [SELECTED_FIELD]: selectedState[idGetter(row)],
-                            })),
-                            mainDataState
-                          )}
-                          {...mainDataState}
-                          onDataStateChange={onMainDataStateChange}
-                          //선택 기능
-                          dataItemKey={DATA_ITEM_KEY}
-                          selectedField={SELECTED_FIELD}
-                          selectable={{
-                            enabled: true,
-                            mode: "single",
-                          }}
-                          onSelectionChange={onSelectionChange}
-                          //스크롤 조회 기능
-                          fixedScroll={true}
-                          total={mainDataResult.total}
-                          skip={page.skip}
-                          take={page.take}
-                          pageable={true}
-                          onPageChange={pageChange}
-                          //원하는 행 위치로 스크롤 기능
-                          ref={gridRef}
-                          rowHeight={30}
-                          //정렬기능
-                          sortable={true}
-                          onSortChange={onMainSortChange}
-                          //컬럼순서조정
-                          reorderable={true}
-                          //컬럼너비조정
-                          resizable={true}
+                <ListRadioContext.Provider
+                  value={{ listRadioItems: listRadioItems }}
+                >
+                  <GridContainer>
+                    <GridTitleContainer>
+                      <GridTitle>프로젝트 상세 항목 리스트</GridTitle>
+                      <ButtonContainer>
+                        <Button
+                          icon={"pencil"}
+                          name="task_order"
+                          onClick={onTaskOrderWndClick2}
+                          themeColor={"primary"}
                         >
-                          <GridColumn
-                            field="status"
-                            title="상태"
-                            width={120}
-                            footerCell={mainTotalFooterCell}
-                            cell={StatusCell}
-                          />
-                          <GridColumn
-                            field="exists_task"
-                            title="지시"
-                            width={80}
-                            cell={CheckBoxReadOnlyCell}
-                          />
-                          <GridColumn
-                            field="is_finish"
-                            title="처리"
-                            width={80}
-                            cell={CheckBoxReadOnlyCell}
-                          />
-                          <GridColumn
-                            field="request_date"
-                            title="요청일"
-                            width={120}
-                            cell={DateCell}
-                          />
-                          <GridColumn
-                            field="be_finished_date"
-                            title="완료예정일"
-                            width={120}
-                            cell={DateCell}
-                          />
-                          <GridColumn
-                            field="customer_name"
-                            title="업체명"
-                            width={200}
-                          />
-                          <GridColumn
-                            field="reception_person"
-                            title="접수자"
-                            width={120}
-                          />
-                          <GridColumn field="title" title="제목" width={300} />
-                          <GridColumn
-                            field="reception_attach_number"
-                            title="접수 첨부"
-                            width={100}
-                            cell={FilesCell}
-                          />
-                          <GridColumn
-                            field="user_name"
-                            title="문의자"
-                            width={120}
-                          />
-                          <GridColumn
-                            field="user_tel"
-                            title="연락처"
-                            width={150}
-                          />
-                          <GridColumn
-                            field="value_code3"
-                            title="Value구분"
-                            width={100}
-                          />
-                          <GridColumn
-                            field="reception_type"
-                            title="접수 구분"
-                            width={120}
-                          />
-                          <GridColumn
-                            field="reception_date"
-                            title="접수일"
-                            width={120}
-                            cell={DateCell}
-                          />
-                        </Grid>
-                      </GridContainer>
-                    </FilesContext.Provider>
-                  </StatusContext.Provider>
-                </GridContainer>
+                          업무지시
+                        </Button>
+                      </ButtonContainer>
+                    </GridTitleContainer>
+                    <Grid
+                      style={{ height: `78vh` }}
+                      data={process(
+                        mainDataResult2.data.map((row) => ({
+                          ...row,
+                          indicator: usersData.find(
+                            (items: any) => items.user_id == row.indicator
+                          )?.user_name,
+                          value_code3: valuecodeItems.find(
+                            (items: any) => items.sub_code == row.value_code3
+                          )?.code_name,
+                          lvl: lvlItems.find(
+                            (items: any) => items.sub_code == row.lvl
+                          )?.code_name,
+                          devperson: usersData.find(
+                            (items: any) => items.user_id == row.devperson
+                          )?.user_name,
+                          chkperson: usersData.find(
+                            (items: any) => items.user_id == row.chkperson
+                          )?.user_name,
+                          useyn:
+                            row.useyn == "Y"
+                              ? true
+                              : row.useyn == "N"
+                              ? false
+                              : row.useyn,
+                          CustSignyn:
+                            row.CustSignyn == "Y"
+                              ? true
+                              : row.CustSignyn == "N"
+                              ? false
+                              : row.CustSignyn,
+                          [SELECTED_FIELD]: selectedState2[idGetter2(row)],
+                        })),
+                        mainDataState2
+                      )}
+                      {...mainDataState2}
+                      onDataStateChange={onMainDataStateChange2}
+                      //선택 기능
+                      dataItemKey={DATA_ITEM_KEY2}
+                      selectedField={SELECTED_FIELD}
+                      selectable={{
+                        enabled: true,
+                        mode: "single",
+                      }}
+                      onSelectionChange={onSelectionChange2}
+                      //스크롤 조회 기능
+                      fixedScroll={true}
+                      total={mainDataResult2.total}
+                      skip={page2.skip}
+                      take={page2.take}
+                      pageable={true}
+                      onPageChange={pageChange2}
+                      //원하는 행 위치로 스크롤 기능
+                      ref={gridRef2}
+                      rowHeight={30}
+                      //정렬기능
+                      sortable={true}
+                      onSortChange={onMainSortChange2}
+                      //컬럼순서조정
+                      reorderable={true}
+                      //컬럼너비조정
+                      resizable={true}
+                    >
+                      <GridColumn field="custnm" title="업체" width={200} />
+                      <GridColumn field="number" title="차수" width={80} />
+                      <GridColumn
+                        field="pgmnm"
+                        title="Value 이름"
+                        width={120}
+                      />
+                      <GridColumn
+                        field="pgmid"
+                        title="폼ID"
+                        width={120}
+                        footerCell={mainTotalFooterCell2}
+                      />
+                      <GridColumn
+                        field="value_code3"
+                        title="Value 구분"
+                        width={120}
+                      />
+                      <GridColumn field="pgmdiv" title="개발구분" width={120} />
+                      <GridColumn
+                        field="prgrate"
+                        title="진행률"
+                        width={120}
+                        cell={ProgressCell}
+                      />
+                      <GridColumn
+                        field="listyn"
+                        title="LIST포함여부"
+                        width={180}
+                        cell={ListRadioCell}
+                      />
+                      <GridColumn field="lvl" title="난이도" width={100} />
+                      <GridColumn
+                        field="stdscore"
+                        title="개발표준점수"
+                        width={100}
+                        cell={NumberCell}
+                      />
+                      <GridColumn
+                        field="modrate"
+                        title="수정률"
+                        width={100}
+                        cell={NumberCell}
+                      />
+                      <GridColumn
+                        field="fnscore"
+                        title="기능점수"
+                        width={100}
+                        cell={NumberCell}
+                      />
+                      <GridColumn
+                        field="indicator"
+                        title="설계자"
+                        width={120}
+                      />
+                      <GridColumn
+                        field="devperson"
+                        title="개발담당자"
+                        width={120}
+                      />
+                      <GridColumn
+                        field="DesignEstTime"
+                        title="설계예정일"
+                        width={120}
+                        cell={DateCell}
+                      />
+                      <GridColumn
+                        field="exptime"
+                        title="개발예상시간"
+                        width={100}
+                        cell={NumberCell}
+                      />
+                      <GridColumn
+                        field="DesignStartDate"
+                        title="설계시작일"
+                        width={120}
+                        cell={DateCell}
+                      />
+                      <GridColumn
+                        field="DesignEndDate"
+                        title="설계완료일"
+                        width={120}
+                        cell={DateCell}
+                      />
+                      <GridColumn
+                        field="devstrdt"
+                        title="개발시작일"
+                        width={120}
+                        cell={DateCell}
+                      />
+                      <GridColumn
+                        field="finexpdt"
+                        title="완료예정일"
+                        width={120}
+                        cell={DateCell}
+                      />
+                      <GridColumn
+                        field="findt"
+                        title="완료일"
+                        width={120}
+                        cell={DateCell}
+                      />
+                      <GridColumn
+                        field="chkperson"
+                        title="확인담당자"
+                        width={120}
+                      />
+                      <GridColumn
+                        field="chkdt"
+                        title="확인일"
+                        width={120}
+                        cell={DateCell}
+                      />
+                      <GridColumn
+                        field="useyn"
+                        title="사용여부"
+                        width={80}
+                        cell={CheckBoxReadOnlyCell}
+                      />
+                      <GridColumn field="remark" title="비고" width={200} />
+                      <GridColumn
+                        field="CustCheckDate"
+                        title="검수일자"
+                        width={120}
+                        cell={DateCell}
+                      />
+                      <GridColumn
+                        field="CustPerson"
+                        title="업체담당자"
+                        width={120}
+                      />
+                      <GridColumn
+                        field="CustSignyn"
+                        title="업체사인"
+                        width={80}
+                        cell={CheckBoxReadOnlyCell}
+                      />
+                      <GridColumn field="module" title="모듈" width={120} />
+                      <GridColumn
+                        field="find_key"
+                        title="개발관리번호"
+                        width={200}
+                      />
+                    </Grid>
+                  </GridContainer>
+                </ListRadioContext.Provider>
+              </GridContainer>
             </GridContainerWrap>
           </TabStripTab>
         </TabStrip>
@@ -1658,6 +1985,32 @@ const App = () => {
             setFilters((prev) => ({
               ...prev,
               findRowValue: Object.getOwnPropertyNames(selectedState)[0],
+              isSearch: true,
+            }));
+          }}
+        />
+      )}
+      {TaskOrderWindowVisible2 && (
+        <TaskOrderWindow
+          setVisible={setTaskOrderWindowVisible2}
+          para={
+            mainDataResult2.data.filter(
+              (item) =>
+                item[DATA_ITEM_KEY2] ==
+                Object.getOwnPropertyNames(selectedState2)[0]
+            )[0] == undefined
+              ? {}
+              : mainDataResult2.data.filter(
+                  (item) =>
+                    item[DATA_ITEM_KEY2] ==
+                    Object.getOwnPropertyNames(selectedState2)[0]
+                )[0]
+          }
+          type={"프로젝트"}
+          reload={() => {
+            setFilters((prev) => ({
+              ...prev,
+              findRowValue: Object.getOwnPropertyNames(selectedState2)[0],
               isSearch: true,
             }));
           }}

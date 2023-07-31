@@ -23,6 +23,7 @@ const RadioGroupCell = (props: CustomCellProps) => {
   } = props;
 
   const value = dataItem[field ?? ""];
+
   const dataList =
     bizComponentData !== null ? bizComponentData.data.Rows : null;
 

@@ -109,6 +109,10 @@ type ITypes = {
   user_name: string;
   user_tel: string;
   value_code3: string;
+
+  //프로젝트 추가
+  devmngnum: string;
+  devmngseq: number;
 };
 const usersQueryStr = `SELECT user_id, user_name 
 FROM sysUserMaster`;
@@ -362,8 +366,8 @@ const KendoWindow = ({ setVisible, para, type, reload }: IKendoWindow) => {
   const removeHTML = () => {
     setLoading(true);
     mainDataResult.data.map((item) => {
-        localStorage.removeItem(item[DATA_ITEM_KEY]);
-        localStorage.removeItem(item[DATA_ITEM_KEY] + "key");
+      localStorage.removeItem(item[DATA_ITEM_KEY]);
+      localStorage.removeItem(item[DATA_ITEM_KEY] + "key");
     });
     setLoading(false);
   };
@@ -498,8 +502,16 @@ const KendoWindow = ({ setVisible, para, type, reload }: IKendoWindow) => {
         "@p_status": "",
         "@p_check": "",
         "@p_ref_type": type != undefined ? type : "",
-        "@p_ref_key": para != undefined ? para.ref_number : "",
-        "@p_ref_seq": 0,
+        "@p_ref_key":
+          para != undefined
+            ? type == "접수"
+              ? para.ref_number
+              : type == "프로젝트"
+              ? para.devmngnum
+              : ""
+            : "",
+        "@p_ref_seq":
+          para != undefined ? (type == "프로젝트" ? para.devmngseq : 0) : 0,
       },
     };
 
@@ -508,13 +520,14 @@ const KendoWindow = ({ setVisible, para, type, reload }: IKendoWindow) => {
     } catch (error) {
       data = null;
     }
-
+    console.log(parameters);
+    console.log(data);
     if (data.isSuccess === true) {
       const totalRowCnt = data.tables[0].TotalRowCount;
       const rows = data.tables[0].Rows;
-      rows.map((item: { orgdiv: string; docunum: string; }) => {
+      rows.map((item: { orgdiv: string; docunum: string }) => {
         fetchDocument("Task", item.orgdiv + "_" + item.docunum, item);
-    });
+      });
       setMainDataResult((prev) => {
         return {
           data: rows,
@@ -563,7 +576,7 @@ const KendoWindow = ({ setVisible, para, type, reload }: IKendoWindow) => {
           const doc = parser.parseFromString(editorContent, "text/html");
           const textContent = doc.body.textContent || ""; //문자열
           localStorage.setItem(key[DATA_ITEM_KEY], textContent);
-          localStorage.setItem(key[DATA_ITEM_KEY]+"key", editorContent);
+          localStorage.setItem(key[DATA_ITEM_KEY] + "key", editorContent);
         }
       } else {
         console.log("[에러발생]");
@@ -612,12 +625,9 @@ const KendoWindow = ({ setVisible, para, type, reload }: IKendoWindow) => {
       localStorage.getItem(currentRow[DATA_ITEM_KEY]) == null
     ) {
       localStorage.setItem(currentRow[DATA_ITEM_KEY], textContent);
-      localStorage.setItem(currentRow[DATA_ITEM_KEY]+"key", editorContent);
+      localStorage.setItem(currentRow[DATA_ITEM_KEY] + "key", editorContent);
     } else {
-      if (
-        localStorage.getItem(currentRow[DATA_ITEM_KEY]) !=
-        textContent
-      ) {
+      if (localStorage.getItem(currentRow[DATA_ITEM_KEY]) != textContent) {
         const newData = mainDataResult.data.map((item) =>
           item[DATA_ITEM_KEY] == currentRow[DATA_ITEM_KEY]
             ? {
@@ -644,11 +654,13 @@ const KendoWindow = ({ setVisible, para, type, reload }: IKendoWindow) => {
         localStorage.removeItem(currentRow[DATA_ITEM_KEY]);
         localStorage.removeItem(currentRow[DATA_ITEM_KEY] + "key");
         localStorage.setItem(currentRow[DATA_ITEM_KEY], textContent);
-        localStorage.setItem(currentRow[DATA_ITEM_KEY]+"key", editorContent);
+        localStorage.setItem(currentRow[DATA_ITEM_KEY] + "key", editorContent);
       }
     }
     if (refEditorRef.current) {
-      const value = localStorage.getItem(selectedRowData[DATA_ITEM_KEY] + "key");
+      const value = localStorage.getItem(
+        selectedRowData[DATA_ITEM_KEY] + "key"
+      );
       if (typeof value == "string") {
         str = value; // ok
       }
@@ -929,39 +941,45 @@ const KendoWindow = ({ setVisible, para, type, reload }: IKendoWindow) => {
   };
 
   const onRemoveClick = () => {
-    //삭제 안 할 데이터 newData에 push, 삭제 데이터 deletedRows에 push
-    let newData: any[] = [];
-    let Object: any[] = [];
-    let Object2: any[] = [];
-    let data;
-    mainDataResult.data.forEach((item: any, index: number) => {
-      if (!selectedState[item[DATA_ITEM_KEY]]) {
-        newData.push(item);
-        Object2.push(index);
+    if (mainDataResult.total > 0) {
+      //삭제 안 할 데이터 newData에 push, 삭제 데이터 deletedRows에 push
+      let newData: any[] = [];
+      let Object: any[] = [];
+      let Object2: any[] = [];
+      let data;
+      mainDataResult.data.forEach((item: any, index: number) => {
+        if (!selectedState[item[DATA_ITEM_KEY]]) {
+          newData.push(item);
+          Object2.push(index);
+        } else {
+          const newData2 = {
+            ...item,
+            rowstatus: "D",
+          };
+          Object.push(index);
+          deletedRows.push(newData2);
+        }
+      });
+
+      if (Math.min(...Object) < Math.min(...Object2)) {
+        data = mainDataResult.data[Math.min(...Object2)];
       } else {
-        const newData2 = {
-          ...item,
-          rowstatus: "D",
-        };
-        Object.push(index);
-        deletedRows.push(newData2);
+        data = mainDataResult.data[Math.min(...Object) - 1];
       }
-    });
 
-    if (Math.min(...Object) < Math.min(...Object2)) {
-      data = mainDataResult.data[Math.min(...Object2)];
-    } else {
-      data = mainDataResult.data[Math.min(...Object) - 1];
+      //newData 생성
+      setMainDataResult((prev) => ({
+        data: newData,
+        total: prev.total - Object.length,
+      }));
+      setSelectedState({
+        [data != undefined ? data[DATA_ITEM_KEY] : newData[0]]: true,
+      });
+      fetchDocument(
+        "Question",
+        data != undefined ? data.document_id : newData[0] != undefined ? newData[0].document_id : ""
+      );
     }
-
-    //newData 생성
-    setMainDataResult((prev) => ({
-      data: newData,
-      total: prev.total - Object.length,
-    }));
-    setSelectedState({
-      [data != undefined ? data[DATA_ITEM_KEY] : newData[0]]: true,
-    });
   };
 
   const parseDate = (input: any) => {
@@ -995,18 +1013,19 @@ const KendoWindow = ({ setVisible, para, type, reload }: IKendoWindow) => {
   };
 
   const onConfirmClick = async () => {
-    if (mainDataResult.total > 0) {    
+    if (mainDataResult.total > 0) {
       let editorContent: any = "";
-    if (refEditorRef.current) {
-      editorContent = refEditorRef.current.getContent();
-    }
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(editorContent, "text/html");
-    const textContent = doc.body.textContent || ""; //문자열
-    let array :any = [];
-    if (
-        localStorage.getItem(Object.getOwnPropertyNames(selectedState)[0].toString()) !=
-        textContent
+      if (refEditorRef.current) {
+        editorContent = refEditorRef.current.getContent();
+      }
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(editorContent, "text/html");
+      const textContent = doc.body.textContent || ""; //문자열
+      let array: any = [];
+      if (
+        localStorage.getItem(
+          Object.getOwnPropertyNames(selectedState)[0].toString()
+        ) != textContent
       ) {
         const newData = mainDataResult.data.map((item) =>
           item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
@@ -1073,22 +1092,29 @@ const KendoWindow = ({ setVisible, para, type, reload }: IKendoWindow) => {
 
       let valid = true;
       let arrays: any[] = [];
-      array[0].map((item: { finexpdt: Date | null; recdt: Date | null; person: string; indicator: string; }) => {
-        if (
-          parseDate(convertDateToStr(item.finexpdt)) == "" ||
-          parseDate(convertDateToStr(item.recdt)) == "" ||
-          item.person == "" ||
-          item.indicator == ""
-        ) {
-          valid = false;
+      array[0].map(
+        (item: {
+          finexpdt: Date | null;
+          recdt: Date | null;
+          person: string;
+          indicator: string;
+        }) => {
+          if (
+            parseDate(convertDateToStr(item.finexpdt)) == "" ||
+            parseDate(convertDateToStr(item.recdt)) == "" ||
+            item.person == "" ||
+            item.indicator == ""
+          ) {
+            valid = false;
+          }
         }
-      });
+      );
 
       if (valid != true) {
         alert("필수항목을 채워주세요.");
       } else {
         const currentRow = array[0].filter(
-          (item: { [x: string]: string; }) =>
+          (item: { [x: string]: string }) =>
             item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
         )[0];
         let editorContent: any = "";
@@ -1104,7 +1130,10 @@ const KendoWindow = ({ setVisible, para, type, reload }: IKendoWindow) => {
           const doc = parser.parseFromString(editorContent, "text/html");
           const textContent = doc.body.textContent || ""; //문자열
           localStorage.setItem(currentRow[DATA_ITEM_KEY], textContent);
-          localStorage.setItem(currentRow[DATA_ITEM_KEY]+"key", editorContent);
+          localStorage.setItem(
+            currentRow[DATA_ITEM_KEY] + "key",
+            editorContent
+          );
         } else {
           localStorage.removeItem(currentRow[DATA_ITEM_KEY]);
           localStorage.removeItem(currentRow[DATA_ITEM_KEY] + "key");
@@ -1112,12 +1141,15 @@ const KendoWindow = ({ setVisible, para, type, reload }: IKendoWindow) => {
           const doc = parser.parseFromString(editorContent, "text/html");
           const textContent = doc.body.textContent || ""; //문자열
           localStorage.setItem(currentRow[DATA_ITEM_KEY], textContent);
-          localStorage.setItem(currentRow[DATA_ITEM_KEY]+"key", editorContent);
+          localStorage.setItem(
+            currentRow[DATA_ITEM_KEY] + "key",
+            editorContent
+          );
         }
 
         let dataItem: any[] = [];
 
-        array[0].map((item: { rowstatus: string | undefined; }) => {
+        array[0].map((item: { rowstatus: string | undefined }) => {
           if (
             (item.rowstatus === "N" || item.rowstatus === "U") &&
             item.rowstatus !== undefined
@@ -1309,8 +1341,8 @@ const KendoWindow = ({ setVisible, para, type, reload }: IKendoWindow) => {
         }
 
         mainDataResult.data.map((item) => {
-            localStorage.removeItem(item[DATA_ITEM_KEY]);
-            localStorage.removeItem(item[DATA_ITEM_KEY] + "key");
+          localStorage.removeItem(item[DATA_ITEM_KEY]);
+          localStorage.removeItem(item[DATA_ITEM_KEY] + "key");
         });
 
         deletedRows = [];

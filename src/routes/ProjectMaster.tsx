@@ -2784,7 +2784,7 @@ const App = () => {
     let Object2: any[] = [];
     let indexs: any[] = [];
     let data: any;
-    if (subDataTotal != 0) {
+    if (subDataTotal > 0) {
       subDataResult.map((items, index2) => {
         items.items.forEach((item: any, index: number) => {
           if (!selectedsubDataState[item[SUB_DATA_ITEM_KEY]]) {
@@ -2831,8 +2831,6 @@ const App = () => {
       setSelectedsubDataState({
         [data != undefined ? data[SUB_DATA_ITEM_KEY] : newData[0]]: true,
       });
-    } else {
-      alert("데이터가 없습니다");
     }
   };
 
