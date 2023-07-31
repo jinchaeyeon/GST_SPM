@@ -734,7 +734,6 @@ const SignWindow = ({ setVisible, orgdiv, number }: IWindow) => {
           <ButtonContainer>
             <Button
               onClick={onAddClick}
-              fillMode="outline"
               themeColor={"primary"}
               icon="plus"
               title="행 추가"

@@ -11,6 +11,7 @@ import {
   GridCellProps,
 } from "@progress/kendo-react-grid";
 import { DataResult, process, State, getter } from "@progress/kendo-data-query";
+import { v4 as uuidv4 } from "uuid";
 import { useApi } from "../../../hooks/api";
 import {
   BottomContainer,
@@ -65,6 +66,7 @@ type IKendoWindow = {
   reload(): void;
   para: ITypes;
   type: string;
+  modal: boolean;
 };
 
 type ITypes = {
@@ -255,7 +257,13 @@ const FilesCell = (props: GridCellProps) => {
 };
 let temp = 0;
 let deletedRows: any[] = [];
-const KendoWindow = ({ setVisible, para, type, reload }: IKendoWindow) => {
+const KendoWindow = ({
+  setVisible,
+  para,
+  type,
+  reload,
+  modal,
+}: IKendoWindow) => {
   let deviceWidth = window.innerWidth;
   let isMobile = deviceWidth <= 768;
   const [position, setPosition] = useState<IWindowPosition>({
@@ -520,11 +528,14 @@ const KendoWindow = ({ setVisible, para, type, reload }: IKendoWindow) => {
     } catch (error) {
       data = null;
     }
-    console.log(parameters);
-    console.log(data);
+
     if (data.isSuccess === true) {
       const totalRowCnt = data.tables[0].TotalRowCount;
-      const rows = data.tables[0].Rows;
+      const rows = data.tables[0].Rows.map((item: { guid: undefined }) => ({
+        ...item,
+        guid: item.guid == undefined || item.guid == "" ? uuidv4() : item.guid,
+      }));
+
       rows.map((item: { orgdiv: string; docunum: string }) => {
         fetchDocument("Task", item.orgdiv + "_" + item.docunum, item);
       });
@@ -540,7 +551,9 @@ const KendoWindow = ({ setVisible, para, type, reload }: IKendoWindow) => {
 
         fetchDocument("Task", rows[0].orgdiv + "_" + rows[0].docunum, rows[0]);
       } else {
-        fetchDocument("", "");
+        if (refEditorRef.current) {
+          refEditorRef.current.setHtml("");
+        }
       }
     } else {
       console.log("[오류 발생]");
@@ -549,7 +562,7 @@ const KendoWindow = ({ setVisible, para, type, reload }: IKendoWindow) => {
     setLoading(false);
   };
 
-  const fetchDocument = async (type: string, ref_key: string, key?: any) => {
+  const fetchDocument = async (type: string, ref_key: string, key: any) => {
     let data: any;
     setLoading(true);
 
@@ -568,6 +581,7 @@ const KendoWindow = ({ setVisible, para, type, reload }: IKendoWindow) => {
 
       if (data !== null) {
         const reference = data.document;
+
         if (refEditorRef.current) {
           let editorContent: any = "";
           refEditorRef.current.setHtml(reference);
@@ -575,8 +589,14 @@ const KendoWindow = ({ setVisible, para, type, reload }: IKendoWindow) => {
           const parser = new DOMParser();
           const doc = parser.parseFromString(editorContent, "text/html");
           const textContent = doc.body.textContent || ""; //문자열
-          localStorage.setItem(key[DATA_ITEM_KEY], textContent);
-          localStorage.setItem(key[DATA_ITEM_KEY] + "key", editorContent);
+
+          if (
+            localStorage.getItem(key[DATA_ITEM_KEY]) == undefined ||
+            localStorage.getItem(key[DATA_ITEM_KEY]) == null
+          ) {
+            localStorage.setItem(key[DATA_ITEM_KEY], textContent);
+            localStorage.setItem(key[DATA_ITEM_KEY] + "key", editorContent);
+          }
         }
       } else {
         console.log("[에러발생]");
@@ -896,7 +916,7 @@ const KendoWindow = ({ setVisible, para, type, reload }: IKendoWindow) => {
         temp = item[DATA_ITEM_KEY];
       }
     });
-
+    const guid = uuidv4();
     const newDataItem = {
       [DATA_ITEM_KEY]: ++temp,
       attach_exists: "N",
@@ -914,15 +934,21 @@ const KendoWindow = ({ setVisible, para, type, reload }: IKendoWindow) => {
       findt: "",
       finexpdt: "",
       finyn: "N",
+      guid: guid,
       groupcd: "",
       indicator: userId,
       is_defective: "N",
       orgdiv: "01",
       person: "",
       recdt: convertDateToStr(new Date()),
-      ref_key: para.ref_number,
-      ref_seq: 0,
-      ref_type: "접수",
+      ref_key:
+        type == "접수"
+          ? para.ref_number
+          : type == "프로젝트"
+          ? para.devmngnum
+          : "",
+      ref_seq: type == "프로젝트" ? para.devmngseq : 0,
+      ref_type: type == undefined ? "" : type,
       remark: "",
       value_code3: "",
       rowstatus: "N",
@@ -975,10 +1001,28 @@ const KendoWindow = ({ setVisible, para, type, reload }: IKendoWindow) => {
       setSelectedState({
         [data != undefined ? data[DATA_ITEM_KEY] : newData[0]]: true,
       });
-      fetchDocument(
-        "Question",
-        data != undefined ? data.document_id : newData[0] != undefined ? newData[0].document_id : ""
-      );
+
+      if (refEditorRef.current) {
+        let str = "";
+        if (
+          localStorage.getItem(
+            data != undefined
+              ? data[DATA_ITEM_KEY] + "key"
+              : newData[0] != undefined
+              ? newData[0][DATA_ITEM_KEY] + "key"
+              : ""
+          )
+        ) {
+          str += localStorage.getItem(
+            data != undefined
+              ? data[DATA_ITEM_KEY] + "key"
+              : newData[0] != undefined
+              ? newData[0][DATA_ITEM_KEY] + "key"
+              : ""
+          );
+        }
+        refEditorRef.current.setHtml(str);
+      }
     }
   };
 
@@ -1038,7 +1082,9 @@ const KendoWindow = ({ setVisible, para, type, reload }: IKendoWindow) => {
               }
         );
 
-        array.push(newData);
+        array = newData;
+      } else {
+        array = mainDataResult.data;
       }
       type TRowsArr = {
         row_status: string[];
@@ -1089,10 +1135,9 @@ const KendoWindow = ({ setVisible, para, type, reload }: IKendoWindow) => {
         ref_key_s: [],
         ref_seq_s: [],
       };
-
       let valid = true;
-      let arrays: any[] = [];
-      array[0].map(
+      let arrays: any = {};
+      array.map(
         (item: {
           finexpdt: Date | null;
           recdt: Date | null;
@@ -1113,10 +1158,14 @@ const KendoWindow = ({ setVisible, para, type, reload }: IKendoWindow) => {
       if (valid != true) {
         alert("필수항목을 채워주세요.");
       } else {
-        const currentRow = array[0].filter(
-          (item: { [x: string]: string }) =>
+        const currentRow = array.filter(
+          (item: any) =>
             item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
         )[0];
+        if (currentRow == undefined) {
+          alert("오류");
+          return false;
+        }
         let editorContent: any = "";
         if (refEditorRef.current) {
           editorContent = refEditorRef.current.getContent();
@@ -1149,7 +1198,7 @@ const KendoWindow = ({ setVisible, para, type, reload }: IKendoWindow) => {
 
         let dataItem: any[] = [];
 
-        array[0].map((item: { rowstatus: string | undefined }) => {
+        array.map((item: { rowstatus: string | undefined }) => {
           if (
             (item.rowstatus === "N" || item.rowstatus === "U") &&
             item.rowstatus !== undefined
@@ -1186,7 +1235,7 @@ const KendoWindow = ({ setVisible, para, type, reload }: IKendoWindow) => {
           } = item;
 
           let str = "";
-          const value = localStorage.getItem(num);
+          const value = localStorage.getItem(num + "key");
 
           if (typeof value == "string") {
             str = value; // ok
@@ -1198,7 +1247,7 @@ const KendoWindow = ({ setVisible, para, type, reload }: IKendoWindow) => {
           const bytes = require("utf8-bytes");
           const convertedEditorContent = bytesToBase64(bytes(str)); //html
 
-          arrays.push(convertedEditorContent);
+          arrays[guid] = convertedEditorContent;
           localStorage.removeItem(num);
           localStorage.removeItem(num + "key");
 
@@ -1211,6 +1260,7 @@ const KendoWindow = ({ setVisible, para, type, reload }: IKendoWindow) => {
           rowsArr.person_s.push(person);
           rowsArr.indicator_s.push(indicator);
 
+          rowsArr.contents_s.push(textContent);
           rowsArr.remark_s.push(remark);
           rowsArr.groupcd_s.push(groupcd);
           rowsArr.custcd_s.push(custcd);
@@ -1257,7 +1307,7 @@ const KendoWindow = ({ setVisible, para, type, reload }: IKendoWindow) => {
             ref_seq = "",
           } = item;
           let str = "";
-          const value = localStorage.getItem(num);
+          const value = localStorage.getItem(num + "key");
 
           if (typeof value == "string") {
             str = value; // ok
@@ -1269,7 +1319,7 @@ const KendoWindow = ({ setVisible, para, type, reload }: IKendoWindow) => {
           const bytes = require("utf8-bytes");
           const convertedEditorContent = bytesToBase64(bytes(str)); //html
 
-          arrays.push(convertedEditorContent);
+          arrays[guid] = convertedEditorContent;
           localStorage.removeItem(num);
           localStorage.removeItem(num + "key");
 
@@ -1281,7 +1331,7 @@ const KendoWindow = ({ setVisible, para, type, reload }: IKendoWindow) => {
           );
           rowsArr.person_s.push(person);
           rowsArr.indicator_s.push(indicator);
-
+          rowsArr.contents_s.push(textContent);
           rowsArr.remark_s.push(remark);
           rowsArr.groupcd_s.push(groupcd);
           rowsArr.custcd_s.push(custcd);
@@ -1306,8 +1356,8 @@ const KendoWindow = ({ setVisible, para, type, reload }: IKendoWindow) => {
         const paras = {
           fileBytes: arrays,
           procedureName: "pw6_sav_task_order",
-          pageNumber: 1,
-          pageSize: 10,
+          pageNumber: 0,
+          pageSize: 0,
           parameters: {
             "@p_work_type": "save",
             "@p_row_status": rowsArr.row_status.join("|"),
@@ -1347,7 +1397,9 @@ const KendoWindow = ({ setVisible, para, type, reload }: IKendoWindow) => {
 
         deletedRows = [];
         reload();
-        onClose();
+        if (dataItem.filter((item) => item.rowstatus == "U").length == 0) {
+          onClose();
+        }
       }
     }
   };
@@ -1360,7 +1412,7 @@ const KendoWindow = ({ setVisible, para, type, reload }: IKendoWindow) => {
       onMove={handleMove}
       onResize={handleResize}
       onClose={onClose}
-      modal={true}
+      modal={modal}
     >
       <GridContainer height={`calc(100% - 60px)`}>
         <GridTitleContainer>

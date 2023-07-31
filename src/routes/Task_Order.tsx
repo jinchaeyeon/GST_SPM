@@ -1941,6 +1941,8 @@ const App = () => {
               </GridContainer>
             </GridContainerWrap>
           </TabStripTab>
+          <TabStripTab title="회의록 참조">
+          </TabStripTab>
         </TabStrip>
       </GridContainerWrap>
       {attachmentsWindowVisible && (
@@ -1988,6 +1990,7 @@ const App = () => {
               isSearch: true,
             }));
           }}
+          modal = {true}
         />
       )}
       {TaskOrderWindowVisible2 && (
@@ -2014,6 +2017,7 @@ const App = () => {
               isSearch: true,
             }));
           }}
+          modal = {true}
         />
       )}
     </>

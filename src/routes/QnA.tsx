@@ -78,6 +78,7 @@ type TFilters = {
   contents: string;
   isPublic: string;
   status: { sub_code: string; code_name: string }[];
+  custnm: string;
   findRowValue: string;
   pgNum: number;
   pgSize: number;
@@ -203,6 +204,7 @@ const App = () => {
       { sub_code: "2", code_name: "진행중" },
       { sub_code: "4", code_name: "보류" },
     ],
+    custnm: "",
     findRowValue: "",
     pgNum: 1,
     pgSize: PAGE_SIZE,
@@ -291,20 +293,20 @@ const App = () => {
       para: `list?dateType=${
         filters.dateType.value
       }&fromDate=${convertDateToStr(
-        filters.fromDate,
+        filters.fromDate
       )}&toDate=${convertDateToStr(filters.toDate)}&userName=${
         filters.userName
-      }&contents=${filters.contents}&isPublic=${
+      }&contents=${filters.contents}&customerName=${filters.custnm}&isPublic=${
         filters.isPublic
-      }&status=${status}&page=${filters.pgNum}&pageSize=${filters.pgSize}`,
+      }&status=${status}&page=${filters.pgNum}&pageSize=${filters.pgSize}`
     };
-
+  
     try {
       data = await processApi<any>("qna-list", para);
     } catch (error) {
       data = null;
     }
-
+   
     if (data.isSuccess === true) {
       const totalRowCnt = data.tables[0].TotalRowCount;
       const rows = data.tables[0].Rows;
@@ -901,11 +903,20 @@ const App = () => {
                 </tr>
                 <tr>
                   <th>제목 및 내용</th>
-                  <td colSpan={3}>
+                  <td>
                     <Input
                       name="contents"
                       type="text"
                       value={filters.contents}
+                      onChange={filterInputChange}
+                    />
+                  </td>
+                  <th>업체명</th>
+                  <td>
+                    <Input
+                      name="custnm"
+                      type="text"
+                      value={filters.custnm}
                       onChange={filterInputChange}
                     />
                   </td>

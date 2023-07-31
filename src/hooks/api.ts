@@ -22,7 +22,7 @@ const domain: any = {
   "document": { action: "get", url: "api/spm/:para" },
 
   //업무지시
-  "taskorder-save": { action: "post", url: "api/spm/meeting" },
+  "taskorder-save": { action: "post", url: "api/spm/task-order" },
 
   // 공지사항
   "notice-list": { action: "get", url: "api/spm/notice/:para" },

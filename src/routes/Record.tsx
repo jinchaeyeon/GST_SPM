@@ -28,8 +28,6 @@ import {
   getGridItemChangedData,
   handleKeyPressSearch,
 } from "../components/CommonFunction";
-import { createContext, useContext, useEffect, useRef, useState } from "react";
-import { DatePicker } from "@progress/kendo-react-dateinputs";
 import {
   ComboBoxFilterChangeEvent,
   MultiColumnComboBox,
@@ -39,7 +37,6 @@ import {
 import {
   dataTypeColumns,
   dataTypeColumns2,
-  dateTypeColumns,
   userColumns,
 } from "../store/columns/common-columns";
 import {
@@ -86,6 +83,7 @@ import { TabStrip, TabStripTab } from "@progress/kendo-react-layout";
 import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
 import { IAttachmentData } from "../hooks/interfaces";
 import AnswerWindow from "../components/Windows/CommonWindows/AnswerWindow";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 
 const workTypeQueryStr = `select sub_code, code_name FROM comCodeMaster where group_code = 'CR004'`;
 
@@ -349,7 +347,6 @@ const App = () => {
   };
   const initialPageState = { skip: 0, take: PAGE_SIZE };
   const [page, setPage] = useState(initialPageState);
-  const [page2, setPage2] = useState(initialPageState);
   const pageChange = (event: GridPageChangeEvent) => {
     const { page } = event;
 
@@ -363,29 +360,8 @@ const App = () => {
       skip: page.skip,
       take: initialPageState.take,
     });
-
-    setPage2(initialPageState);
-    setSubFilters((prev) => ({
-      ...prev,
-      pgNum: 1,
-      isSearch: true,
-    }));
   };
 
-  const pageChange2 = (event: GridPageChangeEvent) => {
-    const { page } = event;
-
-    setSubFilters((prev) => ({
-      ...prev,
-      pgNum: Math.floor(page.skip / initialPageState.take) + 1,
-      isSearch: true,
-    }));
-
-    setPage2({
-      skip: page.skip,
-      take: initialPageState.take,
-    });
-  };
   const [attachmentsWindowVisible, setAttachmentsWindowVisible] =
     useState<boolean>(false);
   const onAttWndClick = () => {
@@ -437,8 +413,7 @@ const App = () => {
   const [filter2, setFilter2] = useState<FilterDescriptor>();
   const [filter3, setFilter3] = useState<FilterDescriptor>();
   const [filter4, setFilter4] = useState<FilterDescriptor>();
-  const [filter5, setFilter5] = useState<FilterDescriptor>();
-  const [filter6, setFilter6] = useState<FilterDescriptor>();
+
   const handleFilterChange = (event: ComboBoxFilterChangeEvent) => {
     if (event) {
       setFilter(event.filter);
@@ -459,18 +434,6 @@ const App = () => {
   const handleFilterChange4 = (event: ComboBoxFilterChangeEvent) => {
     if (event) {
       setFilter4(event.filter);
-    }
-  };
-
-  const handleFilterChange5 = (event: ComboBoxFilterChangeEvent) => {
-    if (event) {
-      setFilter5(event.filter);
-    }
-  };
-
-  const handleFilterChange6 = (event: ComboBoxFilterChangeEvent) => {
-    if (event) {
-      setFilter6(event.filter);
     }
   };
 
@@ -750,7 +713,12 @@ const App = () => {
     contents: "",
     orderer: { user_id: "", user_name: "" },
     worker: { user_id: userId, user_name: userName },
-    type: [{  code: 1, name: "접수" },{  code: 2,name: "프로젝트" },{ code: 3,name: "회의록" },{ code: 4,name: "미참조" }],
+    type: [
+      { code: 1, name: "접수" },
+      { code: 2, name: "프로젝트" },
+      { code: 3, name: "회의록" },
+      { code: 4, name: "미참조" },
+    ],
     findRowValue: "",
     pgSize: PAGE_SIZE,
     pgNum: 1,
@@ -766,12 +734,10 @@ const App = () => {
     isSearch: false,
   });
 
-  function getName(data: { name: string; }[]){
+  function getName(data: { name: string }[]) {
     let str = "";
 
-    data.map((item: { name: string; }) => 
-      str += item.name + ", "
-    )
+    data.map((item: { name: string }) => (str += item.name + ", "));
 
     return data.length > 0 ? str.slice(0, -2) : str;
   }
@@ -782,18 +748,18 @@ const App = () => {
     setLoading(true);
 
     const status =
-    filters.status.length === 0
-      ? "Y|N"  // 미선택시 => 0 전체
-      : filters.status.length === 1
-      ? filters.status[0].code // 1개만 선택시 => 선택된 값 (ex. 1 대기)
-      : "Y|N" //  2개 이상 선택시 => 전체
+      filters.status.length === 0
+        ? "Y|N" // 미선택시 => 0 전체
+        : filters.status.length === 1
+        ? filters.status[0].code // 1개만 선택시 => 선택된 값 (ex. 1 대기)
+        : "Y|N"; //  2개 이상 선택시 => 전체
 
     const type =
       filters.type.length == 0
-      ? "접수, 프로젝트, 회의록, 미참조"
-      : filters.type.length == 1
-      ? filters.type[0].name
-      : getName(filters.type);
+        ? "접수, 프로젝트, 회의록, 미참조"
+        : filters.type.length == 1
+        ? filters.type[0].name
+        : getName(filters.type);
 
     //조회조건 파라미터
     const parameters: Iparameters = {
@@ -935,30 +901,30 @@ const App = () => {
     let data: any;
     setLoading(true);
 
-    if(type == "")  {
+    if (type == "") {
       setHtmlOnEditor({ document: "" });
     } else {
       const para = {
         para: `document?type=${type}&id=${ref_key}`,
       };
-  
+
       try {
         data = await processApi<any>("document", para);
       } catch (error) {
         data = null;
       }
-  
+
       if (data !== null) {
         const document = data.document;
         setHtmlOnEditor({ document });
       } else {
         console.log("[에러발생]");
         console.log(data);
-  
+
         setHtmlOnEditor({ document: "" });
       }
     }
-   
+
     setLoading(false);
   };
 
@@ -968,18 +934,18 @@ const App = () => {
     setLoading(true);
 
     const status =
-    filters.status.length === 0
-      ? "Y|N"  // 미선택시 => 0 전체
-      : filters.status.length === 1
-      ? filters.status[0].code // 1개만 선택시 => 선택된 값 (ex. 1 대기)
-      : "Y|N" //  2개 이상 선택시 => 전체
+      filters.status.length === 0
+        ? "Y|N" // 미선택시 => 0 전체
+        : filters.status.length === 1
+        ? filters.status[0].code // 1개만 선택시 => 선택된 값 (ex. 1 대기)
+        : "Y|N"; //  2개 이상 선택시 => 전체
 
     const type =
       filters.type.length == 0
-      ? "접수, 프로젝트, 회의록, 미참조"
-      : filters.type.length == 1
-      ? filters.type[0].name
-      : getName(filters.type);
+        ? "접수, 프로젝트, 회의록, 미참조"
+        : filters.type.length == 1
+        ? filters.type[0].name
+        : getName(filters.type);
 
     const parameters: Iparameters = {
       procedureName: "pw6_sel_record",
@@ -1891,7 +1857,7 @@ const App = () => {
             <FilterBox onKeyPress={(e) => handleKeyPressSearch(e, search)}>
               <tbody>
                 <tr>
-                  <th style={{width: "50%"}}>
+                  <th style={{ width: "50%" }}>
                     <MultiColumnComboBox
                       name="date_type"
                       data={
@@ -1904,7 +1870,7 @@ const App = () => {
                       className="required"
                       filterable={true}
                       onFilterChange={handleFilterChange}
-                      style={{width:"100%"}}
+                      style={{ width: "100%" }}
                     />
                   </th>
                   <td colSpan={3}>
@@ -1920,7 +1886,7 @@ const App = () => {
                           toDate: e.value.end,
                         }))
                       }
-                      style={{display: "inline-block"}}
+                      style={{ display: "inline-block" }}
                       className="required"
                     />
                   </td>
@@ -1984,8 +1950,23 @@ const App = () => {
                   <td>
                     <MultiColumnComboBox
                       name="orderer"
-                      data={filter4 ? filterBy(usersData, filter4) : usersData}
+                      data={filter3 ? filterBy(usersData, filter3) : usersData}
                       value={filters.orderer}
+                      columns={userColumns}
+                      textField={"user_name"}
+                      onChange={filterComboBoxChange}
+                      filterable={true}
+                      onFilterChange={handleFilterChange3}
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <th>처리담당자</th>
+                  <td>
+                    <MultiColumnComboBox
+                      name="worker"
+                      data={filter4 ? filterBy(usersData, filter4) : usersData}
+                      value={filters.worker}
                       columns={userColumns}
                       textField={"user_name"}
                       onChange={filterComboBoxChange}
@@ -1995,24 +1976,9 @@ const App = () => {
                   </td>
                 </tr>
                 <tr>
-                  <th>처리담당자</th>
-                  <td>
-                    <MultiColumnComboBox
-                      name="worker"
-                      data={filter5 ? filterBy(usersData, filter5) : usersData}
-                      value={filters.worker}
-                      columns={userColumns}
-                      textField={"user_name"}
-                      onChange={filterComboBoxChange}
-                      filterable={true}
-                      onFilterChange={handleFilterChange5}
-                    />
-                  </td>
-                </tr>
-                <tr>
                   <th>참조타입</th>
                   <td>
-                                       <MultiSelect
+                    <MultiSelect
                       name="type"
                       data={TypeData}
                       onChange={filterMultiSelectChange}
@@ -2027,7 +1993,7 @@ const App = () => {
           </FilterBoxWrap>
         </GridContainer>
         {isVisibleDetail && (
-          <GridContainer width={`calc(35% - ${GAP}px)`}>
+          <GridContainer width={`calc(40% - ${GAP}px)`}>
             <FilesContext.Provider
               value={{
                 attdatnum,
@@ -2211,13 +2177,7 @@ const App = () => {
                         //스크롤 조회 기능
                         fixedScroll={true}
                         total={subDataResult.total}
-                        skip={page2.skip}
-                        take={page2.take}
-                        pageable={true}
-                        onPageChange={pageChange2}
-                        //원하는 행 위치로 스크롤 기능
                         ref={gridRef2}
-                        rowHeight={30}
                         //정렬기능
                         sortable={true}
                         onSortChange={onSubSortChange}
@@ -2299,7 +2259,7 @@ const App = () => {
         )}
         <GridContainer
           width={
-            isVisibleDetail ? `calc(50% - ${GAP}px)` : `calc(85% - ${GAP}px)`
+            isVisibleDetail ? `calc(45% - ${GAP}px)` : `calc(85% - ${GAP}px)`
           }
         >
           <GridTitleContainer>

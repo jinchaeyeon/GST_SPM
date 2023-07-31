@@ -19,12 +19,23 @@ div.k-animation-container {
   z-index: 10100 !important;
 }
 
-.k-pager-wrap, .k-pager {
-  justify-content: center;
+.k-pager-md .k-pager-numbers-wrap {
+  justify-content: center !important;
+  width: 100%;
 }
 
-.k-pager-md .k-pager-info {
-  display: none !important;
+.k-pager-numbers-wrap select.k-dropdown-list, .k-pager-numbers-wrap select.k-dropdown, .k-pager-numbers-wrap select.k-dropdownlist {
+  cursor: pointer;
+  display: none;
+}
+/* 주석 해제 시 그리드 페이저의 우측 info 보임 */
+@media screen and (min-width: 600px) {
+  .k-pager-md .k-pager-info {
+    display: flex !important;
+    margin-right: 0;
+    margin-left: 0;
+    justify-content: flex-end !important;
+  }
 }
 
 .editor-container,
