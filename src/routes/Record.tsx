@@ -1883,7 +1883,7 @@ const App = () => {
         </ButtonContainer>
       </TitleContainer>
       <GridContainerWrap height={"90vh"}>
-        <GridContainer width={`22%`}>
+        <GridContainer width={`15%`}>
           <GridTitleContainer>
             <GridTitle>조회조건</GridTitle>
           </GridTitleContainer>
@@ -1891,7 +1891,7 @@ const App = () => {
             <FilterBox onKeyPress={(e) => handleKeyPressSearch(e, search)}>
               <tbody>
                 <tr>
-                  <th>
+                  <th style={{width: "50%"}}>
                     <MultiColumnComboBox
                       name="date_type"
                       data={
@@ -1904,6 +1904,7 @@ const App = () => {
                       className="required"
                       filterable={true}
                       onFilterChange={handleFilterChange}
+                      style={{width:"100%"}}
                     />
                   </th>
                   <td colSpan={3}>
@@ -1919,6 +1920,7 @@ const App = () => {
                           toDate: e.value.end,
                         }))
                       }
+                      style={{display: "inline-block"}}
                       className="required"
                     />
                   </td>
@@ -2025,7 +2027,7 @@ const App = () => {
           </FilterBoxWrap>
         </GridContainer>
         {isVisibleDetail && (
-          <GridContainer width={`calc(43% - ${GAP}px)`}>
+          <GridContainer width={`calc(35% - ${GAP}px)`}>
             <FilesContext.Provider
               value={{
                 attdatnum,
@@ -2297,7 +2299,7 @@ const App = () => {
         )}
         <GridContainer
           width={
-            isVisibleDetail ? `calc(35% - ${GAP}px)` : `calc(78% - ${GAP}px)`
+            isVisibleDetail ? `calc(50% - ${GAP}px)` : `calc(85% - ${GAP}px)`
           }
         >
           <GridTitleContainer>

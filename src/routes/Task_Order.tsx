@@ -214,6 +214,12 @@ const App = () => {
   const [filter4, setFilter4] = useState<FilterDescriptor>();
   const [filter5, setFilter5] = useState<FilterDescriptor>();
   const [filter6, setFilter6] = useState<FilterDescriptor>();
+  const [filter7, setFilter7] = useState<FilterDescriptor>();
+  const [filter8, setFilter8] = useState<FilterDescriptor>();
+  const [filter9, setFilter9] = useState<FilterDescriptor>();
+  const [filter10, setFilter10] = useState<FilterDescriptor>();
+  const [filter11, setFilter11] = useState<FilterDescriptor>();
+
   const handleFilterChange = (event: ComboBoxFilterChangeEvent) => {
     if (event) {
       setFilter(event.filter);
@@ -244,9 +250,86 @@ const App = () => {
       setFilter6(event.filter);
     }
   };
+  const handleFilterChange7 = (event: ComboBoxFilterChangeEvent) => {
+    if (event) {
+      setFilter7(event.filter);
+    }
+  };
+  const handleFilterChange8 = (event: ComboBoxFilterChangeEvent) => {
+    if (event) {
+      setFilter8(event.filter);
+    }
+  };
+  const handleFilterChange9 = (event: ComboBoxFilterChangeEvent) => {
+    if (event) {
+      setFilter9(event.filter);
+    }
+  };
+  const handleFilterChange10 = (event: ComboBoxFilterChangeEvent) => {
+    if (event) {
+      setFilter10(event.filter);
+    }
+  };
+  const handleFilterChange11 = (event: ComboBoxFilterChangeEvent) => {
+    if (event) {
+      setFilter11(event.filter);
+    }
+  };
   const [tabSelected, setTabSelected] = useState(0);
   const handleSelectTab = (e: any) => {
     setTabSelected(e.selected);
+    if (e.selected == 0) {
+        setFilters({
+            workType: "received",
+            date_type: { sub_code: "A", code_name: "요청일" },
+            fromDate: fromDate,
+            toDate: new Date(),
+            custnm: "",
+            value_code3: { sub_code: "", code_name: "" },
+            contents: "",
+            status: [
+              { sub_code: "Wait", code_name: "대기", code: "N" },
+              { sub_code: "Progress", code_name: "진행중", code: "R" },
+              { sub_code: "Hold", code_name: "보류", code: "H" },
+            ],
+            reception_person: { user_id: "", user_name: "" },
+            receptionist: { user_id: "", user_name: "" },
+            worker: { user_id: userId, user_name: userName },
+            reception_type: { sub_code: "", code_name: "" },
+            user_name: { user_id: "", user_name: "" },
+            findRowValue: "",
+            pgSize: PAGE_SIZE,
+            pgNum: 1,
+            isSearch: true,
+        })
+      const selectedRow = mainDataResult.data.filter(
+        (item) =>
+          item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
+      )[0];
+      fetchDocument("Question", selectedRow.document_id);
+    } else if(e.selected == 1) {
+        setFilters({
+            workType: "project",
+            date_type: { sub_code: "A", code_name: "사업시작일(계약일)" },
+            fromDate: fromDate,
+            toDate: new Date(),
+            custnm: "",
+            value_code3: { sub_code: "", code_name: "" },
+            contents: "",
+            status: [
+                { sub_code: "N", code_name: "미완료", code: "N" },
+            ],
+            reception_person: { user_id: "", user_name: "" },
+            receptionist: { user_id: "", user_name: "" },
+            worker: { user_id: userId, user_name: userName },
+            reception_type: { sub_code: "", code_name: "" },
+            user_name: { user_id: "", user_name: "" },
+            findRowValue: "",
+            pgSize: PAGE_SIZE,
+            pgNum: 1,
+            isSearch: true,
+        })
+    }
     setIsVisableDetail(true);
   };
 
@@ -285,6 +368,14 @@ const App = () => {
     { sub_code: "B", code_name: "접수일" },
     { sub_code: "C", code_name: "완료예정일" },
   ];
+  const dateTypeData2 = [
+    { sub_code: "A", code_name: "사업시작일(계약일)" },
+    { sub_code: "B", code_name: "사업완료일" },
+    { sub_code: "C", code_name: "중간점검일" },
+    { sub_code: "D", code_name: "최종점검일" },
+    { sub_code: "E", code_name: "사업종료일" },
+    { sub_code: "%", code_name: "전체" },
+  ];
   const [valuecodeItems, setValuecodeItems] = useState<any[]>([]);
   const [usersData, setUsersData] = useState<any[]>([]);
   const [receptionTypeData, setReceptionTypeData] = useState<any[]>([]);
@@ -294,7 +385,10 @@ const App = () => {
     { sub_code: "Hold", code_name: "보류", code: "H" },
     { sub_code: "Finish", code_name: "완료", code: "Y" },
   ];
-
+  const statusListData2: any[] = [
+    { sub_code: "Y", code_name: "완료", code: "Y" },
+    { sub_code: "N", code_name: "미완료", code: "N" },
+  ];
   const [mainDataState, setMainDataState] = useState<State>({
     sort: [],
   });
@@ -406,6 +500,7 @@ const App = () => {
     receptionist: any;
     worker: any;
     reception_type: any;
+    user_name: any;
     findRowValue: string;
     pgSize: number;
     pgNum: number;
@@ -429,6 +524,7 @@ const App = () => {
     receptionist: { user_id: "", user_name: "" },
     worker: { user_id: userId, user_name: userName },
     reception_type: { sub_code: "", code_name: "" },
+    user_name: { user_id: "", user_name: "" },
     findRowValue: "",
     pgSize: PAGE_SIZE,
     pgNum: 1,
@@ -597,7 +693,11 @@ const App = () => {
       const _ = require("lodash");
       const deepCopiedFilters = _.cloneDeep(filters);
       setFilters((prev) => ({ ...prev, findRowValue: "", isSearch: false })); // 한번만 조회되도록
-      fetchMainGrid(deepCopiedFilters);
+      if(tabSelected == 0) {
+        fetchMainGrid(deepCopiedFilters);
+      } else if(tabSelected == 1) {
+
+      }
     }
   }, [filters]);
 
@@ -755,7 +855,7 @@ const App = () => {
         >
           <TabStripTab title="문의접수 참조">
             <GridContainerWrap>
-              <GridContainer width={`22%`}>
+              <GridContainer width={`15%`}>
                 <GridTitleContainer>
                   <GridTitle>조회조건</GridTitle>
                 </GridTitleContainer>
@@ -765,7 +865,7 @@ const App = () => {
                   >
                     <tbody>
                       <tr>
-                        <th>
+                        <th style={{ width: "50%" }}>
                           <MultiColumnComboBox
                             name="date_type"
                             data={
@@ -780,6 +880,7 @@ const App = () => {
                             className="required"
                             filterable={true}
                             onFilterChange={handleFilterChange}
+                            style={{ width: "100%" }}
                           />
                         </th>
                         <td colSpan={3}>
@@ -797,6 +898,7 @@ const App = () => {
                                 toDate: e.value.end,
                               }))
                             }
+                            style={{ display: "inline-block" }}
                             className="required"
                           />
                         </td>
@@ -929,7 +1031,7 @@ const App = () => {
                   </FilterBox>
                 </FilterBoxWrap>
               </GridContainer>
-              <GridContainer width={`calc(78% - ${GAP}px)`}>
+              <GridContainer width={`calc(85% - ${GAP}px)`}>
                 {isVisibleDetail && (
                   <StatusContext.Provider
                     value={{
@@ -1189,6 +1291,327 @@ const App = () => {
                   </FormBoxWrap>
                 </GridContainer>
               </GridContainer>
+            </GridContainerWrap>
+          </TabStripTab>
+          <TabStripTab title="프로젝트 참조">
+            <GridContainerWrap>
+              <GridContainer width={`15%`}>
+                <GridTitleContainer>
+                  <GridTitle>조회조건</GridTitle>
+                </GridTitleContainer>
+                <FilterBoxWrap>
+                  <FilterBox
+                    onKeyPress={(e) => handleKeyPressSearch(e, search)}
+                  >
+                    <tbody>
+                      <tr>
+                        <th style={{ width: "50%" }}>
+                          <MultiColumnComboBox
+                            name="date_type"
+                            data={
+                              filter7
+                                ? filterBy(dateTypeData2, filter7)
+                                : dateTypeData2
+                            }
+                            value={filters.date_type}
+                            columns={dataTypeColumns}
+                            textField={"code_name"}
+                            onChange={filterComboBoxChange}
+                            className="required"
+                            filterable={true}
+                            onFilterChange={handleFilterChange7}
+                            style={{ width: "100%" }}
+                          />
+                        </th>
+                        <td colSpan={3}>
+                          <CommonDateRangePicker
+                            value={{
+                              start: filters.fromDate,
+                              end: filters.toDate,
+                            }}
+                            onChange={(e: {
+                              value: { start: any; end: any };
+                            }) =>
+                              setFilters((prev) => ({
+                                ...prev,
+                                fromDate: e.value.start,
+                                toDate: e.value.end,
+                              }))
+                            }
+                            style={{ display: "inline-block" }}
+                            className="required"
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>Value 구분</th>
+                        <td>
+                          <MultiColumnComboBox
+                            name="value_code3"
+                            data={
+                              filter8
+                                ? filterBy(valuecodeItems, filter8)
+                                : valuecodeItems
+                            }
+                            value={filters.value_code3}
+                            columns={dataTypeColumns2}
+                            textField={"code_name"}
+                            onChange={filterComboBoxChange}
+                            filterable={true}
+                            onFilterChange={handleFilterChange8}
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>업체명</th>
+                        <td>
+                          <Input
+                            name="custnm"
+                            type="text"
+                            value={filters.custnm}
+                            onChange={filterInputChange}
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>사업진행담당</th>
+                        <td>
+                          <MultiColumnComboBox
+                            name="reception_person"
+                            data={
+                              filter9 ? filterBy(usersData, filter9) : usersData
+                            }
+                            value={filters.reception_person}
+                            columns={userColumns}
+                            textField={"user_name"}
+                            onChange={filterComboBoxChange}
+                            filterable={true}
+                            onFilterChange={handleFilterChange9}
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>담당PM</th>
+                        <td>
+                          <MultiColumnComboBox
+                            name="user_name"
+                            data={
+                              filter10
+                                ? filterBy(usersData, filter10)
+                                : usersData
+                            }
+                            value={filters.user_name}
+                            columns={userColumns}
+                            textField={"user_name"}
+                            onChange={filterComboBoxChange}
+                            filterable={true}
+                            onFilterChange={handleFilterChange10}
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>프로젝트</th>
+                        <td>
+                          <Input
+                            name="contents"
+                            type="text"
+                            value={filters.contents}
+                            onChange={filterInputChange}
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>완료여부</th>
+                        <td>
+                          <MultiSelect
+                            name="status"
+                            data={statusListData2}
+                            onChange={filterMultiSelectChange}
+                            value={filters.status}
+                            textField="code_name"
+                            dataItemKey="sub_code"
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>처리담당자</th>
+                        <td>
+                          <MultiColumnComboBox
+                            name="worker"
+                            data={
+                              filter11
+                                ? filterBy(usersData, filter11)
+                                : usersData
+                            }
+                            value={filters.worker}
+                            columns={userColumns}
+                            textField={"user_name"}
+                            onChange={filterComboBoxChange}
+                            filterable={true}
+                            onFilterChange={handleFilterChange11}
+                          />
+                        </td>
+                      </tr>
+                    </tbody>
+                  </FilterBox>
+                </FilterBoxWrap>
+              </GridContainer>
+              <GridContainer width={`calc(85% - ${GAP}px)`}>
+                  <StatusContext.Provider
+                    value={{
+                      statusListData: statusListData,
+                    }}
+                  >
+                    <FilesContext.Provider
+                      value={{
+                        reception_attach_number: reception_attach_number,
+                      }}
+                    >
+                      <GridContainer>
+                        <GridTitleContainer>
+                          <GridTitle>프로젝트 상세 항목 리스트</GridTitle>
+                          <ButtonContainer>
+                            <Button
+                              icon={"pencil"}
+                              name="task_order"
+                              onClick={onTaskOrderWndClick}
+                              themeColor={"primary"}
+                            >
+                              업무지시
+                            </Button>
+                          </ButtonContainer>
+                        </GridTitleContainer>
+                        <Grid
+                          style={{ height: `78vh` }}
+                          data={process(
+                            mainDataResult.data.map((row) => ({
+                              ...row,
+                              reception_person: usersData.find(
+                                (items: any) =>
+                                  items.user_id == row.reception_person
+                              )?.user_name,
+                              value_code3: valuecodeItems.find(
+                                (items: any) =>
+                                  items.sub_code == row.value_code3
+                              )?.code_name,
+                              status: statusListData.find(
+                                (items: any) => items.code == row.status
+                              )?.code_name,
+                              reception_type: receptionTypeData.find(
+                                (items: any) =>
+                                  items.sub_code == row.reception_type
+                              )?.code_name,
+                              [SELECTED_FIELD]: selectedState[idGetter(row)],
+                            })),
+                            mainDataState
+                          )}
+                          {...mainDataState}
+                          onDataStateChange={onMainDataStateChange}
+                          //선택 기능
+                          dataItemKey={DATA_ITEM_KEY}
+                          selectedField={SELECTED_FIELD}
+                          selectable={{
+                            enabled: true,
+                            mode: "single",
+                          }}
+                          onSelectionChange={onSelectionChange}
+                          //스크롤 조회 기능
+                          fixedScroll={true}
+                          total={mainDataResult.total}
+                          skip={page.skip}
+                          take={page.take}
+                          pageable={true}
+                          onPageChange={pageChange}
+                          //원하는 행 위치로 스크롤 기능
+                          ref={gridRef}
+                          rowHeight={30}
+                          //정렬기능
+                          sortable={true}
+                          onSortChange={onMainSortChange}
+                          //컬럼순서조정
+                          reorderable={true}
+                          //컬럼너비조정
+                          resizable={true}
+                        >
+                          <GridColumn
+                            field="status"
+                            title="상태"
+                            width={120}
+                            footerCell={mainTotalFooterCell}
+                            cell={StatusCell}
+                          />
+                          <GridColumn
+                            field="exists_task"
+                            title="지시"
+                            width={80}
+                            cell={CheckBoxReadOnlyCell}
+                          />
+                          <GridColumn
+                            field="is_finish"
+                            title="처리"
+                            width={80}
+                            cell={CheckBoxReadOnlyCell}
+                          />
+                          <GridColumn
+                            field="request_date"
+                            title="요청일"
+                            width={120}
+                            cell={DateCell}
+                          />
+                          <GridColumn
+                            field="be_finished_date"
+                            title="완료예정일"
+                            width={120}
+                            cell={DateCell}
+                          />
+                          <GridColumn
+                            field="customer_name"
+                            title="업체명"
+                            width={200}
+                          />
+                          <GridColumn
+                            field="reception_person"
+                            title="접수자"
+                            width={120}
+                          />
+                          <GridColumn field="title" title="제목" width={300} />
+                          <GridColumn
+                            field="reception_attach_number"
+                            title="접수 첨부"
+                            width={100}
+                            cell={FilesCell}
+                          />
+                          <GridColumn
+                            field="user_name"
+                            title="문의자"
+                            width={120}
+                          />
+                          <GridColumn
+                            field="user_tel"
+                            title="연락처"
+                            width={150}
+                          />
+                          <GridColumn
+                            field="value_code3"
+                            title="Value구분"
+                            width={100}
+                          />
+                          <GridColumn
+                            field="reception_type"
+                            title="접수 구분"
+                            width={120}
+                          />
+                          <GridColumn
+                            field="reception_date"
+                            title="접수일"
+                            width={120}
+                            cell={DateCell}
+                          />
+                        </Grid>
+                      </GridContainer>
+                    </FilesContext.Provider>
+                  </StatusContext.Provider>
+                </GridContainer>
             </GridContainerWrap>
           </TabStripTab>
         </TabStrip>

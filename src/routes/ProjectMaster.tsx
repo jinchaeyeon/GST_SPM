@@ -24,6 +24,7 @@ import {
   GridRowDoubleClickEvent,
   GridSelectionChangeEvent,
 } from "@progress/kendo-react-grid";
+import { v4 as uuidv4 } from "uuid";
 import { Checkbox, Input, TextArea } from "@progress/kendo-react-inputs";
 import { bytesToBase64 } from "byte-base64";
 import React, {
@@ -2942,13 +2943,14 @@ const App = () => {
         temp2 = item[SUB_DATA_ITEM_KEY2];
       }
     });
+    const guid = uuidv4();
     const newDataItem = {
       [SUB_DATA_ITEM_KEY2]: ++temp2,
       sort_order: temp2,
       date: new Date(),
       devmngnum: subFilters.devmngnum,
       finyn: "N",
-      guid: "",
+      guid: guid,
       is_monitoring: "Y",
       orgdiv: "01",
       title: "",
@@ -3286,7 +3288,7 @@ const App = () => {
       >
         <TabStripTab title="요약정보">
           <GridContainerWrap>
-            <GridContainer width="22%">
+            <GridContainer width="15%">
               <GridTitleContainer>
                 <GridTitle>조회조건</GridTitle>
               </GridTitleContainer>
@@ -3294,7 +3296,7 @@ const App = () => {
                 <FilterBox onKeyPress={(e) => handleKeyPressSearch(e, search)}>
                   <tbody>
                     <tr>
-                      <th>
+                      <th style={{width: "50%"}}>
                         <MultiColumnComboBox
                           name="date_type"
                           data={
@@ -3309,6 +3311,7 @@ const App = () => {
                           className="required"
                           filterable={true}
                           onFilterChange={handleFilterChange}
+                          style={{width:"100%"}}
                         />
                       </th>
                       <td colSpan={3}>
@@ -3324,6 +3327,7 @@ const App = () => {
                               toDate: e.value.end,
                             }))
                           }
+                          style={{display: "inline-block"}}
                           className="required"
                         />
                       </td>
@@ -3404,7 +3408,7 @@ const App = () => {
                 </FilterBox>
               </FilterBoxWrap>
             </GridContainer>
-            <GridContainer width={`calc(78% - ${GAP}px)`}>
+            <GridContainer width={`calc(85% - ${GAP}px)`}>
               <Grid
                 style={{ height: "80vh" }}
                 data={process(

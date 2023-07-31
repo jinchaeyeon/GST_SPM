@@ -58,6 +58,7 @@ import AttachmentsWindow from "./AttachmentsWindow";
 import CheckBoxReadOnlyCell from "../../Cells/CheckBoxReadOnlyCell";
 import CheckBoxCell from "../../Cells/CheckBoxCell";
 import { Checkbox } from "@progress/kendo-react-inputs";
+import { text } from "node:stream/consumers";
 
 type IKendoWindow = {
   setVisible(t: boolean): void;
@@ -358,15 +359,17 @@ const KendoWindow = ({ setVisible, para, type, reload }: IKendoWindow) => {
     });
   };
 
-  const onClose = () => {
+  const removeHTML = () => {
+    setLoading(true);
     mainDataResult.data.map((item) => {
-      if (
-        localStorage.getItem(item[DATA_ITEM_KEY]) == null ||
-        localStorage.getItem(item[DATA_ITEM_KEY]) == undefined
-      ) {
         localStorage.removeItem(item[DATA_ITEM_KEY]);
-      }
+        localStorage.removeItem(item[DATA_ITEM_KEY] + "key");
     });
+    setLoading(false);
+  };
+
+  const onClose = () => {
+    removeHTML();
     setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
     setVisible(false);
   };
@@ -509,7 +512,9 @@ const KendoWindow = ({ setVisible, para, type, reload }: IKendoWindow) => {
     if (data.isSuccess === true) {
       const totalRowCnt = data.tables[0].TotalRowCount;
       const rows = data.tables[0].Rows;
-
+      rows.map((item: { orgdiv: string; docunum: string; }) => {
+        fetchDocument("Task", item.orgdiv + "_" + item.docunum, item);
+    });
       setMainDataResult((prev) => {
         return {
           data: rows,
@@ -520,7 +525,7 @@ const KendoWindow = ({ setVisible, para, type, reload }: IKendoWindow) => {
       if (totalRowCnt > 0) {
         setSelectedState({ [rows[0][DATA_ITEM_KEY]]: true });
 
-        fetchDocument("Task", rows[0].orgdiv + "_" + rows[0].docunum);
+        fetchDocument("Task", rows[0].orgdiv + "_" + rows[0].docunum, rows[0]);
       } else {
         fetchDocument("", "");
       }
@@ -531,7 +536,7 @@ const KendoWindow = ({ setVisible, para, type, reload }: IKendoWindow) => {
     setLoading(false);
   };
 
-  const fetchDocument = async (type: string, ref_key: string) => {
+  const fetchDocument = async (type: string, ref_key: string, key?: any) => {
     let data: any;
     setLoading(true);
 
@@ -551,7 +556,14 @@ const KendoWindow = ({ setVisible, para, type, reload }: IKendoWindow) => {
       if (data !== null) {
         const reference = data.document;
         if (refEditorRef.current) {
+          let editorContent: any = "";
           refEditorRef.current.setHtml(reference);
+          editorContent = refEditorRef.current.getContent();
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(editorContent, "text/html");
+          const textContent = doc.body.textContent || ""; //문자열
+          localStorage.setItem(key[DATA_ITEM_KEY], textContent);
+          localStorage.setItem(key[DATA_ITEM_KEY]+"key", editorContent);
         }
       } else {
         console.log("[에러발생]");
@@ -583,31 +595,68 @@ const KendoWindow = ({ setVisible, para, type, reload }: IKendoWindow) => {
       editorContent = refEditorRef.current.getContent();
     }
 
-    if (
-      localStorage.getItem(currentRow[DATA_ITEM_KEY]) == undefined ||
-      localStorage.getItem(currentRow[DATA_ITEM_KEY]) == null
-    ) {
-      localStorage.setItem(currentRow[DATA_ITEM_KEY], editorContent);
-    } else {
-      localStorage.removeItem(currentRow[DATA_ITEM_KEY]);
-      localStorage.setItem(currentRow[DATA_ITEM_KEY], editorContent);
-    }
-
     const newSelectedState = getSelectedState({
       event,
       selectedState: selectedState,
       dataItemKey: DATA_ITEM_KEY,
     });
-    setSelectedState(newSelectedState);
 
+    let str = "";
     const selectedIdx = event.startRowIndex;
     const selectedRowData = event.dataItems[selectedIdx];
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(editorContent, "text/html");
+    const textContent = doc.body.textContent || ""; //문자열
+    if (
+      localStorage.getItem(currentRow[DATA_ITEM_KEY]) == undefined ||
+      localStorage.getItem(currentRow[DATA_ITEM_KEY]) == null
+    ) {
+      localStorage.setItem(currentRow[DATA_ITEM_KEY], textContent);
+      localStorage.setItem(currentRow[DATA_ITEM_KEY]+"key", editorContent);
+    } else {
+      if (
+        localStorage.getItem(currentRow[DATA_ITEM_KEY]) !=
+        textContent
+      ) {
+        const newData = mainDataResult.data.map((item) =>
+          item[DATA_ITEM_KEY] == currentRow[DATA_ITEM_KEY]
+            ? {
+                ...item,
+                rowstatus: item.rowstatus == "N" ? "N" : "U",
+              }
+            : {
+                ...item,
+              }
+        );
 
-    fetchDocument(
-      "Task",
-      selectedRowData.orgdiv + "_" + selectedRowData.docunum
-    );
+        setTempResult((prev) => {
+          return {
+            data: newData,
+            total: prev.total,
+          };
+        });
+        setMainDataResult((prev) => {
+          return {
+            data: newData,
+            total: prev.total,
+          };
+        });
+        localStorage.removeItem(currentRow[DATA_ITEM_KEY]);
+        localStorage.removeItem(currentRow[DATA_ITEM_KEY] + "key");
+        localStorage.setItem(currentRow[DATA_ITEM_KEY], textContent);
+        localStorage.setItem(currentRow[DATA_ITEM_KEY]+"key", editorContent);
+      }
+    }
+    if (refEditorRef.current) {
+      const value = localStorage.getItem(selectedRowData[DATA_ITEM_KEY] + "key");
+      if (typeof value == "string") {
+        str = value; // ok
+      }
+      refEditorRef.current.setHtml(str);
+    }
+    setSelectedState(newSelectedState);
   };
+
   useEffect(() => {
     fetchWorkType();
     fetchUsers();
@@ -874,6 +923,9 @@ const KendoWindow = ({ setVisible, para, type, reload }: IKendoWindow) => {
       };
     });
     setSelectedState({ [newDataItem[DATA_ITEM_KEY]]: true });
+    if (refEditorRef.current) {
+      refEditorRef.current.setHtml("");
+    }
   };
 
   const onRemoveClick = () => {
@@ -942,8 +994,33 @@ const KendoWindow = ({ setVisible, para, type, reload }: IKendoWindow) => {
     }
   };
 
-  const onConfirmClick = () => {
-    if (mainDataResult.total > 0) {
+  const onConfirmClick = async () => {
+    if (mainDataResult.total > 0) {    
+      let editorContent: any = "";
+    if (refEditorRef.current) {
+      editorContent = refEditorRef.current.getContent();
+    }
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(editorContent, "text/html");
+    const textContent = doc.body.textContent || ""; //문자열
+    let array :any = [];
+    if (
+        localStorage.getItem(Object.getOwnPropertyNames(selectedState)[0].toString()) !=
+        textContent
+      ) {
+        const newData = mainDataResult.data.map((item) =>
+          item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
+            ? {
+                ...item,
+                rowstatus: item.rowstatus == "N" ? "N" : "U",
+              }
+            : {
+                ...item,
+              }
+        );
+
+        array.push(newData);
+      }
       type TRowsArr = {
         row_status: string[];
         guid_s: string[];
@@ -967,8 +1044,6 @@ const KendoWindow = ({ setVisible, para, type, reload }: IKendoWindow) => {
         ref_type_s: string[];
         ref_key_s: string[];
         ref_seq_s: string[];
-
-        html_s: string[];
       };
 
       let rowsArr: TRowsArr = {
@@ -994,12 +1069,11 @@ const KendoWindow = ({ setVisible, para, type, reload }: IKendoWindow) => {
         ref_type_s: [],
         ref_key_s: [],
         ref_seq_s: [],
-
-        html_s: [],
       };
 
       let valid = true;
-      mainDataResult.data.map((item) => {
+      let arrays: any[] = [];
+      array[0].map((item: { finexpdt: Date | null; recdt: Date | null; person: string; indicator: string; }) => {
         if (
           parseDate(convertDateToStr(item.finexpdt)) == "" ||
           parseDate(convertDateToStr(item.recdt)) == "" ||
@@ -1013,27 +1087,37 @@ const KendoWindow = ({ setVisible, para, type, reload }: IKendoWindow) => {
       if (valid != true) {
         alert("필수항목을 채워주세요.");
       } else {
-        const currentRow = mainDataResult.data.filter(
-          (item) =>
+        const currentRow = array[0].filter(
+          (item: { [x: string]: string; }) =>
             item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
         )[0];
         let editorContent: any = "";
         if (refEditorRef.current) {
           editorContent = refEditorRef.current.getContent();
         }
+
         if (
           localStorage.getItem(currentRow[DATA_ITEM_KEY]) == undefined ||
           localStorage.getItem(currentRow[DATA_ITEM_KEY]) == null
         ) {
-          localStorage.setItem(currentRow[DATA_ITEM_KEY], editorContent);
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(editorContent, "text/html");
+          const textContent = doc.body.textContent || ""; //문자열
+          localStorage.setItem(currentRow[DATA_ITEM_KEY], textContent);
+          localStorage.setItem(currentRow[DATA_ITEM_KEY]+"key", editorContent);
         } else {
           localStorage.removeItem(currentRow[DATA_ITEM_KEY]);
-          localStorage.setItem(currentRow[DATA_ITEM_KEY], editorContent);
+          localStorage.removeItem(currentRow[DATA_ITEM_KEY] + "key");
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(editorContent, "text/html");
+          const textContent = doc.body.textContent || ""; //문자열
+          localStorage.setItem(currentRow[DATA_ITEM_KEY], textContent);
+          localStorage.setItem(currentRow[DATA_ITEM_KEY]+"key", editorContent);
         }
 
         let dataItem: any[] = [];
 
-        mainDataResult.data.map((item) => {
+        array[0].map((item: { rowstatus: string | undefined; }) => {
           if (
             (item.rowstatus === "N" || item.rowstatus === "U") &&
             item.rowstatus !== undefined
@@ -1082,48 +1166,35 @@ const KendoWindow = ({ setVisible, para, type, reload }: IKendoWindow) => {
           const bytes = require("utf8-bytes");
           const convertedEditorContent = bytesToBase64(bytes(str)); //html
 
+          arrays.push(convertedEditorContent);
           localStorage.removeItem(num);
+          localStorage.removeItem(num + "key");
 
-          let data: any;
+          rowsArr.row_status.push(rowstatus);
+          rowsArr.guid_s.push(guid);
+          rowsArr.docunum_s.push(docunum);
+          rowsArr.recdt_s.push(
+            recdt.length > 8 ? recdt : convertDateToStr(recdt)
+          );
+          rowsArr.person_s.push(person);
+          rowsArr.indicator_s.push(indicator);
 
-          //추가, 수정 프로시저 파라미터
-          const paras = {
-            fileBytes: convertedEditorContent,
-            procedureName: "pw6_sav_task_order",
-            pageNumber: 1,
-            pageSize: 10,
-            parameters: {
-              "@p_work_type": "save",
-              "@p_row_status": rowstatus,
-              "@p_guid": guid == undefined ? "" : guid,
-              "@p_docunum": docunum,
-              "@p_recdt": recdt.length > 8 ? recdt : convertDateToStr(recdt),
-              "@p_person": person,
-              "@p_indicator": indicator,
-              "@p_contents": textContent,
-              "@p_remark": remark,
-              "@p_groupcd": groupcd,
-              "@p_value_code3": value_code3,
-              "@p_custcd": custcd,
-              "@p_finexpdt":
-                finexpdt.length > 8 ? finexpdt : convertDateToStr(finexpdt),
-              "@p_exphh": exphh == undefined || exphh == "" ? 0 : exphh,
-              "@p_expmm": expmm == undefined || expmm == "" ? 0 : expmm,
-              "@p_custperson": custperson,
-              "@p_attdatnum": attdatnum,
-              "@p_ref_type": ref_type,
-              "@p_ref_key": ref_key,
-              "@p_ref_seq": ref_seq,
-              "@p_id": userId,
-              "@p_pc": pc,
-            },
-          };
+          rowsArr.remark_s.push(remark);
+          rowsArr.groupcd_s.push(groupcd);
+          rowsArr.custcd_s.push(custcd);
+          rowsArr.finexpdt_s.push(
+            finexpdt.length > 8 ? finexpdt : convertDateToStr(finexpdt)
+          );
 
-          try {
-            data = await processApi<any>("taskorder-save", paras);
-          } catch (error) {
-            data = null;
-          }
+          rowsArr.exphh_s.push(exphh == "" ? 0 : exphh);
+          rowsArr.expmm_s.push(expmm == "" ? 0 : expmm);
+          rowsArr.custperson_s.push(custperson);
+          rowsArr.attdatnum_s.push(attdatnum);
+          rowsArr.value_code3_s.push(value_code3);
+
+          rowsArr.ref_type_s.push(ref_type);
+          rowsArr.ref_key_s.push(ref_key);
+          rowsArr.ref_seq_s.push(ref_seq);
         });
 
         deletedRows.forEach(async (item: any) => {
@@ -1166,57 +1237,80 @@ const KendoWindow = ({ setVisible, para, type, reload }: IKendoWindow) => {
           const bytes = require("utf8-bytes");
           const convertedEditorContent = bytesToBase64(bytes(str)); //html
 
+          arrays.push(convertedEditorContent);
           localStorage.removeItem(num);
+          localStorage.removeItem(num + "key");
 
-          let data: any;
+          rowsArr.row_status.push(rowstatus);
+          rowsArr.guid_s.push(guid);
+          rowsArr.docunum_s.push(docunum);
+          rowsArr.recdt_s.push(
+            recdt.length > 8 ? recdt : convertDateToStr(recdt)
+          );
+          rowsArr.person_s.push(person);
+          rowsArr.indicator_s.push(indicator);
 
-          //추가, 수정 프로시저 파라미터
-          const paras = {
-            fileBytes: convertedEditorContent,
-            procedureName: "pw6_sav_task_order",
-            pageNumber: 1,
-            pageSize: 10,
-            parameters: {
-              "@p_work_type": "save",
-              "@p_row_status": rowstatus,
-              "@p_guid": guid == undefined ? "" : guid,
-              "@p_docunum": docunum,
-              "@p_recdt": recdt.length > 8 ? recdt : convertDateToStr(recdt),
-              "@p_person": person,
-              "@p_indicator": indicator,
-              "@p_contents": textContent,
-              "@p_remark": remark,
-              "@p_groupcd": groupcd,
-              "@p_value_code3": value_code3,
-              "@p_custcd": custcd,
-              "@p_finexpdt":
-                finexpdt.length > 8 ? finexpdt : convertDateToStr(finexpdt),
-              "@p_exphh": exphh == undefined || exphh == "" ? 0 : exphh,
-              "@p_expmm": expmm == undefined || expmm == "" ? 0 : expmm,
-              "@p_custperson": custperson,
-              "@p_attdatnum": attdatnum,
-              "@p_ref_type": ref_type,
-              "@p_ref_key": ref_key,
-              "@p_ref_seq": ref_seq,
-              "@p_id": userId,
-              "@p_pc": pc,
-            },
-          };
+          rowsArr.remark_s.push(remark);
+          rowsArr.groupcd_s.push(groupcd);
+          rowsArr.custcd_s.push(custcd);
+          rowsArr.finexpdt_s.push(
+            finexpdt.length > 8 ? finexpdt : convertDateToStr(finexpdt)
+          );
 
-          try {
-            data = await processApi<any>("taskorder-save", paras);
-          } catch (error) {
-            data = null;
-          }
+          rowsArr.exphh_s.push(exphh == "" ? 0 : exphh);
+          rowsArr.expmm_s.push(expmm == "" ? 0 : expmm);
+          rowsArr.custperson_s.push(custperson);
+          rowsArr.attdatnum_s.push(attdatnum);
+          rowsArr.value_code3_s.push(value_code3);
+
+          rowsArr.ref_type_s.push(ref_type);
+          rowsArr.ref_key_s.push(ref_key);
+          rowsArr.ref_seq_s.push(ref_seq);
         });
 
+        let data: any;
+
+        //추가, 수정 프로시저 파라미터
+        const paras = {
+          fileBytes: arrays,
+          procedureName: "pw6_sav_task_order",
+          pageNumber: 1,
+          pageSize: 10,
+          parameters: {
+            "@p_work_type": "save",
+            "@p_row_status": rowsArr.row_status.join("|"),
+            "@p_guid": rowsArr.guid_s.join("|"),
+            "@p_docunum": rowsArr.docunum_s.join("|"),
+            "@p_recdt": rowsArr.recdt_s.join("|"),
+            "@p_person": rowsArr.person_s.join("|"),
+            "@p_indicator": rowsArr.indicator_s.join("|"),
+            "@p_contents": rowsArr.contents_s.join("|"),
+            "@p_remark": rowsArr.remark_s.join("|"),
+            "@p_groupcd": rowsArr.groupcd_s.join("|"),
+            "@p_value_code3": rowsArr.value_code3_s.join("|"),
+            "@p_custcd": rowsArr.custcd_s.join("|"),
+            "@p_finexpdt": rowsArr.finexpdt_s.join("|"),
+            "@p_exphh": rowsArr.exphh_s.join("|"),
+            "@p_expmm": rowsArr.expmm_s.join("|"),
+            "@p_custperson": rowsArr.custperson_s.join("|"),
+            "@p_attdatnum": rowsArr.attdatnum_s.join("|"),
+            "@p_ref_type": rowsArr.ref_type_s.join("|"),
+            "@p_ref_key": rowsArr.ref_key_s.join("|"),
+            "@p_ref_seq": rowsArr.ref_seq_s.join("|"),
+            "@p_id": userId,
+            "@p_pc": pc,
+          },
+        };
+
+        try {
+          data = await processApi<any>("taskorder-save", paras);
+        } catch (error) {
+          data = null;
+        }
+
         mainDataResult.data.map((item) => {
-          if (
-            localStorage.getItem(item[DATA_ITEM_KEY]) == null ||
-            localStorage.getItem(item[DATA_ITEM_KEY]) == undefined
-          ) {
             localStorage.removeItem(item[DATA_ITEM_KEY]);
-          }
+            localStorage.removeItem(item[DATA_ITEM_KEY] + "key");
         });
 
         deletedRows = [];
