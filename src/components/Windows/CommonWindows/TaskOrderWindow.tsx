@@ -54,6 +54,7 @@ import {
   userColumns,
 } from "../../../store/columns/common-columns";
 import AttachmentsWindow from "./AttachmentsWindow";
+import PopUpAttachmentsWindow from "./PopUpAttachmentsWindow";
 import CheckBoxReadOnlyCell from "../../Cells/CheckBoxReadOnlyCell";
 
 type IKendoWindow = {
@@ -146,7 +147,9 @@ const WorkTypeContext = createContext<{
 
 export const FilesContext = createContext<{
   attdatnum: string;
+  attach_exists: string;
   setAttdatnum: (d: any) => void;
+  setAttach_exists: (d: any) => void;
   mainDataState: State;
   setMainDataState: (d: any) => void;
   // fetchGrid: (n: number) => any;
@@ -198,7 +201,7 @@ const FilesCell = (props: GridCellProps) => {
     onChange,
     className = "",
   } = props;
-  const { setAttdatnum } = useContext(FilesContext);
+  const { setAttdatnum, setAttach_exists } = useContext(FilesContext);
   let isInEdit = field === dataItem.inEdit;
   const value = field && dataItem[field] ? dataItem[field] : "";
 
@@ -235,6 +238,11 @@ const FilesCell = (props: GridCellProps) => {
 
   const getAttachmentsData = (data: IAttachmentData) => {
     setAttdatnum(data.attdatnum);
+    if(data.rowCount == 0) {
+      setAttach_exists("N");
+    } else {
+      setAttach_exists("Y");
+    }
   };
 
   return (
@@ -243,7 +251,7 @@ const FilesCell = (props: GridCellProps) => {
         ? null
         : render?.call(undefined, defaultRendering, props)}
       {attachmentsWindowVisible && (
-        <AttachmentsWindow
+        <PopUpAttachmentsWindow
           setVisible={setAttachmentsWindowVisible}
           setData={getAttachmentsData}
           para={dataItem.attdatnum}
@@ -303,8 +311,7 @@ const KendoWindow = ({
         const checkQueryStr = `UPDATE CR005T SET finyn = '${data.check_yn}' WHERE orgdiv = '${data.orgdiv}' AND docunum = '${data.docunum}'`;
         fetchCheck(checkQueryStr);
         const newData = mainDataResult.data.map((item) =>
-          item[DATA_ITEM_KEY] ==
-          data[DATA_ITEM_KEY]
+          item[DATA_ITEM_KEY] == data[DATA_ITEM_KEY]
             ? {
                 ...item,
                 check_yn:
@@ -907,6 +914,7 @@ const KendoWindow = ({
   };
 
   const [attdatnum, setAttdatnum] = useState<string>("");
+  const [attach_exists, setAttach_exists] = useState<string>("");
 
   useEffect(() => {
     if (attdatnum != "" && attdatnum != undefined && attdatnum != null) {
@@ -920,13 +928,18 @@ const KendoWindow = ({
       parseInt(Object.getOwnPropertyNames(selectedState)[0])
         ? {
             ...item,
-            attdatnum: attdatnum,
-            attach_exists : attdatnum != "" && attdatnum != undefined && attdatnum != null ? "Y" : "N"
+            rowstatus: item.rowstatus == "N" ? "N" : "U",
+            attdatnum: attach_exists == "N" ? "" : attdatnum,
+            attach_exists: attach_exists
           }
         : {
             ...item,
           }
     );
+
+    if(attach_exists == "N") {
+      setAttdatnum("");
+    }
     setMainDataResult((prev) => {
       return {
         data: newData,
@@ -939,7 +952,7 @@ const KendoWindow = ({
         total: prev.total,
       };
     });
-  }, [attdatnum]);
+  }, [attdatnum, attach_exists]);
 
   const onAddClick = () => {
     mainDataResult.data.map((item) => {
@@ -1427,7 +1440,7 @@ const KendoWindow = ({
         } catch (error) {
           data = null;
         }
-        console.log(paras);
+
         mainDataResult.data.map((item) => {
           localStorage.removeItem(item[DATA_ITEM_KEY]);
           localStorage.removeItem(item[DATA_ITEM_KEY] + "key");
@@ -1639,7 +1652,9 @@ const KendoWindow = ({
         <FilesContext.Provider
           value={{
             attdatnum,
+            attach_exists,
             setAttdatnum,
+            setAttach_exists,
             mainDataState,
             setMainDataState,
             // fetchGrid,

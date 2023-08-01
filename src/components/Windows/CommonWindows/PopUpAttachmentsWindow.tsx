@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import * as React from "react";
-import { Window, WindowMoveEvent } from "@progress/kendo-react-dialogs";
 import {
   Grid,
   GridColumn,
@@ -28,6 +27,10 @@ import { useLocation } from "react-router-dom";
 import { TAttachmentType } from "../../../store/types";
 import { isLoading } from "../../../store/atoms";
 import { useSetRecoilState } from "recoil";
+import Dialog from "@mui/material/Dialog";
+import { DialogContent, DialogTitle } from "@mui/material";
+import Paper, { PaperProps } from "@mui/material/Paper";
+import Draggable from "react-draggable";
 
 type permission = {
   upload: boolean;
@@ -41,10 +44,20 @@ type IKendoWindow = {
   setData?(data: object): void;
   para: string;
   permission?: permission;
-  modal ? :boolean;
 };
 
 const DATA_ITEM_KEY = "savenm";
+
+function PaperComponent(props: PaperProps) {
+  return (
+    <Draggable
+      handle="#draggable-dialog-title"
+      cancel={'[class*="MuiDialogContent-root"]'}
+    >
+      <Paper {...props} />
+    </Draggable>
+  );
+}
 
 const KendoWindow = ({
   type,
@@ -56,10 +69,10 @@ const KendoWindow = ({
   let deviceWidth = window.innerWidth;
   let isMobile = deviceWidth <= 768;
   const [position, setPosition] = useState<IWindowPosition>({
-    left: 300,
-    top: 100,
+    left: isMobile == true ? 0 : 350,
+    top: isMobile == true ? 0 : 50,
     width: isMobile == true ? deviceWidth : 1200,
-    height: 800,
+    height: isMobile == true ? window.innerHeight : 800,
   });
 
   const setLoading = useSetRecoilState(isLoading);
@@ -68,25 +81,13 @@ const KendoWindow = ({
   const location = useLocation();
   const pathname = location.pathname.replace("/", "");
 
-  const handleMove = (event: WindowMoveEvent) => {
-    setPosition({ ...position, left: event.left, top: event.top });
-  };
-  const handleResize = (event: WindowMoveEvent) => {
-    setPosition({
-      left: event.left,
-      top: event.top,
-      width: event.width,
-      height: event.height,
-    });
-  };
-
   const onClose = () => {
     setVisible(false);
   };
 
   const processApi = useApi();
   const [mainDataResult, setMainDataResult] = useState<DataResult>(
-    process([], {}),
+    process([], {})
   );
 
   useEffect(() => {
@@ -197,7 +198,7 @@ const KendoWindow = ({
 
   const downloadFiles = async () => {
     const parameters = Object.keys(selectedState).filter(
-      (key) => selectedState[key] === true,
+      (key) => selectedState[key] === true
     );
 
     if (parameters.length === 0) {
@@ -249,7 +250,7 @@ const KendoWindow = ({
 
   const deleteFiles = () => {
     const parameters = Object.keys(selectedState).filter(
-      (key) => selectedState[key] === true,
+      (key) => selectedState[key] === true
     );
 
     if (parameters.length === 0) {
@@ -295,7 +296,7 @@ const KendoWindow = ({
 
       setSelectedState(newSelectedState);
     },
-    [selectedState],
+    [selectedState]
   );
 
   const onHeaderSelectionChange = React.useCallback(
@@ -312,7 +313,7 @@ const KendoWindow = ({
 
       setSelectedState(newSelectedState);
     },
-    [],
+    []
   );
 
   const handleFileUpload = async (files: FileList | null) => {
@@ -352,171 +353,179 @@ const KendoWindow = ({
   };
 
   return (
-    <Window
-      title={"파일첨부관리"}
-      width={position.width}
-      height={position.height}
-      onMove={handleMove}
-      onResize={handleResize}
+    <Dialog
       onClose={onClose}
-      modal={true}
+      open={true}
+      PaperComponent={PaperComponent}
+      maxWidth="lg"
+      style={{
+        zIndex: 1000000000,
+        width: position.width,
+        height: position.height,
+        top: position.top,
+        left: position.left,
+      }}
     >
-      <TitleContainer>
-        <ButtonContainer>
-          <Button
-            onClick={upload}
-            themeColor={"primary"}
-            fillMode={"outline"}
-            icon={"upload"}
-            disabled={
-              permission != undefined
-                ? permission.upload == true
-                  ? false
-                  : true
-                : false
-            }
-          >
-            업로드
-            <input
-              id="uploadAttachment"
-              style={{ display: "none" }}
-              type="file"
-              multiple
-              ref={excelInput}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                handleFileUpload(event.target.files);
-              }}
-            />
-          </Button>
-          <Button
-            onClick={downloadFiles}
-            themeColor={"primary"}
-            fillMode={"outline"}
-            icon={"download"}
-            disabled={
-              permission != undefined
-                ? permission.download == true
-                  ? false
-                  : true
-                : false
-            }
-          >
-            다운로드
-          </Button>
-          <Button
-            onClick={deleteFiles}
-            themeColor={"primary"}
-            fillMode={"outline"}
-            icon={"delete"}
-            disabled={
-              permission != undefined
-                ? permission.delete == true
-                  ? false
-                  : true
-                : false
-            }
-          >
-            삭제
-          </Button>
-        </ButtonContainer>
-      </TitleContainer>
-      {(!permission || (permission && permission.upload)) && (
-        <div
-          onDrop={(event: React.DragEvent<HTMLInputElement>) => {
-            event.preventDefault();
-            const files = event.dataTransfer.files;
-            handleFileUpload(files);
-          }}
-          onDragOver={(e: React.DragEvent<HTMLDivElement>) => {
-            e.preventDefault();
-          }}
+      <DialogTitle>파일 첨부 관리</DialogTitle>
+      <DialogContent>
+        <TitleContainer>
+          <ButtonContainer>
+            <Button
+              onClick={upload}
+              themeColor={"primary"}
+              fillMode={"outline"}
+              icon={"upload"}
+              disabled={
+                permission != undefined
+                  ? permission.upload == true
+                    ? false
+                    : true
+                  : false
+              }
+            >
+              업로드
+              <input
+                id="uploadAttachment"
+                style={{ display: "none" }}
+                type="file"
+                multiple
+                ref={excelInput}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                  handleFileUpload(event.target.files);
+                }}
+              />
+            </Button>
+            <Button
+              onClick={downloadFiles}
+              themeColor={"primary"}
+              fillMode={"outline"}
+              icon={"download"}
+              disabled={
+                permission != undefined
+                  ? permission.download == true
+                    ? false
+                    : true
+                  : false
+              }
+            >
+              다운로드
+            </Button>
+            <Button
+              onClick={deleteFiles}
+              themeColor={"primary"}
+              fillMode={"outline"}
+              icon={"delete"}
+              disabled={
+                permission != undefined
+                  ? permission.delete == true
+                    ? false
+                    : true
+                  : false
+              }
+            >
+              삭제
+            </Button>
+          </ButtonContainer>
+        </TitleContainer>
+        {isMobile
+          ? ""
+          : (!permission || (permission && permission.upload)) && (
+              <div
+                onDrop={(event: React.DragEvent<HTMLInputElement>) => {
+                  event.preventDefault();
+                  const files = event.dataTransfer.files;
+                  handleFileUpload(files);
+                }}
+                onDragOver={(e: React.DragEvent<HTMLDivElement>) => {
+                  e.preventDefault();
+                }}
+                style={{
+                  width: "100% ",
+                  lineHeight: "100px",
+                  border: "solid 1px rgba(0, 0, 0, 0.08)",
+                  marginBottom: "5px",
+                  textAlign: "center",
+                  color: "rgba(0,0,0,0.8)",
+                }}
+              >
+                <span
+                  className="k-icon k-i-file-add"
+                  style={{ marginRight: "5px" }}
+                ></span>
+                업로드할 파일을 마우스로 끌어오세요.
+              </div>
+            )}
+        <Grid
           style={{
-            width: "100% ",
-            lineHeight: "100px",
-            border: "solid 1px rgba(0, 0, 0, 0.08)",
-            marginBottom: "5px",
-            textAlign: "center",
-            color: "rgba(0,0,0,0.8)",
+            height:
+              !permission || (permission && permission.upload)
+                ? "390px"
+                : "500px",
           }}
+          data={process(
+            mainDataResult.data.map((row) => ({
+              ...row,
+              insert_time: convertDateToStrWithTime2(new Date(row.insert_time)),
+              [SELECTED_FIELD]: selectedState[idGetter(row)],
+            })),
+            {}
+          )}
+          sortable={true}
+          groupable={false}
+          reorderable={true}
+          //onDataStateChange={dataStateChange}
+          fixedScroll={true}
+          total={mainDataResult.total}
+          //onScroll={scrollHandler}
+          selectedField={SELECTED_FIELD}
+          selectable={{
+            enabled: true,
+            drag: false,
+            cell: false,
+            mode: "multiple",
+          }}
+          onSelectionChange={onSelectionChange}
+          onHeaderSelectionChange={onHeaderSelectionChange}
         >
-          <span
-            className="k-icon k-i-file-add"
-            style={{ marginRight: "5px" }}
-          ></span>
-          업로드할 파일을 마우스로 끌어오세요.
-        </div>
-      )}
-
-      <Grid
-        style={{
-          height:
-            !permission || (permission && permission.upload)
-              ? "490px"
-              : "600px",
-        }}
-        data={process(
-          mainDataResult.data.map((row) => ({
-            ...row,
-            insert_time: convertDateToStrWithTime2(new Date(row.insert_time)),
-            [SELECTED_FIELD]: selectedState[idGetter(row)],
-          })),
-          {},
-        )}
-        sortable={true}
-        groupable={false}
-        reorderable={true}
-        //onDataStateChange={dataStateChange}
-        fixedScroll={true}
-        total={mainDataResult.total}
-        //onScroll={scrollHandler}
-        selectedField={SELECTED_FIELD}
-        selectable={{
-          enabled: true,
-          drag: false,
-          cell: false,
-          mode: "multiple",
-        }}
-        onSelectionChange={onSelectionChange}
-        onHeaderSelectionChange={onHeaderSelectionChange}
-      >
-        <GridColumn
-          field={SELECTED_FIELD}
-          width="45px"
-          headerSelectionValue={
-            mainDataResult.data.findIndex(
-              (item: any) => !selectedState[idGetter(item)],
-            ) === -1
-          }
-        />
-        <GridColumn field="realnm" title="파일명" width="600" />
-        <GridColumn
-          field="filesize"
-          title="파일SIZE (byte)"
-          width="150"
-          cell={NumberCell}
-        />
-        <GridColumn
-          field="user_name"
-          title="등록자"
-          cell={CenterCell}
-          width="150"
-        />
-        <GridColumn
-          field="insert_time"
-          title="등록일자"
-          width="200"
-          cell={CenterCell}
-        />
-      </Grid>
-      <p>※ 최대 파일 크기 (400MB)</p>
-      <BottomContainer>
-        <ButtonContainer>
-          <Button themeColor={"primary"} onClick={onClose}>
-            확인
-          </Button>
-        </ButtonContainer>
-      </BottomContainer>
-    </Window>
+          <GridColumn
+            field={SELECTED_FIELD}
+            width="45px"
+            headerSelectionValue={
+              mainDataResult.data.findIndex(
+                (item: any) => !selectedState[idGetter(item)]
+              ) === -1
+            }
+          />
+          <GridColumn field="realnm" title="파일명" width="600" />
+          <GridColumn
+            field="filesize"
+            title="파일SIZE (byte)"
+            width="150"
+            cell={NumberCell}
+          />
+          <GridColumn
+            field="user_name"
+            title="등록자"
+            cell={CenterCell}
+            width="150"
+          />
+          <GridColumn
+            field="insert_time"
+            title="등록일자"
+            width="200"
+            cell={CenterCell}
+          />
+        </Grid>
+        <p>※ 최대 파일 크기 (400MB)</p>
+        <BottomContainer>
+          <ButtonContainer>
+            <Button themeColor={"primary"} onClick={onClose}>
+              확인
+            </Button>
+          </ButtonContainer>
+        </BottomContainer>
+      </DialogContent>
+    </Dialog>
   );
 };
 
