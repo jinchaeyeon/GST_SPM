@@ -234,7 +234,8 @@ const App = () => {
   const idGetter = getter(DATA_ITEM_KEY);
   const idGetter2 = getter(DATA_ITEM_KEY2);
   const idGetter3 = getter(DATA_ITEM_KEY2);
-
+  let deviceWidth = window.innerWidth;
+  let isMobile = deviceWidth <= 768;
   const initialPageState = { skip: 0, take: PAGE_SIZE };
   const [page, setPage] = useState(initialPageState);
   const [page2, setPage2] = useState(initialPageState);
@@ -1372,9 +1373,9 @@ const App = () => {
           </Button>
         </ButtonContainer>
       </TitleContainer>
-      <GridContainerWrap height={"90vh"}>
+      <GridContainerWrap height={"85vh"}>
         <TabStrip
-          style={{ width: "100%", height: `90vh` }}
+          style={{ width: "100%", height: `85vh` }}
           selected={tabSelected}
           onSelect={handleSelectTab}
         >
@@ -1390,7 +1391,7 @@ const App = () => {
                   >
                     <tbody>
                       <tr>
-                        <th style={{ width: "50%" }}>
+                        <th style={{ width: isMobile ? "100%" : "50%" }}>
                           <MultiColumnComboBox
                             name="date_type"
                             data={
@@ -1583,7 +1584,7 @@ const App = () => {
                           </ButtonContainer>
                         </GridTitleContainer>
                         <Grid
-                          style={{ height: `35vh` }}
+                          style={{ height: `30vh` }}
                           data={process(
                             mainDataResult.data.map((row) => ({
                               ...row,
@@ -1716,7 +1717,7 @@ const App = () => {
                 <GridContainer
                   style={{
                     marginTop: isVisibleDetail ? "10px" : "",
-                    height: isVisibleDetail ? "42.5vh" : "82vh",
+                    height: isMobile ? "76vh" : isVisibleDetail ? "40vh" : "76vh",
                   }}
                 >
                   <GridTitleContainer>
@@ -1830,7 +1831,7 @@ const App = () => {
                   >
                     <tbody>
                       <tr>
-                        <th style={{ width: "50%" }}>
+                        <th style={{ width: isMobile ? "100%" : "50%" }}>
                           <MultiColumnComboBox
                             name="date_type"
                             data={
@@ -2000,7 +2001,7 @@ const App = () => {
                       </ButtonContainer>
                     </GridTitleContainer>
                     <Grid
-                      style={{ height: `78vh` }}
+                      style={{ height: `75vh` }}
                       data={process(
                         mainDataResult2.data.map((row) => ({
                           ...row,
@@ -2224,7 +2225,7 @@ const App = () => {
                   >
                     <tbody>
                       <tr>
-                        <th style={{ width: "50%" }}>
+                        <th style={{ width: isMobile ? "100%" : "50%" }}>
                           <MultiColumnComboBox
                             name="date_type"
                             data={
@@ -2375,7 +2376,7 @@ const App = () => {
                       </ButtonContainer>
                     </GridTitleContainer>
                     <Grid
-                      style={{ height: `35vh` }}
+                      style={{ height: `30vh` }}
                       data={process(
                         mainDataResult3.data.map((row) => ({
                           ...row,
@@ -2493,7 +2494,7 @@ const App = () => {
                 <GridContainer
                   style={{
                     marginTop: isVisibleDetail2 ? "10px" : "",
-                    height: isVisibleDetail2 ? "42.5vh" : "82vh",
+                    height: isMobile ? "76vh" : isVisibleDetail2 ? "40vh" : "76vh",
                   }}
                 >
                   <GridTitleContainer>

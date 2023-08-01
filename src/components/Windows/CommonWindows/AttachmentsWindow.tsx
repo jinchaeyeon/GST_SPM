@@ -41,7 +41,6 @@ type IKendoWindow = {
   setData?(data: object): void;
   para: string;
   permission?: permission;
-  modal? :boolean;
 };
 
 const DATA_ITEM_KEY = "savenm";
@@ -52,7 +51,6 @@ const KendoWindow = ({
   setData,
   para = "",
   permission,
-  modal = false,
 }: IKendoWindow) => {
   let deviceWidth = window.innerWidth;
   let isMobile = deviceWidth <= 768;
@@ -160,7 +158,7 @@ const KendoWindow = ({
         setMainDataResult((prev) => {
           return {
             data: [...rows],
-             total: totalRowCnt == -1 ? 0 : totalRowCnt,
+            total: totalRowCnt,
           };
         });
 
@@ -360,7 +358,7 @@ const KendoWindow = ({
       onMove={handleMove}
       onResize={handleResize}
       onClose={onClose}
-      modal={modal}
+      modal={true}
     >
       <TitleContainer>
         <ButtonContainer>

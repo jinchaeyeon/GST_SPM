@@ -353,7 +353,8 @@ const App = () => {
     [id: string]: boolean | number[];
   }>({});
   let gridRef: any = useRef(null);
-
+  let deviceWidth = window.innerWidth;
+  let isMobile = deviceWidth <= 768;
   useEffect(() => {
     // 접근 권한 검증
     if (loginResult) {
@@ -3280,7 +3281,7 @@ const App = () => {
         </ButtonContainer>
       </TitleContainer>
       <TabStrip
-        style={{ width: "100%" }}
+        style={{ width: "100%", height: `85vh` }}
         selected={AlltabSelected}
         onSelect={handleSelectAllTab}
       >
@@ -3294,7 +3295,7 @@ const App = () => {
                 <FilterBox onKeyPress={(e) => handleKeyPressSearch(e, search)}>
                   <tbody>
                     <tr>
-                      <th style={{width: "50%"}}>
+                      <th style={{width: isMobile? "100%" : "50%"}}>
                         <MultiColumnComboBox
                           name="date_type"
                           data={
@@ -3408,7 +3409,7 @@ const App = () => {
             </GridContainer>
             <GridContainer width={`calc(85% - ${GAP}px)`}>
               <Grid
-                style={{ height: "80vh" }}
+                style={{ height: "76vh" }}
                 data={process(
                   mainDataResult.data.map((row) => ({
                     ...row,
@@ -3788,7 +3789,7 @@ const App = () => {
                             value={{ usersData: usersData }}
                           >
                             <Grid
-                              style={{ height: "37vh" }}
+                              style={{ height: "30vh" }}
                               data={newData.map((item) => ({
                                 ...item,
                                 items: item.items.map((row: any) => ({
@@ -4053,7 +4054,7 @@ const App = () => {
                   </ButtonContainer>
                 </GridTitleContainer>
                 <Grid
-                  style={{ height: "37vh" }}
+                  style={{ height: "30vh" }}
                   data={process(
                     subDataResult2.data.map((row) => ({
                       ...row,

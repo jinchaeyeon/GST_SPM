@@ -315,7 +315,8 @@ const App = () => {
   const userName = loginResult ? loginResult.userName : "";
   const [pc, setPc] = useState("");
   UseParaPc(setPc);
-
+  let deviceWidth = window.innerWidth;
+  let isMobile = deviceWidth <= 768;
   // 서버 업로드는 되었으나 DB에는 저장안된 첨부파일 리스트
   const [unsavedAttadatnums, setUnsavedAttadatnums] = useRecoilState(
     unsavedAttadatnumsState
@@ -1848,8 +1849,8 @@ const App = () => {
           </Button>
         </ButtonContainer>
       </TitleContainer>
-      <GridContainerWrap height={"90vh"}>
-        <GridContainer width={`15%`}>
+      <GridContainerWrap height={"88vh"}>
+        <GridContainer width={`15%`} height={"auto"}>
           <GridTitleContainer>
             <GridTitle>조회조건</GridTitle>
           </GridTitleContainer>
@@ -1857,7 +1858,7 @@ const App = () => {
             <FilterBox onKeyPress={(e) => handleKeyPressSearch(e, search)}>
               <tbody>
                 <tr>
-                  <th style={{ width: "50%" }}>
+                <th style={{width: isMobile? "100%" : "50%"}}>
                     <MultiColumnComboBox
                       name="date_type"
                       data={
@@ -2010,7 +2011,7 @@ const App = () => {
                   <GridTitle>업무지시 정보</GridTitle>
                 </GridTitleContainer>
                 <Grid
-                  style={{ height: `45vh` }}
+                  style={{ height: `40vh` }}
                   data={process(
                     mainDataResult.data.map((row) => ({
                       ...row,
@@ -2261,6 +2262,7 @@ const App = () => {
           width={
             isVisibleDetail ? `calc(45% - ${GAP}px)` : `calc(85% - ${GAP}px)`
           }
+          height={"79vh"}
         >
           <GridTitleContainer>
             <GridTitle>
@@ -2293,13 +2295,14 @@ const App = () => {
               </Button>
             </ButtonContainer>
           </GridTitleContainer>
+          <GridContainer height="80vh">
           <TabStrip
-            style={{ width: "100%", height: `85.5vh` }}
+            style={{ width: "100%"}}
             selected={tabSelected}
             onSelect={handleSelectTab}
           >
             <TabStripTab title="지시 내용">
-              <GridContainer style={{ height: "78vh" }}>
+              <GridContainer style={{ height: "75vh" }}>
                 <FormBoxWrap border={true}>
                   <FormBox>
                     <tbody>
@@ -2352,7 +2355,7 @@ const App = () => {
                   : true
               }
             >
-              <GridContainer style={{ height: "78vh" }}>
+              <GridContainer style={{ height: "75vh" }}>
                 <FormBoxWrap border={true}>
                   <FormBox>
                     <tbody>
@@ -2516,7 +2519,7 @@ const App = () => {
                   : true
               }
             >
-              <GridContainer style={{ height: "78vh" }}>
+              <GridContainer style={{ height: "75vh" }}>
                 <RichEditor id="docEditor3" ref={docEditorRef3} hideTools />
                 <FormBoxWrap border={true}>
                   <FormBox>
@@ -2576,7 +2579,7 @@ const App = () => {
                   : true
               }
             >
-              <GridContainer style={{ height: "78vh" }}>
+              <GridContainer style={{ height: "75vh" }}>
                 <GridTitleContainer>
                   <GridTitle>회의록 내용(요구사항)</GridTitle>
                 </GridTitleContainer>
@@ -2854,6 +2857,7 @@ const App = () => {
               </GridContainer>
             </TabStripTab>
           </TabStrip>
+          </GridContainer>
         </GridContainer>
       </GridContainerWrap>
       {attachmentsWindowVisible && (

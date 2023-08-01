@@ -10,13 +10,13 @@ import stopStsSrc from "./img/stop_16.png";
 import waitStsSrc from "./img/wait_16.png";
 
 export const TitleContainer = styled.div`
-  display: flex;
+  display: inline-block;
   align-items: center;
   justify-content: space-between;
   padding-top: 10px;
   padding-bottom: 5px;
   min-height: 40px;
-
+  width: 100%;
   .iot-title {
     font-size: 26px;
   }
@@ -70,7 +70,8 @@ type TButtonContainer = {
 };
 export const ButtonContainer = styled.div<TButtonContainer>`
   display: flex;
-
+  flex-wrap: wrap;
+  justify-content: flex-end;
   flex-direction: ${(props) =>
     props.flexDirection ? props.flexDirection : "row"};
   align-items: center;
@@ -418,7 +419,7 @@ export const LandscapePrint = styled.div`
 `;
 
 export const GridTitleContainer = styled.div`
-  display: flex;
+display: flex;
   justify-content: space-between;
   align-items: center;
   /* margin: 5 0px; */

@@ -792,9 +792,9 @@ const KendoWindow = ({ setVisible, setData }: IKendoWindow) => {
         onSelect={handleSelectTab}
       >
         <TabStripTab title="Value Items">
-          <GridContainer height="calc(100% - 240px)">
+          <GridContainer height="calc(100% - 260px)">
             <Grid
-              style={{ height: "47vh" }}
+              style={{ height: "45vh" }}
               data={process(
                 mainDataResult.data.map((row) => ({
                   ...row,
@@ -847,15 +847,15 @@ const KendoWindow = ({ setVisible, setData }: IKendoWindow) => {
                 footerCell={mainTotalFooterCell}
               />
               <GridColumn field="name" title="이름" width="200px" />
-              <GridColumn field="remark" title="비고" width="310px" />
+              <GridColumn field="remark" title="비고" width="290px" />
             </Grid>
           </GridContainer>
         </TabStripTab>
         <TabStripTab title="C# Services">
           <GridContainerWrap>
-            <GridContainer width="30%" height="calc(100% - 240px)">
+            <GridContainer width="30%" height="calc(100% - 260px)">
               <Grid
-                style={{ height: "47vh" }}
+                style={{ height: "45vh" }}
                 data={process(
                   mainDataResult.data.map((row) => ({
                     ...row,

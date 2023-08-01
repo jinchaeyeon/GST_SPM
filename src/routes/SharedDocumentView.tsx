@@ -700,7 +700,7 @@ const App = () => {
           permission={
             { upload: false, download: true, delete: false }
           }
-          modal={true}
+        modal={true}
         />
       )}
       {signWindowVisible && (

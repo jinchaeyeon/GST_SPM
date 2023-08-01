@@ -110,6 +110,10 @@ type ITypes = {
   //프로젝트 추가
   devmngnum: string;
   devmngseq: number;
+
+  //회의록 추가
+  meetingnum: string;
+  meetingseq: number;
 };
 const usersQueryStr = `SELECT user_id, user_name 
 FROM sysUserMaster`;
@@ -250,6 +254,7 @@ const FilesCell = (props: GridCellProps) => {
     </>
   );
 };
+
 let temp = 0;
 let deletedRows: any[] = [];
 const KendoWindow = ({
@@ -273,13 +278,33 @@ const KendoWindow = ({
   const [pc, setPc] = useState("");
   UseParaPc(setPc);
 
+  const fetchCheck = async (str: string) => {
+    let data: any;
+    let result: string = "";
+
+    const bytes = require("utf8-bytes");
+    const convertedQueryStr = bytesToBase64(bytes(str));
+
+    let query = {
+      query: convertedQueryStr,
+    };
+
+    try {
+      data = await processApi<any>("bizgst-query", query);
+    } catch (error) {
+      data = null;
+    }
+  };
+
   const Check_ynCell = (props: GridCellProps) => {
     const data = props.dataItem;
-    const changeCheck = () => {
+    const changeCheck = async () => {
       if (data.indicator == userId) {
+        const checkQueryStr = `UPDATE CR005T SET finyn = '${data.check_yn}' WHERE orgdiv = '${data.orgdiv}' AND docunum = '${data.docunum}'`;
+        fetchCheck(checkQueryStr);
         const newData = mainDataResult.data.map((item) =>
           item[DATA_ITEM_KEY] ==
-          parseInt(Object.getOwnPropertyNames(selectedState)[0])
+          data[DATA_ITEM_KEY]
             ? {
                 ...item,
                 check_yn:
@@ -512,7 +537,7 @@ const KendoWindow = ({
               : type == "프로젝트"
               ? para.devmngnum
               : type == "회의록"
-              ? para.devmngnum
+              ? para.meetingnum
               : ""
             : "",
         "@p_ref_seq":
@@ -520,7 +545,7 @@ const KendoWindow = ({
             ? type == "프로젝트"
               ? para.devmngseq
               : type == "회의록"
-              ? para.devmngseq
+              ? para.meetingseq
               : 0
             : 0,
       },
@@ -539,7 +564,6 @@ const KendoWindow = ({
         guid: item.guid == undefined || item.guid == "" ? uuidv4() : item.guid,
       }));
 
-      console.log(rows);
       setMainDataResult((prev) => {
         return {
           data: rows,
@@ -897,12 +921,12 @@ const KendoWindow = ({
         ? {
             ...item,
             attdatnum: attdatnum,
+            attach_exists : attdatnum != "" && attdatnum != undefined && attdatnum != null ? "Y" : "N"
           }
         : {
             ...item,
           }
     );
-
     setMainDataResult((prev) => {
       return {
         data: newData,
@@ -954,18 +978,19 @@ const KendoWindow = ({
           : type == "프로젝트"
           ? para.devmngnum
           : type == "회의록"
-          ? para.devmngnum
+          ? para.meetingnum
           : "",
-      ref_seq: para != undefined
-      ? type == "프로젝트"
-        ? para.devmngseq
-        : type == "회의록"
-        ? para.devmngseq
-        : 0
-      : 0,
+      ref_seq:
+        para != undefined
+          ? type == "프로젝트"
+            ? para.devmngseq
+            : type == "회의록"
+            ? para.meetingseq
+            : 0
+          : 0,
       ref_type: type == undefined ? "" : type,
       remark: "",
-      value_code3: "",
+      value_code3: para.value_code3,
       rowstatus: "N",
     };
 
@@ -999,6 +1024,8 @@ const KendoWindow = ({
           };
           Object.push(index);
           deletedRows.push(newData2);
+          localStorage.removeItem(newData2[DATA_ITEM_KEY]);
+          localStorage.removeItem(newData2[DATA_ITEM_KEY] + "key");
         }
       });
 
@@ -1177,10 +1204,6 @@ const KendoWindow = ({
           (item: any) =>
             item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
         )[0];
-        if (currentRow == undefined) {
-          alert("오류");
-          return false;
-        }
         let editorContent: any = "";
         if (refEditorRef.current) {
           editorContent = refEditorRef.current.getContent();
@@ -1404,7 +1427,7 @@ const KendoWindow = ({
         } catch (error) {
           data = null;
         }
-
+        console.log(paras);
         mainDataResult.data.map((item) => {
           localStorage.removeItem(item[DATA_ITEM_KEY]);
           localStorage.removeItem(item[DATA_ITEM_KEY] + "key");
@@ -1416,6 +1439,171 @@ const KendoWindow = ({
           onClose();
         }
       }
+    } else {
+      type TRowsArr = {
+        row_status: string[];
+        guid_s: string[];
+        docunum_s: string[];
+        recdt_s: string[];
+        person_s: string[];
+        indicator_s: string[];
+
+        contents_s: string[];
+        remark_s: string[];
+        groupcd_s: string[];
+        custcd_s: string[];
+        finexpdt_s: string[];
+
+        exphh_s: string[];
+        expmm_s: string[];
+        custperson_s: string[];
+        attdatnum_s: string[];
+        value_code3_s: string[];
+
+        ref_type_s: string[];
+        ref_key_s: string[];
+        ref_seq_s: string[];
+      };
+
+      let rowsArr: TRowsArr = {
+        row_status: [],
+        guid_s: [],
+        docunum_s: [],
+        recdt_s: [],
+        person_s: [],
+        indicator_s: [],
+
+        contents_s: [],
+        remark_s: [],
+        groupcd_s: [],
+        custcd_s: [],
+        finexpdt_s: [],
+
+        exphh_s: [],
+        expmm_s: [],
+        custperson_s: [],
+        attdatnum_s: [],
+        value_code3_s: [],
+
+        ref_type_s: [],
+        ref_key_s: [],
+        ref_seq_s: [],
+      };
+      let arrays: any = {};
+      deletedRows.forEach(async (item: any) => {
+        const {
+          num = "",
+
+          rowstatus = "",
+          guid = "",
+          docunum = "",
+          recdt = "",
+          person = "",
+          indicator = "",
+
+          contents = "",
+          remark = "",
+          groupcd = "",
+          custcd = "",
+          finexpdt = "",
+
+          exphh = "",
+          expmm = "",
+          custperson = "",
+          attdatnum = "",
+          value_code3 = "",
+
+          ref_type = "",
+          ref_key = "",
+          ref_seq = "",
+        } = item;
+        let str = "";
+        const value = localStorage.getItem(num + "key");
+
+        if (typeof value == "string") {
+          str = value; // ok
+        }
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(str, "text/html");
+        const textContent = doc.body.textContent || ""; //문자열
+
+        const bytes = require("utf8-bytes");
+        const convertedEditorContent = bytesToBase64(bytes(str)); //html
+
+        arrays[guid] = convertedEditorContent;
+        localStorage.removeItem(num);
+        localStorage.removeItem(num + "key");
+
+        rowsArr.row_status.push(rowstatus);
+        rowsArr.guid_s.push(guid);
+        rowsArr.docunum_s.push(docunum);
+        rowsArr.recdt_s.push(
+          recdt.length > 8 ? recdt : convertDateToStr(recdt)
+        );
+        rowsArr.person_s.push(person);
+        rowsArr.indicator_s.push(indicator);
+        rowsArr.contents_s.push(textContent);
+        rowsArr.remark_s.push(remark);
+        rowsArr.groupcd_s.push(groupcd);
+        rowsArr.custcd_s.push(custcd);
+        rowsArr.finexpdt_s.push(
+          finexpdt.length > 8 ? finexpdt : convertDateToStr(finexpdt)
+        );
+
+        rowsArr.exphh_s.push(exphh == "" ? 0 : exphh);
+        rowsArr.expmm_s.push(expmm == "" ? 0 : expmm);
+        rowsArr.custperson_s.push(custperson);
+        rowsArr.attdatnum_s.push(attdatnum);
+        rowsArr.value_code3_s.push(value_code3);
+
+        rowsArr.ref_type_s.push(ref_type);
+        rowsArr.ref_key_s.push(ref_key);
+        rowsArr.ref_seq_s.push(ref_seq);
+      });
+
+      let data: any;
+
+      //추가, 수정 프로시저 파라미터
+      const paras = {
+        fileBytes: arrays,
+        procedureName: "pw6_sav_task_order",
+        pageNumber: 0,
+        pageSize: 0,
+        parameters: {
+          "@p_work_type": "save",
+          "@p_row_status": rowsArr.row_status.join("|"),
+          "@p_guid": rowsArr.guid_s.join("|"),
+          "@p_docunum": rowsArr.docunum_s.join("|"),
+          "@p_recdt": rowsArr.recdt_s.join("|"),
+          "@p_person": rowsArr.person_s.join("|"),
+          "@p_indicator": rowsArr.indicator_s.join("|"),
+          "@p_contents": rowsArr.contents_s.join("|"),
+          "@p_remark": rowsArr.remark_s.join("|"),
+          "@p_groupcd": rowsArr.groupcd_s.join("|"),
+          "@p_value_code3": rowsArr.value_code3_s.join("|"),
+          "@p_custcd": rowsArr.custcd_s.join("|"),
+          "@p_finexpdt": rowsArr.finexpdt_s.join("|"),
+          "@p_exphh": rowsArr.exphh_s.join("|"),
+          "@p_expmm": rowsArr.expmm_s.join("|"),
+          "@p_custperson": rowsArr.custperson_s.join("|"),
+          "@p_attdatnum": rowsArr.attdatnum_s.join("|"),
+          "@p_ref_type": rowsArr.ref_type_s.join("|"),
+          "@p_ref_key": rowsArr.ref_key_s.join("|"),
+          "@p_ref_seq": rowsArr.ref_seq_s.join("|"),
+          "@p_id": userId,
+          "@p_pc": pc,
+        },
+      };
+
+      try {
+        data = await processApi<any>("taskorder-save", paras);
+      } catch (error) {
+        data = null;
+      }
+
+      deletedRows = [];
+      reload();
+      onClose();
     }
   };
 
