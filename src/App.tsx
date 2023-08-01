@@ -16,6 +16,9 @@ import QnA from "./routes/QnA";
 import Notice from "./routes/Notice";
 import ProjectSchedule from "./routes/ProjectSchedule";
 
+import SharedDocumentManagement from "./routes/SharedDocumentManagement";
+import SharedDocumentView from "./routes/SharedDocumentView";
+
 import { isMobileMenuOpendState, loginResultState } from "./store/atoms";
 import {
   IntlProvider,
@@ -254,6 +257,9 @@ const AppInner: React.FC = () => {
                   component={ProjectMaster}
                   exact
                 />
+
+                <AuthRoute path="/SharedDocumentManagement" component={SharedDocumentManagement} exact />
+                <AuthRoute path="/SharedDocumentView" component={SharedDocumentView} exact />
               </PanelBarNavContainer>
             </Switch>
           </Router>

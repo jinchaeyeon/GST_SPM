@@ -63,24 +63,32 @@ const paths = [
     index: ".3",
   },
   {
-    path: "/ProjectSchedule",
+    path: "/SharedDocumentView",
     index: ".4",
   },
   {
-    path: "/MeetingManagement",
+    path: "/ProjectSchedule",
     index: ".5",
   },
   {
-    path: "/Task_Order",
+    path: "/MeetingManagement",
     index: ".6",
   },
   {
-    path: "/Record",
+    path: "/SharedDocumentManagement",
     index: ".7",
   },
   {
-    path: "/ProjectMaster",
+    path: "/Task_Order",
     index: ".8",
+  },
+  {
+    path: "/Record",
+    index: ".9",
+  },
+  {
+    path: "/ProjectMaster",
+    index: ".10",
   },
 ];
 
@@ -517,6 +525,7 @@ const PanelBarNavContainer = (props: any) => {
                 <PanelBarItem title={"공지사항"} route="/Notice" />
                 <PanelBarItem title={"QnA"} route="/QnA" />
                 <PanelBarItem title={"회의록 열람"} route="/MeetingView" />
+                <PanelBarItem title={"공유문서 열람"} route="/SharedDocumentView" />
                 <PanelBarItem
                   title={"프로젝트 일정계획"}
                   route="/ProjectSchedule"
@@ -524,6 +533,10 @@ const PanelBarNavContainer = (props: any) => {
                 <PanelBarItem
                   title={"회의록 관리"}
                   route="/MeetingManagement"
+                />
+                <PanelBarItem
+                  title={"공유문서 관리"}
+                  route="/SharedDocumentManagement"
                 />
                 <PanelBarItem title={"업무 지시"} route="/Task_Order" />
                 <PanelBarItem title={"처리일지 작성"} route="/Record" />

@@ -30,6 +30,12 @@ const domain: any = {
   "notice-save": { action: "post", url: "api/spm/notice" },
   "notice-delete": { action: "delete", url: "api/spm/notice/:id" },
 
+  // 공유문서
+  "shared_document-list": { action: "get", url: "api/spm/shared-document/:para" },
+  "shared_document-detail": { action: "get", url: "api/spm/shared-document/:id" },
+  "shared_document-save": { action: "post", url: "api/spm/shared-document" },
+  "shared_document-delete": { action: "delete", url: "api/spm/shared-document/:id" },
+
   // 홈화면
   "home-general": { action: "get", url: "api/spm/home/general" },
   "home-manager": { action: "get", url: "api/spm/home/manager" },
