@@ -54,14 +54,13 @@ let temp = 0;
 
 type IWindow = {
   setVisible(t: boolean): void;
-  orgdiv: string;
-  number: string;
+  reference_key: string;
 };
 const topHeight = 10;
 const bottomHeight = 55;
 const leftOverHeight = (topHeight + bottomHeight) / 2;
 let targetRowIndex: null | number = null;
-const SignWindow = ({ setVisible, orgdiv, number }: IWindow) => {
+const SignWindow = ({ setVisible, reference_key }: IWindow) => {
   const setLoading = useSetRecoilState(isLoading);
   const [pc, setPc] = useState("");
   const userId = UseGetValueFromSessionItem("user_id");
@@ -118,8 +117,7 @@ const SignWindow = ({ setVisible, orgdiv, number }: IWindow) => {
     process([], tempState)
   );
   const [filters, setFilters] = useState({
-    orgdiv: orgdiv != undefined ? orgdiv : "",
-    meetingnum: number != undefined ? number : "",
+    reference_key: reference_key != undefined ? reference_key : "",
     isSearch: true,
     find_row_value: "",
     pgSize: PAGE_SIZE,
@@ -136,18 +134,12 @@ const SignWindow = ({ setVisible, orgdiv, number }: IWindow) => {
     let data: any;
     //조회조건 파라미터
     const parameters: Iparameters = {
-      procedureName: "pw6_sel_meeting",
+      procedureName: "pw6_sel_check_signature",
       pageNumber: filters.pgNum,
       pageSize: filters.pgSize,
       parameters: {
         "@p_work_type": "attendees",
-        "@p_orgdiv": filters.orgdiv,
-        "@p_meetingnum": filters.meetingnum,
-        "@p_from_date": "",
-        "@p_to_date": "",
-        "@p_custcd": "",
-        "@p_custnm": "",
-        "@p_contents": "",
+        "@p_reference_key": filters.reference_key,
         "@p_find_row_value": filters.find_row_value,
       },
     };
@@ -489,7 +481,7 @@ const SignWindow = ({ setVisible, orgdiv, number }: IWindow) => {
       [DATA_ITEM_KEY]: ++temp,
       is_lock: "N",
       rowstatus: "N",
-      reference_key: orgdiv+"_"+ number,
+      reference_key: reference_key,
       seq: 0,
       name: "",
       part: "",

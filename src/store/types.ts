@@ -490,4 +490,5 @@ export type TAttachmentType =
   | "record"
   | "task"
   | "meeting"
-  | "project";
+  | "project"
+  | "sharedDocument";
