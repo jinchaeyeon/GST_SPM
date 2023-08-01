@@ -184,8 +184,10 @@ AND use_yn = 'Y'`;
 
 const DATA_ITEM_KEY = "document_id";
 const DATA_ITEM_KEY2 = "find_key";
+const DATA_ITEM_KEY3 = "find_key";
 let targetRowIndex: null | number = null;
 let targetRowIndex2: null | number = null;
+let targetRowIndex3: null | number = null;
 
 const ListRadioContext = createContext<{
   listRadioItems: any;
@@ -228,12 +230,16 @@ const App = () => {
   const userName = loginResult ? loginResult.userName : "";
   let gridRef: any = useRef(null);
   let gridRef2: any = useRef(null);
+  let gridRef3: any = useRef(null);
   const idGetter = getter(DATA_ITEM_KEY);
   const idGetter2 = getter(DATA_ITEM_KEY2);
+  const idGetter3 = getter(DATA_ITEM_KEY2);
 
   const initialPageState = { skip: 0, take: PAGE_SIZE };
   const [page, setPage] = useState(initialPageState);
   const [page2, setPage2] = useState(initialPageState);
+  const [page3, setPage3] = useState(initialPageState);
+
   const pageChange = (event: GridPageChangeEvent) => {
     const { page } = event;
 
@@ -263,7 +269,20 @@ const App = () => {
       take: initialPageState.take,
     });
   };
+  const pageChange3 = (event: GridPageChangeEvent) => {
+    const { page } = event;
 
+    setFilters((prev) => ({
+      ...prev,
+      pgNum: Math.floor(page.skip / initialPageState.take) + 1,
+      isSearch: true,
+    }));
+
+    setPage3({
+      skip: page.skip,
+      take: initialPageState.take,
+    });
+  };
   const [filter, setFilter] = useState<FilterDescriptor>();
   const [filter2, setFilter2] = useState<FilterDescriptor>();
   const [filter3, setFilter3] = useState<FilterDescriptor>();
@@ -275,6 +294,10 @@ const App = () => {
   const [filter9, setFilter9] = useState<FilterDescriptor>();
   const [filter10, setFilter10] = useState<FilterDescriptor>();
   const [filter11, setFilter11] = useState<FilterDescriptor>();
+  const [filter12, setFilter12] = useState<FilterDescriptor>();
+  const [filter13, setFilter13] = useState<FilterDescriptor>();
+  const [filter14, setFilter14] = useState<FilterDescriptor>();
+  const [filter15, setFilter15] = useState<FilterDescriptor>();
 
   const handleFilterChange = (event: ComboBoxFilterChangeEvent) => {
     if (event) {
@@ -331,6 +354,26 @@ const App = () => {
       setFilter11(event.filter);
     }
   };
+  const handleFilterChange12 = (event: ComboBoxFilterChangeEvent) => {
+    if (event) {
+      setFilter12(event.filter);
+    }
+  };
+  const handleFilterChange13 = (event: ComboBoxFilterChangeEvent) => {
+    if (event) {
+      setFilter13(event.filter);
+    }
+  };
+  const handleFilterChange14 = (event: ComboBoxFilterChangeEvent) => {
+    if (event) {
+      setFilter14(event.filter);
+    }
+  };
+  const handleFilterChange15 = (event: ComboBoxFilterChangeEvent) => {
+    if (event) {
+      setFilter15(event.filter);
+    }
+  };
   const [tabSelected, setTabSelected] = useState(0);
   const handleSelectTab = (e: any) => {
     setTabSelected(e.selected);
@@ -358,6 +401,10 @@ const App = () => {
         pgNum: 1,
         isSearch: true,
       });
+      setPage({
+        skip: 0,
+        take: initialPageState.take,
+      });
     } else if (e.selected == 1) {
       setFilters({
         workType: "project",
@@ -377,6 +424,34 @@ const App = () => {
         pgSize: PAGE_SIZE,
         pgNum: 1,
         isSearch: true,
+      });
+      setPage2({
+        skip: 0,
+        take: initialPageState.take,
+      });
+    } else if (e.selected == 2) {
+      setFilters({
+        workType: "meeting",
+        date_type: { sub_code: "A", code_name: "회의일" },
+        fromDate: fromDate,
+        toDate: new Date(),
+        custnm: "",
+        value_code3: { sub_code: "", code_name: "" },
+        contents: "",
+        status: [{ sub_code: "N", code_name: "미완료", code: "N" }],
+        reception_person: { user_id: "", user_name: "" },
+        receptionist: { user_id: userId, user_name: userName },
+        worker: { user_id: "", user_name: "" },
+        reception_type: { sub_code: "", code_name: "" },
+        user_name: { user_id: "", user_name: "" },
+        findRowValue: "",
+        pgSize: PAGE_SIZE,
+        pgNum: 1,
+        isSearch: true,
+      });
+      setPage3({
+        skip: 0,
+        take: initialPageState.take,
       });
     }
     setIsVisableDetail(true);
@@ -424,6 +499,11 @@ const App = () => {
     { sub_code: "D", code_name: "최종점검일" },
     { sub_code: "E", code_name: "사업종료일" },
     { sub_code: "%", code_name: "전체" },
+  ];
+  const dateTypeData3 = [
+    { sub_code: "A", code_name: "회의일" },
+    { sub_code: "B", code_name: "요청일" },
+    { sub_code: "C", code_name: "완료예정일" },
   ];
   const [lvlItems, setlvlItems] = useState([
     {
@@ -474,16 +554,25 @@ const App = () => {
   const [mainDataState2, setMainDataState2] = useState<State>({
     sort: [],
   });
+  const [mainDataState3, setMainDataState3] = useState<State>({
+    sort: [],
+  });
   const [mainDataResult, setMainDataResult] = useState<DataResult>(
     process([], mainDataState)
   );
   const [mainDataResult2, setMainDataResult2] = useState<DataResult>(
     process([], mainDataState2)
   );
+  const [mainDataResult3, setMainDataResult3] = useState<DataResult>(
+    process([], mainDataState3)
+  );
   const [selectedState, setSelectedState] = useState<{
     [id: string]: boolean | number[];
   }>({});
   const [selectedState2, setSelectedState2] = useState<{
+    [id: string]: boolean | number[];
+  }>({});
+  const [selectedState3, setSelectedState3] = useState<{
     [id: string]: boolean | number[];
   }>({});
 
@@ -796,7 +885,7 @@ const App = () => {
     } catch (error) {
       data = null;
     }
-    console.log(data);
+
     if (data.isSuccess === true) {
       const totalRowCnt = data.tables[0].TotalRowCount;
       const rows = data.tables[0].Rows;
@@ -861,6 +950,125 @@ const App = () => {
     setLoading(false);
   };
 
+  //그리드 데이터 조회
+  const fetchMainGrid3 = async (filters: any) => {
+    let data: any;
+    setLoading(true);
+
+    const status =
+      filters.status.length == 0
+        ? "Y|N"
+        : filters.status.length == 1
+        ? filters.status[0].sub_code
+        : getName(filters.status);
+
+    //조회조건 파라미터
+    const parameters: Iparameters = {
+      procedureName: "pw6_sel_task_order",
+      pageNumber: filters.pgNum,
+      pageSize: filters.pgSize,
+      parameters: {
+        "@p_work_type": filters.workType,
+        "@p_date_type": filters.date_type.sub_code,
+        "@p_from_date": convertDateToStr(filters.fromDate),
+        "@p_to_date": convertDateToStr(filters.toDate),
+        "@p_customer_code": "",
+        "@p_customer_name": filters.custnm,
+        "@p_user_name":
+          filters.user_name != null ? filters.user_name.user_id : "",
+        "@p_contents": filters.contents,
+        "@p_reception_type":
+          filters.reception_type != null ? filters.reception_type.sub_code : "",
+        "@p_value_code3":
+          filters.value_code3 != null ? filters.value_code3.sub_code : "",
+        "@p_reception_person":
+          filters.reception_person != null
+            ? filters.reception_person.user_id
+            : "",
+        "@p_worker": filters.worker != null ? filters.worker.user_id : "",
+        "@p_receptionist":
+          filters.receptionist != null ? filters.receptionist.user_id : "",
+        "@p_status": status,
+        "@p_check": "",
+        "@p_ref_type": "",
+        "@p_ref_key": "",
+        "@p_ref_seq": 0,
+      },
+    };
+    try {
+      data = await processApi<any>("procedure", parameters);
+    } catch (error) {
+      data = null;
+    }
+    console.log(data);
+    if (data.isSuccess === true) {
+      const totalRowCnt = data.tables[0].TotalRowCount;
+      const rows = data.tables[0].Rows;
+
+      if (filters.findRowValue !== "") {
+        // find_row_value 행으로 스크롤 이동
+        if (gridRef3.current) {
+          const findRowIndex = rows.findIndex(
+            (row: any) => row[DATA_ITEM_KEY3] == filters.findRowValue
+          );
+          targetRowIndex3 = findRowIndex;
+        }
+
+        // find_row_value 데이터가 존재하는 페이지로 설정
+        setPage3({
+          skip: PAGE_SIZE * (data.pageNumber - 1),
+          take: PAGE_SIZE,
+        });
+      } else {
+        // 첫번째 행으로 스크롤 이동
+        if (gridRef3.current) {
+          targetRowIndex3 = 0;
+        }
+      }
+
+      setMainDataResult3((prev) => {
+        return {
+          data: rows,
+          total: totalRowCnt == -1 ? 0 : totalRowCnt,
+        };
+      });
+
+      if (totalRowCnt > 0) {
+        const selectedRow =
+          filters.findRowValue == ""
+            ? rows[0]
+            : rows.find(
+                (row: any) => row[DATA_ITEM_KEY3] == filters.findRowValue
+              );
+
+        if (selectedRow != undefined) {
+          setSelectedState3({ [selectedRow[DATA_ITEM_KEY3]]: true });
+
+          fetchDocument("Meeting", selectedRow.document_id);
+        } else {
+          setSelectedState3({ [rows[0][DATA_ITEM_KEY3]]: true });
+
+          fetchDocument("Meeting", selectedRow.document_id);
+        }
+      } else {
+        fetchDocument("", "");
+      }
+    } else {
+      console.log("[오류 발생]");
+      console.log(data);
+    }
+    // 필터 isSearch false처리, pgNum 세팅
+    setFilters((prev) => ({
+      ...prev,
+      pgNum:
+        data && data.hasOwnProperty("pageNumber")
+          ? data.pageNumber
+          : prev.pgNum,
+      isSearch: false,
+    }));
+    setLoading(false);
+  };
+
   const fetchDocument = async (type: string, ref_key: string) => {
     let data: any;
     setLoading(true);
@@ -901,6 +1109,8 @@ const App = () => {
         fetchMainGrid(deepCopiedFilters);
       } else if (tabSelected == 1) {
         fetchMainGrid2(deepCopiedFilters);
+      } else if (tabSelected == 2) {
+        fetchMainGrid3(deepCopiedFilters);
       }
     }
   }, [filters]);
@@ -921,17 +1131,31 @@ const App = () => {
     }
   }, [mainDataResult2]);
 
+  //메인 그리드 데이터 변경 되었을 때
+  useEffect(() => {
+    if (targetRowIndex3 !== null && gridRef3.current) {
+      gridRef3.current.scrollIntoView({ rowIndex: targetRowIndex3 });
+      targetRowIndex3 = null;
+    }
+  }, [mainDataResult3]);
+
   const onMainSortChange = (e: any) => {
     setMainDataState((prev) => ({ ...prev, sort: e.sort }));
   };
   const onMainSortChange2 = (e: any) => {
     setMainDataState2((prev) => ({ ...prev, sort: e.sort }));
   };
+  const onMainSortChange3 = (e: any) => {
+    setMainDataState3((prev) => ({ ...prev, sort: e.sort }));
+  };
   const onMainDataStateChange = (event: GridDataStateChangeEvent) => {
     setMainDataState(event.dataState);
   };
   const onMainDataStateChange2 = (event: GridDataStateChangeEvent) => {
     setMainDataState2(event.dataState);
+  };
+  const onMainDataStateChange3 = (event: GridDataStateChangeEvent) => {
+    setMainDataState3(event.dataState);
   };
 
   const onSelectionChange = (event: GridSelectionChangeEvent) => {
@@ -955,6 +1179,20 @@ const App = () => {
     });
     setSelectedState2(newSelectedState);
   };
+  const onSelectionChange3 = (event: GridSelectionChangeEvent) => {
+    const newSelectedState = getSelectedState({
+      event,
+      selectedState: selectedState3,
+      dataItemKey: DATA_ITEM_KEY3,
+    });
+    setSelectedState3(newSelectedState);
+
+    const selectedIdx = event.startRowIndex;
+    const selectedRowData = event.dataItems[selectedIdx];
+
+    fetchDocument("Meeting", selectedRowData.document_id);
+  };
+
   const search = () => {
     if (
       filters.date_type == null ||
@@ -965,6 +1203,7 @@ const App = () => {
     } else {
       setPage(initialPageState); // 페이지 초기화
       setPage2(initialPageState); // 페이지 초기화
+      setPage3(initialPageState); // 페이지 초기화
       setHtmlOnEditor({ document: "" });
       setFilters((prev) => ({
         ...prev,
@@ -1033,19 +1272,39 @@ const App = () => {
       </td>
     );
   };
-
+  const mainTotalFooterCell3 = (props: GridFooterCellProps) => {
+    var parts = mainDataResult3.total.toString().split(".");
+    return (
+      <td colSpan={props.colSpan} style={props.style}>
+        총
+        {mainDataResult3.total == -1
+          ? 0
+          : parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",") +
+            (parts[1] ? "." + parts[1] : "")}
+        건
+      </td>
+    );
+  };
   const [isVisibleDetail, setIsVisableDetail] = useState(true);
+  const [isVisibleDetail2, setIsVisableDetail2] = useState(true);
 
   const [reception_attach_number, setReception_attach_number] =
     useState<string>("");
   const [attachmentsWindowVisible, setAttachmentsWindowVisible] =
     useState<boolean>(false);
+  const [attachmentsWindowVisible2, setAttachmentsWindowVisible2] =
+    useState<boolean>(false);
   const onAttWndClick = () => {
     setAttachmentsWindowVisible(true);
+  };
+  const onAttWndClick2 = () => {
+    setAttachmentsWindowVisible2(true);
   };
   const [TaskOrderWindowVisible, setTaskOrderWindowVisible] =
     useState<boolean>(false);
   const [TaskOrderWindowVisible2, setTaskOrderWindowVisible2] =
+    useState<boolean>(false);
+  const [TaskOrderWindowVisible3, setTaskOrderWindowVisible3] =
     useState<boolean>(false);
   const onTaskOrderWndClick = () => {
     if (
@@ -1067,6 +1326,18 @@ const App = () => {
       )[0] != undefined
     ) {
       setTaskOrderWindowVisible2(true);
+    } else {
+      alert("데이터가 없습니다.");
+    }
+  };
+  const onTaskOrderWndClick3 = () => {
+    if (
+      mainDataResult3.data.filter(
+        (item) =>
+          item[DATA_ITEM_KEY3] == Object.getOwnPropertyNames(selectedState3)[0]
+      )[0] != undefined
+    ) {
+      setTaskOrderWindowVisible3(true);
     } else {
       alert("데이터가 없습니다.");
     }
@@ -1942,6 +2213,383 @@ const App = () => {
             </GridContainerWrap>
           </TabStripTab>
           <TabStripTab title="회의록 참조">
+            <GridContainerWrap>
+              <GridContainer width={`15%`}>
+                <GridTitleContainer>
+                  <GridTitle>조회조건</GridTitle>
+                </GridTitleContainer>
+                <FilterBoxWrap>
+                  <FilterBox
+                    onKeyPress={(e) => handleKeyPressSearch(e, search)}
+                  >
+                    <tbody>
+                      <tr>
+                        <th style={{ width: "50%" }}>
+                          <MultiColumnComboBox
+                            name="date_type"
+                            data={
+                              filter12
+                                ? filterBy(dateTypeData3, filter12)
+                                : dateTypeData3
+                            }
+                            value={filters.date_type}
+                            columns={dataTypeColumns}
+                            textField={"code_name"}
+                            onChange={filterComboBoxChange}
+                            className="required"
+                            filterable={true}
+                            onFilterChange={handleFilterChange12}
+                            style={{ width: "100%" }}
+                          />
+                        </th>
+                        <td colSpan={3}>
+                          <CommonDateRangePicker
+                            value={{
+                              start: filters.fromDate,
+                              end: filters.toDate,
+                            }}
+                            onChange={(e: {
+                              value: { start: any; end: any };
+                            }) =>
+                              setFilters((prev) => ({
+                                ...prev,
+                                fromDate: e.value.start,
+                                toDate: e.value.end,
+                              }))
+                            }
+                            style={{ display: "inline-block" }}
+                            className="required"
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>완료여부</th>
+                        <td>
+                          <MultiSelect
+                            name="status"
+                            data={statusListData2}
+                            onChange={filterMultiSelectChange}
+                            value={filters.status}
+                            textField="code_name"
+                            dataItemKey="sub_code"
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>제목 및 내용</th>
+                        <td>
+                          <Input
+                            name="contents"
+                            type="text"
+                            value={filters.contents}
+                            onChange={filterInputChange}
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>접수담당자</th>
+                        <td>
+                          <MultiColumnComboBox
+                            name="receptionist"
+                            data={
+                              filter13
+                                ? filterBy(usersData, filter13)
+                                : usersData
+                            }
+                            value={filters.receptionist}
+                            columns={userColumns}
+                            textField={"user_name"}
+                            onChange={filterComboBoxChange}
+                            filterable={true}
+                            onFilterChange={handleFilterChange13}
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>처리담당자</th>
+                        <td>
+                          <MultiColumnComboBox
+                            name="worker"
+                            data={
+                              filter14
+                                ? filterBy(usersData, filter14)
+                                : usersData
+                            }
+                            value={filters.worker}
+                            columns={userColumns}
+                            textField={"user_name"}
+                            onChange={filterComboBoxChange}
+                            filterable={true}
+                            onFilterChange={handleFilterChange14}
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>업체명</th>
+                        <td>
+                          <Input
+                            name="custnm"
+                            type="text"
+                            value={filters.custnm}
+                            onChange={filterInputChange}
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>Value 구분</th>
+                        <td>
+                          <MultiColumnComboBox
+                            name="value_code3"
+                            data={
+                              filter15
+                                ? filterBy(valuecodeItems, filter15)
+                                : valuecodeItems
+                            }
+                            value={filters.value_code3}
+                            columns={dataTypeColumns2}
+                            textField={"code_name"}
+                            onChange={filterComboBoxChange}
+                            filterable={true}
+                            onFilterChange={handleFilterChange15}
+                          />
+                        </td>
+                      </tr>
+                    </tbody>
+                  </FilterBox>
+                </FilterBoxWrap>
+              </GridContainer>
+              <GridContainer width={`calc(85% - ${GAP}px)`}>
+                {isVisibleDetail2 && (
+                  <GridContainer>
+                    <GridTitleContainer>
+                      <GridTitle>회의록 요구사항 리스트</GridTitle>
+                      <ButtonContainer>
+                        <Button
+                          icon={"pencil"}
+                          name="task_order"
+                          onClick={onTaskOrderWndClick3}
+                          themeColor={"primary"}
+                        >
+                          업무지시
+                        </Button>
+                      </ButtonContainer>
+                    </GridTitleContainer>
+                    <Grid
+                      style={{ height: `35vh` }}
+                      data={process(
+                        mainDataResult3.data.map((row) => ({
+                          ...row,
+                          client_name: usersData.find(
+                            (items: any) => items.user_id == row.client_name
+                          )?.user_name,
+                          value_code3: valuecodeItems.find(
+                            (items: any) => items.sub_code == row.value_code3
+                          )?.code_name,
+                          is_finished:
+                            row.is_finished == "Y"
+                              ? true
+                              : row.is_finished == "N"
+                              ? false
+                              : row.is_finished,
+                          exists_task:
+                            row.exists_task == "Y"
+                              ? true
+                              : row.exists_task == "N"
+                              ? false
+                              : row.exists_task,
+                          [SELECTED_FIELD]: selectedState3[idGetter3(row)],
+                        })),
+                        mainDataState3
+                      )}
+                      {...mainDataState3}
+                      onDataStateChange={onMainDataStateChange3}
+                      //선택 기능
+                      dataItemKey={DATA_ITEM_KEY3}
+                      selectedField={SELECTED_FIELD}
+                      selectable={{
+                        enabled: true,
+                        mode: "single",
+                      }}
+                      onSelectionChange={onSelectionChange3}
+                      //스크롤 조회 기능
+                      fixedScroll={true}
+                      total={mainDataResult3.total}
+                      skip={page3.skip}
+                      take={page3.take}
+                      pageable={true}
+                      onPageChange={pageChange3}
+                      //원하는 행 위치로 스크롤 기능
+                      ref={gridRef3}
+                      rowHeight={30}
+                      //정렬기능
+                      sortable={true}
+                      onSortChange={onMainSortChange3}
+                      //컬럼순서조정
+                      reorderable={true}
+                      //컬럼너비조정
+                      resizable={true}
+                    >
+                      <GridColumn
+                        field="is_finished"
+                        title="완료"
+                        width={50}
+                        cell={CheckBoxReadOnlyCell}
+                        footerCell={mainTotalFooterCell3}
+                      />
+                      <GridColumn
+                        field="exists_task"
+                        title="지시"
+                        width={50}
+                        cell={CheckBoxReadOnlyCell}
+                      />
+                      <GridColumn
+                        field="recdt"
+                        title="회의일"
+                        width={120}
+                        cell={DateCell}
+                      />
+                      <GridColumn field="custnm" title="업체" width={200} />
+                      <GridColumn
+                        field="contents"
+                        title="내용(요구사항)"
+                        width={500}
+                      />
+                      <GridColumn
+                        field="finexpdt"
+                        title="완료예정일"
+                        width={120}
+                        cell={DateCell}
+                      />
+                      <GridColumn
+                        field="reqdt"
+                        title="요청일"
+                        width={120}
+                        cell={DateCell}
+                      />
+                      <GridColumn
+                        field="value_code3"
+                        title="Value 구분"
+                        width={150}
+                      />
+                      <GridColumn
+                        field="client_name"
+                        title="고객담당자"
+                        width={120}
+                      />
+                      <GridColumn
+                        field="client_finexpdt"
+                        title="고객완료예정일"
+                        width={120}
+                        cell={DateCell}
+                      />
+                      <GridColumn
+                        field="find_key"
+                        title="회의록번호"
+                        width={200}
+                      />
+                    </Grid>
+                  </GridContainer>
+                )}
+                <GridContainer
+                  style={{
+                    marginTop: isVisibleDetail2 ? "10px" : "",
+                    height: isVisibleDetail2 ? "42.5vh" : "82vh",
+                  }}
+                >
+                  <GridTitleContainer>
+                    <GridTitle>
+                      <Button
+                        themeColor={"primary"}
+                        fillMode={"flat"}
+                        icon={isVisibleDetail2 ? "chevron-up" : "chevron-down"}
+                        onClick={() => setIsVisableDetail2((prev) => !prev)}
+                      ></Button>
+                      회의 참고 자료
+                    </GridTitle>
+                    {isVisibleDetail2 ? (
+                      ""
+                    ) : (
+                      <ButtonContainer>
+                        <Button
+                          icon={"pencil"}
+                          name="task_order"
+                          onClick={onTaskOrderWndClick3}
+                          themeColor={"primary"}
+                        >
+                          업무지시
+                        </Button>
+                      </ButtonContainer>
+                    )}
+                  </GridTitleContainer>
+                  <FormBoxWrap border={true}>
+                    <FormBox>
+                      <tbody>
+                        <tr>
+                          <th style={{ width: "5%" }}>회의 제목</th>
+                          <td>
+                            <Input
+                              name="title"
+                              type="text"
+                              value={
+                                mainDataResult3.data.filter(
+                                  (item) =>
+                                    item[DATA_ITEM_KEY3] ==
+                                    Object.getOwnPropertyNames(
+                                      selectedState3
+                                    )[0]
+                                )[0] == undefined
+                                  ? ""
+                                  : mainDataResult3.data.filter(
+                                      (item) =>
+                                        item[DATA_ITEM_KEY3] ==
+                                        Object.getOwnPropertyNames(
+                                          selectedState3
+                                        )[0]
+                                    )[0].title
+                              }
+                              className="readonly"
+                            />
+                          </td>
+                          <th style={{ width: "5%" }}>첨부파일</th>
+                          <td>
+                            <Input
+                              name="files"
+                              type="text"
+                              value={
+                                mainDataResult3.data.filter(
+                                  (item) =>
+                                    item[DATA_ITEM_KEY3] ==
+                                    Object.getOwnPropertyNames(
+                                      selectedState3
+                                    )[0]
+                                )[0] == undefined
+                                  ? ""
+                                  : mainDataResult3.data.filter(
+                                      (item) =>
+                                        item[DATA_ITEM_KEY3] ==
+                                        Object.getOwnPropertyNames(
+                                          selectedState3
+                                        )[0]
+                                    )[0].files
+                              }
+                              className="readonly"
+                            />
+                            <ButtonInGridInput>
+                              <Button
+                                onClick={onAttWndClick2}
+                                icon="more-horizontal"
+                                fillMode="flat"
+                              />
+                            </ButtonInGridInput>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </FormBox>
+                  </FormBoxWrap>
+                  <RichEditor id="docEditor" ref={docEditorRef} hideTools />
+                </GridContainer>
+              </GridContainer>
+            </GridContainerWrap>
           </TabStripTab>
         </TabStrip>
       </GridContainerWrap>
@@ -1963,6 +2611,27 @@ const App = () => {
           }
           permission={{ upload: false, download: true, delete: false }}
           type={"question"}
+          modal={true}
+        />
+      )}
+      {attachmentsWindowVisible2 && (
+        <AttachmentsWindow
+          setVisible={setAttachmentsWindowVisible2}
+          para={
+            mainDataResult3.data.filter(
+              (item) =>
+                item[DATA_ITEM_KEY3] ==
+                Object.getOwnPropertyNames(selectedState3)[0]
+            )[0] == undefined
+              ? ""
+              : mainDataResult3.data.filter(
+                  (item) =>
+                    item[DATA_ITEM_KEY3] ==
+                    Object.getOwnPropertyNames(selectedState3)[0]
+                )[0].attdatnum
+          }
+          permission={{ upload: false, download: true, delete: false }}
+          type={"meeting"}
           modal={true}
         />
       )}
@@ -1990,7 +2659,7 @@ const App = () => {
               isSearch: true,
             }));
           }}
-          modal = {true}
+          modal={true}
         />
       )}
       {TaskOrderWindowVisible2 && (
@@ -2017,7 +2686,34 @@ const App = () => {
               isSearch: true,
             }));
           }}
-          modal = {true}
+          modal={true}
+        />
+      )}
+      {TaskOrderWindowVisible3 && (
+        <TaskOrderWindow
+          setVisible={setTaskOrderWindowVisible3}
+          para={
+            mainDataResult3.data.filter(
+              (item) =>
+                item[DATA_ITEM_KEY3] ==
+                Object.getOwnPropertyNames(selectedState3)[0]
+            )[0] == undefined
+              ? {}
+              : mainDataResult3.data.filter(
+                  (item) =>
+                    item[DATA_ITEM_KEY3] ==
+                    Object.getOwnPropertyNames(selectedState3)[0]
+                )[0]
+          }
+          type={"회의록"}
+          reload={() => {
+            setFilters((prev) => ({
+              ...prev,
+              findRowValue: Object.getOwnPropertyNames(selectedState3)[0],
+              isSearch: true,
+            }));
+          }}
+          modal={true}
         />
       )}
     </>

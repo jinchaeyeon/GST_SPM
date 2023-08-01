@@ -32,7 +32,6 @@ import {
 import {
   DEFAULT_ATTDATNUMS,
   EDIT_FIELD,
-  PAGE_SIZE,
   SELECTED_FIELD,
 } from "../../CommonString";
 import { useRecoilState, useSetRecoilState } from "recoil";
@@ -48,7 +47,6 @@ import NumberCell from "../../Cells/NumberCell";
 import RequiredHeader from "../../RequiredHeader";
 import RichEditor from "../../RichEditor";
 import { bytesToBase64 } from "byte-base64";
-import { files } from "@progress/kendo-react-upload/dist/npm/messages";
 import ComboBoxCell from "../../Cells/ComboBoxCell";
 import {
   dataTypeColumns,
@@ -57,9 +55,6 @@ import {
 } from "../../../store/columns/common-columns";
 import AttachmentsWindow from "./AttachmentsWindow";
 import CheckBoxReadOnlyCell from "../../Cells/CheckBoxReadOnlyCell";
-import CheckBoxCell from "../../Cells/CheckBoxCell";
-import { Checkbox } from "@progress/kendo-react-inputs";
-import { text } from "node:stream/consumers";
 
 type IKendoWindow = {
   setVisible(t: boolean): void;
@@ -516,10 +511,18 @@ const KendoWindow = ({
               ? para.ref_number
               : type == "프로젝트"
               ? para.devmngnum
+              : type == "회의록"
+              ? para.devmngnum
               : ""
             : "",
         "@p_ref_seq":
-          para != undefined ? (type == "프로젝트" ? para.devmngseq : 0) : 0,
+          para != undefined
+            ? type == "프로젝트"
+              ? para.devmngseq
+              : type == "회의록"
+              ? para.devmngseq
+              : 0
+            : 0,
       },
     };
 
@@ -536,9 +539,7 @@ const KendoWindow = ({
         guid: item.guid == undefined || item.guid == "" ? uuidv4() : item.guid,
       }));
 
-      rows.map((item: { orgdiv: string; docunum: string }) => {
-        fetchDocument("Task", item.orgdiv + "_" + item.docunum, item);
-      });
+      console.log(rows);
       setMainDataResult((prev) => {
         return {
           data: rows,
@@ -549,7 +550,13 @@ const KendoWindow = ({
       if (totalRowCnt > 0) {
         setSelectedState({ [rows[0][DATA_ITEM_KEY]]: true });
 
-        fetchDocument("Task", rows[0].orgdiv + "_" + rows[0].docunum, rows[0]);
+        for (var i = rows.length - 1; i >= 0; i--) {
+          fetchDocument(
+            "Task",
+            rows[i].orgdiv + "_" + rows[i].docunum,
+            rows[i]
+          );
+        }
       } else {
         if (refEditorRef.current) {
           refEditorRef.current.setHtml("");
@@ -946,8 +953,16 @@ const KendoWindow = ({
           ? para.ref_number
           : type == "프로젝트"
           ? para.devmngnum
+          : type == "회의록"
+          ? para.devmngnum
           : "",
-      ref_seq: type == "프로젝트" ? para.devmngseq : 0,
+      ref_seq: para != undefined
+      ? type == "프로젝트"
+        ? para.devmngseq
+        : type == "회의록"
+        ? para.devmngseq
+        : 0
+      : 0,
       ref_type: type == undefined ? "" : type,
       remark: "",
       value_code3: "",
