@@ -53,9 +53,9 @@ import {
   dataTypeColumns2,
   userColumns,
 } from "../../../store/columns/common-columns";
-import AttachmentsWindow from "./AttachmentsWindow";
 import PopUpAttachmentsWindow from "./PopUpAttachmentsWindow";
 import CheckBoxReadOnlyCell from "../../Cells/CheckBoxReadOnlyCell";
+import ErrorWindow from "./ErrorWindow";
 
 type IKendoWindow = {
   setVisible(t: boolean): void;
@@ -238,7 +238,7 @@ const FilesCell = (props: GridCellProps) => {
 
   const getAttachmentsData = (data: IAttachmentData) => {
     setAttdatnum(data.attdatnum);
-    if(data.rowCount == 0) {
+    if (data.rowCount == 0) {
       setAttach_exists("N");
     } else {
       setAttach_exists("Y");
@@ -294,7 +294,7 @@ const KendoWindow = ({
     const convertedQueryStr = bytesToBase64(bytes(str));
 
     let query = {
-      query: convertedQueryStr,
+      query: convertedQueryStr
     };
 
     try {
@@ -915,7 +915,10 @@ const KendoWindow = ({
 
   const [attdatnum, setAttdatnum] = useState<string>("");
   const [attach_exists, setAttach_exists] = useState<string>("");
-
+  const [errorWindowVisible, setErrorWindowVisible] = useState<boolean>(false);
+  const onErrorWndClick = () => {
+    setErrorWindowVisible(true);
+  };
   useEffect(() => {
     if (attdatnum != "" && attdatnum != undefined && attdatnum != null) {
       setUnsavedAttadatnums((prev) => ({
@@ -930,14 +933,14 @@ const KendoWindow = ({
             ...item,
             rowstatus: item.rowstatus == "N" ? "N" : "U",
             attdatnum: attach_exists == "N" ? "" : attdatnum,
-            attach_exists: attach_exists
+            attach_exists: attach_exists,
           }
         : {
             ...item,
           }
     );
 
-    if(attach_exists == "N") {
+    if (attach_exists == "N") {
       setAttdatnum("");
     }
     setMainDataResult((prev) => {
@@ -1635,6 +1638,12 @@ const KendoWindow = ({
           <GridTitle>업무지시</GridTitle>
           <ButtonContainer>
             <Button
+              onClick={onErrorWndClick}
+              themeColor={"primary"}
+              icon="gear"
+              title="불량 팝업"
+            ></Button>
+            <Button
               onClick={onAddClick}
               themeColor={"primary"}
               icon="plus"
@@ -1749,7 +1758,7 @@ const KendoWindow = ({
                   />
                   <GridColumn
                     field="expmm"
-                    title="예상(H)"
+                    title="예상(M)"
                     width={80}
                     cell={NumberCell}
                   />
@@ -1822,6 +1831,27 @@ const KendoWindow = ({
           </Button>
         </ButtonContainer>
       </BottomContainer>
+      {errorWindowVisible && (
+        <ErrorWindow
+          setVisible={setErrorWindowVisible}
+          para={
+            mainDataResult.data.filter(
+              (item) =>
+                item[DATA_ITEM_KEY] ==
+                Object.getOwnPropertyNames(selectedState)[0]
+            )[0] == undefined
+              ? {}
+              : mainDataResult.data.filter(
+                  (item) =>
+                    item[DATA_ITEM_KEY] ==
+                    Object.getOwnPropertyNames(selectedState)[0]
+                )[0]
+          }
+          reload2={() => {
+            fetchMainGrid();
+          }}
+        />
+      )}
     </Window>
   );
 };

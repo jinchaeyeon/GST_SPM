@@ -496,7 +496,7 @@ const KendoWindow = ({
               ) === -1
             }
           />
-          <GridColumn field="realnm" title="파일명" width="600" />
+          <GridColumn field="realnm" title="파일명" width="500" />
           <GridColumn
             field="filesize"
             title="파일SIZE (byte)"

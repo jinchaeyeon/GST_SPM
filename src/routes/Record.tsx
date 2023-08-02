@@ -795,11 +795,11 @@ const App = () => {
       const totalRowCnt = data.tables[0].TotalRowCount;
       const rows = data.tables[0].Rows;
 
-      if (filters.find_row_value !== "") {
+      if (filters.findRowValue !== "") {
         // find_row_value 행으로 스크롤 이동
         if (gridRef.current) {
           const findRowIndex = rows.findIndex(
-            (row: any) => row[DATA_ITEM_KEY] == filters.find_row_value
+            (row: any) => row[DATA_ITEM_KEY] == filters.findRowValue
           );
           targetRowIndex = findRowIndex;
         }
@@ -825,10 +825,10 @@ const App = () => {
 
       if (totalRowCnt > 0) {
         const selectedRow =
-          filters.find_row_value == ""
+          filters.findRowValue == ""
             ? rows[0]
             : rows.find(
-                (row: any) => row[DATA_ITEM_KEY] == filters.find_row_value
+                (row: any) => row[DATA_ITEM_KEY] == filters.findRowValue
               );
 
         if (selectedRow != undefined) {
@@ -1858,7 +1858,7 @@ const App = () => {
             <FilterBox onKeyPress={(e) => handleKeyPressSearch(e, search)}>
               <tbody>
                 <tr>
-                <th style={{width: isMobile? "100%" : "50%"}}>
+                  <th style={{ width: isMobile ? "100%" : "50%" }}>
                     <MultiColumnComboBox
                       name="date_type"
                       data={
@@ -2296,567 +2296,567 @@ const App = () => {
             </ButtonContainer>
           </GridTitleContainer>
           <GridContainer height="80vh">
-          <TabStrip
-            style={{ width: "100%"}}
-            selected={tabSelected}
-            onSelect={handleSelectTab}
-          >
-            <TabStripTab title="지시 내용">
-              <GridContainer style={{ height: "75vh" }}>
-                <FormBoxWrap border={true}>
-                  <FormBox>
-                    <tbody>
-                      <tr>
-                        <th style={{ width: "5%" }}>비고</th>
-                        <td>
-                          <Input
-                            name="remark"
-                            type="text"
-                            value={
-                              mainDataResult.data.filter(
-                                (item) =>
-                                  item[DATA_ITEM_KEY] ==
-                                  Object.getOwnPropertyNames(selectedState)[0]
-                              )[0] == undefined
-                                ? ""
-                                : mainDataResult.data.filter(
-                                    (item) =>
-                                      item[DATA_ITEM_KEY] ==
-                                      Object.getOwnPropertyNames(
-                                        selectedState
-                                      )[0]
-                                  )[0].remark
-                            }
-                            className="readonly"
-                          />
-                        </td>
-                      </tr>
-                    </tbody>
-                  </FormBox>
-                </FormBoxWrap>
-                <RichEditor id="docEditor" ref={docEditorRef} hideTools />
-              </GridContainer>
-            </TabStripTab>
-            <TabStripTab
-              title="접수 내용"
-              disabled={
-                mainDataResult.data.filter(
-                  (item) =>
-                    item[DATA_ITEM_KEY] ==
-                    Object.getOwnPropertyNames(selectedState)[0]
-                )[0] == undefined
-                  ? true
-                  : mainDataResult.data.filter(
-                      (item) =>
-                        item[DATA_ITEM_KEY] ==
-                        Object.getOwnPropertyNames(selectedState)[0]
-                    )[0].ref_type == "접수"
-                  ? false
-                  : true
-              }
+            <TabStrip
+              style={{ width: "100%" }}
+              selected={tabSelected}
+              onSelect={handleSelectTab}
             >
-              <GridContainer style={{ height: "75vh" }}>
-                <FormBoxWrap border={true}>
-                  <FormBox>
-                    <tbody>
-                      <tr>
-                        <th style={{ width: "5%" }}>제목</th>
-                        <td colSpan={5}>
-                          <Input
-                            name="reception_title"
-                            type="text"
-                            value={
-                              mainDataResult.data.filter(
-                                (item) =>
-                                  item[DATA_ITEM_KEY] ==
-                                  Object.getOwnPropertyNames(selectedState)[0]
-                              )[0] == undefined
-                                ? ""
-                                : mainDataResult.data.filter(
-                                    (item) =>
-                                      item[DATA_ITEM_KEY] ==
-                                      Object.getOwnPropertyNames(
-                                        selectedState
-                                      )[0]
-                                  )[0].reception_title
-                            }
-                            className="readonly"
-                          />
-                        </td>
-                      </tr>
-                      <tr>
-                        <th style={{ width: "5%" }}>업체</th>
-                        <td>
-                          <Input
-                            name="custnm"
-                            type="text"
-                            value={
-                              mainDataResult.data.filter(
-                                (item) =>
-                                  item[DATA_ITEM_KEY] ==
-                                  Object.getOwnPropertyNames(selectedState)[0]
-                              )[0] == undefined
-                                ? ""
-                                : mainDataResult.data.filter(
-                                    (item) =>
-                                      item[DATA_ITEM_KEY] ==
-                                      Object.getOwnPropertyNames(
-                                        selectedState
-                                      )[0]
-                                  )[0].custnm
-                            }
-                            className="readonly"
-                          />
-                        </td>
-                        <th style={{ width: "5%" }}>문의자</th>
-                        <td>
-                          <Input
-                            name="custperson"
-                            type="text"
-                            value={
-                              mainDataResult.data.filter(
-                                (item) =>
-                                  item[DATA_ITEM_KEY] ==
-                                  Object.getOwnPropertyNames(selectedState)[0]
-                              )[0] == undefined
-                                ? ""
-                                : mainDataResult.data.filter(
-                                    (item) =>
-                                      item[DATA_ITEM_KEY] ==
-                                      Object.getOwnPropertyNames(
-                                        selectedState
-                                      )[0]
-                                  )[0].custperson
-                            }
-                            className="readonly"
-                          />
-                        </td>
-                      </tr>
-                      <tr>
-                        <th style={{ width: "5%" }}>문의번호</th>
-                        <td colSpan={3}>
-                          <Input
-                            name="reception_document_id"
-                            type="text"
-                            value={
-                              mainDataResult.data.filter(
-                                (item) =>
-                                  item[DATA_ITEM_KEY] ==
-                                  Object.getOwnPropertyNames(selectedState)[0]
-                              )[0] == undefined
-                                ? ""
-                                : mainDataResult.data.filter(
-                                    (item) =>
-                                      item[DATA_ITEM_KEY] ==
-                                      Object.getOwnPropertyNames(
-                                        selectedState
-                                      )[0]
-                                  )[0].reception_document_id
-                            }
-                            className="readonly"
-                          />
-                        </td>
-                      </tr>
-                    </tbody>
-                  </FormBox>
-                </FormBoxWrap>
-                <RichEditor id="docEditor2" ref={docEditorRef2} hideTools />
-                <FormBoxWrap border={true}>
-                  <FormBox>
-                    <tbody>
-                      <tr>
-                        <th style={{ width: "5%" }}>첨부파일</th>
-                        <td>
-                          <Input
-                            name="reception_files"
-                            type="text"
-                            value={
-                              mainDataResult.data.filter(
-                                (item) =>
-                                  item[DATA_ITEM_KEY] ==
-                                  Object.getOwnPropertyNames(selectedState)[0]
-                              )[0] == undefined
-                                ? ""
-                                : mainDataResult.data.filter(
-                                    (item) =>
-                                      item[DATA_ITEM_KEY] ==
-                                      Object.getOwnPropertyNames(
-                                        selectedState
-                                      )[0]
-                                  )[0].reception_files
-                            }
-                            className="readonly"
-                          />
-                          <ButtonInGridInput>
-                            <Button
-                              onClick={onAttWndClick}
-                              icon="more-horizontal"
-                              fillMode="flat"
+              <TabStripTab title="지시 내용">
+                <GridContainer style={{ height: "75vh" }}>
+                  <FormBoxWrap border={true}>
+                    <FormBox>
+                      <tbody>
+                        <tr>
+                          <th style={{ width: "5%" }}>비고</th>
+                          <td>
+                            <Input
+                              name="remark"
+                              type="text"
+                              value={
+                                mainDataResult.data.filter(
+                                  (item) =>
+                                    item[DATA_ITEM_KEY] ==
+                                    Object.getOwnPropertyNames(selectedState)[0]
+                                )[0] == undefined
+                                  ? ""
+                                  : mainDataResult.data.filter(
+                                      (item) =>
+                                        item[DATA_ITEM_KEY] ==
+                                        Object.getOwnPropertyNames(
+                                          selectedState
+                                        )[0]
+                                    )[0].remark
+                              }
+                              className="readonly"
                             />
-                          </ButtonInGridInput>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </FormBox>
-                </FormBoxWrap>
-              </GridContainer>
-            </TabStripTab>
-            <TabStripTab
-              title="답변 내용"
-              disabled={
-                mainDataResult.data.filter(
-                  (item) =>
-                    item[DATA_ITEM_KEY] ==
-                    Object.getOwnPropertyNames(selectedState)[0]
-                )[0] == undefined
-                  ? true
-                  : mainDataResult.data.filter(
-                      (item) =>
-                        item[DATA_ITEM_KEY] ==
-                        Object.getOwnPropertyNames(selectedState)[0]
-                    )[0].ref_type_full == "접수-문의"
-                  ? false
-                  : true
-              }
-            >
-              <GridContainer style={{ height: "75vh" }}>
-                <RichEditor id="docEditor3" ref={docEditorRef3} hideTools />
-                <FormBoxWrap border={true}>
-                  <FormBox>
-                    <tbody>
-                      <tr>
-                        <th style={{ width: "5%" }}>첨부파일</th>
-                        <td>
-                          <Input
-                            name="answer_files"
-                            type="text"
-                            value={
-                              mainDataResult.data.filter(
-                                (item) =>
-                                  item[DATA_ITEM_KEY] ==
-                                  Object.getOwnPropertyNames(selectedState)[0]
-                              )[0] == undefined
-                                ? ""
-                                : mainDataResult.data.filter(
-                                    (item) =>
-                                      item[DATA_ITEM_KEY] ==
-                                      Object.getOwnPropertyNames(
-                                        selectedState
-                                      )[0]
-                                  )[0].answer_files
-                            }
-                            className="readonly"
-                          />
-                          <ButtonInGridInput>
-                            <Button
-                              onClick={onAttWndClick2}
-                              icon="more-horizontal"
-                              fillMode="flat"
+                          </td>
+                        </tr>
+                      </tbody>
+                    </FormBox>
+                  </FormBoxWrap>
+                  <RichEditor id="docEditor" ref={docEditorRef} hideTools />
+                </GridContainer>
+              </TabStripTab>
+              <TabStripTab
+                title="접수 내용"
+                disabled={
+                  mainDataResult.data.filter(
+                    (item) =>
+                      item[DATA_ITEM_KEY] ==
+                      Object.getOwnPropertyNames(selectedState)[0]
+                  )[0] == undefined
+                    ? true
+                    : mainDataResult.data.filter(
+                        (item) =>
+                          item[DATA_ITEM_KEY] ==
+                          Object.getOwnPropertyNames(selectedState)[0]
+                      )[0].ref_type == "접수"
+                    ? false
+                    : true
+                }
+              >
+                <GridContainer style={{ height: "75vh" }}>
+                  <FormBoxWrap border={true}>
+                    <FormBox>
+                      <tbody>
+                        <tr>
+                          <th style={{ width: "5%" }}>제목</th>
+                          <td colSpan={5}>
+                            <Input
+                              name="reception_title"
+                              type="text"
+                              value={
+                                mainDataResult.data.filter(
+                                  (item) =>
+                                    item[DATA_ITEM_KEY] ==
+                                    Object.getOwnPropertyNames(selectedState)[0]
+                                )[0] == undefined
+                                  ? ""
+                                  : mainDataResult.data.filter(
+                                      (item) =>
+                                        item[DATA_ITEM_KEY] ==
+                                        Object.getOwnPropertyNames(
+                                          selectedState
+                                        )[0]
+                                    )[0].reception_title
+                              }
+                              className="readonly"
                             />
-                          </ButtonInGridInput>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </FormBox>
-                </FormBoxWrap>
-              </GridContainer>
-            </TabStripTab>
-            <TabStripTab
-              title="회의록 정보"
-              disabled={
-                mainDataResult.data.filter(
-                  (item) =>
-                    item[DATA_ITEM_KEY] ==
-                    Object.getOwnPropertyNames(selectedState)[0]
-                )[0] == undefined
-                  ? true
-                  : mainDataResult.data.filter(
-                      (item) =>
-                        item[DATA_ITEM_KEY] ==
-                        Object.getOwnPropertyNames(selectedState)[0]
-                    )[0].ref_type_full == "회의록"
-                  ? false
-                  : true
-              }
-            >
-              <GridContainer style={{ height: "75vh" }}>
-                <GridTitleContainer>
-                  <GridTitle>회의록 내용(요구사항)</GridTitle>
-                </GridTitleContainer>
-                <FormBoxWrap border={true}>
-                  <FormBox>
-                    <tbody>
-                      <tr>
-                        <th style={{ width: "5%" }}>내용</th>
-                        <td colSpan={3}>
-                          <Input
-                            name="meeting_contents"
-                            type="text"
-                            value={
-                              mainDataResult.data.filter(
-                                (item) =>
-                                  item[DATA_ITEM_KEY] ==
-                                  Object.getOwnPropertyNames(selectedState)[0]
-                              )[0] == undefined
-                                ? ""
-                                : mainDataResult.data.filter(
-                                    (item) =>
-                                      item[DATA_ITEM_KEY] ==
-                                      Object.getOwnPropertyNames(
-                                        selectedState
-                                      )[0]
-                                  )[0].meeting_contents
-                            }
-                            className="readonly"
-                          />
-                        </td>
-                      </tr>
-                      <tr>
-                        <th style={{ width: "5%" }}>요청일</th>
-                        <td>
-                          <Input
-                            name="meeting_reqdt"
-                            type="text"
-                            value={
-                              mainDataResult.data.filter(
-                                (item) =>
-                                  item[DATA_ITEM_KEY] ==
-                                  Object.getOwnPropertyNames(selectedState)[0]
-                              )[0] == undefined
-                                ? ""
-                                : dateformat2(
-                                    mainDataResult.data.filter(
+                          </td>
+                        </tr>
+                        <tr>
+                          <th style={{ width: "5%" }}>업체</th>
+                          <td>
+                            <Input
+                              name="custnm"
+                              type="text"
+                              value={
+                                mainDataResult.data.filter(
+                                  (item) =>
+                                    item[DATA_ITEM_KEY] ==
+                                    Object.getOwnPropertyNames(selectedState)[0]
+                                )[0] == undefined
+                                  ? ""
+                                  : mainDataResult.data.filter(
                                       (item) =>
                                         item[DATA_ITEM_KEY] ==
                                         Object.getOwnPropertyNames(
                                           selectedState
                                         )[0]
-                                    )[0].meeting_reqdt
-                                  )
-                            }
-                            className="readonly"
-                          />
-                        </td>
-                        <th style={{ width: "5%" }}>완료예정일</th>
-                        <td>
-                          <Input
-                            name="meeting_finexpdt"
-                            type="text"
-                            value={
-                              mainDataResult.data.filter(
-                                (item) =>
-                                  item[DATA_ITEM_KEY] ==
-                                  Object.getOwnPropertyNames(selectedState)[0]
-                              )[0] == undefined
-                                ? ""
-                                : dateformat2(
-                                    mainDataResult.data.filter(
+                                    )[0].custnm
+                              }
+                              className="readonly"
+                            />
+                          </td>
+                          <th style={{ width: "5%" }}>문의자</th>
+                          <td>
+                            <Input
+                              name="custperson"
+                              type="text"
+                              value={
+                                mainDataResult.data.filter(
+                                  (item) =>
+                                    item[DATA_ITEM_KEY] ==
+                                    Object.getOwnPropertyNames(selectedState)[0]
+                                )[0] == undefined
+                                  ? ""
+                                  : mainDataResult.data.filter(
                                       (item) =>
                                         item[DATA_ITEM_KEY] ==
                                         Object.getOwnPropertyNames(
                                           selectedState
                                         )[0]
-                                    )[0].meeting_finexpdt
-                                  )
-                            }
-                            className="readonly"
-                          />
-                        </td>
-                      </tr>
-                      <tr>
-                        <th style={{ width: "5%" }}>고객담당자</th>
-                        <td>
-                          <Input
-                            name="meeting_client_name"
-                            type="text"
-                            value={
-                              mainDataResult.data.filter(
-                                (item) =>
-                                  item[DATA_ITEM_KEY] ==
-                                  Object.getOwnPropertyNames(selectedState)[0]
-                              )[0] == undefined
-                                ? ""
-                                : mainDataResult.data.filter(
-                                    (item) =>
-                                      item[DATA_ITEM_KEY] ==
-                                      Object.getOwnPropertyNames(
-                                        selectedState
-                                      )[0]
-                                  )[0].meeting_client_name
-                            }
-                            className="readonly"
-                          />
-                        </td>
-                        <th style={{ width: "5%" }}>고객완료예정일</th>
-                        <td>
-                          <Input
-                            name="meeting_client_finexpdt"
-                            type="text"
-                            value={
-                              mainDataResult.data.filter(
-                                (item) =>
-                                  item[DATA_ITEM_KEY] ==
-                                  Object.getOwnPropertyNames(selectedState)[0]
-                              )[0] == undefined
-                                ? ""
-                                : dateformat2(
-                                    mainDataResult.data.filter(
+                                    )[0].custperson
+                              }
+                              className="readonly"
+                            />
+                          </td>
+                        </tr>
+                        <tr>
+                          <th style={{ width: "5%" }}>문의번호</th>
+                          <td colSpan={3}>
+                            <Input
+                              name="reception_document_id"
+                              type="text"
+                              value={
+                                mainDataResult.data.filter(
+                                  (item) =>
+                                    item[DATA_ITEM_KEY] ==
+                                    Object.getOwnPropertyNames(selectedState)[0]
+                                )[0] == undefined
+                                  ? ""
+                                  : mainDataResult.data.filter(
                                       (item) =>
                                         item[DATA_ITEM_KEY] ==
                                         Object.getOwnPropertyNames(
                                           selectedState
                                         )[0]
-                                    )[0].meeting_client_finexpdt
-                                  )
-                            }
-                            className="readonly"
-                          />
-                        </td>
-                      </tr>
-                    </tbody>
-                  </FormBox>
-                </FormBoxWrap>
-                <GridTitleContainer>
-                  <GridTitle>회의록 기본정보</GridTitle>
-                </GridTitleContainer>
-                <FormBoxWrap border={true}>
-                  <FormBox>
-                    <tbody>
-                      <tr>
-                        <th style={{ width: "5%" }}>회의일</th>
-                        <td>
-                          <Input
-                            name="meeting_date"
-                            type="text"
-                            value={
-                              mainDataResult.data.filter(
-                                (item) =>
-                                  item[DATA_ITEM_KEY] ==
-                                  Object.getOwnPropertyNames(selectedState)[0]
-                              )[0] == undefined
-                                ? ""
-                                : dateformat2(
-                                    mainDataResult.data.filter(
+                                    )[0].reception_document_id
+                              }
+                              className="readonly"
+                            />
+                          </td>
+                        </tr>
+                      </tbody>
+                    </FormBox>
+                  </FormBoxWrap>
+                  <RichEditor id="docEditor2" ref={docEditorRef2} hideTools />
+                  <FormBoxWrap border={true}>
+                    <FormBox>
+                      <tbody>
+                        <tr>
+                          <th style={{ width: "5%" }}>첨부파일</th>
+                          <td>
+                            <Input
+                              name="reception_files"
+                              type="text"
+                              value={
+                                mainDataResult.data.filter(
+                                  (item) =>
+                                    item[DATA_ITEM_KEY] ==
+                                    Object.getOwnPropertyNames(selectedState)[0]
+                                )[0] == undefined
+                                  ? ""
+                                  : mainDataResult.data.filter(
                                       (item) =>
                                         item[DATA_ITEM_KEY] ==
                                         Object.getOwnPropertyNames(
                                           selectedState
                                         )[0]
-                                    )[0].meeting_date
-                                  )
-                            }
-                            className="readonly"
-                          />
-                        </td>
-                        <th style={{ width: "5%" }}>업체</th>
-                        <td>
-                          <Input
-                            name="meeting_custnm"
-                            type="text"
-                            value={
-                              mainDataResult.data.filter(
-                                (item) =>
-                                  item[DATA_ITEM_KEY] ==
-                                  Object.getOwnPropertyNames(selectedState)[0]
-                              )[0] == undefined
-                                ? ""
-                                : mainDataResult.data.filter(
-                                    (item) =>
-                                      item[DATA_ITEM_KEY] ==
-                                      Object.getOwnPropertyNames(
-                                        selectedState
-                                      )[0]
-                                  )[0].meeting_custnm
-                            }
-                            className="readonly"
-                          />
-                        </td>
-                      </tr>
-                      <tr>
-                        <th style={{ width: "5%" }}>제목</th>
-                        <td colSpan={5}>
-                          <Input
-                            name="meeting_title"
-                            type="text"
-                            value={
-                              mainDataResult.data.filter(
-                                (item) =>
-                                  item[DATA_ITEM_KEY] ==
-                                  Object.getOwnPropertyNames(selectedState)[0]
-                              )[0] == undefined
-                                ? ""
-                                : mainDataResult.data.filter(
-                                    (item) =>
-                                      item[DATA_ITEM_KEY] ==
-                                      Object.getOwnPropertyNames(
-                                        selectedState
-                                      )[0]
-                                  )[0].meeting_title
-                            }
-                            className="readonly"
-                          />
-                        </td>
-                      </tr>
-                      <tr>
-                        <th style={{ width: "5%" }}>비고</th>
-                        <td colSpan={5}>
-                          <TextArea
-                            value={
-                              mainDataResult.data.filter(
-                                (item) =>
-                                  item[DATA_ITEM_KEY] ==
-                                  Object.getOwnPropertyNames(selectedState)[0]
-                              )[0] == undefined
-                                ? ""
-                                : mainDataResult.data.filter(
-                                    (item) =>
-                                      item[DATA_ITEM_KEY] ==
-                                      Object.getOwnPropertyNames(
-                                        selectedState
-                                      )[0]
-                                  )[0].meeting_remark
-                            }
-                            name="meeting_remark"
-                            rows={2}
-                            className="readonly"
-                          />
-                        </td>
-                      </tr>
-                      <tr>
-                        <th style={{ width: "5%" }}>첨부파일</th>
-                        <td colSpan={5}>
-                          <Input
-                            name="meeting_files"
-                            type="text"
-                            value={
-                              mainDataResult.data.filter(
-                                (item) =>
-                                  item[DATA_ITEM_KEY] ==
-                                  Object.getOwnPropertyNames(selectedState)[0]
-                              )[0] == undefined
-                                ? ""
-                                : mainDataResult.data.filter(
-                                    (item) =>
-                                      item[DATA_ITEM_KEY] ==
-                                      Object.getOwnPropertyNames(
-                                        selectedState
-                                      )[0]
-                                  )[0].meeting_files
-                            }
-                            className="readonly"
-                          />
-                        </td>
-                      </tr>
-                    </tbody>
-                  </FormBox>
-                </FormBoxWrap>
-                <GridTitleContainer>
-                  <GridTitle>회의 참고 자료</GridTitle>
-                </GridTitleContainer>
-                <RichEditor id="docEditor4" ref={docEditorRef4} hideTools />
-              </GridContainer>
-            </TabStripTab>
-          </TabStrip>
+                                    )[0].reception_files
+                              }
+                              className="readonly"
+                            />
+                            <ButtonInGridInput>
+                              <Button
+                                onClick={onAttWndClick}
+                                icon="more-horizontal"
+                                fillMode="flat"
+                              />
+                            </ButtonInGridInput>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </FormBox>
+                  </FormBoxWrap>
+                </GridContainer>
+              </TabStripTab>
+              <TabStripTab
+                title="답변 내용"
+                disabled={
+                  mainDataResult.data.filter(
+                    (item) =>
+                      item[DATA_ITEM_KEY] ==
+                      Object.getOwnPropertyNames(selectedState)[0]
+                  )[0] == undefined
+                    ? true
+                    : mainDataResult.data.filter(
+                        (item) =>
+                          item[DATA_ITEM_KEY] ==
+                          Object.getOwnPropertyNames(selectedState)[0]
+                      )[0].ref_type_full == "접수-문의"
+                    ? false
+                    : true
+                }
+              >
+                <GridContainer style={{ height: "75vh" }}>
+                  <RichEditor id="docEditor3" ref={docEditorRef3} hideTools />
+                  <FormBoxWrap border={true}>
+                    <FormBox>
+                      <tbody>
+                        <tr>
+                          <th style={{ width: "5%" }}>첨부파일</th>
+                          <td>
+                            <Input
+                              name="answer_files"
+                              type="text"
+                              value={
+                                mainDataResult.data.filter(
+                                  (item) =>
+                                    item[DATA_ITEM_KEY] ==
+                                    Object.getOwnPropertyNames(selectedState)[0]
+                                )[0] == undefined
+                                  ? ""
+                                  : mainDataResult.data.filter(
+                                      (item) =>
+                                        item[DATA_ITEM_KEY] ==
+                                        Object.getOwnPropertyNames(
+                                          selectedState
+                                        )[0]
+                                    )[0].answer_files
+                              }
+                              className="readonly"
+                            />
+                            <ButtonInGridInput>
+                              <Button
+                                onClick={onAttWndClick2}
+                                icon="more-horizontal"
+                                fillMode="flat"
+                              />
+                            </ButtonInGridInput>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </FormBox>
+                  </FormBoxWrap>
+                </GridContainer>
+              </TabStripTab>
+              <TabStripTab
+                title="회의록 정보"
+                disabled={
+                  mainDataResult.data.filter(
+                    (item) =>
+                      item[DATA_ITEM_KEY] ==
+                      Object.getOwnPropertyNames(selectedState)[0]
+                  )[0] == undefined
+                    ? true
+                    : mainDataResult.data.filter(
+                        (item) =>
+                          item[DATA_ITEM_KEY] ==
+                          Object.getOwnPropertyNames(selectedState)[0]
+                      )[0].ref_type_full == "회의록"
+                    ? false
+                    : true
+                }
+              >
+                <GridContainer style={{ height: "75vh" }}>
+                  <GridTitleContainer>
+                    <GridTitle>회의록 내용(요구사항)</GridTitle>
+                  </GridTitleContainer>
+                  <FormBoxWrap border={true}>
+                    <FormBox>
+                      <tbody>
+                        <tr>
+                          <th style={{ width: "5%" }}>내용</th>
+                          <td colSpan={3}>
+                            <Input
+                              name="meeting_contents"
+                              type="text"
+                              value={
+                                mainDataResult.data.filter(
+                                  (item) =>
+                                    item[DATA_ITEM_KEY] ==
+                                    Object.getOwnPropertyNames(selectedState)[0]
+                                )[0] == undefined
+                                  ? ""
+                                  : mainDataResult.data.filter(
+                                      (item) =>
+                                        item[DATA_ITEM_KEY] ==
+                                        Object.getOwnPropertyNames(
+                                          selectedState
+                                        )[0]
+                                    )[0].meeting_contents
+                              }
+                              className="readonly"
+                            />
+                          </td>
+                        </tr>
+                        <tr>
+                          <th style={{ width: "5%" }}>요청일</th>
+                          <td>
+                            <Input
+                              name="meeting_reqdt"
+                              type="text"
+                              value={
+                                mainDataResult.data.filter(
+                                  (item) =>
+                                    item[DATA_ITEM_KEY] ==
+                                    Object.getOwnPropertyNames(selectedState)[0]
+                                )[0] == undefined
+                                  ? ""
+                                  : dateformat2(
+                                      mainDataResult.data.filter(
+                                        (item) =>
+                                          item[DATA_ITEM_KEY] ==
+                                          Object.getOwnPropertyNames(
+                                            selectedState
+                                          )[0]
+                                      )[0].meeting_reqdt
+                                    )
+                              }
+                              className="readonly"
+                            />
+                          </td>
+                          <th style={{ width: "5%" }}>완료예정일</th>
+                          <td>
+                            <Input
+                              name="meeting_finexpdt"
+                              type="text"
+                              value={
+                                mainDataResult.data.filter(
+                                  (item) =>
+                                    item[DATA_ITEM_KEY] ==
+                                    Object.getOwnPropertyNames(selectedState)[0]
+                                )[0] == undefined
+                                  ? ""
+                                  : dateformat2(
+                                      mainDataResult.data.filter(
+                                        (item) =>
+                                          item[DATA_ITEM_KEY] ==
+                                          Object.getOwnPropertyNames(
+                                            selectedState
+                                          )[0]
+                                      )[0].meeting_finexpdt
+                                    )
+                              }
+                              className="readonly"
+                            />
+                          </td>
+                        </tr>
+                        <tr>
+                          <th style={{ width: "5%" }}>고객담당자</th>
+                          <td>
+                            <Input
+                              name="meeting_client_name"
+                              type="text"
+                              value={
+                                mainDataResult.data.filter(
+                                  (item) =>
+                                    item[DATA_ITEM_KEY] ==
+                                    Object.getOwnPropertyNames(selectedState)[0]
+                                )[0] == undefined
+                                  ? ""
+                                  : mainDataResult.data.filter(
+                                      (item) =>
+                                        item[DATA_ITEM_KEY] ==
+                                        Object.getOwnPropertyNames(
+                                          selectedState
+                                        )[0]
+                                    )[0].meeting_client_name
+                              }
+                              className="readonly"
+                            />
+                          </td>
+                          <th style={{ width: "5%" }}>고객완료예정일</th>
+                          <td>
+                            <Input
+                              name="meeting_client_finexpdt"
+                              type="text"
+                              value={
+                                mainDataResult.data.filter(
+                                  (item) =>
+                                    item[DATA_ITEM_KEY] ==
+                                    Object.getOwnPropertyNames(selectedState)[0]
+                                )[0] == undefined
+                                  ? ""
+                                  : dateformat2(
+                                      mainDataResult.data.filter(
+                                        (item) =>
+                                          item[DATA_ITEM_KEY] ==
+                                          Object.getOwnPropertyNames(
+                                            selectedState
+                                          )[0]
+                                      )[0].meeting_client_finexpdt
+                                    )
+                              }
+                              className="readonly"
+                            />
+                          </td>
+                        </tr>
+                      </tbody>
+                    </FormBox>
+                  </FormBoxWrap>
+                  <GridTitleContainer>
+                    <GridTitle>회의록 기본정보</GridTitle>
+                  </GridTitleContainer>
+                  <FormBoxWrap border={true}>
+                    <FormBox>
+                      <tbody>
+                        <tr>
+                          <th style={{ width: "5%" }}>회의일</th>
+                          <td>
+                            <Input
+                              name="meeting_date"
+                              type="text"
+                              value={
+                                mainDataResult.data.filter(
+                                  (item) =>
+                                    item[DATA_ITEM_KEY] ==
+                                    Object.getOwnPropertyNames(selectedState)[0]
+                                )[0] == undefined
+                                  ? ""
+                                  : dateformat2(
+                                      mainDataResult.data.filter(
+                                        (item) =>
+                                          item[DATA_ITEM_KEY] ==
+                                          Object.getOwnPropertyNames(
+                                            selectedState
+                                          )[0]
+                                      )[0].meeting_date
+                                    )
+                              }
+                              className="readonly"
+                            />
+                          </td>
+                          <th style={{ width: "5%" }}>업체</th>
+                          <td>
+                            <Input
+                              name="meeting_custnm"
+                              type="text"
+                              value={
+                                mainDataResult.data.filter(
+                                  (item) =>
+                                    item[DATA_ITEM_KEY] ==
+                                    Object.getOwnPropertyNames(selectedState)[0]
+                                )[0] == undefined
+                                  ? ""
+                                  : mainDataResult.data.filter(
+                                      (item) =>
+                                        item[DATA_ITEM_KEY] ==
+                                        Object.getOwnPropertyNames(
+                                          selectedState
+                                        )[0]
+                                    )[0].meeting_custnm
+                              }
+                              className="readonly"
+                            />
+                          </td>
+                        </tr>
+                        <tr>
+                          <th style={{ width: "5%" }}>제목</th>
+                          <td colSpan={5}>
+                            <Input
+                              name="meeting_title"
+                              type="text"
+                              value={
+                                mainDataResult.data.filter(
+                                  (item) =>
+                                    item[DATA_ITEM_KEY] ==
+                                    Object.getOwnPropertyNames(selectedState)[0]
+                                )[0] == undefined
+                                  ? ""
+                                  : mainDataResult.data.filter(
+                                      (item) =>
+                                        item[DATA_ITEM_KEY] ==
+                                        Object.getOwnPropertyNames(
+                                          selectedState
+                                        )[0]
+                                    )[0].meeting_title
+                              }
+                              className="readonly"
+                            />
+                          </td>
+                        </tr>
+                        <tr>
+                          <th style={{ width: "5%" }}>비고</th>
+                          <td colSpan={5}>
+                            <TextArea
+                              value={
+                                mainDataResult.data.filter(
+                                  (item) =>
+                                    item[DATA_ITEM_KEY] ==
+                                    Object.getOwnPropertyNames(selectedState)[0]
+                                )[0] == undefined
+                                  ? ""
+                                  : mainDataResult.data.filter(
+                                      (item) =>
+                                        item[DATA_ITEM_KEY] ==
+                                        Object.getOwnPropertyNames(
+                                          selectedState
+                                        )[0]
+                                    )[0].meeting_remark
+                              }
+                              name="meeting_remark"
+                              rows={2}
+                              className="readonly"
+                            />
+                          </td>
+                        </tr>
+                        <tr>
+                          <th style={{ width: "5%" }}>첨부파일</th>
+                          <td colSpan={5}>
+                            <Input
+                              name="meeting_files"
+                              type="text"
+                              value={
+                                mainDataResult.data.filter(
+                                  (item) =>
+                                    item[DATA_ITEM_KEY] ==
+                                    Object.getOwnPropertyNames(selectedState)[0]
+                                )[0] == undefined
+                                  ? ""
+                                  : mainDataResult.data.filter(
+                                      (item) =>
+                                        item[DATA_ITEM_KEY] ==
+                                        Object.getOwnPropertyNames(
+                                          selectedState
+                                        )[0]
+                                    )[0].meeting_files
+                              }
+                              className="readonly"
+                            />
+                          </td>
+                        </tr>
+                      </tbody>
+                    </FormBox>
+                  </FormBoxWrap>
+                  <GridTitleContainer>
+                    <GridTitle>회의 참고 자료</GridTitle>
+                  </GridTitleContainer>
+                  <RichEditor id="docEditor4" ref={docEditorRef4} hideTools />
+                </GridContainer>
+              </TabStripTab>
+            </TabStrip>
           </GridContainer>
         </GridContainer>
       </GridContainerWrap>
@@ -2911,13 +2911,20 @@ const App = () => {
                 item[DATA_ITEM_KEY] ==
                 Object.getOwnPropertyNames(selectedState)[0]
             )[0] == undefined
-              ? []
+              ? ""
               : mainDataResult.data.filter(
                   (item) =>
                     item[DATA_ITEM_KEY] ==
                     Object.getOwnPropertyNames(selectedState)[0]
-                )[0]
+                )[0].reception_document_id
           }
+          reload={() => {
+            setFilters((prev) => ({
+              ...prev,
+              findRowValue: Object.getOwnPropertyNames(selectedState)[0],
+              isSearch: true,
+            }));
+          }}
         />
       )}
     </>

@@ -23,6 +23,7 @@ const domain: any = {
 
   //업무지시
   "taskorder-save": { action: "post", url: "api/spm/task-order" },
+  "answer": { action: "post", url: "api/spm/answer" },
 
   // 공지사항
   "notice-list": { action: "get", url: "api/spm/notice/:para" },

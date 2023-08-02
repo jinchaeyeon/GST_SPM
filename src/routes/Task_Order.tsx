@@ -13,6 +13,7 @@ import {
   Title,
   TitleContainer,
 } from "../CommonStyled";
+import { v4 as uuidv4 } from "uuid";
 import { useApi } from "../hooks/api";
 import { TabStrip, TabStripTab } from "@progress/kendo-react-layout";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
@@ -23,7 +24,10 @@ import {
   MultiSelectChangeEvent,
 } from "@progress/kendo-react-dropdowns";
 import {
+  UseParaPc,
   convertDateToStr,
+  extractDownloadFilename,
+  getGridItemChangedData,
   handleKeyPressSearch,
 } from "../components/CommonFunction";
 import {
@@ -35,16 +39,26 @@ import {
   process,
 } from "@progress/kendo-data-query";
 import {
+  custTypeColumns,
   dataTypeColumns,
   dataTypeColumns2,
   userColumns,
 } from "../store/columns/common-columns";
-import { GAP, PAGE_SIZE, SELECTED_FIELD } from "../components/CommonString";
+import {
+  EDIT_FIELD,
+  GAP,
+  PAGE_SIZE,
+  SELECTED_FIELD,
+} from "../components/CommonString";
 import CommonDateRangePicker from "../components/DateRangePicker/CommonDateRangePicker";
 import { Input, RadioGroup } from "@progress/kendo-react-inputs";
 import { bytesToBase64 } from "byte-base64";
 import { useRecoilState, useSetRecoilState } from "recoil";
-import { isLoading, loginResultState } from "../store/atoms";
+import {
+  isLoading,
+  loginResultState,
+  unsavedAttadatnumsState,
+} from "../store/atoms";
 import { Iparameters, TEditorHandle } from "../store/types";
 import {
   Grid,
@@ -52,6 +66,7 @@ import {
   GridColumn,
   GridDataStateChangeEvent,
   GridFooterCellProps,
+  GridItemChangeEvent,
   GridPageChangeEvent,
   GridSelectionChangeEvent,
   getSelectedState,
@@ -64,6 +79,13 @@ import TaskOrderWindow from "../components/Windows/CommonWindows/TaskOrderWindow
 import ProgressCell from "../components/Cells/ProgressCell";
 import RadioGroupCell from "../components/Cells/RadioGroupCell";
 import NumberCell from "../components/Cells/NumberCell";
+import { CellRender, RowRender } from "../components/Renderers/Renderers";
+import { IAttachmentData } from "../hooks/interfaces";
+import PopUpAttachmentsWindow from "../components/Windows/CommonWindows/PopUpAttachmentsWindow";
+import RequiredHeader from "../components/RequiredHeader";
+import ErrorWindow from "../components/Windows/CommonWindows/ErrorWindow";
+import ComboBoxCell from "../components/Cells/ComboBoxCell";
+import TaskOrderDataWindow from "../components/Windows/CommonWindows/TaskOrderDataWindow";
 
 const StatusContext = createContext<{
   statusListData: any[];
@@ -112,6 +134,37 @@ const FilesContext = createContext<{
 }>({
   reception_attach_number: "",
 });
+const UserContext = createContext<{
+  usersData: any[];
+}>({
+  usersData: [],
+});
+const CustContext = createContext<{
+  custData: any[];
+}>({
+  custData: [],
+});
+const ValueCodeContext = createContext<{
+  valuecodeItems: any[];
+}>({
+  valuecodeItems: [],
+});
+
+const WorkTypeContext = createContext<{
+  WorkTypeItems: any[];
+}>({
+  WorkTypeItems: [],
+});
+
+export const FilesContext2 = createContext<{
+  attdatnum: string;
+  attach_exists: string;
+  setAttdatnum: (d: any) => void;
+  setAttach_exists: (d: any) => void;
+  mainDataState: State;
+  setMainDataState: (d: any) => void;
+  // fetchGrid: (n: number) => any;
+}>({} as any);
 
 const FilesCell = (props: GridCellProps) => {
   const {
@@ -169,25 +222,257 @@ const FilesCell = (props: GridCellProps) => {
   );
 };
 
+const UserCell = (props: GridCellProps) => {
+  const { usersData } = useContext(UserContext);
+
+  return usersData ? (
+    <ComboBoxCell
+      columns={userColumns}
+      data={usersData}
+      textField="user_name"
+      valueField="user_id"
+      {...props}
+    />
+  ) : (
+    <td />
+  );
+};
+const CustCell = (props: GridCellProps) => {
+  const { custData } = useContext(CustContext);
+
+  return custData ? (
+    <ComboBoxCell
+      columns={custTypeColumns}
+      data={custData}
+      textField="custnm"
+      valueField="custcd"
+      {...props}
+    />
+  ) : (
+    <td />
+  );
+};
+const ValueCodeCell = (props: GridCellProps) => {
+  const { valuecodeItems } = useContext(ValueCodeContext);
+
+  return valuecodeItems ? (
+    <ComboBoxCell columns={dataTypeColumns2} data={valuecodeItems} {...props} />
+  ) : (
+    <td />
+  );
+};
+
+const WorkTypeCodeCell = (props: GridCellProps) => {
+  const { WorkTypeItems } = useContext(WorkTypeContext);
+
+  return WorkTypeItems ? (
+    <ComboBoxCell columns={dataTypeColumns} data={WorkTypeItems} {...props} />
+  ) : (
+    <td />
+  );
+};
+
+const FilesCell2 = (props: GridCellProps) => {
+  const {
+    ariaColumnIndex,
+    columnIndex,
+    dataItem,
+    field = "",
+    render,
+    onChange,
+    className = "",
+  } = props;
+  const { setAttdatnum, setAttach_exists } = useContext(FilesContext2);
+  let isInEdit = field === dataItem.inEdit;
+  const value = field && dataItem[field] ? dataItem[field] : "";
+
+  const [attachmentsWindowVisible, setAttachmentsWindowVisible] =
+    useState<boolean>(false);
+
+  const onAttWndClick2 = () => {
+    setAttachmentsWindowVisible(true);
+  };
+
+  const defaultRendering = (
+    <td
+      className={className}
+      aria-colindex={ariaColumnIndex}
+      data-grid-col-index={columnIndex}
+      style={{ position: "relative" }}
+    >
+      <div style={{ textAlign: "center", marginRight: "10px" }}>
+        {dataItem.attach_exists == "Y" ? (
+          <span className="k-icon k-i-file k-icon-lg"></span>
+        ) : (
+          ""
+        )}
+      </div>
+      <ButtonInGridInput>
+        <Button
+          onClick={onAttWndClick2}
+          icon="more-horizontal"
+          fillMode="flat"
+        />
+      </ButtonInGridInput>
+    </td>
+  );
+
+  const getAttachmentsData = (data: IAttachmentData) => {
+    setAttdatnum(data.attdatnum);
+    if (data.rowCount == 0) {
+      setAttach_exists("N");
+    } else {
+      setAttach_exists("Y");
+    }
+  };
+
+  return (
+    <>
+      {render === undefined
+        ? null
+        : render?.call(undefined, defaultRendering, props)}
+      {attachmentsWindowVisible && (
+        <PopUpAttachmentsWindow
+          setVisible={setAttachmentsWindowVisible}
+          setData={getAttachmentsData}
+          para={dataItem.attdatnum}
+          permission={{ upload: true, download: true, delete: true }}
+          type={"task"}
+        />
+      )}
+    </>
+  );
+};
+
+export const TypeContext = createContext<{
+  ref_type: string;
+  custcd: string;
+  ref_key: string;
+  ref_seq: string;
+  setRef_Type: (d: any) => void;
+  setCustcd: (d: any) => void;
+  setRef_key: (d: any) => void;
+  setRef_seq: (d: any) => void;
+  mainDataState4: State;
+  setMainDataState4: (d: any) => void;
+  // fetchGrid: (n: number) => any;
+}>({} as any);
+
+const TypeCell = (props: GridCellProps) => {
+  const {
+    ariaColumnIndex,
+    columnIndex,
+    dataItem,
+    field = "",
+    render,
+    onChange,
+    className = "",
+  } = props;
+  const { setRef_Type, setCustcd, setRef_key, setRef_seq } =
+    useContext(TypeContext);
+  let isInEdit = field === dataItem.inEdit;
+  const value = field && dataItem[field] ? dataItem[field] : "";
+
+  const [typeWindowVisible, setTypeWindowVisible] = useState<boolean>(false);
+
+  const onTypeWndClick = () => {
+    setTypeWindowVisible(true);
+  };
+
+  const defaultRendering = (
+    <td
+      className={className}
+      aria-colindex={ariaColumnIndex}
+      data-grid-col-index={columnIndex}
+      style={{ position: "relative" }}
+    >
+      <div style={{ textAlign: "center", marginRight: "10px" }}>
+        {dataItem.ref_type == "접수" ? (
+          <span className="k-icon k-i-file k-icon-lg"></span>
+        ) : dataItem.ref_type == "프로젝트" ? (
+          <span className="k-icon k-i-folder k-icon-lg"></span>
+        ) : dataItem.ref_type == "회의록" ? (
+          <span className="k-icon k-i-comment k-icon-lg"></span>
+        ) : (
+          ""
+        )}
+      </div>
+      <ButtonInGridInput>
+        <Button
+          onClick={onTypeWndClick}
+          icon="more-horizontal"
+          fillMode="flat"
+        />
+      </ButtonInGridInput>
+    </td>
+  );
+
+  const getTypeData = (data: any, type: string) => {
+    if (type == "접수") {
+      setRef_Type(type);
+      setCustcd(data.customer_code);
+      setRef_key(data.ref_number);
+      setRef_seq(0);
+    } else if (type == "프로젝트") {
+      setRef_Type(type);
+      setCustcd(data.custcd);
+      setRef_key(data.devmngnum);
+      setRef_seq(data.devmngseq);
+    } else if (type == "회의록") {
+      setRef_Type(type);
+      setCustcd(data.custcd);
+      setRef_key(data.meetingnum);
+      setRef_seq(data.meetingseq);
+    } else {
+      setRef_Type("미참조");
+      setCustcd("");
+      setRef_key("");
+      setRef_seq(0);
+    }
+  };
+
+  return (
+    <>
+      {render === undefined
+        ? null
+        : render?.call(undefined, defaultRendering, props)}
+      {typeWindowVisible && (
+        <TaskOrderDataWindow
+          setVisible={setTypeWindowVisible}
+          setData={getTypeData}
+          modal={true}
+        />
+      )}
+    </>
+  );
+};
+
+let temp = 0;
+let deletedRows: any[] = [];
 const valueCodeQueryStr = `select sub_code, code_name
 from comCodeMaster
 where group_code ='BA012_GST'`;
 
 const usersQueryStr = `SELECT user_id, user_name 
 FROM sysUserMaster`;
+const custQueryStr = `SELECT custcd,custnm
+FROM ba020t where useyn = 'Y' order by custcd`;
 
 const receptionTypeQueryStr = `SELECT a.sub_code,
 a.code_name
 FROM comCodeMaster a 
 WHERE a.group_code = 'BA097'
 AND use_yn = 'Y'`;
+const workTypeQueryStr = `select sub_code, code_name FROM comCodeMaster where group_code = 'CR004'`;
 
 const DATA_ITEM_KEY = "document_id";
 const DATA_ITEM_KEY2 = "find_key";
 const DATA_ITEM_KEY3 = "find_key";
+const DATA_ITEM_KEY4 = "num";
 let targetRowIndex: null | number = null;
 let targetRowIndex2: null | number = null;
 let targetRowIndex3: null | number = null;
+let targetRowIndex4: null | number = null;
 
 const ListRadioContext = createContext<{
   listRadioItems: any;
@@ -231,16 +516,25 @@ const App = () => {
   let gridRef: any = useRef(null);
   let gridRef2: any = useRef(null);
   let gridRef3: any = useRef(null);
+  let gridRef4: any = useRef(null);
   const idGetter = getter(DATA_ITEM_KEY);
   const idGetter2 = getter(DATA_ITEM_KEY2);
-  const idGetter3 = getter(DATA_ITEM_KEY2);
+  const idGetter3 = getter(DATA_ITEM_KEY3);
+  const idGetter4 = getter(DATA_ITEM_KEY4);
   let deviceWidth = window.innerWidth;
   let isMobile = deviceWidth <= 768;
   const initialPageState = { skip: 0, take: PAGE_SIZE };
   const [page, setPage] = useState(initialPageState);
   const [page2, setPage2] = useState(initialPageState);
   const [page3, setPage3] = useState(initialPageState);
+  const [page4, setPage4] = useState(initialPageState);
+  const [pc, setPc] = useState("");
+  UseParaPc(setPc);
 
+  // 서버 업로드는 되었으나 DB에는 저장안된 첨부파일 리스트
+  const [unsavedAttadatnums, setUnsavedAttadatnums] = useRecoilState(
+    unsavedAttadatnumsState
+  );
   const pageChange = (event: GridPageChangeEvent) => {
     const { page } = event;
 
@@ -284,6 +578,23 @@ const App = () => {
       take: initialPageState.take,
     });
   };
+  const pageChange4 = (event: GridPageChangeEvent) => {
+    const { page } = event;
+    mainDataResult4.data.map((item) => {
+      localStorage.removeItem(item[DATA_ITEM_KEY4]);
+      localStorage.removeItem(item[DATA_ITEM_KEY4] + "key");
+    });
+    setFilters((prev) => ({
+      ...prev,
+      pgNum: Math.floor(page.skip / initialPageState.take) + 1,
+      isSearch: true,
+    }));
+
+    setPage4({
+      skip: page.skip,
+      take: initialPageState.take,
+    });
+  };
   const [filter, setFilter] = useState<FilterDescriptor>();
   const [filter2, setFilter2] = useState<FilterDescriptor>();
   const [filter3, setFilter3] = useState<FilterDescriptor>();
@@ -299,6 +610,10 @@ const App = () => {
   const [filter13, setFilter13] = useState<FilterDescriptor>();
   const [filter14, setFilter14] = useState<FilterDescriptor>();
   const [filter15, setFilter15] = useState<FilterDescriptor>();
+  const [filter16, setFilter16] = useState<FilterDescriptor>();
+  const [filter17, setFilter17] = useState<FilterDescriptor>();
+  const [filter18, setFilter18] = useState<FilterDescriptor>();
+  const [filter19, setFilter19] = useState<FilterDescriptor>();
 
   const handleFilterChange = (event: ComboBoxFilterChangeEvent) => {
     if (event) {
@@ -375,9 +690,33 @@ const App = () => {
       setFilter15(event.filter);
     }
   };
+  const handleFilterChange16 = (event: ComboBoxFilterChangeEvent) => {
+    if (event) {
+      setFilter16(event.filter);
+    }
+  };
+  const handleFilterChange17 = (event: ComboBoxFilterChangeEvent) => {
+    if (event) {
+      setFilter17(event.filter);
+    }
+  };
+  const handleFilterChange18 = (event: ComboBoxFilterChangeEvent) => {
+    if (event) {
+      setFilter18(event.filter);
+    }
+  };
+  const handleFilterChange19 = (event: ComboBoxFilterChangeEvent) => {
+    if (event) {
+      setFilter19(event.filter);
+    }
+  };
   const [tabSelected, setTabSelected] = useState(0);
   const handleSelectTab = (e: any) => {
     setTabSelected(e.selected);
+    mainDataResult4.data.map((item) => {
+      localStorage.removeItem(item[DATA_ITEM_KEY4]);
+      localStorage.removeItem(item[DATA_ITEM_KEY4] + "key");
+    });
     if (e.selected == 0) {
       setFilters({
         workType: "received",
@@ -397,6 +736,16 @@ const App = () => {
         worker: { user_id: userId, user_name: userName },
         reception_type: { sub_code: "", code_name: "" },
         user_name: { user_id: "", user_name: "" },
+        ref_type: [
+          { code: 1, name: "접수" },
+          { code: 2, name: "프로젝트" },
+          { code: 3, name: "회의록" },
+          { code: 4, name: "미참조" },
+        ],
+        check: [
+          { sub_code: "Y", code_name: "확인" },
+          { sub_code: "N", code_name: "미확인" },
+        ],
         findRowValue: "",
         pgSize: PAGE_SIZE,
         pgNum: 1,
@@ -421,6 +770,16 @@ const App = () => {
         worker: { user_id: userId, user_name: userName },
         reception_type: { sub_code: "", code_name: "" },
         user_name: { user_id: "", user_name: "" },
+        ref_type: [
+          { code: 1, name: "접수" },
+          { code: 2, name: "프로젝트" },
+          { code: 3, name: "회의록" },
+          { code: 4, name: "미참조" },
+        ],
+        check: [
+          { sub_code: "Y", code_name: "확인" },
+          { sub_code: "N", code_name: "미확인" },
+        ],
         findRowValue: "",
         pgSize: PAGE_SIZE,
         pgNum: 1,
@@ -445,12 +804,56 @@ const App = () => {
         worker: { user_id: "", user_name: "" },
         reception_type: { sub_code: "", code_name: "" },
         user_name: { user_id: "", user_name: "" },
+        ref_type: [
+          { code: 1, name: "접수" },
+          { code: 2, name: "프로젝트" },
+          { code: 3, name: "회의록" },
+          { code: 4, name: "미참조" },
+        ],
+        check: [
+          { sub_code: "Y", code_name: "확인" },
+          { sub_code: "N", code_name: "미확인" },
+        ],
         findRowValue: "",
         pgSize: PAGE_SIZE,
         pgNum: 1,
         isSearch: true,
       });
       setPage3({
+        skip: 0,
+        take: initialPageState.take,
+      });
+    } else {
+      setFilters({
+        workType: "task_order_all",
+        date_type: { sub_code: "A", code_name: "지시일" },
+        fromDate: fromDate,
+        toDate: new Date(),
+        custnm: "",
+        value_code3: { sub_code: "", code_name: "" },
+        contents: "",
+        status: [{ sub_code: "N", code_name: "미완료", code: "N" }],
+        reception_person: { user_id: "", user_name: "" },
+        receptionist: { user_id: "", user_name: "" },
+        worker: { user_id: userId, user_name: userName },
+        reception_type: { sub_code: "", code_name: "" },
+        user_name: { user_id: "", user_name: "" },
+        ref_type: [
+          { code: 1, name: "접수" },
+          { code: 2, name: "프로젝트" },
+          { code: 3, name: "회의록" },
+          { code: 4, name: "미참조" },
+        ],
+        check: [
+          { sub_code: "Y", code_name: "확인" },
+          { sub_code: "N", code_name: "미확인" },
+        ],
+        findRowValue: "",
+        pgSize: PAGE_SIZE,
+        pgNum: 1,
+        isSearch: true,
+      });
+      setPage4({
         skip: 0,
         take: initialPageState.take,
       });
@@ -506,6 +909,10 @@ const App = () => {
     { sub_code: "B", code_name: "요청일" },
     { sub_code: "C", code_name: "완료예정일" },
   ];
+  const dateTypeData4 = [
+    { sub_code: "A", code_name: "지시일" },
+    { sub_code: "B", code_name: "완료예정일" },
+  ];
   const [lvlItems, setlvlItems] = useState([
     {
       sub_code: "A",
@@ -522,8 +929,10 @@ const App = () => {
   ]);
 
   const [valuecodeItems, setValuecodeItems] = useState<any[]>([]);
+  const [WorkTypeItems, setWorkTypeItems] = useState<any[]>([]);
   const [usersData, setUsersData] = useState<any[]>([]);
   const [receptionTypeData, setReceptionTypeData] = useState<any[]>([]);
+  const [custData, setCustData] = useState<any[]>([]);
   const statusListData: any[] = [
     { sub_code: "Wait", code_name: "대기", code: "N" },
     { sub_code: "Progress", code_name: "진행중", code: "R" },
@@ -549,6 +958,28 @@ const App = () => {
     { sub_code: "Y", code_name: "완료", code: "Y" },
     { sub_code: "N", code_name: "미완료", code: "N" },
   ];
+  const CheckListData: any[] = [
+    { sub_code: "Y", code_name: "확인" },
+    { sub_code: "N", code_name: "미확인" },
+  ];
+  const [TypeData, setTypeData] = useState<any[]>([
+    {
+      code: 1,
+      name: "접수",
+    },
+    {
+      code: 2,
+      name: "프로젝트",
+    },
+    {
+      code: 3,
+      name: "회의록",
+    },
+    {
+      code: 4,
+      name: "미참조",
+    },
+  ]);
   const [mainDataState, setMainDataState] = useState<State>({
     sort: [],
   });
@@ -556,6 +987,12 @@ const App = () => {
     sort: [],
   });
   const [mainDataState3, setMainDataState3] = useState<State>({
+    sort: [],
+  });
+  const [mainDataState4, setMainDataState4] = useState<State>({
+    sort: [],
+  });
+  const [tempState, setTempState] = useState<State>({
     sort: [],
   });
   const [mainDataResult, setMainDataResult] = useState<DataResult>(
@@ -567,6 +1004,12 @@ const App = () => {
   const [mainDataResult3, setMainDataResult3] = useState<DataResult>(
     process([], mainDataState3)
   );
+  const [mainDataResult4, setMainDataResult4] = useState<DataResult>(
+    process([], mainDataState4)
+  );
+  const [tempResult, setTempResult] = useState<DataResult>(
+    process([], tempState)
+  );
   const [selectedState, setSelectedState] = useState<{
     [id: string]: boolean | number[];
   }>({});
@@ -576,7 +1019,9 @@ const App = () => {
   const [selectedState3, setSelectedState3] = useState<{
     [id: string]: boolean | number[];
   }>({});
-
+  const [selectedState4, setSelectedState4] = useState<{
+    [id: string]: boolean | number[];
+  }>({});
   const fetchValueCode = async () => {
     let data: any;
 
@@ -596,6 +1041,56 @@ const App = () => {
     if (data !== null && data.isSuccess === true) {
       const rows = data.tables[0].Rows;
       setValuecodeItems(rows);
+    } else {
+      console.log("[에러발생]");
+      console.log(data);
+    }
+  };
+
+  const fetchCust = async () => {
+    let data: any;
+
+    const bytes = require("utf8-bytes");
+    const convertedQueryStr = bytesToBase64(bytes(custQueryStr));
+
+    let query = {
+      query: convertedQueryStr,
+    };
+
+    try {
+      data = await processApi<any>("bizgst-query", query);
+    } catch (error) {
+      data = null;
+    }
+
+    if (data !== null && data.isSuccess === true) {
+      const rows = data.tables[0].Rows;
+      setCustData(rows);
+    } else {
+      console.log("[에러발생]");
+      console.log(data);
+    }
+  };
+
+  const fetchWorkType = async () => {
+    let data: any;
+
+    const bytes = require("utf8-bytes");
+    const convertedQueryStr = bytesToBase64(bytes(workTypeQueryStr));
+
+    let query = {
+      query: convertedQueryStr,
+    };
+
+    try {
+      data = await processApi<any>("bizgst-query", query);
+    } catch (error) {
+      data = null;
+    }
+
+    if (data !== null && data.isSuccess === true) {
+      const rows = data.tables[0].Rows;
+      setWorkTypeItems(rows);
     } else {
       console.log("[에러발생]");
       console.log(data);
@@ -654,10 +1149,108 @@ const App = () => {
 
   useEffect(() => {
     // ComboBox에 사용할 코드 리스트 조회
+    fetchWorkType();
     fetchValueCode();
     fetchUsers();
     fetchReceptionType();
+    fetchCust();
   }, []);
+
+  const fetchCheck = async (str: string) => {
+    let data: any;
+    let result: string = "";
+
+    const bytes = require("utf8-bytes");
+    const convertedQueryStr = bytesToBase64(bytes(str));
+
+    let query = {
+      query: convertedQueryStr
+    };
+
+    try {
+      data = await processApi<any>("bizgst-query", query);
+    } catch (error) {
+      data = null;
+    }
+
+  };
+
+  const Check_ynCell = (props: GridCellProps) => {
+    const data = props.dataItem;
+    const changeCheck = async () => {
+      if (data.indicator == userId) {
+        const checkQueryStr = `UPDATE CR005T SET finyn = '${data.check_yn}' WHERE orgdiv = '${data.orgdiv}' AND docunum = '${data.docunum}'`;
+        console.log(checkQueryStr)
+        fetchCheck(checkQueryStr);
+        const newData = mainDataResult4.data.map((item) =>
+        item[DATA_ITEM_KEY4] == data[DATA_ITEM_KEY4]
+          ? {
+              ...item,
+              check_yn:
+                item.check_yn == "N"
+                  ? true
+                  : item.check_yn == "Y"
+                  ? false
+                  : !item.check_yn,
+              rowstatus: item.rowstatus == "N" ? "N" : "U",
+              [EDIT_FIELD]: props.field,
+            }
+          : {
+              ...item,
+              [EDIT_FIELD]: undefined,
+            }
+      );
+        setTempResult((prev) => {
+          return {
+            data: newData,
+            total: prev.total,
+          };
+        });
+        setMainDataResult4((prev) => {
+          return {
+            data: newData,
+            total: prev.total,
+          };
+        });
+      } else {
+        alert("지시자가 본인인 경우만 확인 처리 가능합니다.");
+      }
+    };
+
+    return data.indicator == userId ? (
+      data.check_yn == "Y" || data.check_yn == true ? (
+        <td style={{ textAlign: "center" }} onClick={changeCheck}>
+          <span
+            className="k-icon k-i-checkmark-circle k-icon-lg"
+            style={{ color: "green" }}
+          ></span>
+        </td>
+      ) : (
+        <td onClick={changeCheck} />
+      )
+    ) : (
+      <td onClick={changeCheck} />
+    );
+  };
+  console.log(mainDataResult4.data)
+  const defectiveCell = (props: GridCellProps) => {
+    const data = props.dataItem;
+
+    return data ? (
+      data.is_defective == "Y" ? (
+        <td style={{ textAlign: "center" }}>
+          <span
+            className="k-icon k-i-warning k-icon-xl"
+            style={{ color: "red" }}
+          ></span>
+        </td>
+      ) : (
+        <td />
+      )
+    ) : (
+      <td />
+    );
+  };
 
   const currentDate = new Date();
   const fromDate = new Date(
@@ -679,6 +1272,8 @@ const App = () => {
     worker: any;
     reception_type: any;
     user_name: any;
+    ref_type: any;
+    check: any;
     findRowValue: string;
     pgSize: number;
     pgNum: number;
@@ -703,6 +1298,16 @@ const App = () => {
     worker: { user_id: userId, user_name: userName },
     reception_type: { sub_code: "", code_name: "" },
     user_name: { user_id: "", user_name: "" },
+    ref_type: [
+      { code: 1, name: "접수" },
+      { code: 2, name: "프로젝트" },
+      { code: 3, name: "회의록" },
+      { code: 4, name: "미참조" },
+    ],
+    check: [
+      { sub_code: "Y", code_name: "확인" },
+      { sub_code: "N", code_name: "미확인" },
+    ],
     findRowValue: "",
     pgSize: PAGE_SIZE,
     pgNum: 1,
@@ -716,6 +1321,13 @@ const App = () => {
 
     return data.length > 0 ? str.slice(0, -1) : str;
   }
+  function getName2(data: { name: string }[]) {
+    let str = "";
+
+    data.map((item: { name: string }) => (str += item.name + ", "));
+
+    return data.length > 0 ? str.slice(0, -2) : str;
+  }
 
   //그리드 데이터 조회
   const fetchMainGrid = async (filters: any) => {
@@ -728,7 +1340,18 @@ const App = () => {
         : filters.status.length == 1
         ? filters.status[0].sub_code
         : getName(filters.status);
-
+    const ref_type =
+      filters.ref_type.length == 0
+        ? "접수, 프로젝트, 회의록, 미참조"
+        : filters.ref_type.length == 1
+        ? filters.ref_type[0].name
+        : getName2(filters.ref_type);
+    const check =
+      filters.check.length == 0
+        ? "Y|N"
+        : filters.check.length == 1
+        ? filters.check[0].sub_code
+        : getName(filters.check);
     //조회조건 파라미터
     const parameters: Iparameters = {
       procedureName: "pw6_sel_task_order",
@@ -756,8 +1379,8 @@ const App = () => {
         "@p_receptionist":
           filters.receptionist != null ? filters.receptionist.user_id : "",
         "@p_status": status,
-        "@p_check": "",
-        "@p_ref_type": "",
+        "@p_check": check,
+        "@p_ref_type": ref_type,
         "@p_ref_key": "",
         "@p_ref_seq": 0,
       },
@@ -847,7 +1470,18 @@ const App = () => {
         : filters.status.length == 1
         ? filters.status[0].sub_code
         : getName(filters.status);
-
+    const ref_type =
+      filters.ref_type.length == 0
+        ? "접수, 프로젝트, 회의록, 미참조"
+        : filters.ref_type.length == 1
+        ? filters.ref_type[0].name
+        : getName2(filters.ref_type);
+    const check =
+      filters.check.length == 0
+        ? "Y|N"
+        : filters.check.length == 1
+        ? filters.check[0].sub_code
+        : getName(filters.check);
     //조회조건 파라미터
     const parameters: Iparameters = {
       procedureName: "pw6_sel_task_order",
@@ -875,8 +1509,8 @@ const App = () => {
         "@p_receptionist":
           filters.receptionist != null ? filters.receptionist.user_id : "",
         "@p_status": status,
-        "@p_check": "",
-        "@p_ref_type": "",
+        "@p_check": check,
+        "@p_ref_type": ref_type,
         "@p_ref_key": "",
         "@p_ref_seq": 0,
       },
@@ -962,7 +1596,18 @@ const App = () => {
         : filters.status.length == 1
         ? filters.status[0].sub_code
         : getName(filters.status);
-
+    const ref_type =
+      filters.ref_type.length == 0
+        ? "접수, 프로젝트, 회의록, 미참조"
+        : filters.ref_type.length == 1
+        ? filters.ref_type[0].name
+        : getName2(filters.ref_type);
+    const check =
+      filters.check.length == 0
+        ? "Y|N"
+        : filters.check.length == 1
+        ? filters.check[0].sub_code
+        : getName(filters.check);
     //조회조건 파라미터
     const parameters: Iparameters = {
       procedureName: "pw6_sel_task_order",
@@ -990,8 +1635,8 @@ const App = () => {
         "@p_receptionist":
           filters.receptionist != null ? filters.receptionist.user_id : "",
         "@p_status": status,
-        "@p_check": "",
-        "@p_ref_type": "",
+        "@p_check": check,
+        "@p_ref_type": ref_type,
         "@p_ref_key": "",
         "@p_ref_seq": 0,
       },
@@ -1001,7 +1646,7 @@ const App = () => {
     } catch (error) {
       data = null;
     }
-    console.log(data);
+
     if (data.isSuccess === true) {
       const totalRowCnt = data.tables[0].TotalRowCount;
       const rows = data.tables[0].Rows;
@@ -1070,7 +1715,160 @@ const App = () => {
     setLoading(false);
   };
 
-  const fetchDocument = async (type: string, ref_key: string) => {
+  //그리드 데이터 조회
+  const fetchMainGrid4 = async (filters: any) => {
+    let data: any;
+    setLoading(true);
+
+    const status =
+      filters.status.length == 0
+        ? "Y|N"
+        : filters.status.length == 1
+        ? filters.status[0].sub_code
+        : getName(filters.status);
+    const ref_type =
+      filters.ref_type.length == 0
+        ? "접수, 프로젝트, 회의록, 미참조"
+        : filters.ref_type.length == 1
+        ? filters.ref_type[0].name
+        : getName2(filters.ref_type);
+    const check =
+      filters.check.length == 0
+        ? "Y|N"
+        : filters.check.length == 1
+        ? filters.check[0].sub_code
+        : getName(filters.check);
+    //조회조건 파라미터
+    const parameters: Iparameters = {
+      procedureName: "pw6_sel_task_order",
+      pageNumber: filters.pgNum,
+      pageSize: filters.pgSize,
+      parameters: {
+        "@p_work_type": filters.workType,
+        "@p_date_type": filters.date_type.sub_code,
+        "@p_from_date": convertDateToStr(filters.fromDate),
+        "@p_to_date": convertDateToStr(filters.toDate),
+        "@p_customer_code": "",
+        "@p_customer_name": filters.custnm,
+        "@p_user_name":
+          filters.user_name != null ? filters.user_name.user_id : "",
+        "@p_contents": filters.contents,
+        "@p_reception_type":
+          filters.reception_type != null ? filters.reception_type.sub_code : "",
+        "@p_value_code3":
+          filters.value_code3 != null ? filters.value_code3.sub_code : "",
+        "@p_reception_person":
+          filters.reception_person != null
+            ? filters.reception_person.user_id
+            : "",
+        "@p_worker": filters.worker != null ? filters.worker.user_id : "",
+        "@p_receptionist":
+          filters.receptionist != null ? filters.receptionist.user_id : "",
+        "@p_status": status,
+        "@p_check": check,
+        "@p_ref_type": ref_type,
+        "@p_ref_key": "",
+        "@p_ref_seq": 0,
+      },
+    };
+    try {
+      data = await processApi<any>("procedure", parameters);
+    } catch (error) {
+      data = null;
+    }
+    console.log(filters)
+    if (data.isSuccess === true) {
+      const totalRowCnt = data.tables[0].TotalRowCount;
+      const rows = data.tables[0].Rows;
+
+      if (filters.findRowValue !== "") {
+        // find_row_value 행으로 스크롤 이동
+        if (gridRef4.current) {
+          const findRowIndex = rows.findIndex(
+            (row: any) => row.docunum == filters.findRowValue
+          );
+          targetRowIndex4 = findRowIndex;
+        }
+
+        // find_row_value 데이터가 존재하는 페이지로 설정
+        setPage4({
+          skip: PAGE_SIZE * (data.pageNumber - 1),
+          take: PAGE_SIZE,
+        });
+      } else {
+        // 첫번째 행으로 스크롤 이동
+        if (gridRef4.current) {
+          targetRowIndex4 = 0;
+        }
+      }
+      setTempResult((prev) => {
+        return {
+          data: rows,
+          total: totalRowCnt == -1 ? 0 : totalRowCnt,
+        };
+      });
+      setMainDataResult4((prev) => {
+        return {
+          data: rows,
+          total: totalRowCnt == -1 ? 0 : totalRowCnt,
+        };
+      });
+
+      if (totalRowCnt > 0) {
+        const selectedRow =
+          filters.findRowValue == ""
+            ? rows[0]
+            : rows.find((row: any) => row.docunum == filters.findRowValue);
+
+        if (selectedRow != undefined) {
+          setSelectedState4({ [selectedRow[DATA_ITEM_KEY4]]: true });
+
+          for (var i = rows.length - 1; i >= 0; i--) {
+            fetchDocument(
+              "Task",
+              rows[i].orgdiv + "_" + rows[i].docunum,
+              rows[i]
+            );
+          }
+
+          fetchDocument(
+            "Task",
+            selectedRow.orgdiv + "_" + selectedRow.docunum,
+            selectedRow
+          );
+        } else {
+          setSelectedState4({ [rows[0][DATA_ITEM_KEY4]]: true });
+
+          for (var i = rows.length - 1; i >= 0; i--) {
+            fetchDocument(
+              "Task",
+              rows[i].orgdiv + "_" + rows[i].docunum,
+              rows[i]
+            );
+          }
+        }
+      } else {
+        if (refEditorRef.current) {
+          refEditorRef.current.setHtml("");
+        }
+      }
+    } else {
+      console.log("[오류 발생]");
+      console.log(data);
+    }
+    // 필터 isSearch false처리, pgNum 세팅
+    setFilters((prev) => ({
+      ...prev,
+      pgNum:
+        data && data.hasOwnProperty("pageNumber")
+          ? data.pageNumber
+          : prev.pgNum,
+      isSearch: false,
+    }));
+    setLoading(false);
+  };
+
+  const fetchDocument = async (type: string, ref_key: string, key?: any) => {
     let data: any;
     setLoading(true);
 
@@ -1090,6 +1888,24 @@ const App = () => {
       if (data !== null) {
         const document = data.document;
         setHtmlOnEditor({ document });
+        if (tabSelected == 3) {
+          if (refEditorRef.current) {
+            let editorContent: any = "";
+
+            editorContent = refEditorRef.current.getContent();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(editorContent, "text/html");
+            const textContent = doc.body.textContent || ""; //문자열
+
+            if (
+              localStorage.getItem(key[DATA_ITEM_KEY4]) == undefined ||
+              localStorage.getItem(key[DATA_ITEM_KEY4]) == null
+            ) {
+              localStorage.setItem(key[DATA_ITEM_KEY4], textContent);
+              localStorage.setItem(key[DATA_ITEM_KEY4] + "key", editorContent);
+            }
+          }
+        }
       } else {
         console.log("[에러발생]");
         console.log(data);
@@ -1097,7 +1913,6 @@ const App = () => {
         setHtmlOnEditor({ document: "" });
       }
     }
-
     setLoading(false);
   };
 
@@ -1112,6 +1927,8 @@ const App = () => {
         fetchMainGrid2(deepCopiedFilters);
       } else if (tabSelected == 2) {
         fetchMainGrid3(deepCopiedFilters);
+      } else if (tabSelected == 3) {
+        fetchMainGrid4(deepCopiedFilters);
       }
     }
   }, [filters]);
@@ -1140,6 +1957,14 @@ const App = () => {
     }
   }, [mainDataResult3]);
 
+  //메인 그리드 데이터 변경 되었을 때
+  useEffect(() => {
+    if (targetRowIndex4 !== null && gridRef4.current) {
+      gridRef4.current.scrollIntoView({ rowIndex: targetRowIndex4 });
+      targetRowIndex4 = null;
+    }
+  }, [mainDataResult4]);
+
   const onMainSortChange = (e: any) => {
     setMainDataState((prev) => ({ ...prev, sort: e.sort }));
   };
@@ -1148,6 +1973,9 @@ const App = () => {
   };
   const onMainSortChange3 = (e: any) => {
     setMainDataState3((prev) => ({ ...prev, sort: e.sort }));
+  };
+  const onMainSortChange4 = (e: any) => {
+    setMainDataState4((prev) => ({ ...prev, sort: e.sort }));
   };
   const onMainDataStateChange = (event: GridDataStateChangeEvent) => {
     setMainDataState(event.dataState);
@@ -1158,7 +1986,9 @@ const App = () => {
   const onMainDataStateChange3 = (event: GridDataStateChangeEvent) => {
     setMainDataState3(event.dataState);
   };
-
+  const onMainDataStateChange4 = (event: GridDataStateChangeEvent) => {
+    setMainDataState4(event.dataState);
+  };
   const onSelectionChange = (event: GridSelectionChangeEvent) => {
     const newSelectedState = getSelectedState({
       event,
@@ -1193,7 +2023,77 @@ const App = () => {
 
     fetchDocument("Meeting", selectedRowData.document_id);
   };
+  const onSelectionChange4 = (event: GridSelectionChangeEvent) => {
+    // 에디터 내 문자 추출
+    const currentRow = mainDataResult4.data.filter(
+      (item) =>
+        item[DATA_ITEM_KEY4] == Object.getOwnPropertyNames(selectedState4)[0]
+    )[0];
+    let editorContent: any = "";
+    if (refEditorRef.current) {
+      editorContent = refEditorRef.current.getContent();
+    }
 
+    const newSelectedState = getSelectedState({
+      event,
+      selectedState: selectedState4,
+      dataItemKey: DATA_ITEM_KEY4,
+    });
+
+    let str = "";
+    const selectedIdx = event.startRowIndex;
+    const selectedRowData = event.dataItems[selectedIdx];
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(editorContent, "text/html");
+    const textContent = doc.body.textContent || ""; //문자열
+    if (
+      localStorage.getItem(currentRow[DATA_ITEM_KEY4]) == undefined ||
+      localStorage.getItem(currentRow[DATA_ITEM_KEY4]) == null
+    ) {
+      localStorage.setItem(currentRow[DATA_ITEM_KEY4], textContent);
+      localStorage.setItem(currentRow[DATA_ITEM_KEY4] + "key", editorContent);
+    } else {
+      if (localStorage.getItem(currentRow[DATA_ITEM_KEY4]) != textContent) {
+        const newData = mainDataResult4.data.map((item) =>
+          item[DATA_ITEM_KEY4] == currentRow[DATA_ITEM_KEY4]
+            ? {
+                ...item,
+                rowstatus: item.rowstatus == "N" ? "N" : "U",
+              }
+            : {
+                ...item,
+              }
+        );
+
+        setTempResult((prev) => {
+          return {
+            data: newData,
+            total: prev.total,
+          };
+        });
+        setMainDataResult4((prev) => {
+          return {
+            data: newData,
+            total: prev.total,
+          };
+        });
+        localStorage.removeItem(currentRow[DATA_ITEM_KEY4]);
+        localStorage.removeItem(currentRow[DATA_ITEM_KEY4] + "key");
+        localStorage.setItem(currentRow[DATA_ITEM_KEY4], textContent);
+        localStorage.setItem(currentRow[DATA_ITEM_KEY4] + "key", editorContent);
+      }
+    }
+    if (refEditorRef.current) {
+      const value = localStorage.getItem(
+        selectedRowData[DATA_ITEM_KEY4] + "key"
+      );
+      if (typeof value == "string") {
+        str = value; // ok
+      }
+      setHtmlOnEditor({ document: str });
+    }
+    setSelectedState4(newSelectedState);
+  };
   const search = () => {
     if (
       filters.date_type == null ||
@@ -1202,9 +2102,15 @@ const App = () => {
     ) {
       alert("필수항목을 입력해주세요");
     } else {
+      mainDataResult4.data.map((item) => {
+        localStorage.removeItem(item[DATA_ITEM_KEY4]);
+        localStorage.removeItem(item[DATA_ITEM_KEY4] + "key");
+      });
+      deletedRows = [];
       setPage(initialPageState); // 페이지 초기화
       setPage2(initialPageState); // 페이지 초기화
       setPage3(initialPageState); // 페이지 초기화
+      setPage4(initialPageState); // 페이지 초기화
       setHtmlOnEditor({ document: "" });
       setFilters((prev) => ({
         ...prev,
@@ -1245,6 +2151,27 @@ const App = () => {
     }
   };
 
+  const gridSumQtyFooterCell = (props: GridFooterCellProps) => {
+    let sum = 0;
+    mainDataResult4.data.forEach((item) =>
+      props.field !== undefined ? (sum = item["total_" + props.field]) : ""
+    );
+    if (sum != undefined) {
+      var parts = sum.toString().split(".");
+
+      return parts[0] != "NaN" ? (
+        <td colSpan={props.colSpan} style={{ textAlign: "right" }}>
+          {parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",") +
+            (parts[1] ? "." + parts[1] : "")}
+        </td>
+      ) : (
+        <td></td>
+      );
+    } else {
+      return <td></td>;
+    }
+  };
+
   //그리드 푸터
   const mainTotalFooterCell = (props: GridFooterCellProps) => {
     var parts = mainDataResult.total.toString().split(".");
@@ -1273,6 +2200,7 @@ const App = () => {
       </td>
     );
   };
+
   const mainTotalFooterCell3 = (props: GridFooterCellProps) => {
     var parts = mainDataResult3.total.toString().split(".");
     return (
@@ -1286,8 +2214,23 @@ const App = () => {
       </td>
     );
   };
+
+  const mainTotalFooterCell4 = (props: GridFooterCellProps) => {
+    var parts = mainDataResult4.total.toString().split(".");
+    return (
+      <td colSpan={props.colSpan} style={props.style}>
+        총
+        {mainDataResult4.total == -1
+          ? 0
+          : parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",") +
+            (parts[1] ? "." + parts[1] : "")}
+        건
+      </td>
+    );
+  };
   const [isVisibleDetail, setIsVisableDetail] = useState(true);
   const [isVisibleDetail2, setIsVisableDetail2] = useState(true);
+  const [isVisibleDetail3, setIsVisableDetail3] = useState(true);
 
   const [reception_attach_number, setReception_attach_number] =
     useState<string>("");
@@ -1344,11 +2287,780 @@ const App = () => {
     }
   };
   const docEditorRef = useRef<TEditorHandle>(null);
+  const refEditorRef = useRef<TEditorHandle>(null);
+
   const setHtmlOnEditor = ({ document }: { document: string }) => {
     if (docEditorRef.current) {
       docEditorRef.current.updateEditable(true);
       docEditorRef.current.setHtml(document);
       docEditorRef.current.updateEditable(false);
+    }
+    if (refEditorRef.current) {
+      refEditorRef.current.updateEditable(true);
+      refEditorRef.current.setHtml(document);
+      refEditorRef.current.updateEditable(false);
+    }
+  };
+
+  const downloadDoc = async () => {
+    let response: any;
+    setLoading(true);
+
+    if (mainDataResult4.total < 1) {
+      alert("데이터가 없습니다.");
+    } else {
+      const datas = mainDataResult4.data.filter(
+        (item) =>
+          item[DATA_ITEM_KEY4] == Object.getOwnPropertyNames(selectedState4)[0]
+      )[0];
+
+      const para = {
+        para: "doc?type=Task&id=" + datas.orgdiv + "_" + datas.docunum,
+      };
+
+      try {
+        response = await processApi<any>("doc-download", para);
+      } catch (error) {
+        response = null;
+      }
+
+      if (response !== null) {
+        const blob = new Blob([response.data]);
+        // 특정 타입을 정의해야 경우에는 옵션을 사용해 MIME 유형을 정의 할 수 있습니다.
+        // const blob = new Blob([this.content], {type: 'text/plain'})
+
+        // blob을 사용해 객체 URL을 생성합니다.
+        const fileObjectUrl = window.URL.createObjectURL(blob);
+
+        // blob 객체 URL을 설정할 링크를 만듭니다.
+        const link = document.createElement("a");
+        link.href = fileObjectUrl;
+        link.style.display = "none";
+
+        // 다운로드 파일 이름을 지정 할 수 있습니다.
+        // 일반적으로 서버에서 전달해준 파일 이름은 응답 Header의 Content-Disposition에 설정됩니다.
+        link.download = extractDownloadFilename(response);
+
+        // 링크를 body에 추가하고 강제로 click 이벤트를 발생시켜 파일 다운로드를 실행시킵니다.
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+
+        // 다운로드가 끝난 리소스(객체 URL)를 해제합니다
+      }
+    }
+    setLoading(false);
+  };
+
+  const onItemChange = (event: GridItemChangeEvent) => {
+    setMainDataState4((prev) => ({ ...prev, sort: [] }));
+    getGridItemChangedData(
+      event,
+      mainDataResult4,
+      setMainDataResult4,
+      DATA_ITEM_KEY4
+    );
+  };
+
+  const customCellRender = (td: any, props: any) => (
+    <CellRender
+      originalProps={props}
+      td={td}
+      enterEdit={enterEdit}
+      editField={EDIT_FIELD}
+    />
+  );
+
+  const customRowRender = (tr: any, props: any) => (
+    <RowRender
+      originalProps={props}
+      tr={tr}
+      exitEdit={exitEdit}
+      editField={EDIT_FIELD}
+    />
+  );
+
+  const enterEdit = (dataItem: any, field: string) => {
+    if (
+      field != "rowstatus" &&
+      field != "is_defective" &&
+      field != "finyn" &&
+      field != "docunum" &&
+      field != "insert_userid" &&
+      field != "ref_key" &&
+      field != "ref_seq"
+    ) {
+      const newData = mainDataResult4.data.map((item) =>
+        item[DATA_ITEM_KEY4] == dataItem[DATA_ITEM_KEY4]
+          ? {
+              ...item,
+              [EDIT_FIELD]: field,
+            }
+          : {
+              ...item,
+              [EDIT_FIELD]: undefined,
+            }
+      );
+      setTempResult((prev) => {
+        return {
+          data: newData,
+          total: prev.total,
+        };
+      });
+      setMainDataResult4((prev) => {
+        return {
+          data: newData,
+          total: prev.total,
+        };
+      });
+    } else {
+      setTempResult((prev) => {
+        return {
+          data: mainDataResult4.data,
+          total: prev.total,
+        };
+      });
+    }
+  };
+
+  const exitEdit = () => {
+    if (tempResult.data != mainDataResult4.data) {
+      const newData = mainDataResult4.data.map((item) =>
+        item[DATA_ITEM_KEY4] == Object.getOwnPropertyNames(selectedState4)[0]
+          ? {
+              ...item,
+              rowstatus: item.rowstatus == "N" ? "N" : "U",
+              [EDIT_FIELD]: undefined,
+            }
+          : {
+              ...item,
+              [EDIT_FIELD]: undefined,
+            }
+      );
+      setTempResult((prev) => {
+        return {
+          data: newData,
+          total: prev.total,
+        };
+      });
+      setMainDataResult4((prev) => {
+        return {
+          data: newData,
+          total: prev.total,
+        };
+      });
+    } else {
+      const newData = mainDataResult4.data.map((item) => ({
+        ...item,
+        [EDIT_FIELD]: undefined,
+      }));
+      setTempResult((prev) => {
+        return {
+          data: newData,
+          total: prev.total,
+        };
+      });
+      setMainDataResult4((prev) => {
+        return {
+          data: newData,
+          total: prev.total,
+        };
+      });
+    }
+  };
+  const [ref_type, setRef_Type] = useState<string>("");
+  const [custcd, setCustcd] = useState<string>("");
+  const [ref_key, setRef_key] = useState<string>("");
+  const [ref_seq, setRef_seq] = useState<string>("");
+  const [attdatnum, setAttdatnum] = useState<string>("");
+  const [attach_exists, setAttach_exists] = useState<string>("");
+  const [errorWindowVisible, setErrorWindowVisible] = useState<boolean>(false);
+  const onErrorWndClick = () => {
+    setErrorWindowVisible(true);
+  };
+  useEffect(() => {
+    if (attdatnum != "" && attdatnum != undefined && attdatnum != null) {
+      setUnsavedAttadatnums((prev) => ({
+        type: "task",
+        attdatnums: [...prev.attdatnums, ...[attdatnum]],
+      }));
+    }
+    const newData = mainDataResult4.data.map((item) =>
+      item[DATA_ITEM_KEY4] ==
+      parseInt(Object.getOwnPropertyNames(selectedState4)[0])
+        ? {
+            ...item,
+            rowstatus: item.rowstatus == "N" ? "N" : "U",
+            attdatnum: attach_exists == "N" ? "" : attdatnum,
+            attach_exists: attach_exists,
+          }
+        : {
+            ...item,
+          }
+    );
+
+    if (attach_exists == "N") {
+      setAttdatnum("");
+    }
+
+    setMainDataResult4((prev) => {
+      return {
+        data: newData,
+        total: prev.total,
+      };
+    });
+    setTempResult((prev) => {
+      return {
+        data: newData,
+        total: prev.total,
+      };
+    });
+  }, [attdatnum, attach_exists]);
+
+  useEffect(() => {
+    console.log(ref_type)
+    const newData = mainDataResult4.data.map((item) =>
+      item[DATA_ITEM_KEY4] ==
+      parseInt(Object.getOwnPropertyNames(selectedState4)[0])
+        ? {
+            ...item,
+            rowstatus: item.rowstatus == "N" ? "N" : "U",
+            ref_type: ref_type,
+            ref_key: ref_key,
+            ref_seq: ref_seq,
+            custcd: ref_type == "미참조" ? item.custcd : custcd
+          }
+        : {
+            ...item,
+          }
+    );
+
+    setMainDataResult4((prev) => {
+      return {
+        data: newData,
+        total: prev.total,
+      };
+    });
+    setTempResult((prev) => {
+      return {
+        data: newData,
+        total: prev.total,
+      };
+    });
+  }, [ref_type, custcd, ref_key, ref_seq]);
+
+  const onAddClick = () => {
+    mainDataResult4.data.map((item) => {
+      if (item[DATA_ITEM_KEY4] > temp) {
+        temp = item[DATA_ITEM_KEY4];
+      }
+    });
+    const guid = uuidv4();
+
+    const newDataItem = {
+      [DATA_ITEM_KEY4]: ++temp,
+      attach_exists: "N",
+      attdatnum: "",
+      check_yn: "",
+      contents: "",
+      custcd: "",
+      custnm: "",
+      custperson: "",
+      docunum: "",
+      expect_time: "0:0",
+      exphh: 0,
+      expmm: 0,
+      find_key: "",
+      findt: "",
+      finexpdt: "",
+      finyn: "N",
+      guid: guid,
+      groupcd: "",
+      indicator: userId,
+      is_defective: "N",
+      orgdiv: "01",
+      person: "",
+      recdt: convertDateToStr(new Date()),
+      ref_key: "",
+      ref_seq: 0,
+      ref_type: "미참조",
+      remark: "",
+      value_code3: "",
+      rowstatus: "N",
+    };
+
+    setMainDataResult4((prev) => {
+      return {
+        data: [newDataItem, ...prev.data],
+        total: prev.total + 1,
+      };
+    });
+    setSelectedState4({ [newDataItem[DATA_ITEM_KEY4]]: true });
+    setHtmlOnEditor({ document: "" });
+  };
+
+  const onRemoveClick = () => {
+    if (mainDataResult4.total > 0) {
+      //삭제 안 할 데이터 newData에 push, 삭제 데이터 deletedRows에 push
+      let newData: any[] = [];
+      let Object: any[] = [];
+      let Object2: any[] = [];
+      let data;
+      mainDataResult4.data.forEach((item: any, index: number) => {
+        if (!selectedState4[item[DATA_ITEM_KEY4]]) {
+          newData.push(item);
+          Object2.push(index);
+        } else {
+          const newData2 = {
+            ...item,
+            rowstatus: "D",
+          };
+          Object.push(index);
+          deletedRows.push(newData2);
+          localStorage.removeItem(newData2[DATA_ITEM_KEY4]);
+          localStorage.removeItem(newData2[DATA_ITEM_KEY4] + "key");
+        }
+      });
+
+      if (Math.min(...Object) < Math.min(...Object2)) {
+        data = mainDataResult4.data[Math.min(...Object2)];
+      } else {
+        data = mainDataResult4.data[Math.min(...Object) - 1];
+      }
+
+      //newData 생성
+      setMainDataResult4((prev) => ({
+        data: newData,
+        total: prev.total - Object.length,
+      }));
+      setSelectedState4({
+        [data != undefined ? data[DATA_ITEM_KEY4] : newData[0]]: true,
+      });
+
+      if (refEditorRef.current) {
+        let str = "";
+        if (
+          localStorage.getItem(
+            data != undefined
+              ? data[DATA_ITEM_KEY4] + "key"
+              : newData[0] != undefined
+              ? newData[0][DATA_ITEM_KEY4] + "key"
+              : ""
+          )
+        ) {
+          str += localStorage.getItem(
+            data != undefined
+              ? data[DATA_ITEM_KEY4] + "key"
+              : newData[0] != undefined
+              ? newData[0][DATA_ITEM_KEY4] + "key"
+              : ""
+          );
+        }
+        setHtmlOnEditor({ document: str });
+      }
+    }
+  };
+
+  const onSetting = async () => {
+    let data: any;
+    setLoading(true);
+    const status =
+      filters.status.length == 0
+        ? "Wait|Progress|Hold|Finish"
+        : filters.status.length == 1
+        ? filters.status[0].sub_code
+        : getName(filters.status);
+    const ref_type =
+      filters.ref_type.length == 0
+        ? "접수, 프로젝트, 회의록, 미참조"
+        : filters.ref_type.length == 1
+        ? filters.ref_type[0].name
+        : getName2(filters.ref_type);
+    const check =
+      filters.check.length == 0
+        ? "Y|N"
+        : filters.check.length == 1
+        ? filters.check[0].sub_code
+        : getName(filters.check);
+    //조회조건 파라미터
+    const parameters: Iparameters = {
+      procedureName: "pw6_sel_task_order",
+      pageNumber: filters.pgNum,
+      pageSize: filters.pgSize,
+      parameters: {
+        "@p_work_type": filters.workType,
+        "@p_date_type": filters.date_type.sub_code,
+        "@p_from_date": convertDateToStr(filters.fromDate),
+        "@p_to_date": convertDateToStr(filters.toDate),
+        "@p_customer_code": "",
+        "@p_customer_name": filters.custnm,
+        "@p_user_name":
+          filters.user_name != null ? filters.user_name.user_id : "",
+        "@p_contents": filters.contents,
+        "@p_reception_type":
+          filters.reception_type != null ? filters.reception_type.sub_code : "",
+        "@p_value_code3":
+          filters.value_code3 != null ? filters.value_code3.sub_code : "",
+        "@p_reception_person":
+          filters.reception_person != null
+            ? filters.reception_person.user_id
+            : "",
+        "@p_worker": filters.worker != null ? filters.worker.user_id : "",
+        "@p_receptionist":
+          filters.receptionist != null ? filters.receptionist.user_id : "",
+        "@p_status": status,
+        "@p_check": check,
+        "@p_ref_type": ref_type,
+        "@p_ref_key": "",
+        "@p_ref_seq": 0,
+      },
+    };
+    try {
+      data = await processApi<any>("procedure", parameters);
+    } catch (error) {
+      data = null;
+    }
+    if (data.isSuccess === true) {
+      const totalRowCnt = data.tables[0].TotalRowCount;
+      const rows = data.tables[0].Rows;
+
+      if (totalRowCnt > 0) {
+        const selectedRow = rows.find(
+          (row: any) =>
+            row[DATA_ITEM_KEY4] == Object.getOwnPropertyNames(selectedState4)[0]
+        );
+
+        const newData = mainDataResult4.data.map((item) =>
+          item[DATA_ITEM_KEY4] == Object.getOwnPropertyNames(selectedState4)[0]
+            ? {
+                ...item,
+                is_defective: selectedRow.is_defective,
+              }
+            : {
+                ...item,
+              }
+        );
+        setMainDataResult4((prev) => {
+          return {
+            data: newData,
+            total: prev.total,
+          };
+        });
+      }
+    } else {
+      console.log("[오류 발생]");
+      console.log(data);
+    }
+    // 필터 isSearch false처리, pgNum 세팅
+    setFilters((prev) => ({
+      ...prev,
+      pgNum:
+        data && data.hasOwnProperty("pageNumber")
+          ? data.pageNumber
+          : prev.pgNum,
+      isSearch: false,
+    }));
+    setLoading(false);
+  };
+
+  const onConfirmClick = async () => {
+    type TRowsArr = {
+      row_status: string[];
+      guid_s: string[];
+      docunum_s: string[];
+      recdt_s: string[];
+      person_s: string[];
+      indicator_s: string[];
+
+      contents_s: string[];
+      remark_s: string[];
+      groupcd_s: string[];
+      custcd_s: string[];
+      finexpdt_s: string[];
+
+      exphh_s: string[];
+      expmm_s: string[];
+      custperson_s: string[];
+      attdatnum_s: string[];
+      value_code3_s: string[];
+
+      ref_type_s: string[];
+      ref_key_s: string[];
+      ref_seq_s: string[];
+    };
+
+    let rowsArr: TRowsArr = {
+      row_status: [],
+      guid_s: [],
+      docunum_s: [],
+      recdt_s: [],
+      person_s: [],
+      indicator_s: [],
+
+      contents_s: [],
+      remark_s: [],
+      groupcd_s: [],
+      custcd_s: [],
+      finexpdt_s: [],
+
+      exphh_s: [],
+      expmm_s: [],
+      custperson_s: [],
+      attdatnum_s: [],
+      value_code3_s: [],
+
+      ref_type_s: [],
+      ref_key_s: [],
+      ref_seq_s: [],
+    };
+
+    let valid = true;
+    let arrays: any = {};
+    mainDataResult4.data.map(
+      (item: {
+        finexpdt: Date | null;
+        recdt: Date | null;
+        person: string;
+        indicator: string;
+      }) => {
+        if (
+          parseDate(convertDateToStr(item.finexpdt)) == "" ||
+          parseDate(convertDateToStr(item.recdt)) == "" ||
+          item.person == "" ||
+          item.indicator == ""
+        ) {
+          valid = false;
+        }
+      }
+    );
+
+    if (valid != true) {
+      alert("필수항목을 채워주세요.");
+    } else {
+      const dataItem = mainDataResult4.data.filter((item: any) => {
+        return (
+          (item.rowstatus === "N" || item.rowstatus === "U") &&
+          item.rowstatus !== undefined
+        );
+      });
+
+      dataItem.forEach(async (item: any) => {
+        const {
+          num = "",
+
+          rowstatus = "",
+          guid = "",
+          docunum = "",
+          recdt = "",
+          person = "",
+          indicator = "",
+
+          remark = "",
+          groupcd = "",
+          custcd = "",
+          finexpdt = "",
+
+          exphh = "",
+          expmm = "",
+          custperson = "",
+          attdatnum = "",
+          value_code3 = "",
+
+          ref_type = "",
+          ref_key = "",
+          ref_seq = "",
+        } = item;
+
+        let str = "";
+        const value = localStorage.getItem(num + "key");
+
+        if (typeof value == "string") {
+          str = value; // ok
+        }
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(str, "text/html");
+        const textContent = doc.body.textContent || ""; //문자열
+
+        const bytes = require("utf8-bytes");
+        const convertedEditorContent = bytesToBase64(bytes(str)); //html
+
+        arrays[guid] = convertedEditorContent;
+        localStorage.removeItem(num);
+        localStorage.removeItem(num + "key");
+
+        rowsArr.row_status.push(rowstatus);
+        rowsArr.guid_s.push(guid);
+        rowsArr.docunum_s.push(docunum);
+        rowsArr.recdt_s.push(
+          recdt.length > 8 ? recdt : convertDateToStr(recdt)
+        );
+        rowsArr.person_s.push(person);
+        rowsArr.indicator_s.push(indicator);
+
+        rowsArr.contents_s.push(textContent);
+        rowsArr.remark_s.push(remark);
+        rowsArr.groupcd_s.push(groupcd);
+        rowsArr.custcd_s.push(custcd);
+        rowsArr.finexpdt_s.push(
+          finexpdt.length > 8 ? finexpdt : convertDateToStr(finexpdt)
+        );
+
+        rowsArr.exphh_s.push(exphh == "" ? 0 : exphh);
+        rowsArr.expmm_s.push(expmm == "" ? 0 : expmm);
+        rowsArr.custperson_s.push(custperson);
+        rowsArr.attdatnum_s.push(attdatnum);
+        rowsArr.value_code3_s.push(value_code3);
+
+        rowsArr.ref_type_s.push(ref_type);
+        rowsArr.ref_key_s.push(ref_key);
+        rowsArr.ref_seq_s.push(ref_seq);
+      });
+
+      deletedRows.forEach(async (item: any) => {
+        const {
+          num = "",
+
+          rowstatus = "",
+          guid = "",
+          docunum = "",
+          recdt = "",
+          person = "",
+          indicator = "",
+
+          contents = "",
+          remark = "",
+          groupcd = "",
+          custcd = "",
+          finexpdt = "",
+
+          exphh = "",
+          expmm = "",
+          custperson = "",
+          attdatnum = "",
+          value_code3 = "",
+
+          ref_type = "",
+          ref_key = "",
+          ref_seq = "",
+        } = item;
+        let str = "";
+        const value = localStorage.getItem(num + "key");
+
+        if (typeof value == "string") {
+          str = value; // ok
+        }
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(str, "text/html");
+        const textContent = doc.body.textContent || ""; //문자열
+
+        const bytes = require("utf8-bytes");
+        const convertedEditorContent = bytesToBase64(bytes(str)); //html
+
+        arrays[guid] = convertedEditorContent;
+        localStorage.removeItem(num);
+        localStorage.removeItem(num + "key");
+
+        rowsArr.row_status.push(rowstatus);
+        rowsArr.guid_s.push(guid);
+        rowsArr.docunum_s.push(docunum);
+        rowsArr.recdt_s.push(
+          recdt.length > 8 ? recdt : convertDateToStr(recdt)
+        );
+        rowsArr.person_s.push(person);
+        rowsArr.indicator_s.push(indicator);
+        rowsArr.contents_s.push(textContent);
+        rowsArr.remark_s.push(remark);
+        rowsArr.groupcd_s.push(groupcd);
+        rowsArr.custcd_s.push(custcd);
+        rowsArr.finexpdt_s.push(
+          finexpdt.length > 8 ? finexpdt : convertDateToStr(finexpdt)
+        );
+
+        rowsArr.exphh_s.push(exphh == "" ? 0 : exphh);
+        rowsArr.expmm_s.push(expmm == "" ? 0 : expmm);
+        rowsArr.custperson_s.push(custperson);
+        rowsArr.attdatnum_s.push(attdatnum);
+        rowsArr.value_code3_s.push(value_code3);
+
+        rowsArr.ref_type_s.push(ref_type);
+        rowsArr.ref_key_s.push(ref_key);
+        rowsArr.ref_seq_s.push(ref_seq);
+      });
+      let data: any;
+      setLoading(true);
+      //추가, 수정 프로시저 파라미터
+      const paras = {
+        fileBytes: arrays,
+        procedureName: "pw6_sav_task_order",
+        pageNumber: 0,
+        pageSize: 0,
+        parameters: {
+          "@p_work_type": "save",
+          "@p_row_status": rowsArr.row_status.join("|"),
+          "@p_guid": rowsArr.guid_s.join("|"),
+          "@p_docunum": rowsArr.docunum_s.join("|"),
+          "@p_recdt": rowsArr.recdt_s.join("|"),
+          "@p_person": rowsArr.person_s.join("|"),
+          "@p_indicator": rowsArr.indicator_s.join("|"),
+          "@p_contents": rowsArr.contents_s.join("|"),
+          "@p_remark": rowsArr.remark_s.join("|"),
+          "@p_groupcd": rowsArr.groupcd_s.join("|"),
+          "@p_value_code3": rowsArr.value_code3_s.join("|"),
+          "@p_custcd": rowsArr.custcd_s.join("|"),
+          "@p_finexpdt": rowsArr.finexpdt_s.join("|"),
+          "@p_exphh": rowsArr.exphh_s.join("|"),
+          "@p_expmm": rowsArr.expmm_s.join("|"),
+          "@p_custperson": rowsArr.custperson_s.join("|"),
+          "@p_attdatnum": rowsArr.attdatnum_s.join("|"),
+          "@p_ref_type": rowsArr.ref_type_s.join("|"),
+          "@p_ref_key": rowsArr.ref_key_s.join("|"),
+          "@p_ref_seq": rowsArr.ref_seq_s.join("|"),
+          "@p_id": userId,
+          "@p_pc": pc,
+        },
+      };
+
+      try {
+        data = await processApi<any>("taskorder-save", paras);
+      } catch (error) {
+        data = null;
+      }
+      if (data.isSuccess === true) {
+        mainDataResult.data.map((item) => {
+          localStorage.removeItem(item[DATA_ITEM_KEY]);
+          localStorage.removeItem(item[DATA_ITEM_KEY] + "key");
+        });
+        const isLastDataDeleted =
+          mainDataResult4.data.length == 1 && filters.pgNum > 1;
+        if (isLastDataDeleted) {
+          setPage({
+            skip:
+              filters.pgNum == 1 || filters.pgNum == 0
+                ? 0
+                : PAGE_SIZE * (filters.pgNum - 2),
+            take: PAGE_SIZE,
+          });
+          setFilters((prev: any) => ({
+            ...prev,
+            findRowValue: "",
+            pgNum: prev.pgNum - 1,
+            isSearch: true,
+          }));
+        } else {
+          setFilters((prev: any) => ({
+            ...prev,
+            findRowValue: data.returnString,
+            pgNum: prev.pgNum,
+            isSearch: true,
+          }));
+        }
+        deletedRows = [];
+      } else {
+        console.log("[오류 발생]");
+        console.log(data);
+        alert(data.resultMessage);
+      }
+      setLoading(false);
     }
   };
   return (
@@ -1361,7 +3073,7 @@ const App = () => {
               themeColor={"primary"}
               fillMode={"outline"}
               icon="save"
-              //onClick={saveProject}
+              onClick={onConfirmClick}
             >
               저장
             </Button>
@@ -1717,7 +3429,11 @@ const App = () => {
                 <GridContainer
                   style={{
                     marginTop: isVisibleDetail ? "10px" : "",
-                    height: isMobile ? "76vh" : isVisibleDetail ? "40vh" : "76vh",
+                    height: isMobile
+                      ? "76vh"
+                      : isVisibleDetail
+                      ? "40vh"
+                      : "76vh",
                   }}
                 >
                   <GridTitleContainer>
@@ -2494,7 +4210,11 @@ const App = () => {
                 <GridContainer
                   style={{
                     marginTop: isVisibleDetail2 ? "10px" : "",
-                    height: isMobile ? "76vh" : isVisibleDetail2 ? "40vh" : "76vh",
+                    height: isMobile
+                      ? "76vh"
+                      : isVisibleDetail2
+                      ? "40vh"
+                      : "76vh",
                   }}
                 >
                   <GridTitleContainer>
@@ -2589,6 +4309,456 @@ const App = () => {
                   </FormBoxWrap>
                   <RichEditor id="docEditor" ref={docEditorRef} hideTools />
                 </GridContainer>
+              </GridContainer>
+            </GridContainerWrap>
+          </TabStripTab>
+          <TabStripTab title="업무지시(전체)">
+            <GridContainerWrap>
+              <GridContainer width={`15%`}>
+                <GridTitleContainer>
+                  <GridTitle>조회조건</GridTitle>
+                </GridTitleContainer>
+                <FilterBoxWrap>
+                  <FilterBox
+                    onKeyPress={(e) => handleKeyPressSearch(e, search)}
+                  >
+                    <tbody>
+                      <tr>
+                        <th style={{ width: isMobile ? "100%" : "50%" }}>
+                          <MultiColumnComboBox
+                            name="date_type"
+                            data={
+                              filter16
+                                ? filterBy(dateTypeData4, filter16)
+                                : dateTypeData4
+                            }
+                            value={filters.date_type}
+                            columns={dataTypeColumns}
+                            textField={"code_name"}
+                            onChange={filterComboBoxChange}
+                            className="required"
+                            filterable={true}
+                            onFilterChange={handleFilterChange16}
+                            style={{ width: "100%" }}
+                          />
+                        </th>
+                        <td colSpan={3}>
+                          <CommonDateRangePicker
+                            value={{
+                              start: filters.fromDate,
+                              end: filters.toDate,
+                            }}
+                            onChange={(e: {
+                              value: { start: any; end: any };
+                            }) =>
+                              setFilters((prev) => ({
+                                ...prev,
+                                fromDate: e.value.start,
+                                toDate: e.value.end,
+                              }))
+                            }
+                            style={{ display: "inline-block" }}
+                            className="required"
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>접수담당자</th>
+                        <td>
+                          <MultiColumnComboBox
+                            name="receptionist"
+                            data={
+                              filter17
+                                ? filterBy(usersData, filter17)
+                                : usersData
+                            }
+                            value={filters.receptionist}
+                            columns={userColumns}
+                            textField={"user_name"}
+                            onChange={filterComboBoxChange}
+                            filterable={true}
+                            onFilterChange={handleFilterChange17}
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>참조</th>
+                        <td>
+                          <MultiSelect
+                            name="ref_type"
+                            data={TypeData}
+                            onChange={filterMultiSelectChange}
+                            value={filters.ref_type}
+                            textField="name"
+                            dataItemKey="code"
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>비고 및 내용</th>
+                        <td>
+                          <Input
+                            name="contents"
+                            type="text"
+                            value={filters.contents}
+                            onChange={filterInputChange}
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>완료여부</th>
+                        <td>
+                          <MultiSelect
+                            name="status"
+                            data={statusListData2}
+                            onChange={filterMultiSelectChange}
+                            value={filters.status}
+                            textField="code_name"
+                            dataItemKey="sub_code"
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>확인여부</th>
+                        <td>
+                          <MultiSelect
+                            name="check"
+                            data={CheckListData}
+                            onChange={filterMultiSelectChange}
+                            value={filters.check}
+                            textField="code_name"
+                            dataItemKey="sub_code"
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>업체명</th>
+                        <td>
+                          <Input
+                            name="custnm"
+                            type="text"
+                            value={filters.custnm}
+                            onChange={filterInputChange}
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>지시자</th>
+                        <td>
+                          <MultiColumnComboBox
+                            name="user_name"
+                            data={
+                              filter18
+                                ? filterBy(usersData, filter18)
+                                : usersData
+                            }
+                            value={filters.user_name}
+                            columns={userColumns}
+                            textField={"user_name"}
+                            onChange={filterComboBoxChange}
+                            filterable={true}
+                            onFilterChange={handleFilterChange18}
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>처리담당자</th>
+                        <td>
+                          <MultiColumnComboBox
+                            name="worker"
+                            data={
+                              filter19
+                                ? filterBy(usersData, filter19)
+                                : usersData
+                            }
+                            value={filters.worker}
+                            columns={userColumns}
+                            textField={"user_name"}
+                            onChange={filterComboBoxChange}
+                            filterable={true}
+                            onFilterChange={handleFilterChange19}
+                          />
+                        </td>
+                      </tr>
+                    </tbody>
+                  </FilterBox>
+                </FilterBoxWrap>
+              </GridContainer>
+              {isVisibleDetail3 && (
+                <GridContainer width={`calc(40% - ${GAP}px)`}>
+                  <GridTitleContainer>
+                    <GridTitle>
+                      업무지시(접수:
+                      <span className="k-icon k-i-file k-icon-lg"></span>,
+                      프로젝트:
+                      <span className="k-icon k-i-folder k-icon-lg"></span>,
+                      회의록:
+                      <span className="k-icon k-i-comment k-icon-lg"></span>)
+                    </GridTitle>
+                    <ButtonContainer>
+                      <Button
+                        onClick={onErrorWndClick}
+                        themeColor={"primary"}
+                        icon="gear"
+                        title="불량 팝업"
+                      ></Button>
+                      <Button
+                        onClick={onAddClick}
+                        themeColor={"primary"}
+                        icon="plus"
+                        title="행 추가"
+                      ></Button>
+                      <Button
+                        onClick={onRemoveClick}
+                        fillMode="outline"
+                        themeColor={"primary"}
+                        icon="minus"
+                        title="행 삭제"
+                      ></Button>
+                    </ButtonContainer>
+                  </GridTitleContainer>
+                  <TypeContext.Provider
+                    value={{
+                      ref_type,
+                      custcd,
+                      ref_key,
+                      ref_seq,
+                      setRef_Type,
+                      setCustcd,
+                      setRef_key,
+                      setRef_seq,
+                      mainDataState4,
+                      setMainDataState4,
+                    }}
+                  >
+                    <FilesContext2.Provider
+                      value={{
+                        attdatnum,
+                        attach_exists,
+                        setAttdatnum,
+                        setAttach_exists,
+                        mainDataState,
+                        setMainDataState,
+                        // fetchGrid,
+                      }}
+                    >
+                      <CustContext.Provider value={{ custData: custData }}>
+                        <WorkTypeContext.Provider
+                          value={{ WorkTypeItems: WorkTypeItems }}
+                        >
+                          <ValueCodeContext.Provider
+                            value={{ valuecodeItems: valuecodeItems }}
+                          >
+                            <UserContext.Provider
+                              value={{ usersData: usersData }}
+                            >
+                              <Grid
+                                style={{ height: `73vh` }}
+                                data={process(
+                                  mainDataResult4.data.map((row) => ({
+                                    ...row,
+                                    insert_userid: usersData.find(
+                                      (items: any) =>
+                                        items.user_id == row.insert_userid
+                                    )?.user_name,
+                                    [SELECTED_FIELD]:
+                                      selectedState4[idGetter4(row)],
+                                  })),
+                                  mainDataState4
+                                )}
+                                {...mainDataState4}
+                                onDataStateChange={onMainDataStateChange4}
+                                //선택 기능
+                                dataItemKey={DATA_ITEM_KEY4}
+                                selectedField={SELECTED_FIELD}
+                                selectable={{
+                                  enabled: true,
+                                  mode: "single",
+                                }}
+                                onSelectionChange={onSelectionChange4}
+                                //스크롤 조회 기능
+                                fixedScroll={true}
+                                total={mainDataResult4.total}
+                                skip={page4.skip}
+                                take={page4.take}
+                                pageable={true}
+                                onPageChange={pageChange4}
+                                //원하는 행 위치로 스크롤 기능
+                                ref={gridRef4}
+                                rowHeight={30}
+                                //정렬기능
+                                sortable={true}
+                                onSortChange={onMainSortChange4}
+                                //컬럼순서조정
+                                reorderable={true}
+                                //컬럼너비조정
+                                resizable={true}
+                                onItemChange={onItemChange}
+                                cellRender={customCellRender}
+                                rowRender={customRowRender}
+                                editField={EDIT_FIELD}
+                              >
+                                <GridColumn
+                                  field="rowstatus"
+                                  title=" "
+                                  width="45px"
+                                />
+                                <GridColumn
+                                  field="is_defective"
+                                  title="불량"
+                                  width={80}
+                                  cell={defectiveCell}
+                                />
+                                <GridColumn
+                                  field="check_yn"
+                                  title="확인"
+                                  width={80}
+                                  cell={Check_ynCell}
+                                />
+                                <GridColumn
+                                  field="ref_type"
+                                  title="참조"
+                                  width={120}
+                                  cell={TypeCell}
+                                />
+                                <GridColumn
+                                  field="custcd"
+                                  title="업체"
+                                  width={120}
+                                  cell={CustCell}
+                                />
+                                <GridColumn
+                                  field="groupcd"
+                                  title="업무분류"
+                                  width={120}
+                                  cell={WorkTypeCodeCell}
+                                  footerCell={mainTotalFooterCell4}
+                                />
+                                <GridColumn
+                                  field="value_code3"
+                                  title="Value 구분"
+                                  width={120}
+                                  cell={ValueCodeCell}
+                                />
+                                <GridColumn
+                                  field="person"
+                                  title="처리담당자"
+                                  headerCell={RequiredHeader}
+                                  width={120}
+                                  cell={UserCell}
+                                />
+                                <GridColumn
+                                  field="finexpdt"
+                                  title="완료예정일"
+                                  cell={DateCell}
+                                  headerCell={RequiredHeader}
+                                  width={120}
+                                />
+                                <GridColumn
+                                  field="exphh"
+                                  title="예상(H)"
+                                  width={80}
+                                  cell={NumberCell}
+                                  footerCell={gridSumQtyFooterCell}
+                                />
+                                <GridColumn
+                                  field="expmm"
+                                  title="예상(M)"
+                                  width={80}
+                                  cell={NumberCell}
+                                  footerCell={gridSumQtyFooterCell}
+                                />
+                                <GridColumn
+                                  field="attdatnum"
+                                  title="첨부"
+                                  width={120}
+                                  cell={FilesCell2}
+                                />
+                                <GridColumn
+                                  field="remark"
+                                  title="비고"
+                                  width={150}
+                                />
+                                <GridColumn
+                                  field="finyn"
+                                  title="완료"
+                                  width={100}
+                                  cell={CheckBoxReadOnlyCell}
+                                />
+                                <GridColumn
+                                  field="recdt"
+                                  title="지시일"
+                                  width={120}
+                                  cell={DateCell}
+                                  headerCell={RequiredHeader}
+                                />
+                                <GridColumn
+                                  field="indicator"
+                                  title="지시자"
+                                  width={120}
+                                  headerCell={RequiredHeader}
+                                  cell={UserCell}
+                                />
+                                <GridColumn
+                                  field="docunum"
+                                  title="지시번호"
+                                  width={200}
+                                />
+                                <GridColumn
+                                  field="insert_userid"
+                                  title="등록자"
+                                  width={120}
+                                />
+                                <GridColumn
+                                  field="ref_key"
+                                  title="참조번호1"
+                                  width={200}
+                                />
+                                <GridColumn
+                                  field="ref_seq"
+                                  title="참조번호2"
+                                  width={120}
+                                  cell={NumberCell}
+                                />
+                              </Grid>
+                            </UserContext.Provider>
+                          </ValueCodeContext.Provider>
+                        </WorkTypeContext.Provider>
+                      </CustContext.Provider>
+                    </FilesContext2.Provider>
+                  </TypeContext.Provider>
+                </GridContainer>
+              )}
+              <GridContainer
+                width={
+                  isVisibleDetail3
+                    ? `calc(45% - ${GAP}px)`
+                    : `calc(85% - ${GAP}px)`
+                }
+                height={"76.8vh"}
+              >
+                <GridTitleContainer>
+                  <GridTitle>
+                    <Button
+                      themeColor={"primary"}
+                      fillMode={"flat"}
+                      icon={isVisibleDetail3 ? "chevron-left" : "chevron-right"}
+                      onClick={() => setIsVisableDetail3((prev) => !prev)}
+                    ></Button>
+                  </GridTitle>
+                  <ButtonContainer>
+                    <Button
+                      icon={"file-word"}
+                      name="meeting"
+                      onClick={downloadDoc}
+                      themeColor={"primary"}
+                      fillMode={"outline"}
+                    >
+                      다운로드
+                    </Button>
+                  </ButtonContainer>
+                </GridTitleContainer>
+                <RichEditor id="refEditor" ref={refEditorRef} />
               </GridContainer>
             </GridContainerWrap>
           </TabStripTab>
@@ -2715,6 +4885,25 @@ const App = () => {
             }));
           }}
           modal={true}
+        />
+      )}
+      {errorWindowVisible && (
+        <ErrorWindow
+          setVisible={setErrorWindowVisible}
+          para={
+            mainDataResult4.data.filter(
+              (item) =>
+                item[DATA_ITEM_KEY4] ==
+                Object.getOwnPropertyNames(selectedState4)[0]
+            )[0] == undefined
+              ? {}
+              : mainDataResult4.data.filter(
+                  (item) =>
+                    item[DATA_ITEM_KEY4] ==
+                    Object.getOwnPropertyNames(selectedState4)[0]
+                )[0]
+          }
+          reload2={() => onSetting()}
         />
       )}
     </>
