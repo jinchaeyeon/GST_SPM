@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Editor,
   EditorChangeEvent,
@@ -54,6 +54,7 @@ type TRichEditor = {
   id: string;
   hideTools?: boolean;
   className?: string;
+  change?(v: number) : void;
 };
 
 const noticeStyle = `body {
@@ -63,8 +64,9 @@ const noticeStyle = `body {
 const { EditorState, EditorView, Plugin, PluginKey } = ProseMirror;
 
 const RichEditor = React.forwardRef(
-  ({ id, hideTools, className = "" }: TRichEditor, ref) => {
+  ({ id, hideTools, className = "", change}: TRichEditor, ref) => {
     const editor = React.createRef<Editor>();
+
     // let styles: null | string = null;
     const [styles, setStyles] = React.useState<null | string>(null);
     const editableRef = React.useRef<boolean>(true);
@@ -298,6 +300,13 @@ const RichEditor = React.forwardRef(
 
       return `#${hex.toString(16).padStart(6, "0")}`;
     };
+ 
+    var count = 0;
+    const textChangeHandler = (e: any) => {
+      if(change != undefined) {
+        change(count++);
+      }
+    }
 
     return (
       <div
@@ -332,6 +341,7 @@ const RichEditor = React.forwardRef(
           }
           ref={editor}
           onMount={onMount}
+          onChange={textChangeHandler}
         />
       </div>
     );

@@ -827,7 +827,7 @@ const App = () => {
       setFilters({
         workType: "task_order_all",
         date_type: { sub_code: "A", code_name: "지시일" },
-        fromDate: fromDate,
+        fromDate: fromDate2,
         toDate: new Date(),
         custnm: "",
         value_code3: { sub_code: "", code_name: "" },
@@ -835,9 +835,9 @@ const App = () => {
         status: [{ sub_code: "N", code_name: "미완료", code: "N" }],
         reception_person: { user_id: "", user_name: "" },
         receptionist: { user_id: "", user_name: "" },
-        worker: { user_id: userId, user_name: userName },
+        worker: { user_id: "", user_name: "" },
         reception_type: { sub_code: "", code_name: "" },
-        user_name: { user_id: "", user_name: "" },
+        user_name: { user_id: userId, user_name: userName },
         ref_type: [
           { code: 1, name: "접수" },
           { code: 2, name: "프로젝트" },
@@ -1164,7 +1164,7 @@ const App = () => {
     const convertedQueryStr = bytesToBase64(bytes(str));
 
     let query = {
-      query: convertedQueryStr
+      query: convertedQueryStr,
     };
 
     try {
@@ -1172,34 +1172,37 @@ const App = () => {
     } catch (error) {
       data = null;
     }
-
   };
 
   const Check_ynCell = (props: GridCellProps) => {
     const data = props.dataItem;
     const changeCheck = async () => {
       if (data.indicator == userId) {
-        const checkQueryStr = `UPDATE CR005T SET finyn = '${data.check_yn}' WHERE orgdiv = '${data.orgdiv}' AND docunum = '${data.docunum}'`;
-        console.log(checkQueryStr)
+        const checkQueryStr = `UPDATE CR005T SET finyn = '${
+          data.check_yn == "N" || data.check_yn == ""
+            ? "Y"
+            : data.check_yn == "Y"
+            ? "N"
+            : ""
+        }' WHERE orgdiv = '${data.orgdiv}' AND docunum = '${data.docunum}'`;
         fetchCheck(checkQueryStr);
         const newData = mainDataResult4.data.map((item) =>
-        item[DATA_ITEM_KEY4] == data[DATA_ITEM_KEY4]
-          ? {
-              ...item,
-              check_yn:
-                item.check_yn == "N"
-                  ? true
-                  : item.check_yn == "Y"
-                  ? false
-                  : !item.check_yn,
-              rowstatus: item.rowstatus == "N" ? "N" : "U",
-              [EDIT_FIELD]: props.field,
-            }
-          : {
-              ...item,
-              [EDIT_FIELD]: undefined,
-            }
-      );
+          item[DATA_ITEM_KEY4] == data[DATA_ITEM_KEY4]
+            ? {
+                ...item,
+                check_yn:
+                  item.check_yn == "N" || item.check_yn == ""
+                    ? true
+                    : item.check_yn == "Y"
+                    ? false
+                    : !item.check_yn,
+                [EDIT_FIELD]: props.field,
+              }
+            : {
+                ...item,
+                [EDIT_FIELD]: undefined,
+              }
+        );
         setTempResult((prev) => {
           return {
             data: newData,
@@ -1232,7 +1235,7 @@ const App = () => {
       <td onClick={changeCheck} />
     );
   };
-  console.log(mainDataResult4.data)
+
   const defectiveCell = (props: GridCellProps) => {
     const data = props.dataItem;
 
@@ -1257,6 +1260,11 @@ const App = () => {
     currentDate.getFullYear(),
     currentDate.getMonth() - 3,
     currentDate.getDate()
+  );
+  const fromDate2 = new Date(
+    currentDate.getFullYear(),
+    currentDate.getMonth(),
+    currentDate.getDate() - 14
   );
   type TFilters = {
     workType: string;
@@ -1383,6 +1391,7 @@ const App = () => {
         "@p_ref_type": ref_type,
         "@p_ref_key": "",
         "@p_ref_seq": 0,
+        "@p_find_row_value": filters.findRowValue,
       },
     };
     try {
@@ -1513,6 +1522,7 @@ const App = () => {
         "@p_ref_type": ref_type,
         "@p_ref_key": "",
         "@p_ref_seq": 0,
+        "@p_find_row_value": filters.findRowValue,
       },
     };
     try {
@@ -1639,6 +1649,7 @@ const App = () => {
         "@p_ref_type": ref_type,
         "@p_ref_key": "",
         "@p_ref_seq": 0,
+        "@p_find_row_value": filters.findRowValue,
       },
     };
     try {
@@ -1769,6 +1780,7 @@ const App = () => {
         "@p_ref_type": ref_type,
         "@p_ref_key": "",
         "@p_ref_seq": 0,
+        "@p_find_row_value": filters.findRowValue,
       },
     };
     try {
@@ -1776,7 +1788,7 @@ const App = () => {
     } catch (error) {
       data = null;
     }
-    console.log(filters)
+
     if (data.isSuccess === true) {
       const totalRowCnt = data.tables[0].TotalRowCount;
       const rows = data.tables[0].Rows;
@@ -1823,14 +1835,6 @@ const App = () => {
         if (selectedRow != undefined) {
           setSelectedState4({ [selectedRow[DATA_ITEM_KEY4]]: true });
 
-          for (var i = rows.length - 1; i >= 0; i--) {
-            fetchDocument(
-              "Task",
-              rows[i].orgdiv + "_" + rows[i].docunum,
-              rows[i]
-            );
-          }
-
           fetchDocument(
             "Task",
             selectedRow.orgdiv + "_" + selectedRow.docunum,
@@ -1839,13 +1843,11 @@ const App = () => {
         } else {
           setSelectedState4({ [rows[0][DATA_ITEM_KEY4]]: true });
 
-          for (var i = rows.length - 1; i >= 0; i--) {
-            fetchDocument(
-              "Task",
-              rows[i].orgdiv + "_" + rows[i].docunum,
-              rows[i]
-            );
-          }
+          fetchDocument(
+            "Task",
+            rows[0].orgdiv + "_" + rows[0].docunum,
+            rows[0]
+          );
         }
       } else {
         if (refEditorRef.current) {
@@ -1874,6 +1876,9 @@ const App = () => {
 
     if (type == "" || ref_key == "") {
       setHtmlOnEditor({ document: "" });
+      if (refEditorRef.current) {
+        refEditorRef.current.setHtml("");
+      }
     } else {
       const para = {
         para: `document?type=${type}&id=${ref_key}`,
@@ -1884,33 +1889,36 @@ const App = () => {
       } catch (error) {
         data = null;
       }
-
       if (data !== null) {
-        const document = data.document;
-        setHtmlOnEditor({ document });
         if (tabSelected == 3) {
           if (refEditorRef.current) {
-            let editorContent: any = "";
-
-            editorContent = refEditorRef.current.getContent();
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(editorContent, "text/html");
-            const textContent = doc.body.textContent || ""; //문자열
-
+            const document = data.document;
             if (
               localStorage.getItem(key[DATA_ITEM_KEY4]) == undefined ||
               localStorage.getItem(key[DATA_ITEM_KEY4]) == null
             ) {
-              localStorage.setItem(key[DATA_ITEM_KEY4], textContent);
-              localStorage.setItem(key[DATA_ITEM_KEY4] + "key", editorContent);
+              localStorage.setItem(key[DATA_ITEM_KEY4], key.contents);
+              localStorage.setItem(key[DATA_ITEM_KEY4] + "key", document);
+            } else {
+              localStorage.removeItem(key[DATA_ITEM_KEY4]);
+              localStorage.removeItem(key[DATA_ITEM_KEY4] + "key");
+              localStorage.setItem(key[DATA_ITEM_KEY4], key.contents);
+              localStorage.setItem(key[DATA_ITEM_KEY4] + "key", document);
             }
+            refEditorRef.current.setHtml(document);
           }
+        } else {
+          const document = data.document;
+          setHtmlOnEditor({ document });
         }
       } else {
         console.log("[에러발생]");
         console.log(data);
 
         setHtmlOnEditor({ document: "" });
+        if (refEditorRef.current) {
+          refEditorRef.current.setHtml("");
+        }
       }
     }
     setLoading(false);
@@ -2024,75 +2032,60 @@ const App = () => {
     fetchDocument("Meeting", selectedRowData.document_id);
   };
   const onSelectionChange4 = (event: GridSelectionChangeEvent) => {
-    // 에디터 내 문자 추출
     const currentRow = mainDataResult4.data.filter(
       (item) =>
         item[DATA_ITEM_KEY4] == Object.getOwnPropertyNames(selectedState4)[0]
     )[0];
-    let editorContent: any = "";
-    if (refEditorRef.current) {
-      editorContent = refEditorRef.current.getContent();
-    }
-
+    let editorContent2: any = "";
+    editorContent2 = refEditorRef.current?.getContent();
+    let editorContent3: any = "";
     const newSelectedState = getSelectedState({
       event,
       selectedState: selectedState4,
       dataItemKey: DATA_ITEM_KEY4,
     });
 
-    let str = "";
     const selectedIdx = event.startRowIndex;
     const selectedRowData = event.dataItems[selectedIdx];
     const parser = new DOMParser();
-    const doc = parser.parseFromString(editorContent, "text/html");
-    const textContent = doc.body.textContent || ""; //문자열
+    const doc = parser.parseFromString(editorContent2, "text/html");
+    const textContent = doc.body.textContent || ""; //기존행 문자열
+
+    //web저장된 문서
     if (
       localStorage.getItem(currentRow[DATA_ITEM_KEY4]) == undefined ||
       localStorage.getItem(currentRow[DATA_ITEM_KEY4]) == null
     ) {
       localStorage.setItem(currentRow[DATA_ITEM_KEY4], textContent);
-      localStorage.setItem(currentRow[DATA_ITEM_KEY4] + "key", editorContent);
+      localStorage.setItem(currentRow[DATA_ITEM_KEY4] + "key", editorContent2);
     } else {
-      if (localStorage.getItem(currentRow[DATA_ITEM_KEY4]) != textContent) {
-        const newData = mainDataResult4.data.map((item) =>
-          item[DATA_ITEM_KEY4] == currentRow[DATA_ITEM_KEY4]
-            ? {
-                ...item,
-                rowstatus: item.rowstatus == "N" ? "N" : "U",
-              }
-            : {
-                ...item,
-              }
-        );
-
-        setTempResult((prev) => {
-          return {
-            data: newData,
-            total: prev.total,
-          };
-        });
-        setMainDataResult4((prev) => {
-          return {
-            data: newData,
-            total: prev.total,
-          };
-        });
+      if (currentRow.rowstatus == "U" || currentRow.rowstatus == "N") {
         localStorage.removeItem(currentRow[DATA_ITEM_KEY4]);
         localStorage.removeItem(currentRow[DATA_ITEM_KEY4] + "key");
         localStorage.setItem(currentRow[DATA_ITEM_KEY4], textContent);
-        localStorage.setItem(currentRow[DATA_ITEM_KEY4] + "key", editorContent);
+        localStorage.setItem(
+          currentRow[DATA_ITEM_KEY4] + "key",
+          editorContent2
+        );
       }
     }
-    if (refEditorRef.current) {
-      const value = localStorage.getItem(
+
+    setSelectedState4(newSelectedState);
+
+    if (selectedRowData.rowstatus == undefined) {
+      fetchDocument(
+        "Task",
+        selectedRowData.orgdiv + "_" + selectedRowData.docunum,
+        selectedRowData
+      );
+    } else {
+      editorContent3 = localStorage.getItem(
         selectedRowData[DATA_ITEM_KEY4] + "key"
       );
-      if (typeof value == "string") {
-        str = value; // ok
+      if (refEditorRef.current) {
+        refEditorRef.current.setHtml(editorContent3);
       }
-      setHtmlOnEditor({ document: str });
     }
-    setSelectedState4(newSelectedState);
   };
   const search = () => {
     if (
@@ -2112,6 +2105,9 @@ const App = () => {
       setPage3(initialPageState); // 페이지 초기화
       setPage4(initialPageState); // 페이지 초기화
       setHtmlOnEditor({ document: "" });
+      if (refEditorRef.current) {
+        refEditorRef.current.setHtml("");
+      }
       setFilters((prev) => ({
         ...prev,
         pgNum: 1,
@@ -2294,11 +2290,6 @@ const App = () => {
       docEditorRef.current.updateEditable(true);
       docEditorRef.current.setHtml(document);
       docEditorRef.current.updateEditable(false);
-    }
-    if (refEditorRef.current) {
-      refEditorRef.current.updateEditable(true);
-      refEditorRef.current.setHtml(document);
-      refEditorRef.current.updateEditable(false);
     }
   };
 
@@ -2518,7 +2509,6 @@ const App = () => {
   }, [attdatnum, attach_exists]);
 
   useEffect(() => {
-    console.log(ref_type)
     const newData = mainDataResult4.data.map((item) =>
       item[DATA_ITEM_KEY4] ==
       parseInt(Object.getOwnPropertyNames(selectedState4)[0])
@@ -2528,7 +2518,7 @@ const App = () => {
             ref_type: ref_type,
             ref_key: ref_key,
             ref_seq: ref_seq,
-            custcd: ref_type == "미참조" ? item.custcd : custcd
+            custcd: ref_type == "미참조" ? item.custcd : custcd,
           }
         : {
             ...item,
@@ -2596,7 +2586,9 @@ const App = () => {
       };
     });
     setSelectedState4({ [newDataItem[DATA_ITEM_KEY4]]: true });
-    setHtmlOnEditor({ document: "" });
+    if (refEditorRef.current) {
+      refEditorRef.current.setHtml("");
+    }
   };
 
   const onRemoveClick = () => {
@@ -2636,27 +2628,10 @@ const App = () => {
       setSelectedState4({
         [data != undefined ? data[DATA_ITEM_KEY4] : newData[0]]: true,
       });
-
-      if (refEditorRef.current) {
-        let str = "";
-        if (
-          localStorage.getItem(
-            data != undefined
-              ? data[DATA_ITEM_KEY4] + "key"
-              : newData[0] != undefined
-              ? newData[0][DATA_ITEM_KEY4] + "key"
-              : ""
-          )
-        ) {
-          str += localStorage.getItem(
-            data != undefined
-              ? data[DATA_ITEM_KEY4] + "key"
-              : newData[0] != undefined
-              ? newData[0][DATA_ITEM_KEY4] + "key"
-              : ""
-          );
-        }
-        setHtmlOnEditor({ document: str });
+      if (data != undefined) {
+        const row =
+          data != undefined ? data : newData[0] != undefined ? newData[0] : "";
+        fetchDocument("Task", row.orgdiv + "_" + row.docunum, row);
       }
     }
   };
@@ -2713,6 +2688,7 @@ const App = () => {
         "@p_ref_type": ref_type,
         "@p_ref_key": "",
         "@p_ref_seq": 0,
+        "@p_find_row_value": filters.findRowValue,
       },
     };
     try {
@@ -2764,158 +2740,413 @@ const App = () => {
   };
 
   const onConfirmClick = async () => {
-    type TRowsArr = {
-      row_status: string[];
-      guid_s: string[];
-      docunum_s: string[];
-      recdt_s: string[];
-      person_s: string[];
-      indicator_s: string[];
-
-      contents_s: string[];
-      remark_s: string[];
-      groupcd_s: string[];
-      custcd_s: string[];
-      finexpdt_s: string[];
-
-      exphh_s: string[];
-      expmm_s: string[];
-      custperson_s: string[];
-      attdatnum_s: string[];
-      value_code3_s: string[];
-
-      ref_type_s: string[];
-      ref_key_s: string[];
-      ref_seq_s: string[];
-    };
-
-    let rowsArr: TRowsArr = {
-      row_status: [],
-      guid_s: [],
-      docunum_s: [],
-      recdt_s: [],
-      person_s: [],
-      indicator_s: [],
-
-      contents_s: [],
-      remark_s: [],
-      groupcd_s: [],
-      custcd_s: [],
-      finexpdt_s: [],
-
-      exphh_s: [],
-      expmm_s: [],
-      custperson_s: [],
-      attdatnum_s: [],
-      value_code3_s: [],
-
-      ref_type_s: [],
-      ref_key_s: [],
-      ref_seq_s: [],
-    };
-
-    let valid = true;
-    let arrays: any = {};
-    mainDataResult4.data.map(
-      (item: {
-        finexpdt: Date | null;
-        recdt: Date | null;
-        person: string;
-        indicator: string;
-      }) => {
-        if (
-          parseDate(convertDateToStr(item.finexpdt)) == "" ||
-          parseDate(convertDateToStr(item.recdt)) == "" ||
-          item.person == "" ||
-          item.indicator == ""
-        ) {
-          valid = false;
-        }
+    if (mainDataResult4.total > 0) {
+      let editorContent: any = "";
+      if (refEditorRef.current) {
+        editorContent = refEditorRef.current.getContent();
       }
-    );
 
-    if (valid != true) {
-      alert("필수항목을 채워주세요.");
-    } else {
-      const dataItem = mainDataResult4.data.filter((item: any) => {
-        return (
-          (item.rowstatus === "N" || item.rowstatus === "U") &&
-          item.rowstatus !== undefined
-        );
-      });
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(editorContent, "text/html");
+      const textContent = doc.body.textContent || ""; //문자열
+      let array: any = [];
 
-      dataItem.forEach(async (item: any) => {
-        const {
-          num = "",
+      const newData = mainDataResult4.data.map((item) =>
+        item[DATA_ITEM_KEY4] == Object.getOwnPropertyNames(selectedState4)[0]
+          ? {
+              ...item,
+              rowstatus: item.rowstatus == "N" ? "N" : "U",
+            }
+          : {
+              ...item,
+            }
+      );
 
-          rowstatus = "",
-          guid = "",
-          docunum = "",
-          recdt = "",
-          person = "",
-          indicator = "",
+      const currentRow = mainDataResult4.data.filter(
+        (item) =>
+          item[DATA_ITEM_KEY4] == Object.getOwnPropertyNames(selectedState4)[0]
+      )[0];
+      array = newData;
+      localStorage.removeItem(currentRow[DATA_ITEM_KEY4]);
+      localStorage.removeItem(currentRow[DATA_ITEM_KEY4] + "key");
+      localStorage.setItem(currentRow[DATA_ITEM_KEY4], textContent);
+      localStorage.setItem(currentRow[DATA_ITEM_KEY4] + "key", editorContent);
 
-          remark = "",
-          groupcd = "",
-          custcd = "",
-          finexpdt = "",
+      type TRowsArr = {
+        row_status: string[];
+        guid_s: string[];
+        docunum_s: string[];
+        recdt_s: string[];
+        person_s: string[];
+        indicator_s: string[];
 
-          exphh = "",
-          expmm = "",
-          custperson = "",
-          attdatnum = "",
-          value_code3 = "",
+        contents_s: string[];
+        remark_s: string[];
+        groupcd_s: string[];
+        custcd_s: string[];
+        finexpdt_s: string[];
 
-          ref_type = "",
-          ref_key = "",
-          ref_seq = "",
-        } = item;
+        exphh_s: string[];
+        expmm_s: string[];
+        custperson_s: string[];
+        attdatnum_s: string[];
+        value_code3_s: string[];
 
-        let str = "";
-        const value = localStorage.getItem(num + "key");
+        ref_type_s: string[];
+        ref_key_s: string[];
+        ref_seq_s: string[];
+      };
 
-        if (typeof value == "string") {
-          str = value; // ok
+      let rowsArr: TRowsArr = {
+        row_status: [],
+        guid_s: [],
+        docunum_s: [],
+        recdt_s: [],
+        person_s: [],
+        indicator_s: [],
+
+        contents_s: [],
+        remark_s: [],
+        groupcd_s: [],
+        custcd_s: [],
+        finexpdt_s: [],
+
+        exphh_s: [],
+        expmm_s: [],
+        custperson_s: [],
+        attdatnum_s: [],
+        value_code3_s: [],
+
+        ref_type_s: [],
+        ref_key_s: [],
+        ref_seq_s: [],
+      };
+
+      let valid = true;
+      let arrays: any = {};
+      mainDataResult4.data.map(
+        (item: {
+          finexpdt: Date | null;
+          recdt: Date | null;
+          person: string;
+          indicator: string;
+        }) => {
+          if (
+            parseDate(convertDateToStr(item.finexpdt)) == "" ||
+            parseDate(convertDateToStr(item.recdt)) == "" ||
+            item.person == "" ||
+            item.indicator == ""
+          ) {
+            valid = false;
+          }
         }
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(str, "text/html");
-        const textContent = doc.body.textContent || ""; //문자열
+      );
 
-        const bytes = require("utf8-bytes");
-        const convertedEditorContent = bytesToBase64(bytes(str)); //html
+      if (valid != true) {
+        alert("필수항목을 채워주세요.");
+      } else {
+        let dataItem: any[] = [];
 
-        arrays[guid] = convertedEditorContent;
-        localStorage.removeItem(num);
-        localStorage.removeItem(num + "key");
+        array.map((item: { rowstatus: string | undefined }) => {
+          if (
+            (item.rowstatus === "N" || item.rowstatus === "U") &&
+            item.rowstatus !== undefined
+          ) {
+            dataItem.push(item);
+          }
+        });
 
-        rowsArr.row_status.push(rowstatus);
-        rowsArr.guid_s.push(guid);
-        rowsArr.docunum_s.push(docunum);
-        rowsArr.recdt_s.push(
-          recdt.length > 8 ? recdt : convertDateToStr(recdt)
-        );
-        rowsArr.person_s.push(person);
-        rowsArr.indicator_s.push(indicator);
+        dataItem.forEach(async (item: any) => {
+          const {
+            num = "",
 
-        rowsArr.contents_s.push(textContent);
-        rowsArr.remark_s.push(remark);
-        rowsArr.groupcd_s.push(groupcd);
-        rowsArr.custcd_s.push(custcd);
-        rowsArr.finexpdt_s.push(
-          finexpdt.length > 8 ? finexpdt : convertDateToStr(finexpdt)
-        );
+            rowstatus = "",
+            guid = "",
+            docunum = "",
+            recdt = "",
+            person = "",
+            indicator = "",
 
-        rowsArr.exphh_s.push(exphh == "" ? 0 : exphh);
-        rowsArr.expmm_s.push(expmm == "" ? 0 : expmm);
-        rowsArr.custperson_s.push(custperson);
-        rowsArr.attdatnum_s.push(attdatnum);
-        rowsArr.value_code3_s.push(value_code3);
+            remark = "",
+            groupcd = "",
+            custcd = "",
+            finexpdt = "",
 
-        rowsArr.ref_type_s.push(ref_type);
-        rowsArr.ref_key_s.push(ref_key);
-        rowsArr.ref_seq_s.push(ref_seq);
-      });
+            exphh = "",
+            expmm = "",
+            custperson = "",
+            attdatnum = "",
+            value_code3 = "",
 
+            ref_type = "",
+            ref_key = "",
+            ref_seq = "",
+          } = item;
+
+          let str = "";
+          let textContent = "";
+          const value = localStorage.getItem(num + "key");
+          const text = localStorage.getItem(num);
+          if (typeof value == "string") {
+            str = value; // ok
+          }
+          if (typeof text == "string") {
+            textContent = text; // ok
+          }
+          const bytes = require("utf8-bytes");
+          const convertedEditorContent = bytesToBase64(bytes(str)); //html
+          let guids = "";
+          if (guid == undefined || guid == "" || guid == null) {
+            guids = uuidv4();
+          } else {
+            guids = guid;
+          }
+          arrays[guids] = convertedEditorContent;
+          localStorage.removeItem(num);
+          localStorage.removeItem(num + "key");
+
+          rowsArr.row_status.push(rowstatus);
+          rowsArr.guid_s.push(guids);
+          rowsArr.docunum_s.push(docunum);
+          rowsArr.recdt_s.push(
+            recdt.length > 8 ? recdt : convertDateToStr(recdt)
+          );
+          rowsArr.person_s.push(person);
+          rowsArr.indicator_s.push(indicator);
+
+          rowsArr.contents_s.push(textContent);
+          rowsArr.remark_s.push(remark);
+          rowsArr.groupcd_s.push(groupcd);
+          rowsArr.custcd_s.push(custcd);
+          rowsArr.finexpdt_s.push(
+            finexpdt.length > 8 ? finexpdt : convertDateToStr(finexpdt)
+          );
+
+          rowsArr.exphh_s.push(exphh == "" ? 0 : exphh);
+          rowsArr.expmm_s.push(expmm == "" ? 0 : expmm);
+          rowsArr.custperson_s.push(custperson);
+          rowsArr.attdatnum_s.push(attdatnum);
+          rowsArr.value_code3_s.push(value_code3);
+
+          rowsArr.ref_type_s.push(ref_type);
+          rowsArr.ref_key_s.push(ref_key);
+          rowsArr.ref_seq_s.push(ref_seq);
+        });
+
+        deletedRows.forEach(async (item: any) => {
+          const {
+            num = "",
+
+            rowstatus = "",
+            guid = "",
+            docunum = "",
+            recdt = "",
+            person = "",
+            indicator = "",
+
+            contents = "",
+            remark = "",
+            groupcd = "",
+            custcd = "",
+            finexpdt = "",
+
+            exphh = "",
+            expmm = "",
+            custperson = "",
+            attdatnum = "",
+            value_code3 = "",
+
+            ref_type = "",
+            ref_key = "",
+            ref_seq = "",
+          } = item;
+
+          let str = "";
+          let textContent = "";
+          const value = localStorage.getItem(num + "key");
+          const text = localStorage.getItem(num);
+          if (typeof value == "string") {
+            str = value; // ok
+          }
+          if (typeof text == "string") {
+            textContent = text; // ok
+          }
+          const bytes = require("utf8-bytes");
+          const convertedEditorContent = bytesToBase64(bytes(str)); //html
+          let guids = "";
+          if (guid == undefined || guid == "" || guid == null) {
+            guids = uuidv4();
+          } else {
+            guids = guid;
+          }
+          arrays[guids] = convertedEditorContent;
+          localStorage.removeItem(num);
+          localStorage.removeItem(num + "key");
+
+          rowsArr.row_status.push(rowstatus);
+          rowsArr.guid_s.push(guids);
+          rowsArr.docunum_s.push(docunum);
+          rowsArr.recdt_s.push(
+            recdt.length > 8 ? recdt : convertDateToStr(recdt)
+          );
+          rowsArr.person_s.push(person);
+          rowsArr.indicator_s.push(indicator);
+          rowsArr.contents_s.push(textContent);
+          rowsArr.remark_s.push(remark);
+          rowsArr.groupcd_s.push(groupcd);
+          rowsArr.custcd_s.push(custcd);
+          rowsArr.finexpdt_s.push(
+            finexpdt.length > 8 ? finexpdt : convertDateToStr(finexpdt)
+          );
+
+          rowsArr.exphh_s.push(exphh == "" ? 0 : exphh);
+          rowsArr.expmm_s.push(expmm == "" ? 0 : expmm);
+          rowsArr.custperson_s.push(custperson);
+          rowsArr.attdatnum_s.push(attdatnum);
+          rowsArr.value_code3_s.push(value_code3);
+
+          rowsArr.ref_type_s.push(ref_type);
+          rowsArr.ref_key_s.push(ref_key);
+          rowsArr.ref_seq_s.push(ref_seq);
+        });
+        let data: any;
+        setLoading(true);
+        //추가, 수정 프로시저 파라미터
+        const paras = {
+          fileBytes: arrays,
+          procedureName: "pw6_sav_task_order",
+          pageNumber: 0,
+          pageSize: 0,
+          parameters: {
+            "@p_work_type": "save",
+            "@p_row_status": rowsArr.row_status.join("|"),
+            "@p_guid": rowsArr.guid_s.join("|"),
+            "@p_docunum": rowsArr.docunum_s.join("|"),
+            "@p_recdt": rowsArr.recdt_s.join("|"),
+            "@p_person": rowsArr.person_s.join("|"),
+            "@p_indicator": rowsArr.indicator_s.join("|"),
+            "@p_contents": rowsArr.contents_s.join("|"),
+            "@p_remark": rowsArr.remark_s.join("|"),
+            "@p_groupcd": rowsArr.groupcd_s.join("|"),
+            "@p_value_code3": rowsArr.value_code3_s.join("|"),
+            "@p_custcd": rowsArr.custcd_s.join("|"),
+            "@p_finexpdt": rowsArr.finexpdt_s.join("|"),
+            "@p_exphh": rowsArr.exphh_s.join("|"),
+            "@p_expmm": rowsArr.expmm_s.join("|"),
+            "@p_custperson": rowsArr.custperson_s.join("|"),
+            "@p_attdatnum": rowsArr.attdatnum_s.join("|"),
+            "@p_ref_type": rowsArr.ref_type_s.join("|"),
+            "@p_ref_key": rowsArr.ref_key_s.join("|"),
+            "@p_ref_seq": rowsArr.ref_seq_s.join("|"),
+            "@p_id": userId,
+            "@p_pc": pc,
+          },
+        };
+
+        try {
+          data = await processApi<any>("taskorder-save", paras);
+        } catch (error) {
+          data = null;
+        }
+
+        if (data != null) {
+          mainDataResult4.data.map((item) => {
+            localStorage.removeItem(item[DATA_ITEM_KEY4]);
+            localStorage.removeItem(item[DATA_ITEM_KEY4] + "key");
+          });
+          const isLastDataDeleted =
+            mainDataResult4.data.length == 1 && filters.pgNum > 1;
+          if (isLastDataDeleted) {
+            setPage4({
+              skip:
+                filters.pgNum == 1 || filters.pgNum == 0
+                  ? 0
+                  : PAGE_SIZE * (filters.pgNum - 2),
+              take: PAGE_SIZE,
+            });
+            setFilters((prev: any) => ({
+              ...prev,
+              findRowValue: "",
+              pgNum: prev.pgNum - 1,
+              isSearch: true,
+            }));
+          } else {
+            const currentRow = mainDataResult4.data.filter(
+              (item) =>
+                item[DATA_ITEM_KEY4] ==
+                Object.getOwnPropertyNames(selectedState4)[0]
+            )[0];
+
+            setFilters((prev: any) => ({
+              ...prev,
+              findRowValue:
+                currentRow == undefined
+                  ? ""
+                  : currentRow.rowstatus == "N" || currentRow.rowstatus == "U"
+                  ? data.returnString
+                  : currentRow.docunum,
+              pgNum: prev.pgNum,
+              isSearch: true,
+            }));
+          }
+          deletedRows = [];
+        } else {
+          console.log("[오류 발생]");
+          console.log(data);
+        }
+        setLoading(false);
+      }
+    } else {
+      type TRowsArr = {
+        row_status: string[];
+        guid_s: string[];
+        docunum_s: string[];
+        recdt_s: string[];
+        person_s: string[];
+        indicator_s: string[];
+
+        contents_s: string[];
+        remark_s: string[];
+        groupcd_s: string[];
+        custcd_s: string[];
+        finexpdt_s: string[];
+
+        exphh_s: string[];
+        expmm_s: string[];
+        custperson_s: string[];
+        attdatnum_s: string[];
+        value_code3_s: string[];
+
+        ref_type_s: string[];
+        ref_key_s: string[];
+        ref_seq_s: string[];
+      };
+
+      let rowsArr: TRowsArr = {
+        row_status: [],
+        guid_s: [],
+        docunum_s: [],
+        recdt_s: [],
+        person_s: [],
+        indicator_s: [],
+
+        contents_s: [],
+        remark_s: [],
+        groupcd_s: [],
+        custcd_s: [],
+        finexpdt_s: [],
+
+        exphh_s: [],
+        expmm_s: [],
+        custperson_s: [],
+        attdatnum_s: [],
+        value_code3_s: [],
+
+        ref_type_s: [],
+        ref_key_s: [],
+        ref_seq_s: [],
+      };
+      let arrays: any = {};
       deletedRows.forEach(async (item: any) => {
         const {
           num = "",
@@ -2986,6 +3217,7 @@ const App = () => {
         rowsArr.ref_key_s.push(ref_key);
         rowsArr.ref_seq_s.push(ref_seq);
       });
+
       let data: any;
       setLoading(true);
       //추가, 수정 프로시저 파라미터
@@ -3025,15 +3257,17 @@ const App = () => {
       } catch (error) {
         data = null;
       }
-      if (data.isSuccess === true) {
-        mainDataResult.data.map((item) => {
-          localStorage.removeItem(item[DATA_ITEM_KEY]);
-          localStorage.removeItem(item[DATA_ITEM_KEY] + "key");
+
+      if (data != null) {
+        mainDataResult4.data.map((item) => {
+          localStorage.removeItem(item[DATA_ITEM_KEY4]);
+          localStorage.removeItem(item[DATA_ITEM_KEY4] + "key");
         });
         const isLastDataDeleted =
           mainDataResult4.data.length == 1 && filters.pgNum > 1;
+
         if (isLastDataDeleted) {
-          setPage({
+          setPage4({
             skip:
               filters.pgNum == 1 || filters.pgNum == 0
                 ? 0
@@ -3047,9 +3281,15 @@ const App = () => {
             isSearch: true,
           }));
         } else {
+          const currentRow = mainDataResult4.data.filter(
+            (item) =>
+              item[DATA_ITEM_KEY4] ==
+              Object.getOwnPropertyNames(selectedState4)[0]
+          )[0];
+
           setFilters((prev: any) => ({
             ...prev,
-            findRowValue: data.returnString,
+            findRowValue: currentRow == undefined ? "" : currentRow.docunum,
             pgNum: prev.pgNum,
             isSearch: true,
           }));
@@ -3058,9 +3298,37 @@ const App = () => {
       } else {
         console.log("[오류 발생]");
         console.log(data);
-        alert(data.resultMessage);
       }
       setLoading(false);
+    }
+  };
+  let value = false;
+  const onChanges = (str: any) => {
+    if (str == 0 && value != false) {
+      value = true;
+    } else if (str == 1) {
+      const newData = mainDataResult4.data.map((item) =>
+        item[DATA_ITEM_KEY4] == Object.getOwnPropertyNames(selectedState4)[0]
+          ? {
+              ...item,
+              rowstatus: item.rowstatus == "N" ? "N" : "U",
+            }
+          : {
+              ...item,
+            }
+      );
+      setTempResult((prev) => {
+        return {
+          data: newData,
+          total: prev.total,
+        };
+      });
+      setMainDataResult4((prev) => {
+        return {
+          data: newData,
+          total: prev.total,
+        };
+      });
     }
   };
   return (
@@ -3430,10 +3698,10 @@ const App = () => {
                   style={{
                     marginTop: isVisibleDetail ? "10px" : "",
                     height: isMobile
-                      ? "76vh"
+                      ? "77vh"
                       : isVisibleDetail
-                      ? "40vh"
-                      : "76vh",
+                      ? "42vh"
+                      : "77vh",
                   }}
                 >
                   <GridTitleContainer>
@@ -4758,7 +5026,11 @@ const App = () => {
                     </Button>
                   </ButtonContainer>
                 </GridTitleContainer>
-                <RichEditor id="refEditor" ref={refEditorRef} />
+                <RichEditor
+                  id="refEditor"
+                  ref={refEditorRef}
+                  change={onChanges}
+                />
               </GridContainer>
             </GridContainerWrap>
           </TabStripTab>

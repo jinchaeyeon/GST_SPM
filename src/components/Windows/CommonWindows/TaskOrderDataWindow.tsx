@@ -1072,6 +1072,7 @@ const KendoWindow = ({ setVisible, setData, modal = false }: IKendoWindow) => {
         "@p_ref_type": ref_type,
         "@p_ref_key": "",
         "@p_ref_seq": 0,
+        "@p_find_row_value": filters.findRowValue,
       },
     };
     try {
@@ -1202,6 +1203,7 @@ const KendoWindow = ({ setVisible, setData, modal = false }: IKendoWindow) => {
         "@p_ref_type": ref_type,
         "@p_ref_key": "",
         "@p_ref_seq": 0,
+        "@p_find_row_value": filters.findRowValue,
       },
     };
     try {
@@ -1328,6 +1330,7 @@ const KendoWindow = ({ setVisible, setData, modal = false }: IKendoWindow) => {
         "@p_ref_type": ref_type,
         "@p_ref_key": "",
         "@p_ref_seq": 0,
+        "@p_find_row_value": filters.findRowValue,
       },
     };
     try {

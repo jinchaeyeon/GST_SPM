@@ -294,7 +294,7 @@ const KendoWindow = ({
     const convertedQueryStr = bytesToBase64(bytes(str));
 
     let query = {
-      query: convertedQueryStr
+      query: convertedQueryStr,
     };
 
     try {
@@ -308,19 +308,24 @@ const KendoWindow = ({
     const data = props.dataItem;
     const changeCheck = async () => {
       if (data.indicator == userId) {
-        const checkQueryStr = `UPDATE CR005T SET finyn = '${data.check_yn}' WHERE orgdiv = '${data.orgdiv}' AND docunum = '${data.docunum}'`;
+        const checkQueryStr = `UPDATE CR005T SET finyn = '${
+          data.check_yn == "N" || data.check_yn == ""
+            ? "Y"
+            : data.check_yn == "Y"
+            ? "N"
+            : ""
+        }' WHERE orgdiv = '${data.orgdiv}' AND docunum = '${data.docunum}'`;
         fetchCheck(checkQueryStr);
         const newData = mainDataResult.data.map((item) =>
           item[DATA_ITEM_KEY] == data[DATA_ITEM_KEY]
             ? {
                 ...item,
                 check_yn:
-                  item.check_yn == "N"
+                  item.check_yn == "N" || item.check_yn == ""
                     ? true
                     : item.check_yn == "Y"
                     ? false
                     : !item.check_yn,
-                rowstatus: item.rowstatus == "N" ? "N" : "U",
                 [EDIT_FIELD]: props.field,
               }
             : {
@@ -555,6 +560,7 @@ const KendoWindow = ({
               ? para.meetingseq
               : 0
             : 0,
+        "@p_find_row_value": "",
       },
     };
 
@@ -581,13 +587,7 @@ const KendoWindow = ({
       if (totalRowCnt > 0) {
         setSelectedState({ [rows[0][DATA_ITEM_KEY]]: true });
 
-        for (var i = rows.length - 1; i >= 0; i--) {
-          fetchDocument(
-            "Task",
-            rows[i].orgdiv + "_" + rows[i].docunum,
-            rows[i]
-          );
-        }
+        fetchDocument("Task", rows[0].orgdiv + "_" + rows[0].docunum, rows[0]);
       } else {
         if (refEditorRef.current) {
           refEditorRef.current.setHtml("");
@@ -618,28 +618,27 @@ const KendoWindow = ({
       }
 
       if (data !== null) {
-        const reference = data.document;
-
         if (refEditorRef.current) {
-          let editorContent: any = "";
-          refEditorRef.current.setHtml(reference);
-          editorContent = refEditorRef.current.getContent();
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(editorContent, "text/html");
-          const textContent = doc.body.textContent || ""; //문자열
-
+          const document = data.document;
           if (
             localStorage.getItem(key[DATA_ITEM_KEY]) == undefined ||
             localStorage.getItem(key[DATA_ITEM_KEY]) == null
           ) {
-            localStorage.setItem(key[DATA_ITEM_KEY], textContent);
-            localStorage.setItem(key[DATA_ITEM_KEY] + "key", editorContent);
+            localStorage.setItem(key[DATA_ITEM_KEY], key.contents);
+            localStorage.setItem(key[DATA_ITEM_KEY] + "key", document);
+          } else {
+            localStorage.removeItem(key[DATA_ITEM_KEY]);
+            localStorage.removeItem(key[DATA_ITEM_KEY] + "key");
+            localStorage.setItem(key[DATA_ITEM_KEY], key.contents);
+            localStorage.setItem(key[DATA_ITEM_KEY] + "key", document);
           }
+          refEditorRef.current.setHtml(document);
         }
       } else {
         console.log("[에러발생]");
         console.log(data);
 
+        setHtmlOnEditor({ document: "" });
         if (refEditorRef.current) {
           refEditorRef.current.setHtml("");
         }
@@ -661,71 +660,51 @@ const KendoWindow = ({
       (item) =>
         item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
     )[0];
-    let editorContent: any = "";
-    if (refEditorRef.current) {
-      editorContent = refEditorRef.current.getContent();
-    }
-
+    let editorContent2: any = "";
+    editorContent2 = refEditorRef.current?.getContent();
+    let editorContent3: any = "";
     const newSelectedState = getSelectedState({
       event,
       selectedState: selectedState,
       dataItemKey: DATA_ITEM_KEY,
     });
 
-    let str = "";
     const selectedIdx = event.startRowIndex;
     const selectedRowData = event.dataItems[selectedIdx];
     const parser = new DOMParser();
-    const doc = parser.parseFromString(editorContent, "text/html");
-    const textContent = doc.body.textContent || ""; //문자열
-    if (
-      localStorage.getItem(currentRow[DATA_ITEM_KEY]) == undefined ||
-      localStorage.getItem(currentRow[DATA_ITEM_KEY]) == null
-    ) {
-      localStorage.setItem(currentRow[DATA_ITEM_KEY], textContent);
-      localStorage.setItem(currentRow[DATA_ITEM_KEY] + "key", editorContent);
-    } else {
-      if (localStorage.getItem(currentRow[DATA_ITEM_KEY]) != textContent) {
-        const newData = mainDataResult.data.map((item) =>
-          item[DATA_ITEM_KEY] == currentRow[DATA_ITEM_KEY]
-            ? {
-                ...item,
-                rowstatus: item.rowstatus == "N" ? "N" : "U",
-              }
-            : {
-                ...item,
-              }
-        );
+    const doc = parser.parseFromString(editorContent2, "text/html");
+    const textContent = doc.body.textContent || ""; //기존행 문자열
 
-        setTempResult((prev) => {
-          return {
-            data: newData,
-            total: prev.total,
-          };
-        });
-        setMainDataResult((prev) => {
-          return {
-            data: newData,
-            total: prev.total,
-          };
-        });
-        localStorage.removeItem(currentRow[DATA_ITEM_KEY]);
-        localStorage.removeItem(currentRow[DATA_ITEM_KEY] + "key");
+      if (
+        localStorage.getItem(currentRow[DATA_ITEM_KEY]) == undefined ||
+        localStorage.getItem(currentRow[DATA_ITEM_KEY]) == null
+      ) {
         localStorage.setItem(currentRow[DATA_ITEM_KEY], textContent);
-        localStorage.setItem(currentRow[DATA_ITEM_KEY] + "key", editorContent);
+        localStorage.setItem(currentRow[DATA_ITEM_KEY] + "key", editorContent2);
+      } else {
+        if (currentRow.rowstatus == "U" || currentRow.rowstatus == "N") {
+          localStorage.removeItem(currentRow[DATA_ITEM_KEY]);
+          localStorage.removeItem(currentRow[DATA_ITEM_KEY] + "key");
+          localStorage.setItem(currentRow[DATA_ITEM_KEY], textContent);
+          localStorage.setItem(currentRow[DATA_ITEM_KEY] + "key", editorContent2);
+        }
       }
-    }
-    if (refEditorRef.current) {
-      const value = localStorage.getItem(
-        selectedRowData[DATA_ITEM_KEY] + "key"
-      );
-      if (typeof value == "string") {
-        str = value; // ok
+      setSelectedState(newSelectedState);
+      if (selectedRowData.rowstatus == undefined) {
+        fetchDocument(
+          "Task",
+          selectedRowData.orgdiv + "_" + selectedRowData.docunum,
+          selectedRowData
+        );
+      } else {
+        editorContent3 = localStorage.getItem(
+          selectedRowData[DATA_ITEM_KEY] + "key"
+        );
+        if (refEditorRef.current) {
+          refEditorRef.current.setHtml(editorContent3);
+        }
       }
-      refEditorRef.current.setHtml(str);
-    }
-    setSelectedState(newSelectedState);
-  };
+    };
 
   useEffect(() => {
     fetchWorkType();
@@ -1060,26 +1039,14 @@ const KendoWindow = ({
         [data != undefined ? data[DATA_ITEM_KEY] : newData[0]]: true,
       });
 
-      if (refEditorRef.current) {
-        let str = "";
-        if (
-          localStorage.getItem(
-            data != undefined
-              ? data[DATA_ITEM_KEY] + "key"
-              : newData[0] != undefined
-              ? newData[0][DATA_ITEM_KEY] + "key"
-              : ""
-          )
-        ) {
-          str += localStorage.getItem(
-            data != undefined
-              ? data[DATA_ITEM_KEY] + "key"
-              : newData[0] != undefined
-              ? newData[0][DATA_ITEM_KEY] + "key"
-              : ""
-          );
-        }
-        refEditorRef.current.setHtml(str);
+      if (data != undefined) {
+        const row =
+          data != undefined
+            ? data[DATA_ITEM_KEY]
+            : newData[0] != undefined
+            ? newData[0][DATA_ITEM_KEY]
+            : "";
+        fetchDocument("Task", row.orgdiv + "_" + row.docunum, row);
       }
     }
   };
@@ -1120,30 +1087,33 @@ const KendoWindow = ({
       if (refEditorRef.current) {
         editorContent = refEditorRef.current.getContent();
       }
+      
       const parser = new DOMParser();
       const doc = parser.parseFromString(editorContent, "text/html");
       const textContent = doc.body.textContent || ""; //문자열
       let array: any = [];
-      if (
-        localStorage.getItem(
-          Object.getOwnPropertyNames(selectedState)[0].toString()
-        ) != textContent
-      ) {
-        const newData = mainDataResult.data.map((item) =>
-          item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
-            ? {
-                ...item,
-                rowstatus: item.rowstatus == "N" ? "N" : "U",
-              }
-            : {
-                ...item,
-              }
-        );
 
-        array = newData;
-      } else {
-        array = mainDataResult.data;
-      }
+      const newData = mainDataResult.data.map((item) =>
+        item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
+          ? {
+              ...item,
+              rowstatus: item.rowstatus == "N" ? "N" : "U",
+            }
+          : {
+              ...item,
+            }
+      );
+
+      const currentRow = mainDataResult.data.filter(
+        (item) =>
+          item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
+      )[0];
+      array = newData;
+      localStorage.removeItem(currentRow[DATA_ITEM_KEY]);
+      localStorage.removeItem(currentRow[DATA_ITEM_KEY] + "key");
+      localStorage.setItem(currentRow[DATA_ITEM_KEY], textContent);
+      localStorage.setItem(currentRow[DATA_ITEM_KEY] + "key", editorContent);
+
       type TRowsArr = {
         row_status: string[];
         guid_s: string[];
@@ -1216,40 +1186,6 @@ const KendoWindow = ({
       if (valid != true) {
         alert("필수항목을 채워주세요.");
       } else {
-        const currentRow = array.filter(
-          (item: any) =>
-            item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
-        )[0];
-        let editorContent: any = "";
-        if (refEditorRef.current) {
-          editorContent = refEditorRef.current.getContent();
-        }
-
-        if (
-          localStorage.getItem(currentRow[DATA_ITEM_KEY]) == undefined ||
-          localStorage.getItem(currentRow[DATA_ITEM_KEY]) == null
-        ) {
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(editorContent, "text/html");
-          const textContent = doc.body.textContent || ""; //문자열
-          localStorage.setItem(currentRow[DATA_ITEM_KEY], textContent);
-          localStorage.setItem(
-            currentRow[DATA_ITEM_KEY] + "key",
-            editorContent
-          );
-        } else {
-          localStorage.removeItem(currentRow[DATA_ITEM_KEY]);
-          localStorage.removeItem(currentRow[DATA_ITEM_KEY] + "key");
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(editorContent, "text/html");
-          const textContent = doc.body.textContent || ""; //문자열
-          localStorage.setItem(currentRow[DATA_ITEM_KEY], textContent);
-          localStorage.setItem(
-            currentRow[DATA_ITEM_KEY] + "key",
-            editorContent
-          );
-        }
-
         let dataItem: any[] = [];
 
         array.map((item: { rowstatus: string | undefined }) => {
@@ -1289,24 +1225,32 @@ const KendoWindow = ({
           } = item;
 
           let str = "";
+          let textContent = "";
           const value = localStorage.getItem(num + "key");
-
+          const text = localStorage.getItem(num);
           if (typeof value == "string") {
             str = value; // ok
           }
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(str, "text/html");
-          const textContent = doc.body.textContent || ""; //문자열
-
+          if (typeof text == "string") {
+            textContent = text; // ok
+          }
           const bytes = require("utf8-bytes");
           const convertedEditorContent = bytesToBase64(bytes(str)); //html
 
-          arrays[guid] = convertedEditorContent;
+          let guids = "";
+
+          if (guid == undefined || guid == "" || guid == null) {
+            guids = uuidv4();
+          } else {
+            guids = guid;
+          }
+
+          arrays[guids] = convertedEditorContent;
           localStorage.removeItem(num);
           localStorage.removeItem(num + "key");
 
           rowsArr.row_status.push(rowstatus);
-          rowsArr.guid_s.push(guid);
+          rowsArr.guid_s.push(guids);
           rowsArr.docunum_s.push(docunum);
           rowsArr.recdt_s.push(
             recdt.length > 8 ? recdt : convertDateToStr(recdt)
@@ -1360,25 +1304,31 @@ const KendoWindow = ({
             ref_key = "",
             ref_seq = "",
           } = item;
-          let str = "";
-          const value = localStorage.getItem(num + "key");
 
+          let str = "";
+          let textContent = "";
+          const value = localStorage.getItem(num + "key");
+          const text = localStorage.getItem(num);
           if (typeof value == "string") {
             str = value; // ok
           }
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(str, "text/html");
-          const textContent = doc.body.textContent || ""; //문자열
-
+          if (typeof text == "string") {
+            textContent = text; // ok
+          }
           const bytes = require("utf8-bytes");
           const convertedEditorContent = bytesToBase64(bytes(str)); //html
-
-          arrays[guid] = convertedEditorContent;
+          let guids = "";
+          if (guid == undefined || guid == "" || guid == null) {
+            guids = uuidv4();
+          } else {
+            guids = guid;
+          }
+          arrays[guids] = convertedEditorContent;
           localStorage.removeItem(num);
           localStorage.removeItem(num + "key");
 
           rowsArr.row_status.push(rowstatus);
-          rowsArr.guid_s.push(guid);
+          rowsArr.guid_s.push(guids);
           rowsArr.docunum_s.push(docunum);
           rowsArr.recdt_s.push(
             recdt.length > 8 ? recdt : convertDateToStr(recdt)
@@ -1617,9 +1567,45 @@ const KendoWindow = ({
         data = null;
       }
 
-      deletedRows = [];
-      reload();
-      onClose();
+      if (data != null) {
+        mainDataResult.data.map((item) => {
+          localStorage.removeItem(item[DATA_ITEM_KEY]);
+          localStorage.removeItem(item[DATA_ITEM_KEY] + "key");
+        });
+        deletedRows = [];
+        reload();
+        onClose();
+      }
+    }
+  };
+
+  let value = false;
+  const onChanges = (str: any) => {
+    if (str == 0 && value == false) {
+      value = true;
+    } else if (str == 1) {
+      const newData = mainDataResult.data.map((item) =>
+        item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
+          ? {
+              ...item,
+              rowstatus: item.rowstatus == "N" ? "N" : "U",
+            }
+          : {
+              ...item,
+            }
+      );
+      setTempResult((prev) => {
+        return {
+          data: newData,
+          total: prev.total,
+        };
+      });
+      setMainDataResult((prev) => {
+        return {
+          data: newData,
+          total: prev.total,
+        };
+      });
     }
   };
 
@@ -1819,7 +1805,7 @@ const KendoWindow = ({
             다운로드
           </Button>
         </ButtonContainer>
-        <RichEditor id="refEditor" ref={refEditorRef} />
+        <RichEditor id="refEditor" ref={refEditorRef} change={onChanges}/>
       </GridContainer>
       <BottomContainer>
         <ButtonContainer>
