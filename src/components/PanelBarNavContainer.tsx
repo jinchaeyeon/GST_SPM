@@ -291,6 +291,12 @@ const PanelBarNavContainer = (props: any) => {
     // }
     props.history.push(route);
 
+    for(let key of Object.keys(localStorage)){
+      if(key != "passwordExpirationInfo" && key != "accessToken" && key != "loginResult" && key != "refreshToken") {
+        localStorage.removeItem(key);
+      }
+    }
+    
     if (route) {
       setIsMobileMenuOpend(false);
       setUserOptionsWindowVisible(false);

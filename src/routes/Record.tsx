@@ -316,7 +316,7 @@ const App = () => {
   const [pc, setPc] = useState("");
   UseParaPc(setPc);
   let deviceWidth = window.innerWidth;
-  let isMobile = deviceWidth <= 768;
+  let isMobile = deviceWidth <= 1200;
   // 서버 업로드는 되었으나 DB에는 저장안된 첨부파일 리스트
   const [unsavedAttadatnums, setUnsavedAttadatnums] = useRecoilState(
     unsavedAttadatnumsState
@@ -1858,7 +1858,8 @@ const App = () => {
             <FilterBox onKeyPress={(e) => handleKeyPressSearch(e, search)}>
               <tbody>
                 <tr>
-                  <th style={{ width: isMobile ? "100%" : "50%" }}>
+                  <th>기간</th>
+                  <td>
                     <MultiColumnComboBox
                       name="date_type"
                       data={
@@ -1871,10 +1872,7 @@ const App = () => {
                       className="required"
                       filterable={true}
                       onFilterChange={handleFilterChange}
-                      style={{ width: "100%" }}
                     />
-                  </th>
-                  <td colSpan={3}>
                     <CommonDateRangePicker
                       value={{
                         start: filters.fromDate,

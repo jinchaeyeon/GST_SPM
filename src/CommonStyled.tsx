@@ -25,7 +25,7 @@ export const TitleContainer = styled.div`
 export const MainTopContainer = styled(TitleContainer)`
   margin-top: 10px;
 
-  @media (max-width: 768px) {
+  @media (max-width: 1200px) {
     margin-top: 0;
     flex-direction: column;
     align-items: flex-start;
@@ -41,7 +41,7 @@ export const MainWorkStartEndContainer = styled.div`
     margin-left: 5px;
   }
 
-  @media (max-width: 768px) {
+  @media (max-width: 1200px) {
     margin-left: 0;
   }
 `;
@@ -174,7 +174,7 @@ export const FilterBox = styled.table`
     padding-left: 10px;
   }
 
-  @media (max-width: 768px) {
+  @media (max-width: 1200px) {
     tr {
       display: flex;
       flex-direction: column;
@@ -242,7 +242,7 @@ export const FormBox = styled.table`
     border: solid 1px rgba(0, 0, 0, 0.08);
     border-radius: 4px;
   }
-  @media (max-width: 768px) {
+  @media (max-width: 1200px) {
     tr {
       display: flex;
       flex-direction: column;
@@ -278,7 +278,7 @@ export const GridContainerWrap = styled.div<TGridContainerWrap>`
   height: ${(props) =>
     typeof props.height === "number" ? props.height + "px" : props.height};
 
-  @media (max-width: 768px) {
+  @media (max-width: 1200px) {
     flex-direction: column;
   }
 `;
@@ -306,7 +306,7 @@ export const FormFieldWrap = styled.div`
   justify-content: space-between;
   flex-direction: row;
 
-  @media (max-width: 768px) {
+  @media (max-width: 1200px) {
     flex-direction: column;
   }
 `;
@@ -356,7 +356,7 @@ export const GridContainer = styled.div<TGridContainer>`
     background-color: #fff0ef;
   } */
 
-  @media (max-width: 768px) {
+  @media (max-width: 1200px) {
     width: auto;
     min-width: auto;
   }
@@ -494,7 +494,7 @@ export const LoginImg = styled.div`
   justify-content: center;
   align-items: center;
 
-  @media (max-width: 768px) {
+  @media (max-width: 1200px) {
     display: none;
   }
 `;
@@ -537,7 +537,7 @@ export const LoginBox = styled.div`
   .k-form-horizontal .k-form-field-wrap {
     max-width: calc(75% - 10px) !important;
   }
-  @media (max-width: 768px) {
+  @media (max-width: 1200px) {
     width: 100%;
   }
 `;
@@ -565,7 +565,7 @@ export const ApprovalBox = styled.div`
     background-color: #ff8549;
   }
 
-  @media (max-width: 768px) {
+  @media (max-width: 1200px) {
     margin-top: 10px;
     margin-left: 0;
     width: 100%;
@@ -702,7 +702,7 @@ export const Wrapper = styled.div<TWrapper>`
   background-color: ${(props) =>
     props.theme === "dark" ? "#181818" : "#ffffff"};
   margin-bottom: 30px;
-  @media (max-width: 768px) {
+  @media (max-width: 1200px) {
     margin-bottom: 0;
   }
 `;
@@ -750,9 +750,9 @@ export const Gnv = styled.div<TGnv>`
   /*=========================================================================
 	미디어 쿼리
 	##Device = 모바일
-	##Screen = 768px 이하 해상도 모바일
+	##Screen = 1200px 이하 해상도 모바일
   =========================================================================*/
-  @media (max-width: 768px) {
+  @media (max-width: 1200px) {
     display: ${(props) => (props.isMobileMenuOpend ? "block" : "none")};
     z-index: 10;
     position: fixed;
@@ -790,7 +790,7 @@ export const Footer = styled.div`
   .default div {
     border-left: solid 1px gray;
   }
-  @media (max-width: 768px) {
+  @media (max-width: 1200px) {
     display: none;
   }
 `;
@@ -805,9 +805,9 @@ export const Content = styled.div<ContentType>`
   /*=========================================================================
   미디어 쿼리
   ##Device = 모바일
-  ##Screen = 768px 이하 해상도 모바일
+  ##Screen = 1200px 이하 해상도 모바일
   =========================================================================*/
-  @media (max-width: 768px) {
+  @media (max-width: 1200px) {
     width: 100%;
     padding-bottom: 5vh;
   }
@@ -817,7 +817,7 @@ export const PageWrap = styled.div`
   padding: 0 15px;
   height: calc(100vh - 30px);
 
-  @media (max-width: 768px) {
+  @media (max-width: 1200px) {
     min-height: auto;
     height: auto;
     padding-top: 50px;
@@ -842,7 +842,7 @@ export const AppName = styled.h1<TAppName>`
     props.theme === "dark" ? "none" : "1px solid #ebebeb"};
   cursor: pointer;
 
-  @media (max-width: 768px) {
+  @media (max-width: 1200px) {
     border-right: 0;
     background-color: ${(props) =>
       props.theme === "dark" ? "#181818" : "#fff"};
@@ -897,9 +897,9 @@ export const TopTitle = styled.div`
   /*=========================================================================
   미디어 쿼리
   ##Device = 모바일
-  ##Screen = 768px 이하 해상도 모바일
+  ##Screen = 1200px 이하 해상도 모바일
   =========================================================================*/
-  @media (max-width: 768px) {
+  @media (max-width: 1200px) {
     display: flex;
     position: fixed;
     z-index: 9;
@@ -1062,7 +1062,7 @@ export const SmallGnv = styled.div<TSmallGnv>`
   border-right: ${(props) =>
     props.theme === "dark" ? "solid 1px #454545" : "1px solid #ebebeb"};
   height: 100vh;
-  @media (max-width: 768px) {
+  @media (max-width: 1200px) {
     display: none;
   }
 `;
@@ -1110,7 +1110,7 @@ export const AdminQuestionBox = styled.div`
     background-color: #6cc56c;
   }
 
-  @media (max-width: 768px) {
+  @media (max-width: 1200px) {
     min-width: auto;
     flex-direction: column;
     align-items: flex-start;
@@ -1157,7 +1157,7 @@ export const AdminProjectBox = styled.div`
     margin-left: 30px;
   }
 
-  @media (max-width: 768px) {
+  @media (max-width: 1200px) {
     min-width: auto;
     flex-direction: column;
     align-items: flex-start;
@@ -1252,7 +1252,7 @@ export const ScrollableContainer = styled.div<TScrollableContainer>`
     pointer-events: none; /* let users still interact with the content 
   } */
 
-  @media (max-width: 768px) {
+  @media (max-width: 1200px) {
     height: calc(100vh / 2 + 20px);
   }
 `;

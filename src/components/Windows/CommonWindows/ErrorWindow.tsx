@@ -83,7 +83,7 @@ const ErrorQueryStr = `select sub_code, code_name from BizGST.dbo.comCodeMaster 
 const KendoWindow = ({ setVisible, para, reload2 }: TKendoWindow) => {
   // 비즈니스 컴포넌트 조회
   let deviceWidth = window.innerWidth;
-  let isMobile = deviceWidth <= 768;
+  let isMobile = deviceWidth <= 1200;
   const [position, setPosition] = useState<IWindowPosition>({
     left: isMobile == true ? 0 : 150,
     top: 0,

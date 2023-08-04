@@ -45,7 +45,7 @@ type IWindow = {
 const SignWindow = ({ setVisible, para, reload }: IWindow) => {
   const setLoading = useSetRecoilState(isLoading);
   let deviceWidth = window.innerWidth;
-  let isMobile = deviceWidth <= 768;
+  let isMobile = deviceWidth <= 1200;
   const [loginResult] = useRecoilState(loginResultState);
   const userId = loginResult ? loginResult.userId : "";
   const [pc, setPc] = useState("");

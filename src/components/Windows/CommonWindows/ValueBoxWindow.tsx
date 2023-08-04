@@ -53,7 +53,7 @@ FROM comCodeMaster WHERE group_code = 'BA012_GST'`;
 
 const KendoWindow = ({ setVisible, setData }: IKendoWindow) => {
   let deviceWidth = window.innerWidth;
-  let isMobile = deviceWidth <= 768;
+  let isMobile = deviceWidth <= 1200;
   const [position, setPosition] = useState<IWindowPosition>({
     left: 300,
     top: 100,

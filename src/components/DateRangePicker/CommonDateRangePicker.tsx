@@ -12,6 +12,7 @@ const CommonDateRangePicker = (props: DateRangePickerProps) => {
       {...props}
       startDateInput={CustomDateInput}
       endDateInput={CustomDateInput}
+      style={{width: "100%", display: "inline-block"}}
     />
   );
 };

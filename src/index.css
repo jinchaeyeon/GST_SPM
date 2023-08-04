@@ -43,7 +43,7 @@ div.k-animation-container {
   margin-top: 5px;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1200px) {
   .k-grid {
     max-height: 820px;
   }
@@ -116,6 +116,7 @@ input.required:hover,
 input.required.k-hover,
 .k-daterangepicker.required input {
   background-color: #fff0ef;
+  width: "100%";
 }
 .k-daterangepicker.required,
 .k-daterangepicker.required:hover {
@@ -156,7 +157,7 @@ input.readonly {
   font-weight: 400;
 }
 /* 모바일 결재문서 숨김 처리 */
-@media (max-width: 768px) {
+@media (max-width: 1200px) {
   .visible-mobile-only {
     display: block;
   }

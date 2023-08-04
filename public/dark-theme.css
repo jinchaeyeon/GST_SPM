@@ -40793,10 +40793,6 @@ select.k-picker-lg {
     box-sizing: border-box;
 }
 
-.k-daterange-picker .k-dateinput, .k-daterangepicker .k-dateinput {
-    width: 10em;
-}
-
 .k-daterangepicker-wrap {
     display: inherit;
     flex-flow: inherit;

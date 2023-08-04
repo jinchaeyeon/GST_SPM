@@ -227,7 +227,7 @@ let targetRowIndex2: null | number = null;
 let targetRowIndex3: null | number = null;
 const KendoWindow = ({ setVisible, setData, modal = false }: IKendoWindow) => {
   let deviceWidth = window.innerWidth;
-  let isMobile = deviceWidth <= 768;
+  let isMobile = deviceWidth <= 1200;
   const processApi = useApi();
   const [position, setPosition] = useState<IWindowPosition>({
     left: 300,

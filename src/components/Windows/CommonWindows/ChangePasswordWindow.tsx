@@ -30,7 +30,7 @@ const KendoWindow = ({ setVisible }: TKendoWindow) => {
   const [pwReq, setPwReq] = useState<TPasswordRequirements | null>(null);
   const setLoading = useSetRecoilState(isLoading);
   let deviceWidth = window.innerWidth;
-  let isMobile = deviceWidth <= 768;
+  let isMobile = deviceWidth <= 1200;
   const [position, setPosition] = useState<IWindowPosition>({
     left: 300,
     top: 100,

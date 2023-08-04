@@ -522,7 +522,7 @@ const App = () => {
   const idGetter3 = getter(DATA_ITEM_KEY3);
   const idGetter4 = getter(DATA_ITEM_KEY4);
   let deviceWidth = window.innerWidth;
-  let isMobile = deviceWidth <= 768;
+  let isMobile = deviceWidth <= 1200;
   const initialPageState = { skip: 0, take: PAGE_SIZE };
   const [page, setPage] = useState(initialPageState);
   const [page2, setPage2] = useState(initialPageState);
@@ -3371,7 +3371,8 @@ const App = () => {
                   >
                     <tbody>
                       <tr>
-                        <th style={{ width: isMobile ? "100%" : "50%" }}>
+                        <th>기간</th>
+                        <td>
                           <MultiColumnComboBox
                             name="date_type"
                             data={
@@ -3386,10 +3387,7 @@ const App = () => {
                             className="required"
                             filterable={true}
                             onFilterChange={handleFilterChange}
-                            style={{ width: "100%" }}
                           />
-                        </th>
-                        <td colSpan={3}>
                           <CommonDateRangePicker
                             value={{
                               start: filters.fromDate,
@@ -3815,7 +3813,8 @@ const App = () => {
                   >
                     <tbody>
                       <tr>
-                        <th style={{ width: isMobile ? "100%" : "50%" }}>
+                        <th>기간</th>
+                        <td>
                           <MultiColumnComboBox
                             name="date_type"
                             data={
@@ -3832,8 +3831,6 @@ const App = () => {
                             onFilterChange={handleFilterChange7}
                             style={{ width: "100%" }}
                           />
-                        </th>
-                        <td colSpan={3}>
                           <CommonDateRangePicker
                             value={{
                               start: filters.fromDate,
@@ -3985,7 +3982,7 @@ const App = () => {
                       </ButtonContainer>
                     </GridTitleContainer>
                     <Grid
-                      style={{ height: `75vh` }}
+                      style={{ height: `70vh` }}
                       data={process(
                         mainDataResult2.data.map((row) => ({
                           ...row,
@@ -4209,7 +4206,8 @@ const App = () => {
                   >
                     <tbody>
                       <tr>
-                        <th style={{ width: isMobile ? "100%" : "50%" }}>
+                        <th>기간</th>
+                        <td colSpan={3}>
                           <MultiColumnComboBox
                             name="date_type"
                             data={
@@ -4226,8 +4224,6 @@ const App = () => {
                             onFilterChange={handleFilterChange12}
                             style={{ width: "100%" }}
                           />
-                        </th>
-                        <td colSpan={3}>
                           <CommonDateRangePicker
                             value={{
                               start: filters.fromDate,
@@ -4592,7 +4588,8 @@ const App = () => {
                   >
                     <tbody>
                       <tr>
-                        <th style={{ width: isMobile ? "100%" : "50%" }}>
+                        <th>기간</th>
+                        <td>
                           <MultiColumnComboBox
                             name="date_type"
                             data={
@@ -4609,8 +4606,6 @@ const App = () => {
                             onFilterChange={handleFilterChange16}
                             style={{ width: "100%" }}
                           />
-                        </th>
-                        <td colSpan={3}>
                           <CommonDateRangePicker
                             value={{
                               start: filters.fromDate,

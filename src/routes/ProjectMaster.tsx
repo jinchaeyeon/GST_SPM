@@ -256,7 +256,6 @@ const App = () => {
   const userId = loginResult ? loginResult.userId : "";
   const [pc, setPc] = useState("");
   UseParaPc(setPc);
-  const [tabSelected, setTabSelected] = React.useState(0);
   const [AlltabSelected, setAllTabSelected] = React.useState(0);
   const [group, setGroup] = React.useState(initialGroup);
   // 삭제할 첨부파일 리스트를 담는 함수
@@ -354,7 +353,7 @@ const App = () => {
   }>({});
   let gridRef: any = useRef(null);
   let deviceWidth = window.innerWidth;
-  let isMobile = deviceWidth <= 768;
+  let isMobile = deviceWidth <= 1200;
   useEffect(() => {
     // 접근 권한 검증
     if (loginResult) {
@@ -647,10 +646,10 @@ const App = () => {
 
     const status =
       filters.status.length === 0
-        ? "Y|N"  // 미선택시 => 0 전체
+        ? "Y|N" // 미선택시 => 0 전체
         : filters.status.length === 1
         ? filters.status[0].code // 1개만 선택시 => 선택된 값 (ex. 1 대기)
-        : "Y|N" //  2개 이상 선택시 => 전체
+        : "Y|N"; //  2개 이상 선택시 => 전체
 
     //조회조건 파라미터
     const parameters: Iparameters = {
@@ -704,7 +703,7 @@ const App = () => {
       setMainDataResult((prev) => {
         return {
           data: rows,
-           total: totalRowCnt == -1 ? 0 : totalRowCnt,
+          total: totalRowCnt == -1 ? 0 : totalRowCnt,
         };
       });
 
@@ -916,11 +915,11 @@ const App = () => {
     let data: any;
     setLoading(true);
     const status =
-    filters.status.length === 0
-      ? "Y|N"  // 미선택시 => 0 전체
-      : filters.status.length === 1
-      ? filters.status[0].code // 1개만 선택시 => 선택된 값 (ex. 1 대기)
-      : "Y|N" //  2개 이상 선택시 => 전체
+      filters.status.length === 0
+        ? "Y|N" // 미선택시 => 0 전체
+        : filters.status.length === 1
+        ? filters.status[0].code // 1개만 선택시 => 선택된 값 (ex. 1 대기)
+        : "Y|N"; //  2개 이상 선택시 => 전체
     //조회조건 파라미터
     const parameters: Iparameters = {
       procedureName: "pw6_sel_project_master",
@@ -964,7 +963,7 @@ const App = () => {
         };
       });
 
-      if (tabSelected == 0) {
+      if (AlltabSelected == 2) {
         const newDataState = processWithGroups(rows, group);
         setSubDataTotal(totalRowCnt);
         setSubDataResult(newDataState);
@@ -972,13 +971,13 @@ const App = () => {
         setSubDataResult2((prev) => {
           return {
             data: rows,
-             total: totalRowCnt == -1 ? 0 : totalRowCnt,
+            total: totalRowCnt == -1 ? 0 : totalRowCnt,
           };
         });
       }
 
       if (totalRowCnt > 0) {
-        if (tabSelected == 0) {
+        if (AlltabSelected == 2) {
           const selectedRow =
             subfilters.find_row_value == ""
               ? rows[0]
@@ -1295,6 +1294,7 @@ const App = () => {
 
     setSubFilters((prev) => ({
       ...prev,
+      workType: "main_schedule",
       devmngnum: selectedRowData.devmngnum,
       pgNum: 1,
       isSearch: true,
@@ -1395,6 +1395,7 @@ const App = () => {
     });
     setSelectedsubDataState2(newSelectedState);
   };
+
   //메인 그리드 데이터 변경 되었을 때
   useEffect(() => {
     if (targetRowIndex !== null && gridRef.current) {
@@ -1521,6 +1522,10 @@ const App = () => {
     setSubDataTotal(0);
     const newDataState = processWithGroups([], group);
     setSubDataResult(newDataState);
+    setSubDataResult2({
+      data: [],
+      total: 0,
+    });
     setWorkType("N");
     setAllTabSelected(1);
   };
@@ -1690,7 +1695,8 @@ const App = () => {
           }
         });
       });
-      if (tabSelected == 0) {
+
+      if (AlltabSelected == 2) {
         dataItem.forEach((item: any) => {
           const {
             rowstatus,
@@ -2418,6 +2424,9 @@ const App = () => {
     }
 
     if (data.isSuccess === true) {
+      if(paraData.work_type == "N") {
+        setAllTabSelected(0);
+      }
       deletedRows = [];
       setParaData({
         work_type: "",
@@ -2835,26 +2844,6 @@ const App = () => {
     }
   };
 
-  const handleSelectTab = (e: any) => {
-    setTabSelected(e.selected);
-
-    if (e.selected == 0) {
-      setSubFilters((prev) => ({
-        ...prev,
-        workType: "detail",
-        pgNum: 1,
-        isSearch: true,
-      }));
-    } else if (e.selected == 1) {
-      setSubFilters((prev) => ({
-        ...prev,
-        workType: "main_schedule",
-        pgNum: 1,
-        isSearch: true,
-      }));
-    }
-    deletedRows = [];
-  };
   const handleSelectAllTab = (e: any) => {
     if (workType != "N") {
       if (e.selected == 1) {
@@ -2865,6 +2854,7 @@ const App = () => {
 
         setSubFilters((prev) => ({
           ...prev,
+          workType: "main_schedule",
           devmngnum: selectedRowData.devmngnum,
           pgNum: 1,
           isSearch: true,
@@ -2931,9 +2921,34 @@ const App = () => {
           remark: selectedRowData.remark,
           revperson: selectedRowData.revperson,
         });
+      } else if (e.selected == 2) {
+        const selectedRowData = mainDataResult.data.filter(
+          (item) =>
+            item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
+        )[0];
+
+        setSubFilters((prev) => ({
+          ...prev,
+          workType: "detail",
+          devmngnum: selectedRowData.devmngnum,
+          pgNum: 1,
+          isSearch: true,
+        }));
+      } else {
+        const selectedRowData = mainDataResult.data.filter(
+          (item) =>
+            item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
+        )[0];
+
+        setFilters((prev) => ({
+          ...prev,
+          find_row_value: selectedRowData != undefined ? selectedRowData[DATA_ITEM_KEY] : "",
+          pgNum: 1,
+          isSearch: true,
+        }));
       }
     }
-
+    deletedRows = [];
     setAllTabSelected(e.selected);
   };
   const onAddClick2 = () => {
@@ -3274,7 +3289,7 @@ const App = () => {
             onClick={search}
             icon="search"
             themeColor={"primary"}
-            disabled={AlltabSelected == 1 ? true : false}
+            disabled={AlltabSelected != 0 ? true : false}
           >
             조회
           </Button>
@@ -3295,7 +3310,8 @@ const App = () => {
                 <FilterBox onKeyPress={(e) => handleKeyPressSearch(e, search)}>
                   <tbody>
                     <tr>
-                      <th style={{width: isMobile? "100%" : "50%"}}>
+                      <th>기간</th>
+                      <td>
                         <MultiColumnComboBox
                           name="date_type"
                           data={
@@ -3310,10 +3326,7 @@ const App = () => {
                           className="required"
                           filterable={true}
                           onFilterChange={handleFilterChange}
-                          style={{width:"100%"}}
                         />
-                      </th>
-                      <td colSpan={3}>
                         <CommonDateRangePicker
                           value={{
                             start: filters.fromDate,
@@ -3326,7 +3339,7 @@ const App = () => {
                               toDate: e.value.end,
                             }))
                           }
-                          style={{display: "inline-block"}}
+                          style={{ display: "inline-block" }}
                           className="required"
                         />
                       </td>
@@ -3737,393 +3750,380 @@ const App = () => {
                 </tbody>
               </FormBox>
             </FormBoxWrap>
-            <TabStrip
-              style={{ width: "100%" }}
-              selected={tabSelected}
-              onSelect={handleSelectTab}
+
+            <GridTitleContainer>
+              <GridTitle>주요일정</GridTitle>
+              <ButtonContainer>
+                <Button
+                  onClick={onAddClick2}
+                  themeColor={"primary"}
+                  icon="plus"
+                  title="행 추가"
+                ></Button>
+                <Button
+                  onClick={onRemoveClick2}
+                  fillMode="outline"
+                  themeColor={"primary"}
+                  icon="minus"
+                  title="행 삭제"
+                ></Button>
+                <Button
+                  onClick={() =>
+                    onArrowsBtnClick({
+                      direction: "UP",
+                      dataInfo: arrowBtnClickPara,
+                    })
+                  }
+                  fillMode="outline"
+                  themeColor={"primary"}
+                  icon="chevron-up"
+                  title="행 위로 이동"
+                ></Button>
+                <Button
+                  onClick={() =>
+                    onArrowsBtnClick({
+                      direction: "DOWN",
+                      dataInfo: arrowBtnClickPara,
+                    })
+                  }
+                  fillMode="outline"
+                  themeColor={"primary"}
+                  icon="chevron-down"
+                  title="행 아래로 이동"
+                ></Button>
+              </ButtonContainer>
+            </GridTitleContainer>
+            <Grid
+              style={{ height: "36vh" }}
+              data={process(
+                subDataResult2.data.map((row) => ({
+                  ...row,
+                  rowstatus:
+                    row.rowstatus == null ||
+                    row.rowstatus == "" ||
+                    row.rowstatus == undefined
+                      ? ""
+                      : row.rowstatus,
+                  [SELECTED_FIELD]: selectedsubDataState2[idGetter3(row)],
+                })),
+                subDataState2
+              )}
+              {...subDataState2}
+              onDataStateChange={onSubDataStateChange2}
+              //선택 기능
+              dataItemKey={SUB_DATA_ITEM_KEY2}
+              selectedField={SELECTED_FIELD}
+              selectable={{
+                enabled: true,
+                mode: "single",
+              }}
+              onSelectionChange={onSubSelectionChange2}
+              //스크롤 조회 기능
+              fixedScroll={true}
+              total={subDataResult2.total}
+              //정렬기능
+              sortable={true}
+              onSortChange={onSubSortChange2}
+              //컬럼순서조정
+              reorderable={true}
+              //컬럼너비조정
+              resizable={true}
+              onItemChange={onItemChange2}
+              cellRender={customCellRender2}
+              rowRender={customRowRender2}
+              editField={EDIT_FIELD}
             >
-              <TabStripTab title="상세정보">
-                <GridContainer>
-                  <GridTitleContainer>
-                    <GridTitle>상세정보</GridTitle>
-                    <ButtonContainer>
-                      <Button
-                        onClick={onValueBoxWndClick}
-                        themeColor={"primary"}
-                        icon="folder"
-                      >
-                        ValueBox 참조
-                      </Button>
-                      <Button
-                        onClick={onValueBoxWndClick2}
-                        fillMode="outline"
-                        themeColor={"primary"}
-                        icon="folder"
-                      >
-                        Value 구분 관리
-                      </Button>
-                      <Button
-                        onClick={onAddClick}
-                        themeColor={"primary"}
-                        icon="plus"
-                        title="행 추가"
-                      ></Button>
-                      <Button
-                        onClick={onRemoveClick}
-                        fillMode="outline"
-                        themeColor={"primary"}
-                        icon="minus"
-                        title="행 삭제"
-                      ></Button>
-                    </ButtonContainer>
-                  </GridTitleContainer>
-                  <DevContext.Provider value={{ devdivItems: devdivItems }}>
-                    <ValueCodeContext.Provider
-                      value={{ valuecodeItems: valuecodeItems }}
-                    >
-                      <ListRadioContext.Provider
-                        value={{ listRadioItems: listRadioItems }}
-                      >
-                        <LvlContext.Provider value={{ lvlItems: lvlItems }}>
-                          <UserContext.Provider
-                            value={{ usersData: usersData }}
-                          >
-                            <Grid
-                              style={{ height: "30vh" }}
-                              data={newData.map((item) => ({
-                                ...item,
-                                items: item.items.map((row: any) => ({
-                                  ...row,
-                                  useyn:
-                                    row.useyn == "Y"
-                                      ? true
-                                      : row.useyn == "N"
-                                      ? false
-                                      : row.useyn,
-                                  CustSignyn:
-                                    row.CustSignyn == "Y"
-                                      ? true
-                                      : row.CustSignyn == "N"
-                                      ? false
-                                      : row.CustSignyn,
-                                  [SELECTED_FIELD]:
-                                    selectedsubDataState[idGetter2(row)], //선택된 데이터
-                                })),
-                              }))}
-                              {...subDataState}
-                              onDataStateChange={onSubDataStateChange}
-                              //선택 기능
-                              dataItemKey={SUB_DATA_ITEM_KEY}
-                              selectedField={SELECTED_FIELD}
-                              selectable={{
-                                enabled: true,
-                                mode: "single",
-                              }}
-                              onSelectionChange={onSubSelectionChange}
-                              //스크롤 조회 기능
-                              fixedScroll={true}
-                              total={subDataTotal}
-                              //정렬기능
-                              sortable={true}
-                              onSortChange={onSubSortChange}
-                              //컬럼순서조정
-                              reorderable={true}
-                              //컬럼너비조정
-                              resizable={true}
-                              onItemChange={onItemChange}
-                              cellRender={customCellRender}
-                              rowRender={customRowRender}
-                              editField={EDIT_FIELD}
-                              //그룹기능
-                              group={group}
-                              groupable={true}
-                              onExpandChange={onExpandChange}
-                              expandField="expanded"
-                              lockGroups={true}
-                            >
-                              <GridColumn
-                                field="rowstatus"
-                                title=" "
-                                width="45px"
-                                locked={true}
-                              />
-                              <GridColumn
-                                field="pgmid"
-                                title="폼ID"
-                                width={120}
-                                footerCell={subTotalFooterCell}
-                                locked={true}
-                              />
-                              <GridColumn
-                                field="pgmnm"
-                                title="메뉴명"
-                                width={150}
-                                locked={true}
-                              />
-                              <GridColumn
-                                field="devdiv"
-                                title="개발구분"
-                                width={120}
-                                cell={DevdivCell}
-                              />
-                              <GridColumn
-                                field="value_code3"
-                                title="Value 구분"
-                                width={120}
-                                cell={ValueCodeCell}
-                              />
-                              <GridColumn
-                                field="prgrate"
-                                title="진행률"
-                                width={100}
-                                cell={ProgressCell}
-                              />
-                              <GridColumn
-                                field="listyn"
-                                title="LIST포함여부"
-                                width={180}
-                                cell={ListRadioCell}
-                              />
-                              <GridColumn
-                                field="lvl"
-                                title="난이도"
-                                width={120}
-                                cell={LvlCell}
-                              />
-                              <GridColumn
-                                field="stdscore"
-                                title="개발표준점수"
-                                width={100}
-                                cell={NumberCell}
-                              />
-                              <GridColumn
-                                field="modrate"
-                                title="수정률"
-                                width={100}
-                                cell={NumberCell}
-                              />
-                              <GridColumn
-                                field="fnscore"
-                                title="기능점수"
-                                width={100}
-                                cell={NumberCell}
-                              />
-                              <GridColumn
-                                field="indicator"
-                                title="설계자"
-                                width={120}
-                                cell={UserCell}
-                              />
-                              <GridColumn
-                                field="devperson"
-                                title="개발담당자"
-                                width={120}
-                                cell={UserCell}
-                              />
-                              <GridColumn
-                                field="DesignEstTime"
-                                title="설계예정일"
-                                width={120}
-                                cell={DateCell}
-                              />
-                              <GridColumn
-                                field="exptime"
-                                title="개발예상시간"
-                                width={100}
-                                cell={NumberCell}
-                              />
-                              <GridColumn
-                                field="DesignStartDate"
-                                title="설계시작일"
-                                width={120}
-                                cell={DateCell}
-                              />
-                              <GridColumn
-                                field="DesignEndDate"
-                                title="설계완료일"
-                                width={120}
-                                cell={DateCell}
-                              />
-                              <GridColumn
-                                field="devstrdt"
-                                title="개발시작일"
-                                width={120}
-                                cell={DateCell}
-                              />
-                              <GridColumn
-                                field="finexpdt"
-                                title="완료예정일"
-                                width={120}
-                                cell={DateCell}
-                              />
-                              <GridColumn
-                                field="findt"
-                                title="완료일"
-                                width={120}
-                                cell={DateCell}
-                              />
-                              <GridColumn
-                                field="chkperson"
-                                title="확인담당자"
-                                width={120}
-                                cell={UserCell}
-                              />
-                              <GridColumn
-                                field="chkdt"
-                                title="확인일"
-                                width={120}
-                                cell={DateCell}
-                              />
-                              <GridColumn
-                                field="useyn"
-                                title="사용여부"
-                                width={80}
-                                cell={CustomCheckBoxCell5}
-                              />
-                              <GridColumn
-                                field="remark"
-                                title="비고"
-                                width={200}
-                              />
-                              <GridColumn
-                                field="CustCheckDate"
-                                title="검수일자"
-                                width={120}
-                                cell={DateCell}
-                              />
-                              <GridColumn
-                                field="CustPerson"
-                                title="업체담당자"
-                                width={120}
-                              />
-                              <GridColumn
-                                field="CustSignyn"
-                                title="업체사인"
-                                width={80}
-                                cell={CustomCheckBoxCell5}
-                              />
-                            </Grid>
-                          </UserContext.Provider>
-                        </LvlContext.Provider>
-                      </ListRadioContext.Provider>
-                    </ValueCodeContext.Provider>
-                  </DevContext.Provider>
-                </GridContainer>
-              </TabStripTab>
-              <TabStripTab title="주요일정">
-                <GridTitleContainer>
-                  <GridTitle>주요일정</GridTitle>
-                  <ButtonContainer>
-                    <Button
-                      onClick={onAddClick2}
-                      themeColor={"primary"}
-                      icon="plus"
-                      title="행 추가"
-                    ></Button>
-                    <Button
-                      onClick={onRemoveClick2}
-                      fillMode="outline"
-                      themeColor={"primary"}
-                      icon="minus"
-                      title="행 삭제"
-                    ></Button>
-                    <Button
-                      onClick={() =>
-                        onArrowsBtnClick({
-                          direction: "UP",
-                          dataInfo: arrowBtnClickPara,
-                        })
-                      }
-                      fillMode="outline"
-                      themeColor={"primary"}
-                      icon="chevron-up"
-                      title="행 위로 이동"
-                    ></Button>
-                    <Button
-                      onClick={() =>
-                        onArrowsBtnClick({
-                          direction: "DOWN",
-                          dataInfo: arrowBtnClickPara,
-                        })
-                      }
-                      fillMode="outline"
-                      themeColor={"primary"}
-                      icon="chevron-down"
-                      title="행 아래로 이동"
-                    ></Button>
-                  </ButtonContainer>
-                </GridTitleContainer>
-                <Grid
-                  style={{ height: "30vh" }}
-                  data={process(
-                    subDataResult2.data.map((row) => ({
-                      ...row,
-                      rowstatus:
-                        row.rowstatus == null ||
-                        row.rowstatus == "" ||
-                        row.rowstatus == undefined
-                          ? ""
-                          : row.rowstatus,
-                      [SELECTED_FIELD]: selectedsubDataState2[idGetter3(row)],
-                    })),
-                    subDataState2
-                  )}
-                  {...subDataState2}
-                  onDataStateChange={onSubDataStateChange2}
-                  //선택 기능
-                  dataItemKey={SUB_DATA_ITEM_KEY2}
-                  selectedField={SELECTED_FIELD}
-                  selectable={{
-                    enabled: true,
-                    mode: "single",
-                  }}
-                  onSelectionChange={onSubSelectionChange2}
-                  //스크롤 조회 기능
-                  fixedScroll={true}
-                  total={subDataResult2.total}
-                  //정렬기능
-                  sortable={true}
-                  onSortChange={onSubSortChange2}
-                  //컬럼순서조정
-                  reorderable={true}
-                  //컬럼너비조정
-                  resizable={true}
-                  onItemChange={onItemChange2}
-                  cellRender={customCellRender2}
-                  rowRender={customRowRender2}
-                  editField={EDIT_FIELD}
+              <GridColumn field="rowstatus" title=" " width="45px" />
+              <GridColumn
+                field="date"
+                title="일자"
+                width={120}
+                cell={DateCell}
+                footerCell={subTotalFooterCell2}
+                headerCell={RequiredHeader}
+              />
+              <GridColumn
+                field="title"
+                title="제목"
+                width={1205}
+                headerCell={RequiredHeader}
+              />
+              <GridColumn
+                field="is_monitoring"
+                title="모니터링"
+                width={80}
+                cell={CheckBoxCell}
+              />
+              <GridColumn field="user_name" title="작성자" width={120} />
+              <GridColumn
+                field="finyn"
+                title="완료"
+                width={80}
+                cell={CheckBoxCell}
+              />
+            </Grid>
+          </GridContainer>
+        </TabStripTab>
+        <TabStripTab title="상세정보">
+          <GridContainer>
+            <GridTitleContainer>
+              <GridTitle>상세정보</GridTitle>
+              <ButtonContainer>
+                <Button
+                  onClick={onValueBoxWndClick}
+                  themeColor={"primary"}
+                  icon="folder"
                 >
-                  <GridColumn field="rowstatus" title=" " width="45px" />
-                  <GridColumn
-                    field="date"
-                    title="일자"
-                    width={120}
-                    cell={DateCell}
-                    footerCell={subTotalFooterCell2}
-                    headerCell={RequiredHeader}
-                  />
-                  <GridColumn
-                    field="title"
-                    title="제목"
-                    width={1205}
-                    headerCell={RequiredHeader}
-                  />
-                  <GridColumn
-                    field="is_monitoring"
-                    title="모니터링"
-                    width={80}
-                    cell={CheckBoxCell}
-                  />
-                  <GridColumn field="user_name" title="작성자" width={120} />
-                  <GridColumn
-                    field="finyn"
-                    title="완료"
-                    width={80}
-                    cell={CheckBoxCell}
-                  />
-                </Grid>
-              </TabStripTab>
-            </TabStrip>
+                  ValueBox 참조
+                </Button>
+                <Button
+                  onClick={onValueBoxWndClick2}
+                  fillMode="outline"
+                  themeColor={"primary"}
+                  icon="folder"
+                >
+                  Value 구분 관리
+                </Button>
+                <Button
+                  onClick={onAddClick}
+                  themeColor={"primary"}
+                  icon="plus"
+                  title="행 추가"
+                ></Button>
+                <Button
+                  onClick={onRemoveClick}
+                  fillMode="outline"
+                  themeColor={"primary"}
+                  icon="minus"
+                  title="행 삭제"
+                ></Button>
+              </ButtonContainer>
+            </GridTitleContainer>
+            <DevContext.Provider value={{ devdivItems: devdivItems }}>
+              <ValueCodeContext.Provider
+                value={{ valuecodeItems: valuecodeItems }}
+              >
+                <ListRadioContext.Provider
+                  value={{ listRadioItems: listRadioItems }}
+                >
+                  <LvlContext.Provider value={{ lvlItems: lvlItems }}>
+                    <UserContext.Provider value={{ usersData: usersData }}>
+                      <Grid
+                        style={{ height: "72vh" }}
+                        data={newData.map((item) => ({
+                          ...item,
+                          items: item.items.map((row: any) => ({
+                            ...row,
+                            useyn:
+                              row.useyn == "Y"
+                                ? true
+                                : row.useyn == "N"
+                                ? false
+                                : row.useyn,
+                            CustSignyn:
+                              row.CustSignyn == "Y"
+                                ? true
+                                : row.CustSignyn == "N"
+                                ? false
+                                : row.CustSignyn,
+                            [SELECTED_FIELD]:
+                              selectedsubDataState[idGetter2(row)], //선택된 데이터
+                          })),
+                        }))}
+                        {...subDataState}
+                        onDataStateChange={onSubDataStateChange}
+                        //선택 기능
+                        dataItemKey={SUB_DATA_ITEM_KEY}
+                        selectedField={SELECTED_FIELD}
+                        selectable={{
+                          enabled: true,
+                          mode: "single",
+                        }}
+                        onSelectionChange={onSubSelectionChange}
+                        //스크롤 조회 기능
+                        fixedScroll={true}
+                        total={subDataTotal}
+                        //정렬기능
+                        sortable={true}
+                        onSortChange={onSubSortChange}
+                        //컬럼순서조정
+                        reorderable={true}
+                        //컬럼너비조정
+                        resizable={true}
+                        onItemChange={onItemChange}
+                        cellRender={customCellRender}
+                        rowRender={customRowRender}
+                        editField={EDIT_FIELD}
+                        //그룹기능
+                        group={group}
+                        groupable={true}
+                        onExpandChange={onExpandChange}
+                        expandField="expanded"
+                        lockGroups={true}
+                      >
+                        <GridColumn
+                          field="rowstatus"
+                          title=" "
+                          width="45px"
+                          locked={true}
+                        />
+                        <GridColumn
+                          field="pgmid"
+                          title="폼ID"
+                          width={120}
+                          footerCell={subTotalFooterCell}
+                          locked={true}
+                        />
+                        <GridColumn
+                          field="pgmnm"
+                          title="메뉴명"
+                          width={150}
+                          locked={true}
+                        />
+                        <GridColumn
+                          field="devdiv"
+                          title="개발구분"
+                          width={120}
+                          cell={DevdivCell}
+                        />
+                        <GridColumn
+                          field="value_code3"
+                          title="Value 구분"
+                          width={120}
+                          cell={ValueCodeCell}
+                        />
+                        <GridColumn
+                          field="prgrate"
+                          title="진행률"
+                          width={100}
+                          cell={ProgressCell}
+                        />
+                        <GridColumn
+                          field="listyn"
+                          title="LIST포함여부"
+                          width={180}
+                          cell={ListRadioCell}
+                        />
+                        <GridColumn
+                          field="lvl"
+                          title="난이도"
+                          width={120}
+                          cell={LvlCell}
+                        />
+                        <GridColumn
+                          field="stdscore"
+                          title="개발표준점수"
+                          width={100}
+                          cell={NumberCell}
+                        />
+                        <GridColumn
+                          field="modrate"
+                          title="수정률"
+                          width={100}
+                          cell={NumberCell}
+                        />
+                        <GridColumn
+                          field="fnscore"
+                          title="기능점수"
+                          width={100}
+                          cell={NumberCell}
+                        />
+                        <GridColumn
+                          field="indicator"
+                          title="설계자"
+                          width={120}
+                          cell={UserCell}
+                        />
+                        <GridColumn
+                          field="devperson"
+                          title="개발담당자"
+                          width={120}
+                          cell={UserCell}
+                        />
+                        <GridColumn
+                          field="DesignEstTime"
+                          title="설계예정일"
+                          width={120}
+                          cell={DateCell}
+                        />
+                        <GridColumn
+                          field="exptime"
+                          title="개발예상시간"
+                          width={100}
+                          cell={NumberCell}
+                        />
+                        <GridColumn
+                          field="DesignStartDate"
+                          title="설계시작일"
+                          width={120}
+                          cell={DateCell}
+                        />
+                        <GridColumn
+                          field="DesignEndDate"
+                          title="설계완료일"
+                          width={120}
+                          cell={DateCell}
+                        />
+                        <GridColumn
+                          field="devstrdt"
+                          title="개발시작일"
+                          width={120}
+                          cell={DateCell}
+                        />
+                        <GridColumn
+                          field="finexpdt"
+                          title="완료예정일"
+                          width={120}
+                          cell={DateCell}
+                        />
+                        <GridColumn
+                          field="findt"
+                          title="완료일"
+                          width={120}
+                          cell={DateCell}
+                        />
+                        <GridColumn
+                          field="chkperson"
+                          title="확인담당자"
+                          width={120}
+                          cell={UserCell}
+                        />
+                        <GridColumn
+                          field="chkdt"
+                          title="확인일"
+                          width={120}
+                          cell={DateCell}
+                        />
+                        <GridColumn
+                          field="useyn"
+                          title="사용여부"
+                          width={80}
+                          cell={CustomCheckBoxCell5}
+                        />
+                        <GridColumn field="remark" title="비고" width={200} />
+                        <GridColumn
+                          field="CustCheckDate"
+                          title="검수일자"
+                          width={120}
+                          cell={DateCell}
+                        />
+                        <GridColumn
+                          field="CustPerson"
+                          title="업체담당자"
+                          width={120}
+                        />
+                        <GridColumn
+                          field="CustSignyn"
+                          title="업체사인"
+                          width={80}
+                          cell={CustomCheckBoxCell5}
+                        />
+                      </Grid>
+                    </UserContext.Provider>
+                  </LvlContext.Provider>
+                </ListRadioContext.Provider>
+              </ValueCodeContext.Provider>
+            </DevContext.Provider>
           </GridContainer>
         </TabStripTab>
       </TabStrip>
