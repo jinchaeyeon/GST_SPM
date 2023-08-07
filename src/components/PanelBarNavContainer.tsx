@@ -79,16 +79,20 @@ const paths = [
     index: ".7",
   },
   {
-    path: "/Task_Order",
+    path: "/Reception_Answer",
     index: ".8",
   },
   {
-    path: "/Record",
+    path: "/Task_Order",
     index: ".9",
   },
   {
-    path: "/ProjectMaster",
+    path: "/Record",
     index: ".10",
+  },
+  {
+    path: "/ProjectMaster",
+    index: ".11",
   },
 ];
 
@@ -544,6 +548,7 @@ const PanelBarNavContainer = (props: any) => {
                   title={"공유문서 관리"}
                   route="/SharedDocumentManagement"
                 />
+                <PanelBarItem title={"접수 및 답변"} route="/Reception_Answer" />
                 <PanelBarItem title={"업무 지시"} route="/Task_Order" />
                 <PanelBarItem title={"처리일지 작성"} route="/Record" />
                 <PanelBarItem

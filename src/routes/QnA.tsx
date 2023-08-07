@@ -798,7 +798,6 @@ const App = () => {
                 onClick={addData}
                 icon="file-add"
                 themeColor={"primary"}
-                fillMode="outline"
               >
                 신규
               </Button>

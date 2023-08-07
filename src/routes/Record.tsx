@@ -315,8 +315,6 @@ const App = () => {
   const userName = loginResult ? loginResult.userName : "";
   const [pc, setPc] = useState("");
   UseParaPc(setPc);
-  let deviceWidth = window.innerWidth;
-  let isMobile = deviceWidth <= 1200;
   // 서버 업로드는 되었으나 DB에는 저장안된 첨부파일 리스트
   const [unsavedAttadatnums, setUnsavedAttadatnums] = useRecoilState(
     unsavedAttadatnumsState

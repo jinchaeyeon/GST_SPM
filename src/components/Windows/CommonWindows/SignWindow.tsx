@@ -816,7 +816,7 @@ const SignWindow = ({ setVisible, reference_key }: IWindow) => {
             mainDataResult.data.filter(
               (item) => item.num == Object.getOwnPropertyNames(selectedState)[0]
             )[0] == undefined
-              ? false
+              ? true
               : mainDataResult.data.filter(
                   (item) =>
                     item.num == Object.getOwnPropertyNames(selectedState)[0]

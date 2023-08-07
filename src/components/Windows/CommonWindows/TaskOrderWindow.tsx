@@ -675,36 +675,36 @@ const KendoWindow = ({
     const doc = parser.parseFromString(editorContent2, "text/html");
     const textContent = doc.body.textContent || ""; //기존행 문자열
 
-      if (
-        localStorage.getItem(currentRow[DATA_ITEM_KEY]) == undefined ||
-        localStorage.getItem(currentRow[DATA_ITEM_KEY]) == null
-      ) {
+    if (
+      localStorage.getItem(currentRow[DATA_ITEM_KEY]) == undefined ||
+      localStorage.getItem(currentRow[DATA_ITEM_KEY]) == null
+    ) {
+      localStorage.setItem(currentRow[DATA_ITEM_KEY], textContent);
+      localStorage.setItem(currentRow[DATA_ITEM_KEY] + "key", editorContent2);
+    } else {
+      if (currentRow.rowstatus == "U" || currentRow.rowstatus == "N") {
+        localStorage.removeItem(currentRow[DATA_ITEM_KEY]);
+        localStorage.removeItem(currentRow[DATA_ITEM_KEY] + "key");
         localStorage.setItem(currentRow[DATA_ITEM_KEY], textContent);
         localStorage.setItem(currentRow[DATA_ITEM_KEY] + "key", editorContent2);
-      } else {
-        if (currentRow.rowstatus == "U" || currentRow.rowstatus == "N") {
-          localStorage.removeItem(currentRow[DATA_ITEM_KEY]);
-          localStorage.removeItem(currentRow[DATA_ITEM_KEY] + "key");
-          localStorage.setItem(currentRow[DATA_ITEM_KEY], textContent);
-          localStorage.setItem(currentRow[DATA_ITEM_KEY] + "key", editorContent2);
-        }
       }
-      setSelectedState(newSelectedState);
-      if (selectedRowData.rowstatus == undefined) {
-        fetchDocument(
-          "Task",
-          selectedRowData.orgdiv + "_" + selectedRowData.docunum,
-          selectedRowData
-        );
-      } else {
-        editorContent3 = localStorage.getItem(
-          selectedRowData[DATA_ITEM_KEY] + "key"
-        );
-        if (refEditorRef.current) {
-          refEditorRef.current.setHtml(editorContent3);
-        }
+    }
+    setSelectedState(newSelectedState);
+    if (selectedRowData.rowstatus == undefined) {
+      fetchDocument(
+        "Task",
+        selectedRowData.orgdiv + "_" + selectedRowData.docunum,
+        selectedRowData
+      );
+    } else {
+      editorContent3 = localStorage.getItem(
+        selectedRowData[DATA_ITEM_KEY] + "key"
+      );
+      if (refEditorRef.current) {
+        refEditorRef.current.setHtml(editorContent3);
       }
-    };
+    }
+  };
 
   useEffect(() => {
     fetchWorkType();
@@ -1087,7 +1087,7 @@ const KendoWindow = ({
       if (refEditorRef.current) {
         editorContent = refEditorRef.current.getContent();
       }
-      
+
       const parser = new DOMParser();
       const doc = parser.parseFromString(editorContent, "text/html");
       const textContent = doc.body.textContent || ""; //문자열
@@ -1627,8 +1627,9 @@ const KendoWindow = ({
               onClick={onErrorWndClick}
               themeColor={"primary"}
               icon="gear"
-              title="불량 팝업"
-            ></Button>
+            >
+              불량 팝업
+            </Button>
             <Button
               onClick={onAddClick}
               themeColor={"primary"}
@@ -1805,7 +1806,7 @@ const KendoWindow = ({
             다운로드
           </Button>
         </ButtonContainer>
-        <RichEditor id="refEditor" ref={refEditorRef} change={onChanges}/>
+        <RichEditor id="refEditor" ref={refEditorRef} change={onChanges} />
       </GridContainer>
       <BottomContainer>
         <ButtonContainer>

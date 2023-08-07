@@ -2128,7 +2128,6 @@ const KendoWindow = ({ setVisible }: TKendoWindow) => {
                   <ButtonContainer>
                     <Button
                       onClick={onCreateDefaultClick}
-                      fillMode="outline"
                       themeColor={"primary"}
                       icon="file-add"
                     >
@@ -2308,7 +2307,6 @@ const KendoWindow = ({ setVisible }: TKendoWindow) => {
                   <ButtonContainer>
                     <Button
                       onClick={onCreateColumnClick}
-                      fillMode="outline"
                       themeColor={"primary"}
                       icon="file-add"
                     >

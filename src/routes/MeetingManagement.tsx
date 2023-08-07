@@ -1448,7 +1448,6 @@ const App = () => {
             </Button>
             <Button
               themeColor={"primary"}
-              fillMode={"outline"}
               icon="file-add"
               onClick={createMeeting}
             >
@@ -1583,8 +1582,8 @@ const App = () => {
                 cell={CenterCell}
                 footerCell={mainTotalFooterCell}
               />
-              <GridColumn field="custnm" title="업체" width={100} />
-              <GridColumn field="title" title="제목" width={300} />
+              <GridColumn field="custnm" title="업체" width={150} />
+              <GridColumn field="title" title="제목" width={500} />
             </Grid>
           </GridContainer>
           <GridContainer width={`calc(50% - ${GAP}px)`}>

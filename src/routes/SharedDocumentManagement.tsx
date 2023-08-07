@@ -691,7 +691,6 @@ const App = () => {
             <>
               <Button
                 themeColor={"primary"}
-                fillMode={"outline"}
                 icon="file-add"
                 onClick={createSharedDocument}
               >

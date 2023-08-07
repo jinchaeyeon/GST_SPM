@@ -25,7 +25,7 @@ import {
   loginResultState,
   unsavedAttadatnumsState,
 } from "../../../store/atoms";
-import { Input } from "@progress/kendo-react-inputs";
+import { Input, Checkbox } from "@progress/kendo-react-inputs";
 import { Iparameters, TEditorHandle } from "../../../store/types";
 import RichEditor from "../../RichEditor";
 import { DEFAULT_ATTDATNUMS, PAGE_SIZE } from "../../CommonString";
@@ -136,7 +136,10 @@ const SignWindow = ({ setVisible, para, reload }: IWindow) => {
           insert_time: rows[0].insert_time,
           insert_userid: rows[0].insert_userid,
           is_checked: rows[0].is_checked,
-          is_finished: rows[0].is_finished,
+          is_finish:
+            rows[0].is_finish == "N" || rows[0].is_finish == undefined
+              ? false
+              : true,
           is_lock: rows[0].is_lock,
           is_public: rows[0].is_public,
           module_type: rows[0].module_type,
@@ -248,7 +251,7 @@ const SignWindow = ({ setVisible, para, reload }: IWindow) => {
     insert_time: "",
     insert_userid: "",
     is_checked: "",
-    is_finished: "",
+    is_finish: false,
     is_lock: "",
     is_public: "",
     module_type: "",
@@ -325,7 +328,13 @@ const SignWindow = ({ setVisible, para, reload }: IWindow) => {
         "@p_contents": textContent,
         "@p_attdatnum": Information.answer_attdatnum,
         "@p_is_finish":
-          Information.is_finished == undefined ? "N" : Information.is_finished,
+          Information.is_finish == undefined
+            ? "N"
+            : Information.is_finish == true
+            ? "Y"
+            : Information.is_finish == false
+            ? "N"
+            : Information.is_finish,
         "@p_id": userId,
         "@p_pc": pc,
       },
@@ -384,6 +393,20 @@ const SignWindow = ({ setVisible, para, reload }: IWindow) => {
       // 다운로드가 끝난 리소스(객체 URL)를 해제합니다
     }
     setLoading(false);
+  };
+
+  const changeCheck = () => {
+    setInformation((prev) => ({
+      ...prev,
+      is_finish:
+        prev.is_finish == undefined
+          ? true
+          : prev.is_finish == "Y"
+          ? false
+          : prev.is_finish == "N"
+          ? true
+          : !prev.is_finish,
+    }));
   };
 
   return (
@@ -505,8 +528,25 @@ const SignWindow = ({ setVisible, para, reload }: IWindow) => {
                 다운로드
               </Button>
             </div>
-            <div>
-              <Button themeColor={"primary"} onClick={() => onSave("U")}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                marginTop: isMobile ? "10px" : "0px",
+              }}
+            >
+              <div style={{ marginTop: "10px" }}>
+                <Checkbox
+                  value={Information.is_finish}
+                  onClick={changeCheck}
+                  label="처리 완료"
+                />
+              </div>
+              <Button
+                themeColor={"primary"}
+                onClick={() => onSave("U")}
+                style={{ marginLeft: "10px" }}
+              >
                 확인
               </Button>
               <Button

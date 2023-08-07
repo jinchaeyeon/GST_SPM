@@ -4415,7 +4415,6 @@ const App = () => {
                         title="완료"
                         width={50}
                         cell={CheckBoxReadOnlyCell}
-                        footerCell={mainTotalFooterCell3}
                       />
                       <GridColumn
                         field="exists_task"
@@ -4428,6 +4427,7 @@ const App = () => {
                         title="회의일"
                         width={120}
                         cell={DateCell}
+                        footerCell={mainTotalFooterCell3}
                       />
                       <GridColumn field="custnm" title="업체" width={200} />
                       <GridColumn
@@ -4763,8 +4763,7 @@ const App = () => {
                         onClick={onErrorWndClick}
                         themeColor={"primary"}
                         icon="gear"
-                        title="불량 팝업"
-                      ></Button>
+                      >불량 팝업</Button>
                       <Button
                         onClick={onAddClick}
                         themeColor={"primary"}
