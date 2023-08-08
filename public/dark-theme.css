@@ -40794,7 +40794,7 @@ select.k-picker-lg {
 }
 
 .k-daterange-picker .k-dateinput, .k-daterangepicker .k-dateinput {
-    width: "100%";
+    width: 10em;
 }
 
 .k-daterangepicker-wrap {

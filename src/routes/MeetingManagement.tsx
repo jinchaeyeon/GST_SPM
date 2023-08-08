@@ -1965,6 +1965,7 @@ const App = () => {
             workType=""
             setVisible={setCustWindowVisible}
             setData={setCustData}
+            modal={true}
           />
         )}
         {projectWindowVisible && (

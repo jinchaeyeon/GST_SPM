@@ -580,10 +580,12 @@ const App = () => {
   };
   const pageChange4 = (event: GridPageChangeEvent) => {
     const { page } = event;
-    mainDataResult4.data.map((item) => {
-      localStorage.removeItem(item[DATA_ITEM_KEY4]);
-      localStorage.removeItem(item[DATA_ITEM_KEY4] + "key");
-    });
+    for(let key of Object.keys(localStorage)){
+      if(key != "passwordExpirationInfo" && key != "accessToken" && key != "loginResult" && key != "refreshToken") {
+        localStorage.removeItem(key);
+      }
+    }
+    
     setFilters((prev) => ({
       ...prev,
       pgNum: Math.floor(page.skip / initialPageState.take) + 1,
@@ -713,10 +715,12 @@ const App = () => {
   const [tabSelected, setTabSelected] = useState(0);
   const handleSelectTab = (e: any) => {
     setTabSelected(e.selected);
-    mainDataResult4.data.map((item) => {
-      localStorage.removeItem(item[DATA_ITEM_KEY4]);
-      localStorage.removeItem(item[DATA_ITEM_KEY4] + "key");
-    });
+    for(let key of Object.keys(localStorage)){
+      if(key != "passwordExpirationInfo" && key != "accessToken" && key != "loginResult" && key != "refreshToken") {
+        localStorage.removeItem(key);
+      }
+    }
+    
     if (e.selected == 0) {
       setFilters({
         workType: "received",
@@ -2095,10 +2099,12 @@ const App = () => {
     ) {
       alert("필수항목을 입력해주세요");
     } else {
-      mainDataResult4.data.map((item) => {
-        localStorage.removeItem(item[DATA_ITEM_KEY4]);
-        localStorage.removeItem(item[DATA_ITEM_KEY4] + "key");
-      });
+      for(let key of Object.keys(localStorage)){
+        if(key != "passwordExpirationInfo" && key != "accessToken" && key != "loginResult" && key != "refreshToken") {
+          localStorage.removeItem(key);
+        }
+      }
+      
       deletedRows = [];
       setPage(initialPageState); // 페이지 초기화
       setPage2(initialPageState); // 페이지 초기화
@@ -3050,10 +3056,12 @@ const App = () => {
         }
 
         if (data != null) {
-          mainDataResult4.data.map((item) => {
-            localStorage.removeItem(item[DATA_ITEM_KEY4]);
-            localStorage.removeItem(item[DATA_ITEM_KEY4] + "key");
-          });
+          for(let key of Object.keys(localStorage)){
+            if(key != "passwordExpirationInfo" && key != "accessToken" && key != "loginResult" && key != "refreshToken") {
+              localStorage.removeItem(key);
+            }
+          }
+          
           const isLastDataDeleted =
             mainDataResult4.data.length == 1 && filters.pgNum > 1;
           if (isLastDataDeleted) {
@@ -3259,10 +3267,12 @@ const App = () => {
       }
 
       if (data != null) {
-        mainDataResult4.data.map((item) => {
-          localStorage.removeItem(item[DATA_ITEM_KEY4]);
-          localStorage.removeItem(item[DATA_ITEM_KEY4] + "key");
-        });
+        for(let key of Object.keys(localStorage)){
+          if(key != "passwordExpirationInfo" && key != "accessToken" && key != "loginResult" && key != "refreshToken") {
+            localStorage.removeItem(key);
+          }
+        }
+        
         const isLastDataDeleted =
           mainDataResult4.data.length == 1 && filters.pgNum > 1;
 

@@ -14,6 +14,7 @@ import {
   TitleContainer,
 } from "../CommonStyled";
 import {
+  UseParaPc,
   convertDateToStr,
   extractDownloadFilename,
   getGridItemChangedData,
@@ -52,7 +53,7 @@ import {
   dataTypeColumns2,
   userColumns,
 } from "../store/columns/common-columns";
-import { Input } from "@progress/kendo-react-inputs";
+import { Input, Checkbox } from "@progress/kendo-react-inputs";
 import { bytesToBase64 } from "byte-base64";
 import { useApi } from "../hooks/api";
 import { Iparameters, TEditorHandle } from "../store/types";
@@ -69,7 +70,6 @@ import {
 } from "@progress/kendo-react-grid";
 import DateCell from "../components/Cells/DateCell";
 import NumberCell from "../components/Cells/NumberCell";
-import RequiredHeader from "../components/RequiredHeader";
 import { CellRender, RowRender } from "../components/Renderers/Renderers";
 import CheckBoxReadOnlyCell from "../components/Cells/CheckBoxReadOnlyCell";
 import ComboBoxCell from "../components/Cells/ComboBoxCell";
@@ -77,6 +77,8 @@ import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWi
 import { IAttachmentData } from "../hooks/interfaces";
 import RichEditor from "../components/RichEditor";
 import AnswerWindow from "../components/Windows/CommonWindows/AnswerWindow";
+import QuestionWindow from "../components/Windows/CommonWindows/QuestionWindow";
+import TaskOrderListWindow from "../components/Windows/CommonWindows/TaskOrderListWindow";
 
 const valueCodeQueryStr = `select sub_code, code_name
 from comCodeMaster
@@ -247,10 +249,60 @@ const FilesCell = (props: GridCellProps) => {
           setData={getAttachmentsData}
           para={dataItem.reception_attach_number}
           permission={{ upload: true, download: true, delete: true }}
-          type={"question"}
+          type={"receipt"}
           modal={true}
         />
       )}
+    </>
+  );
+};
+
+const Exists_taskCell = (props: GridCellProps) => {
+  const {
+    ariaColumnIndex,
+    columnIndex,
+    dataItem,
+    field = "",
+    render,
+    onChange,
+    className = "",
+  } = props;
+  let value = dataItem[field ?? ""];
+  if (value === "Y" || value === true) {
+    value = true;
+  } else {
+    value = false;
+  }
+  const [taskWindowVisible, setTaskWindowVisible] = useState<boolean>(false);
+
+  const onTaskWndClick = () => {
+    if(value == true) {
+        setTaskWindowVisible(true);
+    }
+  };
+
+  return (
+    <>
+      <td
+        className={className}
+        aria-colindex={ariaColumnIndex}
+        data-grid-col-index={columnIndex}
+        style={{ position: "relative" }}
+      >
+        <div style={{ textAlign: "center", marginRight: "10px" }}>
+          <Checkbox checked={value} readOnly />
+        </div>
+        <ButtonInGridInput>
+          <Button onClick={onTaskWndClick} icon="search" fillMode="flat" />
+        </ButtonInGridInput>
+        {taskWindowVisible && (
+          <TaskOrderListWindow
+            setVisible={setTaskWindowVisible}
+            para={dataItem}
+            modal={true}
+          />
+        )}
+      </td>
     </>
   );
 };
@@ -268,6 +320,8 @@ const App = () => {
   const [loginResult] = useRecoilState(loginResultState);
   const userId = loginResult ? loginResult.userId : "";
   const userName = loginResult ? loginResult.userName : "";
+  const [pc, setPc] = useState("");
+  UseParaPc(setPc);
   const idGetter = getter(DATA_ITEM_KEY);
   let gridRef: any = useRef(null);
   const initialPageState = { skip: 0, take: PAGE_SIZE };
@@ -320,16 +374,7 @@ const App = () => {
     ) {
       alert("필수항목을 입력해주세요");
     } else {
-      //   mainDataResult4.data.map((item) => {
-      //     localStorage.removeItem(item[DATA_ITEM_KEY4]);
-      //     localStorage.removeItem(item[DATA_ITEM_KEY4] + "key");
-      //   });
-      //deletedRows = [];
       setPage(initialPageState); // 페이지 초기화
-      //   setHtmlOnEditor({ document: "" });
-      //   if (refEditorRef.current) {
-      //     refEditorRef.current.setHtml("");
-      //   }
       setFilters((prev) => ({
         ...prev,
         pgNum: 1,
@@ -660,7 +705,12 @@ const App = () => {
           total: totalRowCnt == -1 ? 0 : totalRowCnt,
         };
       });
-
+      setTempResult((prev) => {
+        return {
+            data: rows,
+            total: totalRowCnt == -1 ? 0 : totalRowCnt,
+          };
+      })
       if (totalRowCnt > 0) {
         const selectedRow =
           filters.findRowValue == ""
@@ -873,7 +923,7 @@ const App = () => {
   useEffect(() => {
     if (attdatnum != "" && attdatnum != undefined && attdatnum != null) {
       setUnsavedAttadatnums((prev) => ({
-        type: "question",
+        type: "receipt",
         attdatnums: [...prev.attdatnums, ...[attdatnum]],
       }));
     }
@@ -1031,6 +1081,10 @@ const App = () => {
     useState<boolean>(false);
   const [answerWindowVisible, setAnswerWindowVisible] =
     useState<boolean>(false);
+  const [questionWindowVisible, setQuestionWindowVisible] =
+    useState<boolean>(false);
+  const [questionWindowVisible2, setQuestionWindowVisible2] =
+    useState<boolean>(false);
   const onAttWndClick = () => {
     setAttachmentsWindowVisible(true);
   };
@@ -1041,23 +1095,300 @@ const App = () => {
     setAnswerWindowVisible(true);
   };
 
+  const onAddClick = () => {
+    setQuestionWindowVisible(true);
+  };
+
+  const onQuestionWndClick = () => {
+    setQuestionWindowVisible2(true);
+  };
+
+  const onConfirmClick = async () => {
+    if (mainDataResult.total == 0) {
+      alert("데이터가 없습니다.");
+    } else {
+      type TRowsArr = {
+        row_status: string[];
+        document_id_s: string[];
+        customer_code_s: string[];
+        user_name_s: string[];
+        user_tel_s: string[];
+        request_date_s: string[];
+        title_s: string[];
+        reception_type_s: string[];
+        reception_date_s: string[];
+        reception_person_s: string[];
+        reception_time_s: string[];
+        work_person_s: string[];
+        work_estimated_hour_s: string[];
+        work_estimated_minute_s: string[];
+        value_code3_s: string[];
+        be_finished_date_s: string[];
+        completion_date_s: string[];
+        status_s: string[];
+        attach_number_s: string[];
+        ref_number_s: string[];
+        contents_s: string[];
+        attdatnum_s: string[];
+      };
+      let rowsArr: TRowsArr = {
+        row_status: [],
+        document_id_s: [],
+        customer_code_s: [],
+        user_name_s: [],
+        user_tel_s: [],
+        request_date_s: [],
+        title_s: [],
+        reception_type_s: [],
+        reception_date_s: [],
+        reception_person_s: [],
+        reception_time_s: [],
+        work_person_s: [],
+        work_estimated_hour_s: [],
+        work_estimated_minute_s: [],
+        value_code3_s: [],
+        be_finished_date_s: [],
+        completion_date_s: [],
+        status_s: [],
+        attach_number_s: [],
+        ref_number_s: [],
+        contents_s: [],
+        attdatnum_s: [],
+      };
+
+      let dataItem: any[] = [];
+      mainDataResult.data.map((item) => {
+        if (
+          (item.rowstatus === "N" || item.rowstatus === "U") &&
+          item.rowstatus !== undefined
+        ) {
+          dataItem.push(item);
+        }
+      });
+
+      dataItem.forEach((item: any) => {
+        const {
+          rowstatus,
+          document_id,
+          customer_code,
+          user_name,
+          user_tel,
+          request_date,
+          title,
+          reception_type,
+          reception_date,
+          reception_person,
+          reception_time,
+          work_person,
+          work_estimated_hour,
+          work_estimated_minute,
+          value_code3,
+          be_finished_date,
+          completion_date,
+          status,
+          reception_attach_number,
+          ref_number,
+          contents,
+          attdatnum,
+        } = item;
+
+        rowsArr.row_status.push(rowstatus);
+        rowsArr.document_id_s.push(document_id);
+        rowsArr.customer_code_s.push(customer_code);
+        rowsArr.user_name_s.push(user_name);
+        rowsArr.user_tel_s.push(user_tel);
+        rowsArr.request_date_s.push(request_date);
+        rowsArr.title_s.push(title);
+        rowsArr.reception_type_s.push(reception_type);
+        rowsArr.reception_date_s.push(reception_date);
+        rowsArr.reception_person_s.push(reception_person);
+        rowsArr.reception_time_s.push(reception_time);
+        rowsArr.work_person_s.push("");
+        rowsArr.work_estimated_hour_s.push("0");
+        rowsArr.work_estimated_minute_s.push("0");
+        rowsArr.value_code3_s.push(value_code3);
+        rowsArr.be_finished_date_s.push(be_finished_date);
+        rowsArr.completion_date_s.push(completion_date);
+        rowsArr.status_s.push(status);
+        rowsArr.attach_number_s.push(reception_attach_number);
+        rowsArr.ref_number_s.push(ref_number);
+        rowsArr.contents_s.push(contents);
+        rowsArr.attdatnum_s.push(attdatnum);
+      });
+
+      let data: any;
+      setLoading(true);
+      const paras = {
+        procedureName: "pw6_sav_receptions",
+        pageNumber: 0,
+        pageSize: 0,
+        parameters: {
+          "@p_work_type": "U",
+
+          "@p_row_status": rowsArr.row_status.join("|"),
+          "@p_document_id_s": rowsArr.document_id_s.join("|"),
+
+          "@p_customer_code_s": rowsArr.customer_code_s.join("|"),
+          "@p_user_name_s": rowsArr.user_name_s.join("|"),
+          "@p_user_tel_s": rowsArr.user_tel_s.join("|"),
+          "@p_request_date_s": rowsArr.request_date_s.join("|"),
+          "@p_title_s": rowsArr.title_s.join("|"),
+          "@p_reception_type_s": rowsArr.reception_type_s.join("|"),
+          "@p_reception_date_s": rowsArr.reception_date_s.join("|"),
+          "@p_reception_person_s": rowsArr.reception_person_s.join("|"),
+          "@p_reception_time_s": rowsArr.reception_time_s.join("|"),
+          "@p_work_person_s": rowsArr.work_person_s.join("|"),
+          "@p_work_estimated_hour_s": rowsArr.work_estimated_hour_s.join("|"),
+          "@p_work_estimated_minute_s":
+            rowsArr.work_estimated_minute_s.join("|"),
+          "@p_value_code3_s": rowsArr.value_code3_s.join("|"),
+          "@p_be_finished_date_s": rowsArr.be_finished_date_s.join("|"),
+          "@p_completion_date_s": rowsArr.completion_date_s.join("|"),
+          "@p_status_s": rowsArr.status_s.join("|"),
+          "@p_attach_number_s": rowsArr.attach_number_s.join("|"),
+          "@p_ref_number_s": rowsArr.ref_number_s.join("|"),
+          "@p_contents": rowsArr.contents_s.join("|"),
+          "@p_attdatnum": rowsArr.attdatnum_s.join("|"),
+          "@p_id": userId,
+          "@p_pc": pc,
+        },
+      };
+      try {
+        data = await processApi<any>("procedure", paras);
+      } catch (error) {
+        data = null;
+      }
+      if (data != null) {
+        setFilters((prev) => ({
+          ...prev,
+          find_row_value: Object.getOwnPropertyNames(selectedState)[0],
+          isSearch: true,
+        }));
+      } else {
+        console.log("[오류 발생]");
+        console.log(data);
+      }
+      setLoading(false);
+    }
+  };
+
+  const onDeleteClick = async () => {
+    if (!window.confirm("삭제하시겠습니까?")) {
+      return false;
+    }
+
+    if (mainDataResult.total == 0) {
+      alert("데이터가 없습니다.");
+    } else {
+      const datas = mainDataResult.data.filter(
+        (item) =>
+          item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
+      )[0];
+
+      let data: any;
+      setLoading(true);
+
+      let editorContent: any = "";
+      if (docEditorRef.current) {
+        editorContent = docEditorRef.current.getContent();
+      }
+      const bytes = require("utf8-bytes");
+      const convertedEditorContent = bytesToBase64(bytes(editorContent));
+
+      const paras = {
+        fileBytes: datas.reception_type == "Q" ? convertedEditorContent : "",
+        procedureName: "pw6_sav_receptions",
+        pageNumber: 0,
+        pageSize: 0,
+        parameters: {
+          "@p_work_type": datas.reception_type == "Q" ? "D_CR020T" : "D",
+
+          "@p_row_status": "",
+          "@p_document_id_s": datas.document_id,
+
+          "@p_customer_code_s": "",
+          "@p_user_name_s": "",
+          "@p_user_tel_s": "",
+          "@p_request_date_s": "",
+          "@p_title_s": "",
+          "@p_reception_type_s": "",
+          "@p_reception_date_s": "",
+          "@p_reception_person_s": "",
+          "@p_reception_time_s": "",
+          "@p_work_person_s": "",
+          "@p_work_estimated_hour_s": "",
+          "@p_work_estimated_minute_s": "",
+          "@p_value_code3_s": "",
+          "@p_be_finished_date_s": "",
+          "@p_completion_date_s": "",
+          "@p_status_s": "",
+          "@p_attach_number_s": "",
+          "@p_ref_number_s": datas.ref_number,
+          "@p_contents": "",
+          "@p_attdatnum": "",
+          "@p_id": userId,
+          "@p_pc": pc,
+        },
+      };
+      try {
+        data = await processApi<any>("receptions-save", paras);
+      } catch (error) {
+        data = null;
+      }
+      if (data != null) {
+        if (mainDataResult.data.length === 1 && filters.pgNum == 1) {
+          setFilters((prev) => ({
+            ...prev,
+            find_row_value: "",
+            pgNum: 1,
+            isSearch: true,
+          }));
+        } else {
+          const isLastDataDeleted =
+            mainDataResult.data.length === 1 && filters.pgNum > 1;
+          const findRowIndex = mainDataResult.data.findIndex(
+            (row: any) =>
+              row[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
+          );
+          if (isLastDataDeleted) {
+            setFilters((prev) => ({
+              ...prev,
+              find_row_value: "",
+              pgNum: isLastDataDeleted ? prev.pgNum - 1 : prev.pgNum,
+              isSearch: true,
+            }));
+          } else {
+            setFilters((prev) => ({
+              ...prev,
+              find_row_value:
+                mainDataResult.data[findRowIndex == 0 ? 1 : findRowIndex - 1][
+                  DATA_ITEM_KEY
+                ],
+              pgNum: isLastDataDeleted ? prev.pgNum - 1 : prev.pgNum,
+              isSearch: true,
+            }));
+          }
+        }
+      } else {
+        console.log("[오류 발생]");
+        console.log(data);
+      }
+      setLoading(false);
+    }
+  };
   return (
     <>
       <TitleContainer>
         <Title>접수 및 답변</Title>
         <ButtonContainer>
-          <Button
-            themeColor={"primary"}
-            icon="file-add"
-            //onClick={onConfirmClick}
-          >
+          <Button themeColor={"primary"} icon="file-add" onClick={onAddClick}>
             신규
           </Button>
           <Button
             themeColor={"primary"}
             fillMode={"outline"}
             icon="delete"
-            //onClick={onConfirmClick}
+            onClick={onDeleteClick}
           >
             삭제
           </Button>
@@ -1065,7 +1396,7 @@ const App = () => {
             themeColor={"primary"}
             fillMode={"outline"}
             icon="save"
-            //onClick={onConfirmClick}
+            onClick={onConfirmClick}
           >
             저장
           </Button>
@@ -1332,8 +1663,8 @@ const App = () => {
                         <GridColumn
                           field="exists_task"
                           title="지시여부"
-                          width={80}
-                          cell={CheckBoxReadOnlyCell}
+                          width={120}
+                          cell={Exists_taskCell}
                         />
                         <GridColumn
                           field="is_finish"
@@ -1403,7 +1734,6 @@ const App = () => {
                           title="처리완료일"
                           width={120}
                           cell={DateCell}
-                          headerCell={RequiredHeader}
                         />
                         <GridColumn
                           field="reception_attach_number"
@@ -1451,6 +1781,30 @@ const App = () => {
                   문의 내용
                 </GridTitle>
                 <ButtonContainer>
+                  <Button
+                    icon={"pencil"}
+                    onClick={onQuestionWndClick}
+                    themeColor={"primary"}
+                    fillMode={"outline"}
+                    disabled={
+                      mainDataResult.data.filter(
+                        (item) =>
+                          item[DATA_ITEM_KEY] ==
+                          Object.getOwnPropertyNames(selectedState)[0]
+                      )[0] == undefined
+                        ? true
+                        : mainDataResult.data.filter(
+                            (item) =>
+                              item[DATA_ITEM_KEY] ==
+                              Object.getOwnPropertyNames(selectedState)[0]
+                          )[0].reception_type == "Q"
+                        ? true
+                        : false
+                    }
+                    style={{ marginTop: "5px" }}
+                  >
+                    수정
+                  </Button>
                   <Button
                     icon={"file-word"}
                     name="meeting"
@@ -1621,6 +1975,47 @@ const App = () => {
               isSearch: true,
             }));
           }}
+        />
+      )}
+      {questionWindowVisible && (
+        <QuestionWindow
+          setVisible={setQuestionWindowVisible}
+          reload={(str: string) => {
+            setFilters((prev) => ({
+              ...prev,
+              findRowValue: str,
+              pgNum: 1,
+              isSearch: true,
+            }));
+          }}
+          modal={true}
+        />
+      )}
+      {questionWindowVisible2 && (
+        <QuestionWindow
+          setVisible={setQuestionWindowVisible2}
+          reload={(str: string) => {
+            setFilters((prev) => ({
+              ...prev,
+              findRowValue: str,
+              pgNum: 1,
+              isSearch: true,
+            }));
+          }}
+          para={
+            mainDataResult.data.filter(
+              (item) =>
+                item[DATA_ITEM_KEY] ==
+                Object.getOwnPropertyNames(selectedState)[0]
+            )[0] == undefined
+              ? ""
+              : mainDataResult.data.filter(
+                  (item) =>
+                    item[DATA_ITEM_KEY] ==
+                    Object.getOwnPropertyNames(selectedState)[0]
+                )[0]
+          }
+          modal={true}
         />
       )}
     </>

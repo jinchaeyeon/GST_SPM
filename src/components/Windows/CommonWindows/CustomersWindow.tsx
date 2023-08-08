@@ -39,11 +39,12 @@ type IKendoWindow = {
   setData(data: object): void;
   workType: string;
   para?: Iparameters;
+  modal? :boolean;
 };
 
 const DATA_ITEM_KEY = "custcd";
 
-const KendoWindow = ({ setVisible, workType, setData, para }: IKendoWindow) => {
+const KendoWindow = ({ setVisible, workType, setData, para, modal = false }: IKendoWindow) => {
   const [position, setPosition] = useState<IWindowPosition>({
     left: 300,
     top: 100,
@@ -247,7 +248,7 @@ const KendoWindow = ({ setVisible, workType, setData, para }: IKendoWindow) => {
       onMove={handleMove}
       onResize={handleResize}
       onClose={onClose}
-      modal={true}
+      modal={modal}
     >
       <TitleContainer>
         <Title />

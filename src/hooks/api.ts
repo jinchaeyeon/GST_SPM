@@ -25,6 +25,9 @@ const domain: any = {
   "taskorder-save": { action: "post", url: "api/spm/task-order" },
   "answer": { action: "post", url: "api/spm/answer" },
 
+  //접수 및 답변
+  "receptions-save" : { action: "post", url: "api/spm/reception"},
+
   // 공지사항
   "notice-list": { action: "get", url: "api/spm/notice/:para" },
   "notice-detail": { action: "get", url: "api/spm/notice/:id" },

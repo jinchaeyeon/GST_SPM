@@ -24,6 +24,10 @@ div.k-animation-container {
   width: 100%;
 }
 
+.k-daterange-picker .k-dateinput, .k-daterangepicker .k-dateinput {
+  width: 100% !important;
+}
+
 .k-pager-numbers-wrap select.k-dropdown-list, .k-pager-numbers-wrap select.k-dropdown, .k-pager-numbers-wrap select.k-dropdownlist {
   cursor: pointer;
   display: none;

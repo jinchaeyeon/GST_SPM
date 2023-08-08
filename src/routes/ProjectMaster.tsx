@@ -4141,6 +4141,7 @@ const App = () => {
           setVisible={setCustWindowVisible}
           workType={workType}
           setData={setCustData}
+          modal={true}
         />
       )}
       {attachmentsWindowVisible && (
