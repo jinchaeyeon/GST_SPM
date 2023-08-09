@@ -636,11 +636,10 @@ const App = () => {
         // DB 저장안된 첨부파일
         setDeletedAttadatnums(unsavedAttadatnums);
       } else if (detailData.attdatnum) {
-        // DB 저장된 첨부파일
-        setDeletedAttadatnums({
-          type: "sharedDocument",
-          attdatnums: [detailData.attdatnum],
-        });
+        setDeletedAttadatnums((prev) => ({
+          type: [...prev.type, "sharedDocument"],
+          attdatnums: [...prev.attdatnums, detailData.attdatnum],
+        }));
       }
 
       setFilters((prev) => ({
@@ -656,11 +655,14 @@ const App = () => {
   }, [detailData]);
 
   const getAttachmentsData = (data: IAttachmentData) => {
-    if (!detailData.attdatnum) {
-      setUnsavedAttadatnums({
-        type: "sharedDocument",
-        attdatnums: [data.attdatnum],
-      });
+    if (
+      detailData.attdatnum &&
+      !unsavedAttadatnums.attdatnums.includes(detailData.attdatnum)
+    ) {
+      setUnsavedAttadatnums((prev) => ({
+        type: [...prev.type, "sharedDocument"],
+        attdatnums: [...prev.attdatnums, ...[data.attdatnum]],
+      }));
     }
     setDetailData((prev) => ({
       ...prev,

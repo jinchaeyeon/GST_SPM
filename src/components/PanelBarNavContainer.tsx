@@ -295,12 +295,17 @@ const PanelBarNavContainer = (props: any) => {
     // }
     props.history.push(route);
 
-    for(let key of Object.keys(localStorage)){
-      if(key != "passwordExpirationInfo" && key != "accessToken" && key != "loginResult" && key != "refreshToken") {
+    for (let key of Object.keys(localStorage)) {
+      if (
+        key != "passwordExpirationInfo" &&
+        key != "accessToken" &&
+        key != "loginResult" &&
+        key != "refreshToken"
+      ) {
         localStorage.removeItem(key);
       }
     }
-    
+
     if (route) {
       setIsMobileMenuOpend(false);
       setUserOptionsWindowVisible(false);
@@ -478,13 +483,13 @@ const PanelBarNavContainer = (props: any) => {
   ]);
 
   const fetchToDeletedAttachment = useCallback(
-    async (type: string, attdatnums: string[]) => {
+    async (type: string[], attdatnums: string[]) => {
       let data: any;
 
-      attdatnums.forEach(async (attdatnum) => {
+      attdatnums.forEach(async (attdatnum, index) => {
         try {
           data = await processApi<any>("attachment-delete", {
-            attached: `attachment?type=${type}&attachmentNumber=${attdatnum}`,
+            attached: `attachment?type=${type[index]}&attachmentNumber=${attdatnum}`,
           });
         } catch (error) {
           data = null;
@@ -535,7 +540,10 @@ const PanelBarNavContainer = (props: any) => {
                 <PanelBarItem title={"공지사항"} route="/Notice" />
                 <PanelBarItem title={"QnA"} route="/QnA" />
                 <PanelBarItem title={"회의록 열람"} route="/MeetingView" />
-                <PanelBarItem title={"공유문서 열람"} route="/SharedDocumentView" />
+                <PanelBarItem
+                  title={"공유문서 열람"}
+                  route="/SharedDocumentView"
+                />
                 <PanelBarItem
                   title={"프로젝트 일정계획"}
                   route="/ProjectSchedule"
@@ -548,7 +556,10 @@ const PanelBarNavContainer = (props: any) => {
                   title={"공유문서 관리"}
                   route="/SharedDocumentManagement"
                 />
-                <PanelBarItem title={"접수 및 답변"} route="/Reception_Answer" />
+                <PanelBarItem
+                  title={"접수 및 답변"}
+                  route="/Reception_Answer"
+                />
                 <PanelBarItem title={"업무 지시"} route="/Task_Order" />
                 <PanelBarItem title={"처리일지 작성"} route="/Record" />
                 <PanelBarItem

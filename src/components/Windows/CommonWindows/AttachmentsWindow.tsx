@@ -41,7 +41,7 @@ type IKendoWindow = {
   setData?(data: object): void;
   para: string;
   permission?: permission;
-  modal ? :boolean;
+  modal?: boolean;
 };
 
 const DATA_ITEM_KEY = "savenm";
@@ -86,7 +86,7 @@ const KendoWindow = ({
 
   const processApi = useApi();
   const [mainDataResult, setMainDataResult] = useState<DataResult>(
-    process([], {}),
+    process([], {})
   );
 
   useEffect(() => {
@@ -197,7 +197,7 @@ const KendoWindow = ({
 
   const downloadFiles = async () => {
     const parameters = Object.keys(selectedState).filter(
-      (key) => selectedState[key] === true,
+      (key) => selectedState[key] === true
     );
 
     if (parameters.length === 0) {
@@ -249,7 +249,7 @@ const KendoWindow = ({
 
   const deleteFiles = () => {
     const parameters = Object.keys(selectedState).filter(
-      (key) => selectedState[key] === true,
+      (key) => selectedState[key] === true
     );
 
     if (parameters.length === 0) {
@@ -271,13 +271,32 @@ const KendoWindow = ({
       } catch (error) {
         data = null;
       }
-
-      if (data !== null) {
-        fetchGrid();
-      } else {
-        alert("처리 중 오류가 발생하였습니다.");
-      }
     });
+
+    if (data !== null) {
+      if (parameters.length == mainDataResult.data.length) {
+        let result: IAttachmentData = {
+          attdatnum: "null",
+          original_name: "",
+          rowCount: 0,
+        };
+        setMainDataResult((prev) => {
+          return {
+            data: [],
+            total: 0,
+          };
+        });
+
+        if (setData) {
+          setData(result);
+        }
+        onClose();
+      } else {
+        fetchGrid();
+      }
+    } else {
+      alert("처리 중 오류가 발생하였습니다.");
+    }
   };
 
   const idGetter = getter(DATA_ITEM_KEY);
@@ -295,7 +314,7 @@ const KendoWindow = ({
 
       setSelectedState(newSelectedState);
     },
-    [selectedState],
+    [selectedState]
   );
 
   const onHeaderSelectionChange = React.useCallback(
@@ -312,7 +331,7 @@ const KendoWindow = ({
 
       setSelectedState(newSelectedState);
     },
-    [],
+    []
   );
 
   const handleFileUpload = async (files: FileList | null) => {
@@ -460,7 +479,7 @@ const KendoWindow = ({
             insert_time: convertDateToStrWithTime2(new Date(row.insert_time)),
             [SELECTED_FIELD]: selectedState[idGetter(row)],
           })),
-          {},
+          {}
         )}
         sortable={true}
         groupable={false}
@@ -484,7 +503,7 @@ const KendoWindow = ({
           width="45px"
           headerSelectionValue={
             mainDataResult.data.findIndex(
-              (item: any) => !selectedState[idGetter(item)],
+              (item: any) => !selectedState[idGetter(item)]
             ) === -1
           }
         />

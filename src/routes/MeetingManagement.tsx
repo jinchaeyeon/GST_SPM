@@ -450,7 +450,7 @@ const App = () => {
           setSelectedState({ [selectedMeetingnum]: true });
           setMainDataResult({
             data: rows,
-             total: totalRowCnt == -1 ? 0 : totalRowCnt,
+            total: totalRowCnt == -1 ? 0 : totalRowCnt,
           });
 
           const selectedData = rows.find(
@@ -504,7 +504,7 @@ const App = () => {
           // 일반 데이터 조회
           setMainDataResult({
             data: rows,
-             total: totalRowCnt == -1 ? 0 : totalRowCnt,
+            total: totalRowCnt == -1 ? 0 : totalRowCnt,
           });
 
           const firstRowData = rows[0];
@@ -557,7 +557,7 @@ const App = () => {
           setMainDataResult((prev) => {
             return {
               data: [...prev.data, ...rows],
-               total: totalRowCnt == -1 ? 0 : totalRowCnt,
+              total: totalRowCnt == -1 ? 0 : totalRowCnt,
             };
           });
         }
@@ -815,8 +815,9 @@ const App = () => {
 
       // 다운로드 파일 이름을 지정 할 수 있습니다.
       // 일반적으로 서버에서 전달해준 파일 이름은 응답 Header의 Content-Disposition에 설정됩니다.
-      link.download = extractDownloadFilename(response);
-
+      
+      let name = extractDownloadFilename(response);
+      link.download = name.replace("회의록", detailData.title)
       // 다운로드 파일의 이름은 직접 지정 할 수 있습니다.
       // link.download = "sample-file.xlsx";
 
@@ -863,7 +864,7 @@ const App = () => {
   const getAttachmentsDataPr = (data: IAttachmentData) => {
     if (!detailData.attdatnum_private) {
       setUnsavedAttadatnums((prev) => ({
-        type: "meeting",
+        type: [...prev.type, "meeting"],
         attdatnums: [...prev.attdatnums, ...[data.attdatnum]],
       }));
     }
@@ -879,7 +880,7 @@ const App = () => {
   const getAttachmentsDataPb = (data: IAttachmentData) => {
     if (!detailData.attdatnum) {
       setUnsavedAttadatnums((prev) => ({
-        type: "meeting",
+        type: [...prev.type, "meeting"],
         attdatnums: [...prev.attdatnums, ...[data.attdatnum]],
       }));
     }
@@ -1071,10 +1072,10 @@ const App = () => {
         setDeletedAttadatnums(unsavedAttadatnums);
       } else if (detailData.attdatnum || detailData.attdatnum_private) {
         // DB 저장된 첨부파일
-        setDeletedAttadatnums({
-          type: "meeting",
+        setDeletedAttadatnums((prev) => ({
+          type: [...prev.type, "meeting"],
           attdatnums: [detailData.attdatnum, detailData.attdatnum_private],
-        });
+        }));
       }
       setFilters((prev) => ({
         ...prev,
@@ -1978,7 +1979,7 @@ const App = () => {
         {signWindowVisible && (
           <SignWindow
             setVisible={setSignWindowVisible}
-            reference_key={detailData.orgdiv+"_"+detailData.meetingnum}
+            reference_key={detailData.orgdiv + "_" + detailData.meetingnum}
           />
         )}
       </CodesContext.Provider>

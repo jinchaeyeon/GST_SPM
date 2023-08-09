@@ -159,7 +159,7 @@ const App = () => {
 
   // 서버 업로드는 되었으나 DB에는 저장안된 첨부파일 리스트
   const [unsavedAttadatnums, setUnsavedAttadatnums] = useRecoilState(
-    unsavedAttadatnumsState,
+    unsavedAttadatnumsState
   );
 
   //조회조건 Input Change 함수 => 사용자가 Input에 입력한 값을 조회 파라미터로 세팅
@@ -230,7 +230,7 @@ const App = () => {
     sort: [],
   });
   const [mainDataResult, setMainDataResult] = useState<DataResult>(
-    process([], mainDataState),
+    process([], mainDataState)
   );
 
   const [detailData, setDetailData] = useState(defaultDetailData);
@@ -286,7 +286,7 @@ const App = () => {
         ? filters.status[0].sub_code // 1개만 선택시 => 선택된 값 (ex. 1 대기)
         : filters.status.reduce(
             (total, current) => total + Number(current.sub_code),
-            0,
+            0
           ); //  2개 이상 선택시 => 값 합치기 (ex. 1 대기 + 2 진행중 = 3 )
 
     const para = {
@@ -298,15 +298,15 @@ const App = () => {
         filters.userName
       }&contents=${filters.contents}&customerName=${filters.custnm}&isPublic=${
         filters.isPublic
-      }&status=${status}&page=${filters.pgNum}&pageSize=${filters.pgSize}`
+      }&status=${status}&page=${filters.pgNum}&pageSize=${filters.pgSize}`,
     };
-  
+
     try {
       data = await processApi<any>("qna-list", para);
     } catch (error) {
       data = null;
     }
-   
+
     if (data.isSuccess === true) {
       const totalRowCnt = data.tables[0].TotalRowCount;
       const rows = data.tables[0].Rows;
@@ -316,7 +316,7 @@ const App = () => {
           setSelectedState({ [filters.findRowValue]: true });
           setMainDataResult({
             data: rows,
-             total: totalRowCnt == -1 ? 0 : totalRowCnt,
+            total: totalRowCnt == -1 ? 0 : totalRowCnt,
           });
         } else if (filters.isReset) {
           // 일반 데이터 조회
@@ -324,14 +324,14 @@ const App = () => {
           setSelectedState({ [firstRowData[DATA_ITEM_KEY]]: true });
           setMainDataResult({
             data: rows,
-             total: totalRowCnt == -1 ? 0 : totalRowCnt,
+            total: totalRowCnt == -1 ? 0 : totalRowCnt,
           });
         } else {
           // 스크롤하여 다른 페이지 조회
           setMainDataResult((prev) => {
             return {
               data: [...prev.data, ...rows],
-               total: totalRowCnt == -1 ? 0 : totalRowCnt,
+              total: totalRowCnt == -1 ? 0 : totalRowCnt,
             };
           });
         }
@@ -370,7 +370,7 @@ const App = () => {
         data = null;
         console.log(
           "It shoud be 'true' => " +
-            (error.message === "비밀번호를 확인해 주십시오."),
+            (error.message === "비밀번호를 확인해 주십시오.")
         );
         console.log(error);
         if (error.message === "비밀번호를 확인해 주십시오.") {
@@ -393,7 +393,7 @@ const App = () => {
             password: enteredPw,
             is_lock: row.is_lock === "Y" ? true : false,
             status: detailDataStatusListData.find(
-              (item: any) => item["sub_code"] === row.status,
+              (item: any) => item["sub_code"] === row.status
             ),
             request_date: toDate(row.request_date),
             reception_date: dateformat2(row.reception_date),
@@ -413,7 +413,7 @@ const App = () => {
       }
       setLoading(false);
     },
-    [selectedState, setLoading, detailData, setIsDataLocked],
+    [selectedState, setLoading, detailData, setIsDataLocked]
   );
 
   const setHtmlOnEditor = ({
@@ -537,7 +537,7 @@ const App = () => {
       return false;
     }
     const selectedRow = mainDataResult.data.find(
-      (item) => item[DATA_ITEM_KEY] === mainDataId,
+      (item) => item[DATA_ITEM_KEY] === mainDataId
     );
 
     if (
@@ -570,10 +570,10 @@ const App = () => {
         setDeletedAttadatnums(unsavedAttadatnums);
       } else if (selectedRow.attdatnum) {
         // DB 저장된 첨부파일
-        setDeletedAttadatnums({
-          type: "notice",
-          attdatnums: [selectedRow.attdatnum],
-        });
+        setDeletedAttadatnums((prev) => ({
+          type: [...prev.type, "notice"],
+          attdatnums: [...prev.attdatnums, selectedRow.attdatnum],
+        }));
       }
 
       setFilters((prev) => ({
@@ -673,7 +673,7 @@ const App = () => {
   };
 
   const handleKeyPressSearchDetail = (
-    e: React.KeyboardEvent<HTMLDivElement>,
+    e: React.KeyboardEvent<HTMLDivElement>
   ) => {
     if (e.key === "Enter") {
       fetchDetail(detailData.password);
@@ -681,11 +681,14 @@ const App = () => {
   };
 
   const getAttachmentsDataQ = (data: IAttachmentData) => {
-    if (!detailData.attdatnum) {
-      setUnsavedAttadatnums({
-        type: "question",
-        attdatnums: [data.attdatnum],
-      });
+    if (
+      !detailData.attdatnum &&
+      !unsavedAttadatnums.attdatnums.includes(detailData.attdatnum)
+    ) {
+      setUnsavedAttadatnums((prev) => ({
+        type: [...prev.type, "question"],
+        attdatnums: [...prev.attdatnums, ...[data.attdatnum]],
+      }));
     }
     setDetailData((prev) => ({
       ...prev,
@@ -696,11 +699,14 @@ const App = () => {
     }));
   };
   const getAttachmentsDataA = (data: IAttachmentData) => {
-    if (!detailData.answer_attdatnum) {
-      setUnsavedAttadatnums({
-        type: "answer",
-        attdatnums: [data.attdatnum],
-      });
+    if (
+      !detailData.answer_attdatnum &&
+      !unsavedAttadatnums.attdatnums.includes(detailData.answer_attdatnum)
+    ) {
+      setUnsavedAttadatnums((prev) => ({
+        type: [...prev.type, "answer"],
+        attdatnums: [...prev.attdatnums, ...[data.attdatnum]],
+      }));
     }
     setDetailData((prev) => ({
       ...prev,
@@ -721,7 +727,7 @@ const App = () => {
       return false;
     }
     const selectedRow = mainDataResult.data.find(
-      (item) => item[DATA_ITEM_KEY] === mainDataId,
+      (item) => item[DATA_ITEM_KEY] === mainDataId
     );
 
     if (!selectedRow.answer_document_id) {
@@ -767,8 +773,7 @@ const App = () => {
 
   const selectedItem = mainDataResult.data.find(
     (item) =>
-      item[DATA_ITEM_KEY] === Object.getOwnPropertyNames(selectedState)[0] ??
-      "",
+      item[DATA_ITEM_KEY] === Object.getOwnPropertyNames(selectedState)[0] ?? ""
   );
 
   const isChecked = selectedItem && selectedItem.is_checked === "Y";
@@ -794,11 +799,7 @@ const App = () => {
           </Button>
           {!isAdmin && (
             <>
-              <Button
-                onClick={addData}
-                icon="file-add"
-                themeColor={"primary"}
-              >
+              <Button onClick={addData} icon="file-add" themeColor={"primary"}>
                 신규
               </Button>
               <Button
@@ -941,7 +942,7 @@ const App = () => {
                 completion_date: dateformat2(row.completion_date),
                 [SELECTED_FIELD]: selectedState[idGetter(row)],
               })),
-              mainDataState,
+              mainDataState
             )}
             {...mainDataState}
             onDataStateChange={onMainDataStateChange}
@@ -1105,7 +1106,7 @@ const App = () => {
                       <RadioGroup
                         name="is_public"
                         data={isPublicListData.filter(
-                          (data) => data.value !== "All",
+                          (data) => data.value !== "All"
                         )}
                         value={detailData.is_public}
                         onChange={(e) =>
@@ -1128,7 +1129,7 @@ const App = () => {
                           name="request_date"
                           type="text"
                           value={dateformat2(
-                            convertDateToStr(detailData.request_date),
+                            convertDateToStr(detailData.request_date)
                           )}
                           className="readonly"
                           readOnly

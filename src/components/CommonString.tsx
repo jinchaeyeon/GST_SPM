@@ -29,4 +29,4 @@ export const DEFAULT_SESSION_ITEM: TSessionItem[] = [
   { code: "dptcd", value: "" },
 ];
 
-export const DEFAULT_ATTDATNUMS = { type: null, attdatnums: [] };
+export const DEFAULT_ATTDATNUMS = { type: [], attdatnums: [] };

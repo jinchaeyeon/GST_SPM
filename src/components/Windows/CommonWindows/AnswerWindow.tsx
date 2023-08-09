@@ -21,6 +21,7 @@ import {
 import { IAttachmentData, IWindowPosition } from "../../../hooks/interfaces";
 import { useRecoilState, useSetRecoilState } from "recoil";
 import {
+  deletedAttadatnumsState,
   isLoading,
   loginResultState,
   unsavedAttadatnumsState,
@@ -54,6 +55,9 @@ const SignWindow = ({ setVisible, para, reload }: IWindow) => {
   const [unsavedAttadatnums, setUnsavedAttadatnums] = useRecoilState(
     unsavedAttadatnumsState
   );
+  // 삭제할 첨부파일 리스트를 담는 함수
+  const setDeletedAttadatnums = useSetRecoilState(deletedAttadatnumsState);
+
   const [position, setPosition] = useState<IWindowPosition>({
     left: 300,
     top: 100,
@@ -74,7 +78,12 @@ const SignWindow = ({ setVisible, para, reload }: IWindow) => {
   };
 
   const onClose = () => {
+    console.log(unsavedAttadatnums);
+    if (unsavedAttadatnums.attdatnums.length > 0) {
+      setDeletedAttadatnums(unsavedAttadatnums);
+    }
     setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
+    reload();
     setVisible(false);
   };
 
@@ -220,7 +229,7 @@ const SignWindow = ({ setVisible, para, reload }: IWindow) => {
   const getAttachmentsData = (data: IAttachmentData) => {
     if (!Information.attdatnum) {
       setUnsavedAttadatnums((prev) => ({
-        type: "answer",
+        type: [...prev.type, "answer"],
         attdatnums: [...prev.attdatnums, ...[data.attdatnum]],
       }));
     }
@@ -348,9 +357,15 @@ const SignWindow = ({ setVisible, para, reload }: IWindow) => {
 
     if (data != null) {
       // unsaved 첨부파일 초기화
+      if (workType == "D") {
+        setDeletedAttadatnums((prev) => ({
+          type: [...prev.type, "answer"],
+          attdatnums: [...prev.attdatnums, Information.answer_attdatnum],
+        }));
+      }
       setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
       reload();
-      onClose();
+      setVisible(false);
     }
   };
 

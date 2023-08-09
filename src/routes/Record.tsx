@@ -92,8 +92,7 @@ SELECT 'Y' as code, '완료' as name
 UNION ALL
 SELECT 'N' as code, '미완료' as name`;
 
-const usersQueryStr = `SELECT user_id, user_name 
-FROM sysUserMaster`;
+const usersQueryStr = `SELECT user_id, user_name + (CASE WHEN rtrchk = 'Y' THEN '-퇴' ELSE '' END) as user_name FROM sysUserMaster ORDER BY (CASE WHEN rtrchk = 'Y' THEN 2 ELSE 1 END), user_id`;
 
 const valueCodeQueryStr = `select sub_code, code_name
 from comCodeMaster
@@ -320,9 +319,8 @@ const App = () => {
     unsavedAttadatnumsState
   );
   // 삭제할 첨부파일 리스트를 담는 함수
-  const [deletedAttadatnums, setDeletedAttadatnums] = useRecoilState(
-    deletedAttadatnumsState
-  );
+  const setDeletedAttadatnums = useSetRecoilState(deletedAttadatnumsState);
+
   const [tabSelected, setTabSelected] = useState(0);
   const handleSelectTab = (e: any) => {
     setTabSelected(e.selected);
@@ -1075,7 +1073,7 @@ const App = () => {
     // DB에 저장안된 첨부파일 서버에서 삭제
     if (unsavedAttadatnums.attdatnums.length > 0)
       setDeletedAttadatnums(unsavedAttadatnums);
-
+    setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
     fetchDocument(
       "Task",
       selectedRowData.orgdiv + "_" + selectedRowData.docunum
@@ -1143,7 +1141,7 @@ const App = () => {
       //DB에 저장안된 첨부파일 서버에서 삭제
       if (unsavedAttadatnums.attdatnums.length > 0)
         setDeletedAttadatnums(unsavedAttadatnums);
-
+      setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
       setPage(initialPageState); // 페이지 초기화
       setTabSelected(0);
       setHtmlOnEditor({ document: "" });
@@ -1516,37 +1514,9 @@ const App = () => {
   const [files2, setFiles2] = useState<string>("");
 
   useEffect(() => {
-    if (attdatnum != "" && attdatnum != undefined && attdatnum != null) {
+    if (attdatnum2 && !unsavedAttadatnums.attdatnums.includes(attdatnum2)) {
       setUnsavedAttadatnums((prev) => ({
-        type: "record",
-        attdatnums: [...prev.attdatnums, ...[attdatnum]],
-      }));
-    }
-    const newData = mainDataResult.data.map((item) =>
-      item[DATA_ITEM_KEY] ==
-      parseInt(Object.getOwnPropertyNames(selectedState)[0])
-        ? {
-            ...item,
-            attdatnum: attdatnum,
-            files: files,
-          }
-        : {
-            ...item,
-          }
-    );
-
-    setMainDataResult((prev) => {
-      return {
-        data: newData,
-        total: prev.total,
-      };
-    });
-  }, [attdatnum, files]);
-
-  useEffect(() => {
-    if (attdatnum2 != "" && attdatnum2 != undefined && attdatnum2 != null) {
-      setUnsavedAttadatnums((prev) => ({
-        type: "record",
+        type: [...prev.type, "record"],
         attdatnums: [...prev.attdatnums, ...[attdatnum2]],
       }));
     }
@@ -1792,6 +1762,12 @@ const App = () => {
     }
 
     if (data.isSuccess === true) {
+      deletedRows.map((item) =>
+        setDeletedAttadatnums((prev) => ({
+          type: [...prev.type, "record"],
+          attdatnums: [...prev.attdatnums, item.attdatnum],
+        }))
+      );
       deletedRows = [];
       setParaData({
         work_type: "",

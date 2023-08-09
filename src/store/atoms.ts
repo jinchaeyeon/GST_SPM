@@ -80,21 +80,21 @@ export const isLoading = atom<boolean>({
 // 삭제된 데이터의 첨부파일 번호를 저장하는 용도
 // 값이 set되면  PanelBarNavContainer에서 useEffect로 서버에서 파일을 삭제 처리하도록 함
 export const deletedAttadatnumsState = atom<{
-  type: TAttachmentType | null;
+  type: TAttachmentType[];
   attdatnums: string[];
 }>({
   key: "deletedAttadatnums",
-  default: { type: null, attdatnums: [] },
+  default: { type: [], attdatnums: [] },
 });
 
 // 서버 업로드는 되었으나 DB에는 저장안된 첨부파일 번호를 저장하는 용도.
 // unsavedAttadatnums 값이 존재하는데 저장화면을 벗어나면(path 변경, 팝업닫기, 새로고침 시) 서버에서 파일을 삭제 처리하도록 함
 export const unsavedAttadatnumsState = atom<{
-  type: TAttachmentType | null;
+  type: TAttachmentType[];
   attdatnums: string[];
 }>({
   key: "unsavedAttadatnums",
-  default: { type: null, attdatnums: [] },
+  default: { type: [], attdatnums: [] },
 });
 
 // 메인 화면에서 그리드 행 클릭하여 다른 화면으로 이동 시 저장할 조회조건 값

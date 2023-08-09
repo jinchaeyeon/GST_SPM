@@ -152,8 +152,7 @@ SELECT 'N' as code, '미완료' as name`;
 const custQueryStr = `SELECT custcd,custnm
 FROM ba020t where useyn = 'Y' order by custcd`;
 
-const usersQueryStr = `SELECT user_id, user_name 
-FROM sysUserMaster`;
+const usersQueryStr = `SELECT user_id, user_name + (CASE WHEN rtrchk = 'Y' THEN '-퇴' ELSE '' END) as user_name FROM sysUserMaster ORDER BY (CASE WHEN rtrchk = 'Y' THEN 2 ELSE 1 END), user_id`;
 
 const devdivQueryStr = `select sub_code, code_name FROM comCodeMaster where group_code = 'CR004'`;
 
@@ -438,9 +437,10 @@ const App = () => {
       temp2 = 0;
       deletedRows = [];
       // DB에 저장안된 첨부파일 서버에서 삭제
-      if (unsavedAttadatnums.attdatnums.length > 0)
+      if (unsavedAttadatnums.attdatnums.length > 0) {
         setDeletedAttadatnums(unsavedAttadatnums);
-
+      }
+      setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
       setFilters((prev) => ({
         ...prev,
         pgNum: 1,
@@ -549,9 +549,12 @@ const App = () => {
   };
 
   const getAttachmentsData = (data: IAttachmentData) => {
-    if (!information.attdatnum) {
+    if (
+      data.attdatnum &&
+      !unsavedAttadatnums.attdatnums.includes(data.attdatnum)
+    ) {
       setUnsavedAttadatnums((prev) => ({
-        type: "project",
+        type: [...prev.type, "project"],
         attdatnums: [...prev.attdatnums, ...[data.attdatnum]],
       }));
     }
@@ -1556,18 +1559,6 @@ const App = () => {
     if (mainDataResult.data.length == 0) {
       alert("데이터가 없습니다");
     } else {
-      // 첨부파일 서버에서 삭제
-      if (unsavedAttadatnums.attdatnums.length > 0) {
-        // DB 저장안된 첨부파일
-        setDeletedAttadatnums(unsavedAttadatnums);
-      } else if (information.attdatnum || information.attdatnum_private) {
-        // DB 저장된 첨부파일
-        setDeletedAttadatnums({
-          type: "project",
-          attdatnums: [information.attdatnum, information.attdatnum_private],
-        });
-      }
-
       const data = mainDataResult.data.filter(
         (item) =>
           item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
@@ -2384,6 +2375,24 @@ const App = () => {
           (row: any) =>
             row[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
         );
+
+        if (mainDataResult.data[findRowIndex].attdatnum) {
+          // DB 저장된 첨부파일
+          setDeletedAttadatnums((prev) => ({
+            type: [...prev.type, "project"],
+            attdatnums: [
+              ...prev.attdatnums,
+              mainDataResult.data[findRowIndex].attdatnum,
+            ],
+          }));
+        }
+
+        // DB에 저장안된 첨부파일 서버에서 삭제
+        if (unsavedAttadatnums.attdatnums.length > 0) {
+          setDeletedAttadatnums(unsavedAttadatnums);
+        }
+
+        setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
         if (isLastDataDeleted) {
           setFilters((prev) => ({
             ...prev,
@@ -2424,9 +2433,10 @@ const App = () => {
     }
 
     if (data.isSuccess === true) {
-      if(paraData.work_type == "N") {
+      if (paraData.work_type == "N") {
         setAllTabSelected(0);
       }
+      setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
       deletedRows = [];
       setParaData({
         work_type: "",
@@ -2942,11 +2952,16 @@ const App = () => {
 
         setFilters((prev) => ({
           ...prev,
-          find_row_value: selectedRowData != undefined ? selectedRowData[DATA_ITEM_KEY] : "",
+          find_row_value:
+            selectedRowData != undefined ? selectedRowData[DATA_ITEM_KEY] : "",
           pgNum: 1,
           isSearch: true,
         }));
       }
+      if (unsavedAttadatnums.attdatnums.length > 0) {
+        setDeletedAttadatnums(unsavedAttadatnums);
+      }
+      setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
     }
     deletedRows = [];
     setAllTabSelected(e.selected);

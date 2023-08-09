@@ -333,8 +333,9 @@ const App = () => {
 
       // 다운로드 파일 이름을 지정 할 수 있습니다.
       // 일반적으로 서버에서 전달해준 파일 이름은 응답 Header의 Content-Disposition에 설정됩니다.
-      link.download = extractDownloadFilename(response);
-
+      let name = extractDownloadFilename(response);
+      let datas = mainDataResult.data.filter((item) => item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0])[0];
+      link.download = name.replace("회의록", datas.title)
       // 링크를 body에 추가하고 강제로 click 이벤트를 발생시켜 파일 다운로드를 실행시킵니다.
       document.body.appendChild(link);
       link.click();
@@ -345,7 +346,7 @@ const App = () => {
 
     setLoading(false);
   };
-
+  console.log(detailData)
   useEffect(() => {
     if (filters.isFetch) {
       const _ = require("lodash");

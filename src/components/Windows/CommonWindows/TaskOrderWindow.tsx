@@ -36,6 +36,7 @@ import {
 } from "../../CommonString";
 import { useRecoilState, useSetRecoilState } from "recoil";
 import {
+  deletedAttadatnumsState,
   isLoading,
   loginResultState,
   unsavedAttadatnumsState,
@@ -389,6 +390,9 @@ const KendoWindow = ({
   const [unsavedAttadatnums, setUnsavedAttadatnums] = useRecoilState(
     unsavedAttadatnumsState
   );
+  // 삭제할 첨부파일 리스트를 담는 함수
+  const setDeletedAttadatnums = useSetRecoilState(deletedAttadatnumsState);
+
   const setLoading = useSetRecoilState(isLoading);
 
   const handleMove = (event: WindowMoveEvent) => {
@@ -414,7 +418,11 @@ const KendoWindow = ({
 
   const onClose = () => {
     removeHTML();
+    if (unsavedAttadatnums.attdatnums.length > 0) {
+      setDeletedAttadatnums(unsavedAttadatnums);
+    }
     setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
+
     setVisible(false);
   };
   const processApi = useApi();
@@ -899,9 +907,9 @@ const KendoWindow = ({
     setErrorWindowVisible(true);
   };
   useEffect(() => {
-    if (attdatnum != "" && attdatnum != undefined && attdatnum != null) {
+    if (attdatnum && !unsavedAttadatnums.attdatnums.includes(attdatnum)) {
       setUnsavedAttadatnums((prev) => ({
-        type: "task",
+        type: [...prev.type, "task"],
         attdatnums: [...prev.attdatnums, ...[attdatnum]],
       }));
     }
@@ -1398,11 +1406,17 @@ const KendoWindow = ({
           localStorage.removeItem(item[DATA_ITEM_KEY]);
           localStorage.removeItem(item[DATA_ITEM_KEY] + "key");
         });
-
+        deletedRows.map((item) =>
+          setDeletedAttadatnums((prev) => ({
+            type: [...prev.type, "task"],
+            attdatnums: [...prev.attdatnums, item.attdatnum],
+          }))
+        );
         deletedRows = [];
         reload();
+        setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
         if (dataItem.filter((item) => item.rowstatus == "U").length == 0) {
-          onClose();
+          setVisible(false);
         }
       }
     } else {
@@ -1572,6 +1586,13 @@ const KendoWindow = ({
           localStorage.removeItem(item[DATA_ITEM_KEY]);
           localStorage.removeItem(item[DATA_ITEM_KEY] + "key");
         });
+        deletedRows.map((item) =>
+          setDeletedAttadatnums((prev) => ({
+            type: [...prev.type, "task"],
+            attdatnums: [...prev.attdatnums, item.attdatnum],
+          }))
+        );
+        setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
         deletedRows = [];
         reload();
         onClose();

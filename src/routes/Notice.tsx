@@ -76,7 +76,7 @@ const DraggableGridRowRender = (properties: any) => {
   return React.cloneElement(
     row,
     { ...row.props, ...additionalProps },
-    row.props.children,
+    row.props.children
   );
 };
 
@@ -134,7 +134,7 @@ const App = () => {
 
   // 서버 업로드는 되었으나 DB에는 저장안된 첨부파일 리스트
   const [unsavedAttadatnums, setUnsavedAttadatnums] = useRecoilState(
-    unsavedAttadatnumsState,
+    unsavedAttadatnumsState
   );
 
   const [attachmentsWindowVisible, setAttachmentsWindowVisible] =
@@ -152,15 +152,15 @@ const App = () => {
     sort: [],
   });
   const [mainDataResult, setMainDataResult] = useState<DataResult>(
-    process([], mainDataState),
+    process([], mainDataState)
   );
   const [detailData, setDetailData] = useState(defaultDetailData);
 
   const [allCustData, setAllCustData] = useState<DataResult>(
-    process([], allCustDataState),
+    process([], allCustDataState)
   );
   const [refCustData, setRefCustData] = useState<DataResult>(
-    process([], refCustDataState),
+    process([], refCustDataState)
   );
 
   const [allCustDragDataItem, setAllCustDragDataItem] = useState<any>(null);
@@ -292,7 +292,7 @@ const App = () => {
 
     const para = {
       para: `list?fromDate=${convertDateToStr(
-        filters.fromDate,
+        filters.fromDate
       )}&toDate=${convertDateToStr(filters.toDate)}&contents=${
         filters.contents
       }&page=${filters.pgNum}&pageSize=${filters.pgSize}`,
@@ -314,7 +314,7 @@ const App = () => {
           setSelectedState({ [filters.findRowValue]: true });
           setMainDataResult({
             data: rows,
-             total: totalRowCnt == -1 ? 0 : totalRowCnt,
+            total: totalRowCnt == -1 ? 0 : totalRowCnt,
           });
         } else if (filters.isReset) {
           // 일반 데이터 조회
@@ -322,14 +322,14 @@ const App = () => {
           setSelectedState({ [firstRowData[DATA_ITEM_KEY]]: true });
           setMainDataResult({
             data: rows,
-             total: totalRowCnt == -1 ? 0 : totalRowCnt,
+            total: totalRowCnt == -1 ? 0 : totalRowCnt,
           });
         } else {
           // 스크롤하여 다른 페이지 조회
           setMainDataResult((prev) => {
             return {
               data: [...prev.data, ...rows],
-               total: totalRowCnt == -1 ? 0 : totalRowCnt,
+              total: totalRowCnt == -1 ? 0 : totalRowCnt,
             };
           });
         }
@@ -394,7 +394,7 @@ const App = () => {
       setHtmlOnEditor(document);
 
       const selectedRow = mainDataResult.data.find(
-        (item) => item[DATA_ITEM_KEY] === mainDataId,
+        (item) => item[DATA_ITEM_KEY] === mainDataId
       );
 
       // 한달 이내 작성된 데이터인 경우
@@ -443,7 +443,7 @@ const App = () => {
       setAllCustData((prev) => {
         return {
           data: rows,
-           total: totalRowCnt == -1 ? 0 : totalRowCnt,
+          total: totalRowCnt == -1 ? 0 : totalRowCnt,
         };
       });
     }
@@ -530,7 +530,7 @@ const App = () => {
   // 참조 업체 삭제
   const handleAllCustDrop = (e: any, dataItem: any) => {
     const newData = refCustData.data.filter(
-      (row) => row?.customer_code !== refCustDragDataItem?.customer_code,
+      (row) => row?.customer_code !== refCustDragDataItem?.customer_code
     );
 
     setRefCustData((prev) => ({
@@ -646,7 +646,7 @@ const App = () => {
       return false;
     }
     const selectedRow = mainDataResult.data.find(
-      (item) => item[DATA_ITEM_KEY] === mainDataId,
+      (item) => item[DATA_ITEM_KEY] === mainDataId
     );
 
     if (!window.confirm("[" + selectedRow.title + "] 정말 삭제하시겠습니까?"))
@@ -668,11 +668,10 @@ const App = () => {
         // DB 저장안된 첨부파일
         setDeletedAttadatnums(unsavedAttadatnums);
       } else if (detailData.attdatnum) {
-        // DB 저장된 첨부파일
-        setDeletedAttadatnums({
-          type: "notice",
-          attdatnums: [detailData.attdatnum],
-        });
+        setDeletedAttadatnums((prev) => ({
+          type: [...prev.type, "notice"],
+          attdatnums: [...prev.attdatnums, detailData.attdatnum],
+        }));
       }
 
       setFilters((prev) => ({
@@ -688,11 +687,14 @@ const App = () => {
   }, [detailData]);
 
   const getAttachmentsData = (data: IAttachmentData) => {
-    if (!detailData.attdatnum) {
-      setUnsavedAttadatnums({
-        type: "notice",
-        attdatnums: [data.attdatnum],
-      });
+    if (
+      !detailData.attdatnum &&
+      !unsavedAttadatnums.attdatnums.includes(detailData.attdatnum)
+    ) {
+      setUnsavedAttadatnums((prev) => ({
+        type: [...prev.type, "notice"],
+        attdatnums: [...prev.attdatnums, ...[data.attdatnum]],
+      }));
     }
     setDetailData((prev) => ({
       ...prev,
@@ -715,7 +717,7 @@ const App = () => {
   const refCustRowDoubleClick = (e: GridRowDoubleClickEvent) => {
     const { dataItem } = e;
     const newData = refCustData.data.filter(
-      (row) => row?.customer_code !== dataItem?.customer_code,
+      (row) => row?.customer_code !== dataItem?.customer_code
     );
 
     setRefCustData((prev) => ({
@@ -831,7 +833,7 @@ const App = () => {
                 [SELECTED_FIELD]: selectedState[idGetter(row)],
                 notice_date: dateformat2(row.notice_date),
               })),
-              mainDataState,
+              mainDataState
             )}
             {...mainDataState}
             onDataStateChange={onMainDataStateChange}
@@ -891,7 +893,7 @@ const App = () => {
                         name="notice_date"
                         type="text"
                         value={dateformat2(
-                          convertDateToStr(detailData.notice_date),
+                          convertDateToStr(detailData.notice_date)
                         )}
                         onChange={detailDataInputChange}
                         className={!isAdmin ? "readonly" : "required"}
@@ -977,7 +979,7 @@ const App = () => {
                     : refCustData.data.map((row) => ({
                         ...row,
                       })),
-                  refCustDataState,
+                  refCustDataState
                 )}
                 {...refCustDataState}
                 onDataStateChange={onRefCustDataStateChange}
@@ -1029,7 +1031,7 @@ const App = () => {
                     ...row,
                     // [SELECTED_FIELD]: selectedState[idGetter(row)],
                   })),
-                  allCustDataState,
+                  allCustDataState
                 )}
                 {...allCustDataState}
                 onDataStateChange={onAllCustDataStateChange}

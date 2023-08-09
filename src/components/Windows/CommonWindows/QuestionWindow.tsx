@@ -6,6 +6,7 @@ import {
   IWindowPosition,
 } from "../../../hooks/interfaces";
 import {
+  deletedAttadatnumsState,
   isLoading,
   loginResultState,
   unsavedAttadatnumsState,
@@ -92,9 +93,9 @@ const KendoWindow = ({
   const [unsavedAttadatnums, setUnsavedAttadatnums] = useRecoilState(
     unsavedAttadatnumsState
   );
-  const [unsavedAttadatnums2, setUnsavedAttadatnums2] = useRecoilState(
-    unsavedAttadatnumsState
-  );
+  // 삭제할 첨부파일 리스트를 담는 함수
+  const setDeletedAttadatnums = useSetRecoilState(deletedAttadatnumsState);
+
   const handleMove = (event: WindowMoveEvent) => {
     setPosition({ ...position, left: event.left, top: event.top });
   };
@@ -108,8 +109,11 @@ const KendoWindow = ({
   };
 
   const onClose = () => {
+    if (unsavedAttadatnums.attdatnums.length > 0) {
+      setDeletedAttadatnums(unsavedAttadatnums);
+    }
     setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
-    setUnsavedAttadatnums2(DEFAULT_ATTDATNUMS);
+    reload(para.document_id);
     setVisible(false);
   };
 
@@ -394,7 +398,7 @@ const KendoWindow = ({
   const getAttachmentsData = (data: IAttachmentData) => {
     if (!Information.attach_number) {
       setUnsavedAttadatnums((prev) => ({
-        type: "receipt",
+        type: [...prev.type, "receipt"],
         attdatnums: [...prev.attdatnums, ...[data.attdatnum]],
       }));
     }
@@ -408,8 +412,8 @@ const KendoWindow = ({
   };
   const getAttachmentsData2 = (data: IAttachmentData) => {
     if (!Information.attdatnum) {
-      setUnsavedAttadatnums2((prev) => ({
-        type: "question",
+      setUnsavedAttadatnums((prev) => ({
+        type: [...prev.type, "question"],
         attdatnums: [...prev.attdatnums, ...[data.attdatnum]],
       }));
     }
@@ -549,7 +553,8 @@ const KendoWindow = ({
       }
       if (data != null) {
         reload(data.returnString);
-        onClose();
+        setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
+        setVisible(false);
       } else {
         console.log("[오류 발생]");
         console.log(data);

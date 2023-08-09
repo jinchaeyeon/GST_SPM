@@ -10,6 +10,7 @@ import {
   GridContainerWrap,
   GridTitle,
   GridTitleContainer,
+  StatusIcon,
   Title,
   TitleContainer,
 } from "../CommonStyled";
@@ -45,6 +46,7 @@ import {
   userColumns,
 } from "../store/columns/common-columns";
 import {
+  DEFAULT_ATTDATNUMS,
   EDIT_FIELD,
   GAP,
   PAGE_SIZE,
@@ -55,6 +57,7 @@ import { Input, RadioGroup } from "@progress/kendo-react-inputs";
 import { bytesToBase64 } from "byte-base64";
 import { useRecoilState, useSetRecoilState } from "recoil";
 import {
+  deletedAttadatnumsState,
   isLoading,
   loginResultState,
   unsavedAttadatnumsState,
@@ -97,31 +100,19 @@ const StatusCell = (props: GridCellProps) => {
   const { statusListData } = useContext(StatusContext);
   const data = props.dataItem;
 
-  const styles =
-    data.status == "진행중" ? (
-      <span
-        className="k-icon k-i-circle k-icon-xxl"
-        style={{ color: "yellow", marginLeft: "-6px", marginRight: "-2px" }}
-      ></span>
-    ) : data.status == "완료" ? (
-      <span
-        className="k-icon k-i-checkmark-circle k-icon-lg"
-        style={{ color: "green", marginRight: "5px" }}
-      ></span>
-    ) : data.status == "보류" ? (
-      <span
-        className="k-icon k-i-minus k-icon-lg"
-        style={{ marginRight: "5px" }}
-      ></span>
-    ) : (
-      <span
-        className="k-icon k-i-circle k-icon-xxl"
-        style={{ color: "gray", marginLeft: "-6px", marginRight: "-2px" }}
-      ></span>
-    );
+  const str =
+    data.status == "진행중"
+      ? "R"
+      : data.status == "완료"
+      ? "Y"
+      : data.status == "보류"
+      ? "H"
+      : data.status == "대기"
+      ? "N"
+      : "";
   return statusListData ? (
     <td>
-      {styles}
+      <StatusIcon status={str} />
       <span>{data.status}</span>
     </td>
   ) : (
@@ -453,8 +444,8 @@ const valueCodeQueryStr = `select sub_code, code_name
 from comCodeMaster
 where group_code ='BA012_GST'`;
 
-const usersQueryStr = `SELECT user_id, user_name 
-FROM sysUserMaster`;
+const usersQueryStr = `SELECT user_id, user_name + (CASE WHEN rtrchk = 'Y' THEN '-퇴' ELSE '' END) as user_name FROM sysUserMaster ORDER BY (CASE WHEN rtrchk = 'Y' THEN 2 ELSE 1 END), user_id`;
+
 const custQueryStr = `SELECT custcd,custnm
 FROM ba020t where useyn = 'Y' order by custcd`;
 
@@ -535,6 +526,9 @@ const App = () => {
   const [unsavedAttadatnums, setUnsavedAttadatnums] = useRecoilState(
     unsavedAttadatnumsState
   );
+  // 삭제할 첨부파일 리스트를 담는 함수
+  const setDeletedAttadatnums = useSetRecoilState(deletedAttadatnumsState);
+
   const pageChange = (event: GridPageChangeEvent) => {
     const { page } = event;
 
@@ -580,12 +574,17 @@ const App = () => {
   };
   const pageChange4 = (event: GridPageChangeEvent) => {
     const { page } = event;
-    for(let key of Object.keys(localStorage)){
-      if(key != "passwordExpirationInfo" && key != "accessToken" && key != "loginResult" && key != "refreshToken") {
+    for (let key of Object.keys(localStorage)) {
+      if (
+        key != "passwordExpirationInfo" &&
+        key != "accessToken" &&
+        key != "loginResult" &&
+        key != "refreshToken"
+      ) {
         localStorage.removeItem(key);
       }
     }
-    
+
     setFilters((prev) => ({
       ...prev,
       pgNum: Math.floor(page.skip / initialPageState.take) + 1,
@@ -715,12 +714,19 @@ const App = () => {
   const [tabSelected, setTabSelected] = useState(0);
   const handleSelectTab = (e: any) => {
     setTabSelected(e.selected);
-    for(let key of Object.keys(localStorage)){
-      if(key != "passwordExpirationInfo" && key != "accessToken" && key != "loginResult" && key != "refreshToken") {
+    for (let key of Object.keys(localStorage)) {
+      if (
+        key != "passwordExpirationInfo" &&
+        key != "accessToken" &&
+        key != "loginResult" &&
+        key != "refreshToken"
+      ) {
         localStorage.removeItem(key);
       }
     }
-    
+    if (unsavedAttadatnums.attdatnums.length > 0) {
+      setDeletedAttadatnums(unsavedAttadatnums);
+    }
     if (e.selected == 0) {
       setFilters({
         workType: "received",
@@ -2099,12 +2105,20 @@ const App = () => {
     ) {
       alert("필수항목을 입력해주세요");
     } else {
-      for(let key of Object.keys(localStorage)){
-        if(key != "passwordExpirationInfo" && key != "accessToken" && key != "loginResult" && key != "refreshToken") {
+      for (let key of Object.keys(localStorage)) {
+        if (
+          key != "passwordExpirationInfo" &&
+          key != "accessToken" &&
+          key != "loginResult" &&
+          key != "refreshToken"
+        ) {
           localStorage.removeItem(key);
         }
       }
-      
+      if (unsavedAttadatnums.attdatnums.length > 0) {
+        setDeletedAttadatnums(unsavedAttadatnums);
+      }
+
       deletedRows = [];
       setPage(initialPageState); // 페이지 초기화
       setPage2(initialPageState); // 페이지 초기화
@@ -2475,10 +2489,11 @@ const App = () => {
   const onErrorWndClick = () => {
     setErrorWindowVisible(true);
   };
+
   useEffect(() => {
-    if (attdatnum != "" && attdatnum != undefined && attdatnum != null) {
+    if (attdatnum && !unsavedAttadatnums.attdatnums.includes(attdatnum)) {
       setUnsavedAttadatnums((prev) => ({
-        type: "task",
+        type: [...prev.type, "task"],
         attdatnums: [...prev.attdatnums, ...[attdatnum]],
       }));
     }
@@ -3056,12 +3071,24 @@ const App = () => {
         }
 
         if (data != null) {
-          for(let key of Object.keys(localStorage)){
-            if(key != "passwordExpirationInfo" && key != "accessToken" && key != "loginResult" && key != "refreshToken") {
+          for (let key of Object.keys(localStorage)) {
+            if (
+              key != "passwordExpirationInfo" &&
+              key != "accessToken" &&
+              key != "loginResult" &&
+              key != "refreshToken"
+            ) {
               localStorage.removeItem(key);
             }
           }
-          
+          deletedRows.map((item) =>
+            setDeletedAttadatnums((prev) => ({
+              type: [...prev.type, "task"],
+              attdatnums: [...prev.attdatnums, item.attdatnum],
+            }))
+          );
+
+          setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
           const isLastDataDeleted =
             mainDataResult4.data.length == 1 && filters.pgNum > 1;
           if (isLastDataDeleted) {
@@ -3267,12 +3294,25 @@ const App = () => {
       }
 
       if (data != null) {
-        for(let key of Object.keys(localStorage)){
-          if(key != "passwordExpirationInfo" && key != "accessToken" && key != "loginResult" && key != "refreshToken") {
+        for (let key of Object.keys(localStorage)) {
+          if (
+            key != "passwordExpirationInfo" &&
+            key != "accessToken" &&
+            key != "loginResult" &&
+            key != "refreshToken"
+          ) {
             localStorage.removeItem(key);
           }
         }
-        
+
+        deletedRows.map((item) =>
+          setDeletedAttadatnums((prev) => ({
+            type: [...prev.type, "task"],
+            attdatnums: [...prev.attdatnums, item.attdatnum],
+          }))
+        );
+
+        setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
         const isLastDataDeleted =
           mainDataResult4.data.length == 1 && filters.pgNum > 1;
 
@@ -3341,6 +3381,7 @@ const App = () => {
       });
     }
   };
+
   return (
     <>
       <TitleContainer>
@@ -4773,7 +4814,9 @@ const App = () => {
                         onClick={onErrorWndClick}
                         themeColor={"primary"}
                         icon="gear"
-                      >불량 팝업</Button>
+                      >
+                        불량 팝업
+                      </Button>
                       <Button
                         onClick={onAddClick}
                         themeColor={"primary"}

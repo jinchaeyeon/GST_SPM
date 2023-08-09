@@ -10,6 +10,7 @@ import {
   GridContainerWrap,
   GridTitle,
   GridTitleContainer,
+  StatusIcon,
   Title,
   TitleContainer,
 } from "../CommonStyled";
@@ -28,6 +29,7 @@ import {
 } from "@progress/kendo-react-dropdowns";
 import CommonDateRangePicker from "../components/DateRangePicker/CommonDateRangePicker";
 import {
+  DEFAULT_ATTDATNUMS,
   EDIT_FIELD,
   GAP,
   PAGE_SIZE,
@@ -35,6 +37,7 @@ import {
 } from "../components/CommonString";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import {
+  deletedAttadatnumsState,
   isLoading,
   loginResultState,
   unsavedAttadatnumsState,
@@ -79,13 +82,13 @@ import RichEditor from "../components/RichEditor";
 import AnswerWindow from "../components/Windows/CommonWindows/AnswerWindow";
 import QuestionWindow from "../components/Windows/CommonWindows/QuestionWindow";
 import TaskOrderListWindow from "../components/Windows/CommonWindows/TaskOrderListWindow";
+import StatusComboBoxCell from "../components/Cells/StatusComboBoxCell";
 
 const valueCodeQueryStr = `select sub_code, code_name
 from comCodeMaster
 where group_code ='BA012_GST'`;
 
-const usersQueryStr = `SELECT user_id, user_name 
-FROM sysUserMaster`;
+const usersQueryStr = `SELECT user_id, user_name + (CASE WHEN rtrchk = 'Y' THEN '-퇴' ELSE '' END) as user_name FROM sysUserMaster ORDER BY (CASE WHEN rtrchk = 'Y' THEN 2 ELSE 1 END), user_id`;
 
 const receptionTypeQueryStr = `SELECT a.sub_code,
 a.code_name
@@ -120,46 +123,15 @@ const FilesContext = createContext<{
 
 const StatusCell = (props: GridCellProps) => {
   const { statusListData } = useContext(StatusContext);
-  const data = props.dataItem;
-
-  const styles =
-    data.status == "R" ? (
-      <span
-        className="k-icon k-i-circle k-icon-xxl"
-        style={{ color: "yellow", marginLeft: "-6px", marginRight: "-2px" }}
-      ></span>
-    ) : data.status == "Y" ? (
-      <span
-        className="k-icon k-i-checkmark-circle k-icon-lg"
-        style={{ color: "green", marginRight: "5px" }}
-      ></span>
-    ) : data.status == "H" ? (
-      <span
-        className="k-icon k-i-minus k-icon-lg"
-        style={{ marginRight: "5px" }}
-      ></span>
-    ) : (
-      <span
-        className="k-icon k-i-circle k-icon-xxl"
-        style={{ color: "gray", marginLeft: "-6px", marginRight: "-2px" }}
-      ></span>
-    );
-
-  const str =
-    data.status == "R"
-      ? "진행중"
-      : data.status == "H"
-      ? "보류"
-      : data.status == "Y"
-      ? "완료"
-      : data.status == "N"
-      ? "대기"
-      : "";
+  
   return statusListData ? (
-    <td>
-      {styles}
-      <span>{str}</span>
-    </td>
+    <StatusComboBoxCell
+      columns={dataTypeColumns}
+      data={statusListData}
+      textField="code_name"
+      valueField="code"
+      {...props}
+    />
   ) : (
     <td />
   );
@@ -276,8 +248,8 @@ const Exists_taskCell = (props: GridCellProps) => {
   const [taskWindowVisible, setTaskWindowVisible] = useState<boolean>(false);
 
   const onTaskWndClick = () => {
-    if(value == true) {
-        setTaskWindowVisible(true);
+    if (value == true) {
+      setTaskWindowVisible(true);
     }
   };
 
@@ -316,6 +288,10 @@ const App = () => {
   const [unsavedAttadatnums, setUnsavedAttadatnums] = useRecoilState(
     unsavedAttadatnumsState
   );
+
+  // 삭제할 첨부파일 리스트를 담는 함수
+  const setDeletedAttadatnums = useSetRecoilState(deletedAttadatnumsState);
+
   const setLoading = useSetRecoilState(isLoading);
   const [loginResult] = useRecoilState(loginResultState);
   const userId = loginResult ? loginResult.userId : "";
@@ -374,6 +350,10 @@ const App = () => {
     ) {
       alert("필수항목을 입력해주세요");
     } else {
+      if (unsavedAttadatnums.attdatnums.length > 0) {
+        setDeletedAttadatnums(unsavedAttadatnums);
+      }
+      setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
       setPage(initialPageState); // 페이지 초기화
       setFilters((prev) => ({
         ...prev,
@@ -707,10 +687,10 @@ const App = () => {
       });
       setTempResult((prev) => {
         return {
-            data: rows,
-            total: totalRowCnt == -1 ? 0 : totalRowCnt,
-          };
-      })
+          data: rows,
+          total: totalRowCnt == -1 ? 0 : totalRowCnt,
+        };
+      });
       if (totalRowCnt > 0) {
         const selectedRow =
           filters.findRowValue == ""
@@ -838,7 +818,8 @@ const App = () => {
       field == "reception_date" ||
       field == "value_code3" ||
       field == "be_finished_date" ||
-      field == "completion_date"
+      field == "completion_date" ||
+      field == "status"
     ) {
       const newData = mainDataResult.data.map((item) =>
         item[DATA_ITEM_KEY] === dataItem[DATA_ITEM_KEY]
@@ -921,9 +902,9 @@ const App = () => {
   const [attdatnum, setAttdatnum] = useState<string>("");
   const [attach_exists, setAttach_exists] = useState<string>("");
   useEffect(() => {
-    if (attdatnum != "" && attdatnum != undefined && attdatnum != null) {
+    if (attdatnum && !unsavedAttadatnums.attdatnums.includes(attdatnum)) {
       setUnsavedAttadatnums((prev) => ({
-        type: "receipt",
+        type: [...prev.type, "receipt"],
         attdatnums: [...prev.attdatnums, ...[attdatnum]],
       }));
     }
@@ -1259,6 +1240,7 @@ const App = () => {
         data = null;
       }
       if (data != null) {
+        setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
         setFilters((prev) => ({
           ...prev,
           find_row_value: Object.getOwnPropertyNames(selectedState)[0],
@@ -1332,10 +1314,28 @@ const App = () => {
       };
       try {
         data = await processApi<any>("receptions-save", paras);
-      } catch (error) {
+      } catch (error: any) {
+        alert(error.message);
         data = null;
       }
       if (data != null) {
+        if (datas.attdatnum) {
+          // DB 저장된 첨부파일
+          setDeletedAttadatnums((prev) => ({
+            type: [...prev.type, "question"],
+            attdatnums: [...prev.attdatnums, datas.attdatnum],
+          }));
+        }
+        if (unsavedAttadatnums.attdatnums.length > 0) {
+          // DB 저장안된 첨부파일
+          setDeletedAttadatnums(unsavedAttadatnums);
+        } else if (datas.reception_attach_number) {
+          setDeletedAttadatnums((prev) => ({
+            type: [...prev.type, "receipt"],
+            attdatnums: [...prev.attdatnums, datas.reception_attach_number],
+          }));
+        }
+        setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
         if (mainDataResult.data.length === 1 && filters.pgNum == 1) {
           setFilters((prev) => ({
             ...prev,
@@ -1369,9 +1369,6 @@ const App = () => {
             }));
           }
         }
-      } else {
-        console.log("[오류 발생]");
-        console.log(data);
       }
       setLoading(false);
     }

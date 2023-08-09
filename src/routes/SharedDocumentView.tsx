@@ -1,4 +1,11 @@
-import { DataResult, filterBy, FilterDescriptor, getter, process, State } from "@progress/kendo-data-query";
+import {
+  DataResult,
+  filterBy,
+  FilterDescriptor,
+  getter,
+  process,
+  State,
+} from "@progress/kendo-data-query";
 import { Button } from "@progress/kendo-react-buttons";
 import { DatePicker } from "@progress/kendo-react-dateinputs";
 import {
@@ -33,11 +40,7 @@ import {
   isWithinOneMonth,
   toDate,
 } from "../components/CommonFunction";
-import {
-  GAP,
-  PAGE_SIZE,
-  SELECTED_FIELD,
-} from "../components/CommonString";
+import { GAP, PAGE_SIZE, SELECTED_FIELD } from "../components/CommonString";
 import {
   deletedAttadatnumsState,
   isLoading,
@@ -53,7 +56,11 @@ import { bytesToBase64 } from "byte-base64";
 import { IAttachmentData } from "../hooks/interfaces";
 import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
 import Cookies from "js-cookie";
-import { ComboBoxChangeEvent, ComboBoxFilterChangeEvent, MultiColumnComboBox } from "@progress/kendo-react-dropdowns";
+import {
+  ComboBoxChangeEvent,
+  ComboBoxFilterChangeEvent,
+  MultiColumnComboBox,
+} from "@progress/kendo-react-dropdowns";
 import { dataTypeColumns } from "../store/columns/common-columns";
 import SignWindow from "../components/Windows/CommonWindows/SignWindow";
 
@@ -61,7 +68,7 @@ type TFilters = {
   fromDate: Date;
   toDate: Date;
   contents: string;
-  type: {sub_code:string, code_name:string};
+  type: { sub_code: string; code_name: string };
   findRowValue: string;
   pgNum: number;
   pgSize: number;
@@ -77,8 +84,8 @@ const defaultDetailData: {
   contents: string;
   attdatnum: string;
   files: string;
-  customer: {custcd:string, custnm:string}
-  type: {sub_code:string, code_name:string};
+  customer: { custcd: string; custnm: string };
+  type: { sub_code: string; code_name: string };
 } = {
   work_type: "N",
   document_id: "",
@@ -94,7 +101,7 @@ const defaultDetailData: {
   type: {
     sub_code: "",
     code_name: "",
-  }
+  },
 };
 
 const DATA_ITEM_KEY = "document_id";
@@ -113,7 +120,7 @@ const App = () => {
 
   // 서버 업로드는 되었으나 DB에는 저장안된 첨부파일 리스트
   const [unsavedAttadatnums, setUnsavedAttadatnums] = useRecoilState(
-    unsavedAttadatnumsState,
+    unsavedAttadatnumsState
   );
 
   const [attachmentsWindowVisible, setAttachmentsWindowVisible] =
@@ -128,7 +135,7 @@ const App = () => {
   });
 
   const [mainDataResult, setMainDataResult] = useState<DataResult>(
-    process([], mainDataState),
+    process([], mainDataState)
   );
   const [detailData, setDetailData] = useState(defaultDetailData);
 
@@ -143,7 +150,7 @@ const App = () => {
     fromDate: fromDate,
     toDate: new Date(),
     contents: "",
-    type: {sub_code: "", code_name: ""},
+    type: { sub_code: "", code_name: "" },
     findRowValue: "",
     pgNum: 1,
     pgSize: PAGE_SIZE,
@@ -160,7 +167,7 @@ const App = () => {
       [name]: value,
     }));
   };
-  
+
   const FilterComboBoxChange = (e: ComboBoxChangeEvent) => {
     const { value } = e.target;
     const name = e.target.props.name ?? "";
@@ -259,7 +266,11 @@ const App = () => {
     let data: any;
 
     const bytes = require("utf8-bytes");
-    const convertedQueryStr = bytesToBase64(bytes("SELECT sub_code, code_name FROM comCodeMaster WHERE group_code = 'CR080' AND use_yn = 'Y'"));
+    const convertedQueryStr = bytesToBase64(
+      bytes(
+        "SELECT sub_code, code_name FROM comCodeMaster WHERE group_code = 'CR080' AND use_yn = 'Y'"
+      )
+    );
 
     let query = {
       query: convertedQueryStr,
@@ -279,7 +290,7 @@ const App = () => {
       console.log(data);
     }
   };
- 
+
   //그리드 데이터 조회
   const fetchGrid = useCallback(async (filters: TFilters) => {
     let data: any;
@@ -288,19 +299,11 @@ const App = () => {
     const para = {
       para: `list?fromDate=${convertDateToStr(
         filters.fromDate
-      )}&toDate=${convertDateToStr(
-        filters.toDate
-      )}&contents=${
+      )}&toDate=${convertDateToStr(filters.toDate)}&contents=${
         filters.contents
-      }&type=${
-        filters.type.sub_code
-      }&find_row_value=${
+      }&type=${filters.type.sub_code}&find_row_value=${
         filters.findRowValue
-      }&page=${
-        filters.pgNum
-      }&pageSize=${
-        filters.pgSize
-      }`,
+      }&page=${filters.pgNum}&pageSize=${filters.pgSize}`,
     };
 
     try {
@@ -319,7 +322,7 @@ const App = () => {
           setSelectedState({ [filters.findRowValue]: true });
           setMainDataResult({
             data: rows,
-             total: totalRowCnt == -1 ? 0 : totalRowCnt,
+            total: totalRowCnt == -1 ? 0 : totalRowCnt,
           });
         } else if (filters.isReset) {
           // 일반 데이터 조회
@@ -327,14 +330,14 @@ const App = () => {
           setSelectedState({ [firstRowData[DATA_ITEM_KEY]]: true });
           setMainDataResult({
             data: rows,
-             total: totalRowCnt == -1 ? 0 : totalRowCnt,
+            total: totalRowCnt == -1 ? 0 : totalRowCnt,
           });
         } else {
           // 스크롤하여 다른 페이지 조회
           setMainDataResult((prev) => {
             return {
               data: [...prev.data, ...rows],
-               total: totalRowCnt == -1 ? 0 : totalRowCnt,
+              total: totalRowCnt == -1 ? 0 : totalRowCnt,
             };
           });
         }
@@ -374,8 +377,8 @@ const App = () => {
           ...row,
           work_type: "U",
           write_date: toDate(row.write_date),
-          customer: {custcd: row.customer_code, custnm: row.customer_name},
-          type: {sub_code: row.type, code_name: row.typenm}
+          customer: { custcd: row.customer_code, custnm: row.customer_name },
+          type: { sub_code: row.type, code_name: row.typenm },
         }));
       } else {
         resetDetailData();
@@ -385,20 +388,28 @@ const App = () => {
       setHtmlOnEditor(document);
 
       const selectedRow = mainDataResult.data.find(
-        (item) => item[DATA_ITEM_KEY] === mainDataId,
+        (item) => item[DATA_ITEM_KEY] === mainDataId
       );
 
       // 한달 이내 작성된 데이터인 경우
       if (selectedRow && isWithinOneMonth(selectedRow.write_date)) {
         // 조회한 공지사항 쿠키에 저장
         const savedSharedDocumentsRaw = Cookies.get("readSharedDocuments");
-        const savedSharedDocuments = savedSharedDocumentsRaw ? JSON.parse(savedSharedDocumentsRaw) : [];
+        const savedSharedDocuments = savedSharedDocumentsRaw
+          ? JSON.parse(savedSharedDocumentsRaw)
+          : [];
         const updatedSharedDocuments = [...savedSharedDocuments, mainDataId];
-        const uniqueSharedDocuments = Array.from(new Set(updatedSharedDocuments));
+        const uniqueSharedDocuments = Array.from(
+          new Set(updatedSharedDocuments)
+        );
 
-        Cookies.set("readSharedDocuments", JSON.stringify(uniqueSharedDocuments), {
-          expires: 30,
-        });
+        Cookies.set(
+          "readSharedDocuments",
+          JSON.stringify(uniqueSharedDocuments),
+          {
+            expires: 30,
+          }
+        );
       }
     } else {
       console.log("[에러발생]");
@@ -441,11 +452,14 @@ const App = () => {
   };
 
   const getAttachmentsData = (data: IAttachmentData) => {
-    if (!detailData.attdatnum) {
-      setUnsavedAttadatnums({
-        type: "sharedDocument",
-        attdatnums: [data.attdatnum],
-      });
+    if (
+      !detailData.attdatnum &&
+      !unsavedAttadatnums.attdatnums.includes(detailData.attdatnum)
+    ) {
+      setUnsavedAttadatnums((prev) => ({
+        type: [...prev.type, "sharedDocument"],
+        attdatnums: [...prev.attdatnums, ...[data.attdatnum]],
+      }));
     }
     setDetailData((prev) => ({
       ...prev,
@@ -553,7 +567,7 @@ const App = () => {
                 [SELECTED_FIELD]: selectedState[idGetter(row)],
                 write_date: dateformat2(row.write_date),
               })),
-              mainDataState,
+              mainDataState
             )}
             {...mainDataState}
             onDataStateChange={onMainDataStateChange}
@@ -584,13 +598,16 @@ const App = () => {
               cell={CenterCell}
               footerCell={mainTotalFooterCell}
             />
-            <GridColumn field="typenm" title="구분" width={100} cell={CenterCell} />
+            <GridColumn
+              field="typenm"
+              title="구분"
+              width={100}
+              cell={CenterCell}
+            />
             <GridColumn field="title" title="제목" />
           </Grid>
         </GridContainer>
-        <GridContainer
-          width={`calc(70% - ${GAP}px)`}
-        >
+        <GridContainer width={`calc(70% - ${GAP}px)`}>
           <GridTitleContainer>
             <GridTitle>상세정보</GridTitle>
           </GridTitleContainer>
@@ -614,7 +631,7 @@ const App = () => {
                       name="write_date"
                       type="text"
                       value={dateformat2(
-                        convertDateToStr(detailData.write_date),
+                        convertDateToStr(detailData.write_date)
                       )}
                       className={"readonly"}
                       readOnly={true}
@@ -628,7 +645,7 @@ const App = () => {
                       name="title"
                       type="text"
                       value={detailData.title}
-                      className={"readonly" }
+                      className={"readonly"}
                       readOnly={true}
                     />
                   </td>
@@ -697,10 +714,8 @@ const App = () => {
           setVisible={setAttachmentsWindowVisible}
           setData={getAttachmentsData}
           para={detailData.attdatnum}
-          permission={
-            { upload: false, download: true, delete: false }
-          }
-        modal={true}
+          permission={{ upload: false, download: true, delete: false }}
+          modal={true}
         />
       )}
       {signWindowVisible && (

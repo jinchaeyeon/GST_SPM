@@ -60,6 +60,7 @@ import CheckBoxReadOnlyCell from "../../Cells/CheckBoxReadOnlyCell";
 import RichEditor from "../../RichEditor";
 import NumberCell from "../../Cells/NumberCell";
 import ProgressCell from "../../Cells/ProgressCell";
+import PopUpAttachmentsWindow from "./PopUpAttachmentsWindow";
 
 type IKendoWindow = {
   setVisible(t: boolean): void;
@@ -2554,7 +2555,7 @@ const KendoWindow = ({ setVisible, setData, modal = false }: IKendoWindow) => {
         </ButtonContainer>
       </BottomContainer>
       {attachmentsWindowVisible && (
-        <AttachmentsWindow
+        <PopUpAttachmentsWindow
           setVisible={setAttachmentsWindowVisible}
           para={
             mainDataResult.data.filter(
@@ -2571,11 +2572,10 @@ const KendoWindow = ({ setVisible, setData, modal = false }: IKendoWindow) => {
           }
           permission={{ upload: false, download: true, delete: false }}
           type={"question"}
-          modal={true}
         />
       )}
       {attachmentsWindowVisible2 && (
-        <AttachmentsWindow
+        <PopUpAttachmentsWindow
           setVisible={setAttachmentsWindowVisible2}
           para={
             mainDataResult3.data.filter(
@@ -2592,7 +2592,6 @@ const KendoWindow = ({ setVisible, setData, modal = false }: IKendoWindow) => {
           }
           permission={{ upload: false, download: true, delete: false }}
           type={"meeting"}
-          modal={true}
         />
       )}
     </Window>

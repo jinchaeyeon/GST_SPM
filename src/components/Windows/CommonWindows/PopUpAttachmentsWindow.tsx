@@ -272,15 +272,33 @@ const KendoWindow = ({
       } catch (error) {
         data = null;
       }
-
-      if (data !== null) {
-        fetchGrid();
-      } else {
-        alert("처리 중 오류가 발생하였습니다.");
-      }
     });
-  };
 
+    if (data !== null) {
+      if (parameters.length == mainDataResult.data.length) {
+        let result: IAttachmentData = {
+          attdatnum: "null",
+          original_name: "",
+          rowCount: 0,
+        };
+        setMainDataResult((prev) => {
+          return {
+            data: [],
+            total: 0,
+          };
+        });
+
+        if (setData) {
+          setData(result);
+        }
+        onClose();
+      } else {
+        fetchGrid();
+      }
+    } else {
+      alert("처리 중 오류가 발생하였습니다.");
+    }
+  };
   const idGetter = getter(DATA_ITEM_KEY);
   const [selectedState, setSelectedState] = useState<{
     [id: string]: boolean | number[];
