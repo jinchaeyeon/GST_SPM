@@ -88,6 +88,7 @@ import DateCell from "../components/Cells/DateCell";
 import ComboBoxCell from "../components/Cells/ComboBoxCell";
 import {
   ComboBoxFilterChangeEvent,
+  DropDownListProps,
   MultiColumnComboBox,
   MultiSelect,
   MultiSelectChangeEvent,
@@ -99,6 +100,7 @@ import {
   userColumns,
   dataTypeColumns,
   dataTypeColumns2,
+  dataTypeColumns3,
 } from "../store/columns/common-columns";
 import NumberCell from "../components/Cells/NumberCell";
 import ProgressCell from "../components/Cells/ProgressCell";
@@ -204,7 +206,11 @@ const ValueCodeCell = (props: GridCellProps) => {
   const { valuecodeItems } = useContext(ValueCodeContext);
 
   return valuecodeItems ? (
-    <ComboBoxCell columns={dataTypeColumns2} data={valuecodeItems} {...props} />
+    <ComboBoxCell
+      columns={dataTypeColumns3}
+      data={valuecodeItems}
+      {...props}
+    />
   ) : (
     <td />
   );
@@ -351,8 +357,7 @@ const App = () => {
     [id: string]: boolean | number[];
   }>({});
   let gridRef: any = useRef(null);
-  let deviceWidth = window.innerWidth;
-  let isMobile = deviceWidth <= 1200;
+
   useEffect(() => {
     // 접근 권한 검증
     if (loginResult) {
@@ -550,7 +555,7 @@ const App = () => {
 
   const getAttachmentsData = (data: IAttachmentData) => {
     if (
-      data.attdatnum &&
+      !information.attdatnum &&
       !unsavedAttadatnums.attdatnums.includes(data.attdatnum)
     ) {
       setUnsavedAttadatnums((prev) => ({
@@ -567,6 +572,7 @@ const App = () => {
       attdatnum_exists: "Y",
     }));
   };
+
   type TFilters = {
     workType: string;
     date_type: any;
@@ -1375,8 +1381,7 @@ const App = () => {
       dataItemKey: DATA_ITEM_KEY,
     });
     setSelectedState(newSelectedState);
-    if (unsavedAttadatnums.attdatnums.length > 0)
-      setDeletedAttadatnums(unsavedAttadatnums);
+
     setWorkType("U");
   };
 
@@ -2966,6 +2971,7 @@ const App = () => {
     deletedRows = [];
     setAllTabSelected(e.selected);
   };
+
   const onAddClick2 = () => {
     subDataResult2.data.map((item) => {
       if (item[SUB_DATA_ITEM_KEY2] > temp2) {
@@ -3224,6 +3230,10 @@ const App = () => {
     dataResult: subDataResult2,
     setDataResult: setSubDataResult2,
   };
+
+  useEffect(() => {
+    setAllTabSelected(0);
+  },[valuecodeItems]);
 
   const CustomCheckBoxCell5 = (props: GridCellProps) => {
     const { ariaColumnIndex, columnIndex, dataItem, field } = props;
@@ -4149,7 +4159,12 @@ const App = () => {
         />
       )}
       {valueboxWindowVisible2 && (
-        <ValueBoxWindow2 setVisible={setValueBoxWindowVisible2} />
+        <ValueBoxWindow2
+          setVisible={setValueBoxWindowVisible2}
+          reload={() => {
+            fetchValueCode();
+          }}
+        />
       )}
       {custWindowVisible && (
         <CustomersWindow

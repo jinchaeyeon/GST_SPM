@@ -275,7 +275,6 @@ const KendoWindow = ({
     });
 
     if (data !== null) {
-      if (parameters.length == mainDataResult.data.length) {
         let result: IAttachmentData = {
           attdatnum: "null",
           original_name: "",
@@ -292,9 +291,6 @@ const KendoWindow = ({
           setData(result);
         }
         onClose();
-      } else {
-        fetchGrid();
-      }
     } else {
       alert("처리 중 오류가 발생하였습니다.");
     }

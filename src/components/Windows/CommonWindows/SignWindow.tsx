@@ -740,7 +740,7 @@ const SignWindow = ({ setVisible, reference_key }: IWindow) => {
           </ButtonContainer>
         </GridTitleContainer>
         <Grid
-          style={{ height: "30vh" }}
+          style={{ height: "100%"}}
           data={process(
             mainDataResult.data.map((row) => ({
               ...row,
@@ -799,7 +799,7 @@ const SignWindow = ({ setVisible, reference_key }: IWindow) => {
       </GridContainer>
       <GridContainer height={`calc(50% - ${leftOverHeight}px)`}>
         <GridTitleContainer>
-          <GridTitle>서명</GridTitle>
+          <GridTitle>서명란</GridTitle>
         </GridTitleContainer>
         <Sign
           value={
@@ -832,6 +832,10 @@ const SignWindow = ({ setVisible, reference_key }: IWindow) => {
         />
       </GridContainer>
       <BottomContainer>
+        <div style={{float: "left", paddingTop: "10px", width: "70%"}}>
+          ※ 회의(교육) 내용의 보다 정확한 보관 및 기록을 위하여 녹음되고 있음을 안내드립니다.
+        </div>
+        <div>
         <ButtonContainer>
           <Button themeColor={"primary"} onClick={onSave}>
             확인
@@ -840,6 +844,7 @@ const SignWindow = ({ setVisible, reference_key }: IWindow) => {
             닫기
           </Button>
         </ButtonContainer>
+        </div>
       </BottomContainer>
     </Window>
   );

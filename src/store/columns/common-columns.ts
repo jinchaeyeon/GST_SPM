@@ -67,6 +67,19 @@ export const dataTypeColumns2 = [
   },
 ];
 
+export const dataTypeColumns3 = [
+  {
+    field: "sub_code",
+    header: "코드",
+    width: 120,
+  },
+  {
+    field: "code_name",
+    header: "Value 구분",
+    width: 120,
+  },
+];
+
 
 export const userColumns = [
   {

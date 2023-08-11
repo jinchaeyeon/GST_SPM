@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as React from "react";
 import { Window, WindowMoveEvent } from "@progress/kendo-react-dialogs";
 import {
@@ -37,13 +37,15 @@ import { Iparameters } from "../../../store/types";
 
 type IKendoWindow = {
   setVisible(t: boolean): void;
+  reload() : void;
 };
 
 const DATA_ITEM_KEY = "num";
 let temp = 0;
 let deletedRows: any[] = [];
+let targetRowIndex: null | number = null;
 
-const KendoWindow = ({ setVisible }: IKendoWindow) => {
+const KendoWindow = ({ setVisible, reload }: IKendoWindow) => {
   let deviceWidth = window.innerWidth;
   let isMobile = deviceWidth <= 1200;
   const [position, setPosition] = useState<IWindowPosition>({
@@ -52,6 +54,8 @@ const KendoWindow = ({ setVisible }: IKendoWindow) => {
     width: isMobile == true ? deviceWidth : 900,
     height: 700,
   });
+  let gridRef: any = useRef(null);
+
   const [loginResult] = useRecoilState(loginResultState);
   const userId = loginResult ? loginResult.userId : "";
   const [pc, setPc] = useState("");
@@ -86,6 +90,7 @@ const KendoWindow = ({ setVisible }: IKendoWindow) => {
 
   const onClose = () => {
     setVisible(false);
+    reload();
   };
 
   const processApi = useApi();
@@ -106,6 +111,7 @@ const KendoWindow = ({ setVisible }: IKendoWindow) => {
     code: "",
     name: "",
     isSearch: true,
+    find_row_value: "",
   });
 
   const from_date = new Date(); // 현재 날짜와 시간을 가져옵니다.
@@ -117,7 +123,7 @@ const KendoWindow = ({ setVisible }: IKendoWindow) => {
 
   useEffect(() => {
     if (filters.isSearch) {
-      setFilters((prev) => ({ ...prev, isSearch: false })); // 한번만 조회되도록
+      setFilters((prev) => ({ ...prev, find_row_value: "", isSearch: false })); // 한번만 조회되도록
       fetchMainGrid();
     }
   }, [filters]);
@@ -153,14 +159,37 @@ const KendoWindow = ({ setVisible }: IKendoWindow) => {
     if (data !== null && data.isSuccess === true) {
       const totalRowCnt = data.tables[0].TotalRowCount;
       const rows = data.tables[0].Rows;
+
+      if (filters.find_row_value != "") {
+        // find_row_value 행으로 스크롤 이동
+        const findRowIndex = rows.findIndex(
+          (row: any) => row.code == filters.find_row_value
+        );
+
+        targetRowIndex = findRowIndex;
+      } else {
+        // 첫번째 행으로 스크롤 이동
+        if (gridRef.current) {
+          targetRowIndex = 0;
+        }
+      }
+
       setMainDataResult((prev) => {
         return {
           data: rows,
-           total: totalRowCnt == -1 ? 0 : totalRowCnt,
+          total: totalRowCnt == -1 ? 0 : totalRowCnt,
         };
       });
       if (totalRowCnt > 0) {
-        setSelectedState({ [rows[0][DATA_ITEM_KEY]]: true });
+        const selectedRow =
+          filters.find_row_value == ""
+            ? rows[0]
+            : rows.find((row: any) => row.code == filters.find_row_value);
+        if (selectedRow != undefined) {
+          setSelectedState({ [selectedRow[DATA_ITEM_KEY]]: true });
+        } else {
+          setSelectedState({ [rows[0][DATA_ITEM_KEY]]: true });
+        }
       }
     } else {
       console.log("[에러발생]");
@@ -168,10 +197,13 @@ const KendoWindow = ({ setVisible }: IKendoWindow) => {
     }
   };
 
-  //그리드 리셋
-  const resetAllGrid = () => {
-    setMainDataResult(process([], mainDataState));
-  };
+  //메인 그리드 데이터 변경 되었을 때
+  useEffect(() => {
+    if (targetRowIndex !== null && gridRef.current) {
+      gridRef.current.scrollIntoView({ rowIndex: targetRowIndex });
+      targetRowIndex = null;
+    }
+  }, [mainDataResult]);
 
   //그리드의 dataState 요소 변경 시 => 데이터 컨트롤에 사용되는 dataState에 적용
   const onMainDataStateChange = (event: GridDataStateChangeEvent) => {
@@ -212,6 +244,7 @@ const KendoWindow = ({ setVisible }: IKendoWindow) => {
     setFilters((prev) => ({
       ...prev,
       isSearch: true,
+      find_row_value: "",
     }));
   };
 
@@ -244,7 +277,10 @@ const KendoWindow = ({ setVisible }: IKendoWindow) => {
   );
 
   const enterEdit = (dataItem: any, field: string) => {
-    if (!(field == "code" && dataItem.rowstatus != "N") && field != "rowstatus") {
+    if (
+      !(field == "code" && dataItem.rowstatus != "N") &&
+      field != "rowstatus"
+    ) {
       const newData = mainDataResult.data.map((item) =>
         item[DATA_ITEM_KEY] === dataItem[DATA_ITEM_KEY]
           ? {
@@ -552,10 +588,29 @@ const KendoWindow = ({ setVisible }: IKendoWindow) => {
         row_status: "",
       });
 
-      setFilters((prev) => ({
-        ...prev,
-        isSearch: true,
-      }));
+      if(paraData.row_status.includes("N") || paraData.row_status.includes("U")) {
+        setFilters((prev) => ({
+          ...prev,
+          find_row_value: data.returnString,
+          isSearch: true,
+        }));
+      } else {
+        const datas = mainDataResult.data.filter((item) => item[DATA_ITEM_KEY]==Object.getOwnPropertyNames(selectedState)[0])[0];
+        if(datas != undefined) {
+          setFilters((prev) => ({
+            ...prev,
+            find_row_value: datas.code,
+            isSearch: true,
+          }));
+        } else {
+          setFilters((prev) => ({
+            ...prev,
+            find_row_value: "",
+            isSearch: true,
+          }));
+        }
+
+      }
     } else {
       console.log("[오류 발생]");
       console.log(data);
@@ -658,6 +713,7 @@ const KendoWindow = ({ setVisible }: IKendoWindow) => {
           //스크롤 조회 기능
           fixedScroll={true}
           total={mainDataResult.total}
+          ref={gridRef}
           //정렬기능
           sortable={true}
           onSortChange={onMainSortChange}
