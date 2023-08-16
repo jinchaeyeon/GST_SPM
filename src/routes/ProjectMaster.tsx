@@ -21,6 +21,7 @@ import {
   GridExpandChangeEvent,
   GridFooterCellProps,
   GridItemChangeEvent,
+  GridPageChangeEvent,
   GridRowDoubleClickEvent,
   GridSelectionChangeEvent,
 } from "@progress/kendo-react-grid";
@@ -119,6 +120,7 @@ const SUB_DATA_ITEM_KEY = "devmngseq";
 const SUB_DATA_ITEM_KEY2 = "idx";
 
 let targetRowIndex: null | number = null;
+let targetRowIndex2: null | number = null;
 let deletedRows: any[] = [];
 let temp = 0;
 let temp2 = 0;
@@ -266,6 +268,22 @@ const App = () => {
   const [unsavedAttadatnums, setUnsavedAttadatnums] = useRecoilState(
     unsavedAttadatnumsState
   );
+  const initialPageState = { skip: 0, take: PAGE_SIZE };
+  const [page, setPage] = useState(initialPageState);
+  const pageChange = (event: GridPageChangeEvent) => {
+    const { page } = event;
+
+    setSubFilters((prev) => ({
+      ...prev,
+      pgNum: Math.floor(page.skip / initialPageState.take) + 1,
+      isSearch: true,
+    }));
+
+    setPage({
+      skip: page.skip,
+      take: initialPageState.take,
+    });
+  };
   const idGetter = getter(DATA_ITEM_KEY);
   const idGetter2 = getter(SUB_DATA_ITEM_KEY);
   const idGetter3 = getter(SUB_DATA_ITEM_KEY2);
@@ -353,6 +371,7 @@ const App = () => {
     [id: string]: boolean | number[];
   }>({});
   let gridRef: any = useRef(null);
+  let gridRef2: any = useRef(null);
 
   useEffect(() => {
     // 접근 권한 검증
@@ -547,6 +566,12 @@ const App = () => {
     setSelectedsubDataState({
       [newData[newData.length - 1][SUB_DATA_ITEM_KEY]]: true,
     });
+
+    setPage((prev) => ({
+      ...prev,
+      skip: 0,
+      take: prev.take + 1,
+    }));
   };
 
   const getAttachmentsData = (data: IAttachmentData) => {
@@ -928,8 +953,8 @@ const App = () => {
     //조회조건 파라미터
     const parameters: Iparameters = {
       procedureName: "pw6_sel_project_master",
-      pageNumber: filters.pgNum,
-      pageSize: filters.pgSize,
+      pageNumber: subfilters.pgNum,
+      pageSize: subfilters.pgSize,
       parameters: {
         "@p_work_type": subfilters.workType,
         "@p_date_type": filters.date_type.code,
@@ -967,7 +992,26 @@ const App = () => {
           idx: idx++,
         };
       });
+      if (subfilters.findRowValue !== "") {
+        // find_row_value 행으로 스크롤 이동
+        if (gridRef2.current) {
+          const findRowIndex = rows.findIndex(
+            (row: any) => row[SUB_DATA_ITEM_KEY] == subfilters.findRowValue
+          );
+          targetRowIndex2 = findRowIndex;
+        }
 
+        // find_row_value 데이터가 존재하는 페이지로 설정
+        setPage({
+          skip: PAGE_SIZE * (data.pageNumber - 1),
+          take: PAGE_SIZE,
+        });
+      } else {
+        // 첫번째 행으로 스크롤 이동
+        if (gridRef2.current) {
+          targetRowIndex2 = 0;
+        }
+      }
       if (AlltabSelected == 2) {
         const newDataState = processWithGroups(rows, group);
         setSubDataTotal(totalRowCnt);
@@ -1378,7 +1422,7 @@ const App = () => {
     });
     setSelectedState(newSelectedState);
 
-    if(workType == "N") {
+    if (workType == "N") {
       if (unsavedAttadatnums.attdatnums.length > 0) {
         setDeletedAttadatnums(unsavedAttadatnums);
       }
@@ -1413,6 +1457,14 @@ const App = () => {
       targetRowIndex = null;
     }
   }, [mainDataResult, AlltabSelected]);
+
+  //메인 그리드 데이터 변경 되었을 때
+  useEffect(() => {
+    if (targetRowIndex2 !== null && gridRef2.current) {
+      gridRef2.current.scrollIntoView({ rowIndex: targetRowIndex2 });
+      targetRowIndex2 = null;
+    }
+  }, [subDataResult]);
 
   //그리드 푸터
   const mainTotalFooterCell = (props: GridFooterCellProps) => {
@@ -2803,7 +2855,11 @@ const App = () => {
         newData.push(item);
       });
     });
-
+    setPage((prev) => ({
+      ...prev,
+      skip: 0,
+      take: prev.take + 1,
+    }));
     setSubDataTotal(subDataTotal + 1);
     const newDataState = processWithGroups(newData, group);
     setSubDataResult(newDataState);
@@ -3977,6 +4033,13 @@ const App = () => {
                         //스크롤 조회 기능
                         fixedScroll={true}
                         total={subDataTotal}
+                        skip={page.skip}
+                        take={page.take}
+                        pageable={true}
+                        onPageChange={pageChange}
+                        //원하는 행 위치로 스크롤 기능
+                        ref={gridRef2}
+                        rowHeight={30}
                         //정렬기능
                         sortable={true}
                         onSortChange={onSubSortChange}
