@@ -206,11 +206,7 @@ const ValueCodeCell = (props: GridCellProps) => {
   const { valuecodeItems } = useContext(ValueCodeContext);
 
   return valuecodeItems ? (
-    <ComboBoxCell
-      columns={dataTypeColumns3}
-      data={valuecodeItems}
-      {...props}
-    />
+    <ComboBoxCell columns={dataTypeColumns3} data={valuecodeItems} {...props} />
   ) : (
     <td />
   );
@@ -1382,6 +1378,12 @@ const App = () => {
     });
     setSelectedState(newSelectedState);
 
+    if(workType == "N") {
+      if (unsavedAttadatnums.attdatnums.length > 0) {
+        setDeletedAttadatnums(unsavedAttadatnums);
+      }
+      setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
+    }
     setWorkType("U");
   };
 
@@ -2367,6 +2369,12 @@ const App = () => {
 
     if (data.isSuccess === true) {
       if (mainDataResult.data.length === 1 && filters.pgNum == 1) {
+        // DB에 저장안된 첨부파일 서버에서 삭제
+        if (unsavedAttadatnums.attdatnums.length > 0) {
+          setDeletedAttadatnums(unsavedAttadatnums);
+        }
+
+        setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
         setFilters((prev) => ({
           ...prev,
           find_row_value: "",
@@ -2861,6 +2869,10 @@ const App = () => {
 
   const handleSelectAllTab = (e: any) => {
     if (workType != "N") {
+      if (unsavedAttadatnums.attdatnums.length > 0) {
+        setDeletedAttadatnums(unsavedAttadatnums);
+      }
+      setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
       if (e.selected == 1) {
         const selectedRowData = mainDataResult.data.filter(
           (item) =>
@@ -2963,11 +2975,8 @@ const App = () => {
           isSearch: true,
         }));
       }
-      if (unsavedAttadatnums.attdatnums.length > 0) {
-        setDeletedAttadatnums(unsavedAttadatnums);
-      }
-      setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
     }
+
     deletedRows = [];
     setAllTabSelected(e.selected);
   };
@@ -3233,7 +3242,7 @@ const App = () => {
 
   useEffect(() => {
     setAllTabSelected(0);
-  },[valuecodeItems]);
+  }, [valuecodeItems]);
 
   const CustomCheckBoxCell5 = (props: GridCellProps) => {
     const { ariaColumnIndex, columnIndex, dataItem, field } = props;
