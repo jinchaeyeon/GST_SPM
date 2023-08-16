@@ -60,7 +60,6 @@ import {
   getGroupGridItemChangedData,
 } from "../components/CommonFunction";
 import {
-  DEFAULT_ATTDATNUMS,
   EDIT_FIELD,
   GAP,
   PAGE_SIZE,
@@ -71,10 +70,9 @@ import {
   deletedAttadatnumsState,
   isLoading,
   loginResultState,
-  unsavedAttadatnumsState,
 } from "../store/atoms";
 import { Iparameters } from "../store/types";
-import { IAttachmentData, ICustData } from "../hooks/interfaces";
+import { ICustData } from "../hooks/interfaces";
 import ValueBoxWindow from "../components/Windows/CommonWindows/ValueBoxWindow";
 import CustomersWindow from "../components/Windows/CommonWindows/CustomersWindow";
 import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
@@ -89,12 +87,11 @@ import DateCell from "../components/Cells/DateCell";
 import ComboBoxCell from "../components/Cells/ComboBoxCell";
 import {
   ComboBoxFilterChangeEvent,
-  DropDownListProps,
   MultiColumnComboBox,
   MultiSelect,
   MultiSelectChangeEvent,
 } from "@progress/kendo-react-dropdowns";
-import { useHistory } from "react-router-dom";
+import { useHistory, useLocation } from "react-router-dom";
 import {
   dateTypeColumns,
   custTypeColumns,
@@ -261,15 +258,11 @@ const App = () => {
   UseParaPc(setPc);
   const [AlltabSelected, setAllTabSelected] = React.useState(0);
   const [group, setGroup] = React.useState(initialGroup);
-  // 삭제할 첨부파일 리스트를 담는 함수
-  const setDeletedAttadatnums = useSetRecoilState(deletedAttadatnumsState);
-
-  // 서버 업로드는 되었으나 DB에는 저장안된 첨부파일 리스트
-  const [unsavedAttadatnums, setUnsavedAttadatnums] = useRecoilState(
-    unsavedAttadatnumsState
-  );
+  const [fileList, setFileList] = useState<FileList | any[]>([]);
+  const [savenmList, setSavenmList] = useState<string[]>([]);
   const initialPageState = { skip: 0, take: PAGE_SIZE };
   const [page, setPage] = useState(initialPageState);
+
   const pageChange = (event: GridPageChangeEvent) => {
     const { page } = event;
 
@@ -287,6 +280,8 @@ const App = () => {
   const idGetter = getter(DATA_ITEM_KEY);
   const idGetter2 = getter(SUB_DATA_ITEM_KEY);
   const idGetter3 = getter(SUB_DATA_ITEM_KEY2);
+  const location = useLocation();
+  const pathname = location.pathname.replace("/", "");
   const history = useHistory();
   const filterRef = useRef<HTMLDivElement>(null);
   const [filter, setFilter] = React.useState<FilterDescriptor>();
@@ -456,11 +451,8 @@ const App = () => {
       temp = 0;
       temp2 = 0;
       deletedRows = [];
-      // DB에 저장안된 첨부파일 서버에서 삭제
-      if (unsavedAttadatnums.attdatnums.length > 0) {
-        setDeletedAttadatnums(unsavedAttadatnums);
-      }
-      setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
+      setFileList([]);
+      setSavenmList([]);
       setFilters((prev) => ({
         ...prev,
         pgNum: 1,
@@ -574,22 +566,32 @@ const App = () => {
     }));
   };
 
-  const getAttachmentsData = (data: IAttachmentData) => {
-    if (
-      !information.attdatnum &&
-      !unsavedAttadatnums.attdatnums.includes(data.attdatnum)
-    ) {
-      setUnsavedAttadatnums((prev) => ({
-        type: [...prev.type, "project"],
-        attdatnums: [...prev.attdatnums, ...[data.attdatnum]],
-      }));
+  const getAttachmentsData = (
+    data: any,
+    fileList?: FileList | any[],
+    savenmList?: string[]
+  ) => {
+    if (fileList) {
+      setFileList(fileList);
+    } else {
+      setFileList([]);
     }
+
+    if (savenmList) {
+      setSavenmList(savenmList);
+    } else {
+      setSavenmList([]);
+    }
+
     setInformation((prev) => ({
       ...prev,
-      attdatnum: data.attdatnum,
+      attdatnum: data.length > 0 ? data[0].attdatnum : prev.attdatnum,
       files:
-        data.original_name +
-        (data.rowCount > 1 ? " 등 " + String(data.rowCount) + "건" : ""),
+        data.length > 1
+          ? data[0].realnm + " 등 " + String(data.length - 1) + "건"
+          : data.length == 0
+          ? ""
+          : data[0].realnm,
       attdatnum_exists: "Y",
     }));
   };
@@ -1422,12 +1424,8 @@ const App = () => {
     });
     setSelectedState(newSelectedState);
 
-    if (workType == "N") {
-      if (unsavedAttadatnums.attdatnums.length > 0) {
-        setDeletedAttadatnums(unsavedAttadatnums);
-      }
-      setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
-    }
+    setFileList([]);
+    setSavenmList([]);
     setWorkType("U");
   };
 
@@ -1631,7 +1629,53 @@ const App = () => {
     }
   };
 
-  const Save = () => {
+  const uploadFile = async (
+    files: File,
+    type: string,
+    attdatnum? :string,
+    newAttachmentNumber?: string
+  ) => {
+    let data: any;
+
+    const queryParams = new URLSearchParams();
+
+    if (newAttachmentNumber != undefined) {
+      queryParams.append("attachmentNumber", newAttachmentNumber);
+    } else if (information.attdatnum != undefined) {
+      queryParams.append(
+        "attachmentNumber",
+        information.attdatnum == "" ? "" : information.attdatnum
+      );
+    }
+
+    const formid = "%28web%29" + pathname;
+
+    queryParams.append("type", type);
+    queryParams.append("formId", formid);
+
+    const filePara = {
+      attached: "attachment?" + queryParams.toString(),
+      files: files,
+    };
+
+    setLoading(true);
+
+    try {
+      data = await processApi<any>("file-upload", filePara);
+    } catch (error) {
+      data = null;
+    }
+
+    setLoading(false);
+
+    if (data !== null) {
+      return data.attachmentNumber;
+    } else {
+      return data;
+    }
+  };
+
+  const Save = async () => {
     type TRowsArr = {
       row_status: string[];
       devmngseq_s: string[];
@@ -2079,6 +2123,49 @@ const App = () => {
             );
           });
 
+          let newAttachmentNumber = "";
+          const promises = [];
+
+          for (const file of fileList) {
+            // 최초 등록 시, 업로드 후 첨부번호를 가져옴 (다중 업로드 대응)
+            if (information.attdatnum == "" && newAttachmentNumber == "") {
+              newAttachmentNumber = await uploadFile(file, "project", information.attdatnum);
+              const promise = newAttachmentNumber;
+              promises.push(promise);
+              continue;
+            }
+
+            const promise = newAttachmentNumber
+              ? await uploadFile(file, "project", information.attdatnum, newAttachmentNumber)
+              : await uploadFile(file, "project", information.attdatnum);
+            promises.push(promise);
+          }
+
+          const results = await Promise.all(promises);
+
+          // 실패한 파일이 있는지 확인
+          if (results.includes(null)) {
+            alert("파일 업로드에 실패했습니다.");
+          } else {
+            setInformation((prev) => ({
+              ...prev,
+              attdatnum: results[0],
+            }));
+          }
+
+          let data: any;
+          let type = "project";
+          savenmList.map(async (parameter: any) => {
+            try {
+              data = await processApi<any>("file-delete", {
+                type,
+                attached: parameter,
+              });
+            } catch (error) {
+              data = null;
+            }
+          });
+
           setParaData({
             work_type: workType,
             devmngnum: information.devmngnum,
@@ -2112,7 +2199,8 @@ const App = () => {
             pjtperson:
               information.pjtperson == "" ? "" : information.pjtperson.user_id,
             remark: information.remark,
-            attdatnum: information.attdatnum,
+            attdatnum:
+              results[0] == undefined ? information.attdatnum : results[0],
             midchkdt:
               information.midchkdt == null
                 ? ""
@@ -2420,13 +2508,25 @@ const App = () => {
     }
 
     if (data.isSuccess === true) {
-      if (mainDataResult.data.length === 1 && filters.pgNum == 1) {
-        // DB에 저장안된 첨부파일 서버에서 삭제
-        if (unsavedAttadatnums.attdatnums.length > 0) {
-          setDeletedAttadatnums(unsavedAttadatnums);
-        }
+      const findRowIndex = mainDataResult.data.findIndex(
+        (row: any) =>
+          row[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
+      );
 
-        setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
+      if (mainDataResult.data[findRowIndex].attdatnum) {
+        let data2: any;
+        try {
+          data2 = await processApi<any>("attachment-delete", {
+            attached: "attachment?type=project&attachmentNumber=" + mainDataResult.data[findRowIndex].attdatnum + "&id=",
+          });
+        } catch (error) {
+          data2 = null;
+        }
+      }
+
+      if (mainDataResult.data.length === 1 && filters.pgNum == 1) {
+        setFileList([]);
+        setSavenmList([]);
         setFilters((prev) => ({
           ...prev,
           find_row_value: "",
@@ -2436,28 +2536,9 @@ const App = () => {
       } else {
         const isLastDataDeleted =
           mainDataResult.data.length === 1 && filters.pgNum > 1;
-        const findRowIndex = mainDataResult.data.findIndex(
-          (row: any) =>
-            row[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
-        );
 
-        if (mainDataResult.data[findRowIndex].attdatnum) {
-          // DB 저장된 첨부파일
-          setDeletedAttadatnums((prev) => ({
-            type: [...prev.type, "project"],
-            attdatnums: [
-              ...prev.attdatnums,
-              mainDataResult.data[findRowIndex].attdatnum,
-            ],
-          }));
-        }
-
-        // DB에 저장안된 첨부파일 서버에서 삭제
-        if (unsavedAttadatnums.attdatnums.length > 0) {
-          setDeletedAttadatnums(unsavedAttadatnums);
-        }
-
-        setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
+        setFileList([]);
+        setSavenmList([]);
         if (isLastDataDeleted) {
           setFilters((prev) => ({
             ...prev,
@@ -2501,7 +2582,8 @@ const App = () => {
       if (paraData.work_type == "N") {
         setAllTabSelected(0);
       }
-      setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
+      setFileList([]);
+      setSavenmList([]);
       deletedRows = [];
       setParaData({
         work_type: "",
@@ -2566,7 +2648,8 @@ const App = () => {
         is_monitoring: "",
       });
       // unsaved 첨부파일 초기화
-      setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
+      setFileList([]);
+      setSavenmList([]);
       setFilters((prev) => ({
         ...prev,
         find_row_value: data.returnString,
@@ -2925,10 +3008,8 @@ const App = () => {
 
   const handleSelectAllTab = (e: any) => {
     if (workType != "N") {
-      if (unsavedAttadatnums.attdatnums.length > 0) {
-        setDeletedAttadatnums(unsavedAttadatnums);
-      }
-      setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
+      setFileList([]);
+      setSavenmList([]);
       if (e.selected == 1) {
         const selectedRowData = mainDataResult.data.filter(
           (item) =>
@@ -4253,6 +4334,8 @@ const App = () => {
           para={information.attdatnum}
           type={"project"}
           modal={true}
+          fileLists={fileList}
+          savenmLists={savenmList}
         />
       )}
     </>

@@ -4,7 +4,9 @@ import { Window, WindowMoveEvent } from "@progress/kendo-react-dialogs";
 import {
   Grid,
   GridColumn,
+  GridHeaderCellProps,
   GridHeaderSelectionChangeEvent,
+  GridItemChangeEvent,
   GridSelectionChangeEvent,
   getSelectedState,
 } from "@progress/kendo-react-grid";
@@ -20,14 +22,20 @@ import { IAttachmentData, IWindowPosition } from "../../../hooks/interfaces";
 import NumberCell from "../../Cells/NumberCell";
 import CenterCell from "../../Cells/CenterCell";
 import {
+  UseParaPc,
   convertDateToStrWithTime2,
+  convertDateToStrWithTime3,
   extractDownloadFilename,
+  getGridItemChangedData,
 } from "../../CommonFunction";
-import { SELECTED_FIELD } from "../../CommonString";
+import { EDIT_FIELD, SELECTED_FIELD } from "../../CommonString";
 import { useLocation } from "react-router-dom";
 import { TAttachmentType } from "../../../store/types";
-import { isLoading } from "../../../store/atoms";
-import { useSetRecoilState } from "recoil";
+import { isLoading, loginResultState } from "../../../store/atoms";
+import { useRecoilState, useSetRecoilState } from "recoil";
+import CheckBoxCell from "../../Cells/CheckBoxCell";
+import { CellRender, RowRender } from "../../Renderers/Renderers";
+import { Checkbox } from "@progress/kendo-react-inputs";
 
 type permission = {
   upload: boolean;
@@ -38,20 +46,28 @@ type permission = {
 type IKendoWindow = {
   type: TAttachmentType;
   setVisible(arg: boolean): void;
-  setData?(data: object): void;
+  setData?(
+    data: object,
+    fileList?: FileList | any[],
+    savenmList?: string[]
+  ): void;
   para: string;
+  fileLists?: FileList | any[];
+  savenmLists?: string[];
   permission?: permission;
   modal?: boolean;
 };
 
-const DATA_ITEM_KEY = "savenm";
-
+const DATA_ITEM_KEY = "idx";
+let idx = 0;
 const KendoWindow = ({
   type,
   setVisible,
   setData,
   para = "",
   permission,
+  fileLists = [],
+  savenmLists = []
 }: IKendoWindow) => {
   let deviceWidth = window.innerWidth;
   let isMobile = deviceWidth <= 1200;
@@ -61,10 +77,15 @@ const KendoWindow = ({
     width: isMobile == true ? deviceWidth : 1200,
     height: 800,
   });
-
+  const [loginResult] = useRecoilState(loginResultState);
+  const userId = loginResult ? loginResult.userId : "";
+  const username = loginResult ? loginResult.userName : "";
+  const [pc, setPc] = useState("");
+  UseParaPc(setPc);
   const setLoading = useSetRecoilState(isLoading);
   const [attachmentNumber, setAttachmentNumber] = useState(para);
-
+  const [fileList, setFileList] = useState<FileList | any[]>([]);
+  const [savenmList, setSavenmList] = useState<string[]>([]);
   const location = useLocation();
   const pathname = location.pathname.replace("/", "");
 
@@ -81,6 +102,21 @@ const KendoWindow = ({
   };
 
   const onClose = () => {
+    if (setData) {
+      if (fileList) {
+        if (savenmList) {
+          setData(mainDataResult.data, fileList, savenmList);
+        } else {
+          setData(mainDataResult.data, fileList);
+        }
+      } else {
+        if (savenmList) {
+          setData(mainDataResult.data, [], savenmList);
+        } else {
+          setData(mainDataResult.data);
+        }
+      }
+    }
     setVisible(false);
   };
 
@@ -93,41 +129,28 @@ const KendoWindow = ({
     fetchGrid();
   }, [attachmentNumber]);
 
-  const uploadFile = async (files: File, newAttachmentNumber?: string) => {
-    let data: any;
-
-    const queryParams = new URLSearchParams();
-
-    if (attachmentNumber) {
-      queryParams.append("attachmentNumber", attachmentNumber);
-    } else if (newAttachmentNumber) {
-      queryParams.append("attachmentNumber", newAttachmentNumber);
+  useEffect(() => {
+    if(fileLists.length != 0) {
+      for (var i = 0; i < fileLists.length; i++) {
+        const newData = {
+          attdatnum: !attachmentNumber ? "" : attachmentNumber,
+          filesize: fileLists[i].size,
+          realnm: fileLists[i].name,
+          user_name: username,
+          insert_user_id: userId,
+          insert_pc: pc,
+          insert_time: convertDateToStrWithTime3(new Date()),
+          rowstatus: "N",
+          idx: idx++,
+        };
+        setMainDataResult((prev) => ({
+          data: [...prev.data, newData],
+          total: prev.total + 1,
+        }));
+        setFileList(fileLists);
+      }
     }
-
-    queryParams.append("type", type);
-    queryParams.append("formId", "%28web%29" + pathname);
-
-    const filePara = {
-      attached: "attachment?" + queryParams.toString(),
-      files: files,
-    };
-
-    setLoading(true);
-
-    try {
-      data = await processApi<any>("file-upload", filePara);
-    } catch (error) {
-      data = null;
-    }
-
-    setLoading(false);
-
-    if (data !== null) {
-      return data.attachmentNumber;
-    } else {
-      return data;
-    }
-  };
+  }, []);
 
   //그리드 조회
   const fetchGrid = async () => {
@@ -154,14 +177,30 @@ const KendoWindow = ({
       const totalRowCnt = data.tables[0].RowCount;
 
       if (totalRowCnt > 0) {
-        const rows = data.tables[0].Rows;
+        const rows = data.tables[0].Rows.map((item: any) => ({
+          ...item,
+          idx: idx++,
+          rowstatus: "U",
+        }));
 
-        setMainDataResult((prev) => {
-          return {
-            data: [...rows],
-            total: totalRowCnt,
-          };
-        });
+        if(savenmLists.length != 0) {
+          const newData = rows.filter((item: { savenm: string; }) => 
+            savenmLists.includes(item.savenm) != true );
+  
+          setMainDataResult((prev) => ({
+            data: newData,
+            total: newData.length,
+          }));
+          setSavenmList(savenmLists);
+        } else {
+          setMainDataResult((prev) => {
+            return {
+              data: [...prev.data, ...rows],
+              total: totalRowCnt,
+            };
+          });
+  
+        }
 
         result = {
           attdatnum: rows[0].attdatnum,
@@ -183,9 +222,6 @@ const KendoWindow = ({
         };
       }
     }
-    if (setData) {
-      setData(result);
-    }
   };
 
   const excelInput: any = React.useRef();
@@ -196,12 +232,22 @@ const KendoWindow = ({
   };
 
   const downloadFiles = async () => {
-    const parameters = Object.keys(selectedState).filter(
-      (key) => selectedState[key] === true
-    );
+    const parameters = mainDataResult.data.filter((item) => item.chk == true);
 
     if (parameters.length === 0) {
       alert("선택된 자료가 없습니다.");
+      return false;
+    }
+
+    let valid = true;
+    parameters.map((item: any) => {
+      if (item.rowstatus == "N") {
+        valid = false;
+      }
+    });
+
+    if (valid != true) {
+      alert("추가된 행은 다운로드가 불가능합니다.");
       return false;
     }
 
@@ -209,10 +255,10 @@ const KendoWindow = ({
 
     let response: any;
 
-    parameters.forEach(async (parameter) => {
+    parameters.forEach(async (parameter: any) => {
       try {
         response = await processApi<any>("file-download", {
-          attached: parameter,
+          attached: mainDataResult.data[parameter].savenm,
           type,
         });
       } catch (error) {
@@ -248,51 +294,39 @@ const KendoWindow = ({
   };
 
   const deleteFiles = () => {
-    const parameters = Object.keys(selectedState).filter(
-      (key) => selectedState[key] === true
-    );
+    const parameters = mainDataResult.data.filter((item) => item.chk == true);
 
     if (parameters.length === 0) {
       alert("선택된 자료가 없습니다.");
       return false;
     }
 
-    if (!window.confirm("삭제하시겠습니까?")) {
-      return false;
-    }
-    let data: any;
-
-    parameters.forEach(async (parameter) => {
-      try {
-        data = await processApi<any>("file-delete", {
-          type,
-          attached: parameter,
-        });
-      } catch (error) {
-        data = null;
+    let valid = true;
+    parameters.map((item: any) => {
+      if (item.rowstatus == "N") {
+        valid = false;
       }
     });
 
-    if (data !== null) {
-        let result: IAttachmentData = {
-          attdatnum: "null",
-          original_name: "",
-          rowCount: 0,
-        };
-        setMainDataResult((prev) => {
-          return {
-            data: [],
-            total: 0,
-          };
-        });
-
-        if (setData) {
-          setData(result);
-        }
-        onClose();
-    } else {
-      alert("처리 중 오류가 발생하였습니다.");
+    if (valid != true) {
+      alert("추가된 행은 삭제가 불가능합니다.");
+      return false;
     }
+
+    if (!window.confirm("삭제하시겠습니까?")) {
+      return false;
+    }
+
+    parameters.map((item: any) => {
+      setSavenmList((prev) => ([...prev, ...[item.savenm]]));
+    });
+
+    const newData = mainDataResult.data.filter((item) => item.chk != true)
+    
+    setMainDataResult({
+      data: newData,
+      total: newData.length,
+    });
   };
 
   const idGetter = getter(DATA_ITEM_KEY);
@@ -333,37 +367,114 @@ const KendoWindow = ({
   const handleFileUpload = async (files: FileList | null) => {
     if (files === null) return false;
 
-    let newAttachmentNumber = "";
-    const promises = [];
-
-    for (const file of files) {
-      // 최초 등록 시, 업로드 후 첨부번호를 가져옴 (다중 업로드 대응)
-      if (!attachmentNumber && !newAttachmentNumber) {
-        newAttachmentNumber = await uploadFile(file);
-        const promise = newAttachmentNumber;
-        promises.push(promise);
-        continue;
-      }
-
-      const promise = newAttachmentNumber
-        ? await uploadFile(file, newAttachmentNumber)
-        : await uploadFile(file);
-      promises.push(promise);
+    for (var i = 0; i < files.length; i++) {
+      const newData = {
+        attdatnum: !attachmentNumber ? "" : attachmentNumber,
+        filesize: files[i].size,
+        realnm: files[i].name,
+        user_name: username,
+        insert_user_id: userId,
+        insert_pc: pc,
+        insert_time: convertDateToStrWithTime3(new Date()),
+        rowstatus: "N",
+        idx: idx++,
+      };
+      setMainDataResult((prev) => ({
+        data: [...prev.data, newData],
+        total: prev.total + 1,
+      }));
+      setFileList((prev) => [
+        ...prev,
+        ...files
+      ])
     }
+  };
 
-    const results = await Promise.all(promises);
+  const [values2, setValues2] = React.useState<boolean>(false);
+  const CustomCheckBoxCell2 = (props: GridHeaderCellProps) => {
+    const changeCheck = () => {
+      const newData = mainDataResult.data.map((item) => ({
+        ...item,
+        chk: !values2,
+        [EDIT_FIELD]: props.field,
+      }));
+      setValues2(!values2);
+      setMainDataResult((prev) => {
+        return {
+          data: newData,
+          total: prev.total,
+        };
+      });
+    };
 
-    // 실패한 파일이 있는지 확인
-    if (results.includes(null)) {
-      alert("파일 업로드에 실패했습니다.");
-    } else {
-      // 모든 파일이 성공적으로 업로드된 경우
-      if (!attachmentNumber) {
-        setAttachmentNumber(newAttachmentNumber);
-      } else {
-        fetchGrid();
-      }
+    return (
+      <div style={{ textAlign: "center" }}>
+        <Checkbox value={values2} onClick={changeCheck}></Checkbox>
+      </div>
+    );
+  };
+
+  const onMainItemChange = (event: GridItemChangeEvent) => {
+    getGridItemChangedData(
+      event,
+      mainDataResult,
+      setMainDataResult,
+      DATA_ITEM_KEY
+    );
+  };
+
+  const customCellRender = (td: any, props: any) => (
+    <CellRender
+      originalProps={props}
+      td={td}
+      enterEdit={enterEdit}
+      editField={EDIT_FIELD}
+    />
+  );
+
+  const customRowRender = (tr: any, props: any) => (
+    <RowRender
+      originalProps={props}
+      tr={tr}
+      exitEdit={exitEdit}
+      editField={EDIT_FIELD}
+    />
+  );
+
+  const enterEdit = (dataItem: any, field: string) => {
+    if (field == "chk") {
+      const newData = mainDataResult.data.map((item) =>
+        item[DATA_ITEM_KEY] == dataItem[DATA_ITEM_KEY]
+          ? {
+              ...item,
+              [EDIT_FIELD]: field,
+            }
+          : {
+              ...item,
+              [EDIT_FIELD]: undefined,
+            }
+      );
+
+      setMainDataResult((prev) => {
+        return {
+          data: newData,
+          total: prev.total,
+        };
+      });
     }
+  };
+
+  const exitEdit = () => {
+    const newData = mainDataResult.data.map((item: any) => ({
+      ...item,
+      [EDIT_FIELD]: undefined,
+    }));
+    setMainDataResult((prev: { total: any }) => {
+      return {
+        data: newData,
+        total: prev.total,
+      };
+    });
   };
 
   return (
@@ -492,16 +603,17 @@ const KendoWindow = ({
           mode: "multiple",
         }}
         onSelectionChange={onSelectionChange}
-        onHeaderSelectionChange={onHeaderSelectionChange}
+        onItemChange={onMainItemChange}
+        cellRender={customCellRender}
+        rowRender={customRowRender}
+        editField={EDIT_FIELD}
       >
         <GridColumn
-          field={SELECTED_FIELD}
+          field="chk"
+          title=" "
           width="45px"
-          headerSelectionValue={
-            mainDataResult.data.findIndex(
-              (item: any) => !selectedState[idGetter(item)]
-            ) === -1
-          }
+          headerCell={CustomCheckBoxCell2}
+          cell={CheckBoxCell}
         />
         <GridColumn field="realnm" title="파일명" width="600" />
         <GridColumn
