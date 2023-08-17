@@ -698,8 +698,8 @@ const App = () => {
     let data: any;
     setLoading(true);
 
-    const para = { document_id: selectedRow.document_id };
-
+    const para = { id: selectedRow.document_id };
+    
     try {
       data = await processApi<any>("shared_document-delete", para);
     } catch (error: any) {
