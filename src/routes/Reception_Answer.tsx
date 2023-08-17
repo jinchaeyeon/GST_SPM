@@ -10,7 +10,6 @@ import {
   GridContainerWrap,
   GridTitle,
   GridTitleContainer,
-  StatusIcon,
   Title,
   TitleContainer,
 } from "../CommonStyled";
@@ -29,7 +28,6 @@ import {
 } from "@progress/kendo-react-dropdowns";
 import CommonDateRangePicker from "../components/DateRangePicker/CommonDateRangePicker";
 import {
-  DEFAULT_ATTDATNUMS,
   EDIT_FIELD,
   GAP,
   PAGE_SIZE,
@@ -37,10 +35,8 @@ import {
 } from "../components/CommonString";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import {
-  deletedAttadatnumsState,
   isLoading,
   loginResultState,
-  unsavedAttadatnumsState,
 } from "../store/atoms";
 import { useRecoilState, useSetRecoilState } from "recoil";
 import {
@@ -77,12 +73,12 @@ import { CellRender, RowRender } from "../components/Renderers/Renderers";
 import CheckBoxReadOnlyCell from "../components/Cells/CheckBoxReadOnlyCell";
 import ComboBoxCell from "../components/Cells/ComboBoxCell";
 import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
-import { IAttachmentData } from "../hooks/interfaces";
 import RichEditor from "../components/RichEditor";
 import AnswerWindow from "../components/Windows/CommonWindows/AnswerWindow";
 import QuestionWindow from "../components/Windows/CommonWindows/QuestionWindow";
 import TaskOrderListWindow from "../components/Windows/CommonWindows/TaskOrderListWindow";
 import StatusComboBoxCell from "../components/Cells/StatusComboBoxCell";
+import { useLocation } from "react-router-dom";
 
 const valueCodeQueryStr = `select sub_code, code_name
 from comCodeMaster
@@ -114,8 +110,12 @@ const ValueCodeContext = createContext<{
 const FilesContext = createContext<{
   attdatnum: string;
   attach_exists: string;
+  fileList: FileList | any[];
+  savenmList: string[];
   setAttdatnum: (d: any) => void;
   setAttach_exists: (d: any) => void;
+  setFileList: (d: any) => void;
+  setSavenmList: (d: any) => void;
   mainDataState: State;
   setMainDataState: (d: any) => void;
   // fetchGrid: (n: number) => any;
@@ -123,7 +123,7 @@ const FilesContext = createContext<{
 
 const StatusCell = (props: GridCellProps) => {
   const { statusListData } = useContext(StatusContext);
-  
+
   return statusListData ? (
     <StatusComboBoxCell
       columns={dataTypeColumns}
@@ -173,7 +173,13 @@ const FilesCell = (props: GridCellProps) => {
     onChange,
     className = "",
   } = props;
-  const { setAttdatnum, setAttach_exists } = useContext(FilesContext);
+  const {
+    setAttdatnum,
+    setAttach_exists,
+    setFileList,
+    setSavenmList,
+    attdatnum,
+  } = useContext(FilesContext);
 
   const [attachmentsWindowVisible, setAttachmentsWindowVisible] =
     useState<boolean>(false);
@@ -182,9 +188,25 @@ const FilesCell = (props: GridCellProps) => {
     setAttachmentsWindowVisible(true);
   };
 
-  const getAttachmentsData = (data: IAttachmentData) => {
-    setAttdatnum(data.attdatnum);
-    if (data.rowCount == 0) {
+  const getAttachmentsData = (
+    data: any,
+    fileList?: FileList | any[],
+    savenmList?: string[]
+  ) => {
+    setAttdatnum(data.length > 0 ? data[0].attdatnum : attdatnum);
+    if (fileList) {
+      setFileList(fileList);
+    } else {
+      setFileList([]);
+    }
+
+    if (savenmList) {
+      setSavenmList(savenmList);
+    } else {
+      setSavenmList([]);
+    }
+
+    if (data.length == 0) {
       setAttach_exists("N");
     } else {
       setAttach_exists("Y");
@@ -223,6 +245,8 @@ const FilesCell = (props: GridCellProps) => {
           permission={{ upload: true, download: true, delete: true }}
           type={"receipt"}
           modal={true}
+          fileLists={dataItem.fileList}
+          savenmLists={dataItem.savenmList}
         />
       )}
     </>
@@ -285,12 +309,6 @@ const App = () => {
   // 서버 업로드는 되었으나 DB에는 저장안된 첨부파일 리스트
   let deviceWidth = window.innerWidth;
   let isMobile = deviceWidth <= 1200;
-  const [unsavedAttadatnums, setUnsavedAttadatnums] = useRecoilState(
-    unsavedAttadatnumsState
-  );
-
-  // 삭제할 첨부파일 리스트를 담는 함수
-  const setDeletedAttadatnums = useSetRecoilState(deletedAttadatnumsState);
 
   const setLoading = useSetRecoilState(isLoading);
   const [loginResult] = useRecoilState(loginResultState);
@@ -302,6 +320,8 @@ const App = () => {
   let gridRef: any = useRef(null);
   const initialPageState = { skip: 0, take: PAGE_SIZE };
   const [page, setPage] = useState(initialPageState);
+  const location = useLocation();
+  const pathname = location.pathname.replace("/", "");
   const pageChange = (event: GridPageChangeEvent) => {
     const { page } = event;
 
@@ -350,10 +370,8 @@ const App = () => {
     ) {
       alert("필수항목을 입력해주세요");
     } else {
-      if (unsavedAttadatnums.attdatnums.length > 0) {
-        setDeletedAttadatnums(unsavedAttadatnums);
-      }
-      setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
+      setFileList([]);
+      setSavenmList([]);
       setPage(initialPageState); // 페이지 초기화
       setFilters((prev) => ({
         ...prev,
@@ -899,44 +917,42 @@ const App = () => {
       });
     }
   };
+  const [fileList, setFileList] = useState<FileList | any[]>([]);
+  const [savenmList, setSavenmList] = useState<string[]>([]);
   const [attdatnum, setAttdatnum] = useState<string>("");
   const [attach_exists, setAttach_exists] = useState<string>("");
   useEffect(() => {
-    if (attdatnum && !unsavedAttadatnums.attdatnums.includes(attdatnum)) {
-      setUnsavedAttadatnums((prev) => ({
-        type: [...prev.type, "receipt"],
-        attdatnums: [...prev.attdatnums, ...[attdatnum]],
-      }));
-    }
-    const newData = mainDataResult.data.map((item) =>
-      item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
-        ? {
-            ...item,
-            rowstatus: item.rowstatus == "N" ? "N" : "U",
-            reception_attach_number: attach_exists == "N" ? "" : attdatnum,
-            reception_attach_exists: attach_exists,
-          }
-        : {
-            ...item,
-          }
-    );
+    if (fileList.length > 0 || savenmList.length > 0) {
+      const newData = mainDataResult.data.map((item) =>
+        item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
+          ? {
+              ...item,
+              rowstatus: item.rowstatus == "N" ? "N" : "U",
+              reception_attach_number: attdatnum,
+              reception_attach_exists: attach_exists,
+              fileList: fileList,
+              savenmList: savenmList,
+            }
+          : {
+              ...item,
+            }
+      );
 
-    if (attach_exists == "N") {
-      setAttdatnum("");
+      setMainDataResult((prev) => {
+        return {
+          data: newData,
+          total: prev.total,
+        };
+      });
+      setTempResult((prev) => {
+        return {
+          data: newData,
+          total: prev.total,
+        };
+      });
+      setFileList([]);
+      setSavenmList([]);
     }
-
-    setMainDataResult((prev) => {
-      return {
-        data: newData,
-        total: prev.total,
-      };
-    });
-    setTempResult((prev) => {
-      return {
-        data: newData,
-        total: prev.total,
-      };
-    });
   }, [attdatnum, attach_exists]);
 
   const docEditorRef = useRef<TEditorHandle>(null);
@@ -1084,6 +1100,49 @@ const App = () => {
     setQuestionWindowVisible2(true);
   };
 
+  const uploadFile = async (
+    files: File,
+    type: string,
+    attdatnum?: string,
+    newAttachmentNumber?: string
+  ) => {
+    let data: any;
+
+    const queryParams = new URLSearchParams();
+
+    if (newAttachmentNumber != undefined) {
+      queryParams.append("attachmentNumber", newAttachmentNumber);
+    } else if (attdatnum != undefined) {
+      queryParams.append("attachmentNumber", attdatnum == "" ? "" : attdatnum);
+    }
+
+    const formid = "%28web%29" + pathname;
+
+    queryParams.append("type", type);
+    queryParams.append("formId", formid);
+
+    const filePara = {
+      attached: "attachment?" + queryParams.toString(),
+      files: files,
+    };
+
+    setLoading(true);
+
+    try {
+      data = await processApi<any>("file-upload", filePara);
+    } catch (error) {
+      data = null;
+    }
+
+    setLoading(false);
+
+    if (data !== null) {
+      return data.attachmentNumber;
+    } else {
+      return data;
+    }
+  };
+
   const onConfirmClick = async () => {
     if (mainDataResult.total == 0) {
       alert("데이터가 없습니다.");
@@ -1167,7 +1226,6 @@ const App = () => {
           be_finished_date,
           completion_date,
           status,
-          reception_attach_number,
           ref_number,
           contents,
           attdatnum,
@@ -1191,11 +1249,69 @@ const App = () => {
         rowsArr.be_finished_date_s.push(be_finished_date);
         rowsArr.completion_date_s.push(completion_date);
         rowsArr.status_s.push(status);
-        rowsArr.attach_number_s.push(reception_attach_number);
         rowsArr.ref_number_s.push(ref_number);
         rowsArr.contents_s.push(contents);
         rowsArr.attdatnum_s.push(attdatnum);
       });
+      setLoading(true);
+      for (const item of dataItem) {
+        let newAttachmentNumber = "";
+
+        const promises = [];
+        if(item.fileList != undefined) {
+          for (const file of item.fileList) {
+            // 최초 등록 시, 업로드 후 첨부번호를 가져옴 (다중 업로드 대응)
+            if (item.reception_attach_number == "" && newAttachmentNumber == "") {
+              newAttachmentNumber = await uploadFile(
+                file,
+                "receipt",
+                item.reception_attach_number
+              );
+              const promise = newAttachmentNumber;
+              promises.push(promise);
+              continue;
+            }
+
+            const promise = newAttachmentNumber
+              ? await uploadFile(
+                  file,
+                  "receipt",
+                  item.reception_attach_number,
+                  newAttachmentNumber
+                )
+              : await uploadFile(file, "receipt", item.reception_attach_number);
+            promises.push(promise);
+          }
+
+          const results = await Promise.all(promises);
+
+          // 실패한 파일이 있는지 확인
+          if (results.includes(null)) {
+            alert("파일 업로드에 실패했습니다.");
+          } else {
+            rowsArr.attach_number_s.push(
+              results[0] == undefined ? item.reception_attach_number : results[0]
+            );
+          }
+
+          let datas: any;
+          let type = "receipt";
+          item.savenmList.map(async (parameter: any) => {
+            try {
+              datas = await processApi<any>("file-delete", {
+                type,
+                attached: parameter,
+              });
+            } catch (error) {
+              datas = null;
+            }
+          });
+
+          if (datas != null) {
+            rowsArr.attach_number_s.push(item.reception_attach_number);
+          }
+        }
+      }
 
       let data: any;
       setLoading(true);
@@ -1240,7 +1356,8 @@ const App = () => {
         data = null;
       }
       if (data != null) {
-        setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
+        setFileList([]);
+        setSavenmList([]);
         setFilters((prev) => ({
           ...prev,
           find_row_value: Object.getOwnPropertyNames(selectedState)[0],
@@ -1319,23 +1436,45 @@ const App = () => {
         data = null;
       }
       if (data != null) {
-        if (datas.attdatnum) {
-          // DB 저장된 첨부파일
-          setDeletedAttadatnums((prev) => ({
-            type: [...prev.type, "question"],
-            attdatnums: [...prev.attdatnums, datas.attdatnum],
-          }));
+        if(datas.reception_type == "Q") {
+          let data2: any;
+          try {
+            data2 = await processApi<any>("attachment-delete", {
+              attached: "attachment?type=receipt&attachmentNumber=" + datas.reception_attach_number + "&id=",
+            });
+          } catch (error) {
+            data2 = null;
+          }
+        } else {
+          let data2: any;
+          try {
+            data2 = await processApi<any>("attachment-delete", {
+              attached: "attachment?type=receipt&attachmentNumber=" + datas.reception_attach_number + "&id=",
+            });
+          } catch (error) {
+            data2 = null;
+          }
+  
+          let data3: any;
+          try {
+            data3 = await processApi<any>("attachment-delete", {
+              attached: "attachment?type=question&attachmentNumber=" + datas.attdatnum + "&id=",
+            });
+          } catch (error) {
+            data3 = null;
+          }
+  
+         let data4: any;
+          try {
+            data4 = await processApi<any>("attachment-delete", {
+              attached: "attachment?type=answer&attachmentNumber=" + datas.answer_attdatnum + "&id=",
+            });
+          } catch (error) {
+            data4 = null;
+          }
+
         }
-        if (unsavedAttadatnums.attdatnums.length > 0) {
-          // DB 저장안된 첨부파일
-          setDeletedAttadatnums(unsavedAttadatnums);
-        } else if (datas.reception_attach_number) {
-          setDeletedAttadatnums((prev) => ({
-            type: [...prev.type, "receipt"],
-            attdatnums: [...prev.attdatnums, datas.reception_attach_number],
-          }));
-        }
-        setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
+      
         if (mainDataResult.data.length === 1 && filters.pgNum == 1) {
           setFilters((prev) => ({
             ...prev,
@@ -1588,8 +1727,12 @@ const App = () => {
                     value={{
                       attdatnum,
                       attach_exists,
+                      fileList,
+                      savenmList,
                       setAttdatnum,
                       setAttach_exists,
+                      setFileList,
+                      setSavenmList,
                       mainDataState,
                       setMainDataState,
                       // fetchGrid,

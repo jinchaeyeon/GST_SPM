@@ -67,7 +67,6 @@ import {
 } from "../components/CommonString";
 import { useApi } from "../hooks/api";
 import {
-  deletedAttadatnumsState,
   isLoading,
   loginResultState,
 } from "../store/atoms";
@@ -1629,6 +1628,7 @@ const App = () => {
     }
   };
 
+
   const uploadFile = async (
     files: File,
     type: string,
@@ -1641,10 +1641,10 @@ const App = () => {
 
     if (newAttachmentNumber != undefined) {
       queryParams.append("attachmentNumber", newAttachmentNumber);
-    } else if (information.attdatnum != undefined) {
+    } else if (attdatnum != undefined) {
       queryParams.append(
         "attachmentNumber",
-        information.attdatnum == "" ? "" : information.attdatnum
+        attdatnum == "" ? "" : attdatnum
       );
     }
 

@@ -13,10 +13,7 @@ import {
   Title,
   TitleContainer,
 } from "../CommonStyled";
-import {
-  isLoading,
-  loginResultState,
-} from "../store/atoms";
+import { isLoading, loginResultState } from "../store/atoms";
 import { useRecoilState, useSetRecoilState } from "recoil";
 import {
   UseParaPc,
@@ -332,8 +329,8 @@ const FilesCell2 = (props: GridCellProps) => {
           permission={{ upload: true, download: true, delete: true }}
           type={"record"}
           modal={true}
-          fileLists={fileList2}
-          savenmLists={savenmList2}
+          fileLists={dataItem.fileList}
+          savenmLists={dataItem.savenmList}
         />
       )}
     </>
@@ -1533,6 +1530,7 @@ const App = () => {
     }
     setLoading(false);
   };
+
   const uploadFile = async (
     files: File,
     type: string,
@@ -1608,6 +1606,8 @@ const App = () => {
           total: prev.total,
         };
       });
+      setFileList2([]);
+      setSavenmList2([]);
     }
   }, [attdatnum2, files2]);
 
@@ -1735,76 +1735,88 @@ const App = () => {
             is_finished == true ? "Y" : is_finished == false ? "N" : is_finished
           );
         });
-       setLoading(true);
+        setLoading(true);
         for (const item of dataItem) {
           let newAttachmentNumber = "";
-          
+
           const promises = [];
-          for (const file of item.fileList) {
-            // 최초 등록 시, 업로드 후 첨부번호를 가져옴 (다중 업로드 대응)
-            if (item.attdatnum == "" && newAttachmentNumber == "") {
-              newAttachmentNumber = await uploadFile(file, "record", item.attdatnum);
-              const promise = newAttachmentNumber;
+          if (item.fileList != undefined) {
+            for (const file of item.fileList) {
+              // 최초 등록 시, 업로드 후 첨부번호를 가져옴 (다중 업로드 대응)
+              if (item.attdatnum == "" && newAttachmentNumber == "") {
+                newAttachmentNumber = await uploadFile(
+                  file,
+                  "record",
+                  item.attdatnum
+                );
+                const promise = newAttachmentNumber;
+                promises.push(promise);
+                continue;
+              }
+
+              const promise = newAttachmentNumber
+                ? await uploadFile(
+                    file,
+                    "record",
+                    item.attdatnum,
+                    newAttachmentNumber
+                  )
+                : await uploadFile(file, "record", item.attdatnum);
               promises.push(promise);
-              continue;
             }
-  
-            const promise = newAttachmentNumber
-              ? await uploadFile(file, "record", item.attdatnum, newAttachmentNumber)
-              : await uploadFile(file, "record", item.attdatnum);
-            promises.push(promise);
-          }
-  
-          const results = await Promise.all(promises);
-  
-          // 실패한 파일이 있는지 확인
-          if (results.includes(null)) {
-            alert("파일 업로드에 실패했습니다.");
-          } else {
-            rowsArr.attdatnum_s.push( results[0] == undefined ? item.attdatnum : results[0])
-          }
 
-          let datas: any;
-          let type = "record";
-          item.savenmList.map(async (parameter: any) => {
-            try {
-              datas = await processApi<any>("file-delete", {
-                type,
-                attached: parameter,
-              });
-            } catch (error) {
-              datas = null;
+            const results = await Promise.all(promises);
+
+            // 실패한 파일이 있는지 확인
+            if (results.includes(null)) {
+              alert("파일 업로드에 실패했습니다.");
+            } else {
+              rowsArr.attdatnum_s.push(
+                results[0] == undefined ? item.attdatnum : results[0]
+              );
             }
-          });
 
-          if(datas != null) {
-            rowsArr.attdatnum_s.push(item.attdatnum)
+            let datas: any;
+            let type = "record";
+            item.savenmList.map(async (parameter: any) => {
+              try {
+                datas = await processApi<any>("file-delete", {
+                  type,
+                  attached: parameter,
+                });
+              } catch (error) {
+                datas = null;
+              }
+            });
+
+            if (datas != null) {
+              rowsArr.attdatnum_s.push(item.attdatnum);
+            }
           }
         }
-   
+
         for (const item of deletedRows) {
-          let datas: any;
-          let type = "record";
-          item.savenmList.map(async (parameter: any) => {
-            try {
-              datas = await processApi<any>("file-delete", {
-                type,
-                attached: parameter,
-              });
-            } catch (error) {
-              datas = null;
-            }
-          });
+          let data2: any;
+          try {
+            data2 = await processApi<any>("attachment-delete", {
+              attached:
+                "attachment?type=record&attachmentNumber=" +
+                item.attdatnum +
+                "&id=",
+            });
+          } catch (error) {
+            data2 = null;
+          }
 
-          if(datas != null) {
-            rowsArr.attdatnum_s.push(item.attdatnum)
+          if (data2 != null) {
+            rowsArr.attdatnum_s.push(item.attdatnum);
           }
         }
-   
+
         const data = mainDataResult.data.filter(
           (item) =>
             item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
-        )[0]; 
+        )[0];
 
         setParaData({
           work_type: "SAVE",

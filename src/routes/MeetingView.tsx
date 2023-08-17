@@ -346,7 +346,7 @@ const App = () => {
 
     setLoading(false);
   };
-  console.log(detailData)
+
   useEffect(() => {
     if (filters.isFetch) {
       const _ = require("lodash");

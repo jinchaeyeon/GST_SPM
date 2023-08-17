@@ -347,23 +347,6 @@ const KendoWindow = ({
     [selectedState]
   );
 
-  const onHeaderSelectionChange = React.useCallback(
-    (event: GridHeaderSelectionChangeEvent) => {
-      const checkboxElement: any = event.syntheticEvent.target;
-      const checked = checkboxElement.checked;
-      const newSelectedState: {
-        [id: string]: boolean | number[];
-      } = {};
-
-      event.dataItems.forEach((item) => {
-        newSelectedState[idGetter(item)] = checked;
-      });
-
-      setSelectedState(newSelectedState);
-    },
-    []
-  );
-
   const handleFileUpload = async (files: FileList | null) => {
     if (files === null) return false;
 

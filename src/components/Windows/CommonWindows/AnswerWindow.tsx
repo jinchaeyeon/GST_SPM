@@ -32,6 +32,7 @@ import RichEditor from "../../RichEditor";
 import { DEFAULT_ATTDATNUMS, PAGE_SIZE } from "../../CommonString";
 import PopUpAttachmentsWindow from "./PopUpAttachmentsWindow";
 import { bytesToBase64 } from "byte-base64";
+import { useLocation } from "react-router-dom";
 
 interface IAnswer {
   reception_document_id: string;
@@ -51,12 +52,11 @@ const SignWindow = ({ setVisible, para, reload }: IWindow) => {
   const userId = loginResult ? loginResult.userId : "";
   const [pc, setPc] = useState("");
   UseParaPc(setPc);
-  // 서버 업로드는 되었으나 DB에는 저장안된 첨부파일 리스트
-  const [unsavedAttadatnums, setUnsavedAttadatnums] = useRecoilState(
-    unsavedAttadatnumsState
-  );
-  // 삭제할 첨부파일 리스트를 담는 함수
-  const setDeletedAttadatnums = useSetRecoilState(deletedAttadatnumsState);
+
+  const [fileList, setFileList] = useState<FileList | any[]>([]);
+  const [savenmList, setSavenmList] = useState<string[]>([]);
+  const location = useLocation();
+  const pathname = location.pathname.replace("/", "");
 
   const [position, setPosition] = useState<IWindowPosition>({
     left: 300,
@@ -78,12 +78,9 @@ const SignWindow = ({ setVisible, para, reload }: IWindow) => {
   };
 
   const onClose = () => {
-    console.log(unsavedAttadatnums);
-    if (unsavedAttadatnums.attdatnums.length > 0) {
-      setDeletedAttadatnums(unsavedAttadatnums);
-    }
-    setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
     reload();
+    setFileList([]);
+    setSavenmList([]);
     setVisible(false);
   };
 
@@ -226,19 +223,32 @@ const SignWindow = ({ setVisible, para, reload }: IWindow) => {
     setAttachmentsWindowVisible(true);
   };
 
-  const getAttachmentsData = (data: IAttachmentData) => {
-    if (!Information.attdatnum) {
-      setUnsavedAttadatnums((prev) => ({
-        type: [...prev.type, "answer"],
-        attdatnums: [...prev.attdatnums, ...[data.attdatnum]],
-      }));
+  const getAttachmentsData = (
+    data: any,
+    fileList?: FileList | any[],
+    savenmList?: string[]
+  ) => {
+    if (fileList) {
+      setFileList(fileList);
+    } else {
+      setFileList([]);
     }
+
+    if (savenmList) {
+      setSavenmList(savenmList);
+    } else {
+      setSavenmList([]);
+    }
+
     setInformation((prev) => ({
       ...prev,
-      answer_attdatnum: data.attdatnum,
+      answer_attdatnum: data.length > 0 ? data[0].attdatnum : prev.answer_attdatnum,
       answer_files:
-        data.original_name +
-        (data.rowCount > 1 ? " 등 " + String(data.rowCount) + "건" : ""),
+        data.length > 1
+          ? data[0].realnm + " 등 " + String(data.length - 1) + "건"
+          : data.length == 0
+          ? ""
+          : data[0].realnm,
     }));
   };
 
@@ -286,6 +296,12 @@ const SignWindow = ({ setVisible, para, reload }: IWindow) => {
   });
 
   const onSave = async (workType: string) => {
+    if(workType == "D") {
+      if (!window.confirm("삭제하시겠습니까?")) {
+        return false;
+      }
+    }
+    
     let data2: any;
     const parameters: Iparameters = {
       procedureName: "pw6_sel_answers",
@@ -315,7 +331,50 @@ const SignWindow = ({ setVisible, para, reload }: IWindow) => {
     const bytes = require("utf8-bytes");
     const convertedEditorContent = bytesToBase64(bytes(editorContent)); //html
 
+    let data3: any;
+
+    let newAttachmentNumber = "";
+    const promises = [];
+
+    for (const file of fileList) {
+      // 최초 등록 시, 업로드 후 첨부번호를 가져옴 (다중 업로드 대응)
+      if (Information.answer_attdatnum == "" && newAttachmentNumber == "") {
+        newAttachmentNumber = await uploadFile(file, "answer", Information.answer_attdatnum);
+        const promise = newAttachmentNumber;
+        promises.push(promise);
+        continue;
+      }
+
+      const promise = newAttachmentNumber
+        ? await uploadFile(file, "answer", Information.answer_attdatnum, newAttachmentNumber)
+        : await uploadFile(file, "answer", Information.answer_attdatnum);
+      promises.push(promise);
+    }
+
+    const results = await Promise.all(promises);
+
+    // 실패한 파일이 있는지 확인
+    if (results.includes(null)) {
+      alert("파일 업로드에 실패했습니다.");
+    } else {
+      setInformation((prev) => ({
+        ...prev,
+        attdatnum: results[0],
+      }));
+    }
+
     let data: any;
+    let type = "answer";
+    savenmList.map(async (parameter: any) => {
+      try {
+        data = await processApi<any>("file-delete", {
+          type,
+          attached: parameter,
+        });
+      } catch (error) {
+        data = null;
+      }
+    });
 
     //추가, 수정 프로시저 파라미터
     const paras = {
@@ -335,7 +394,7 @@ const SignWindow = ({ setVisible, para, reload }: IWindow) => {
         "@p_document_id": Information.answer_document_id,
         "@p_ref_document_id": para,
         "@p_contents": textContent,
-        "@p_attdatnum": Information.answer_attdatnum,
+        "@p_attdatnum":  results[0] == undefined ? Information.answer_attdatnum : results[0],
         "@p_is_finish":
           Information.is_finish == undefined
             ? "N"
@@ -350,22 +409,70 @@ const SignWindow = ({ setVisible, para, reload }: IWindow) => {
     };
 
     try {
-      data = await processApi<any>("answer", paras);
+      data3 = await processApi<any>("answer", paras);
+    } catch (error) {
+      data3 = null;
+    }
+
+    if (data3 != null) {
+      if(workType == "D") {
+        let data2: any;
+        try {
+          data2 = await processApi<any>("attachment-delete", {
+            attached: "attachment?type=answer&attachmentNumber=" + Information.answer_attdatnum + "&id=",
+          });
+        } catch (error) {
+          data2 = null;
+        }
+      }
+      reload();
+      setVisible(false);
+    }
+  };
+
+  const uploadFile = async (
+    files: File,
+    type: string,
+    attdatnum? :string,
+    newAttachmentNumber?: string
+  ) => {
+    let data: any;
+
+    const queryParams = new URLSearchParams();
+
+    if (newAttachmentNumber != undefined) {
+      queryParams.append("attachmentNumber", newAttachmentNumber);
+    } else if (attdatnum != undefined) {
+      queryParams.append(
+        "attachmentNumber",
+        attdatnum == "" ? "" : attdatnum
+      );
+    }
+
+    const formid = "%28web%29" + pathname;
+
+    queryParams.append("type", type);
+    queryParams.append("formId", formid);
+
+    const filePara = {
+      attached: "attachment?" + queryParams.toString(),
+      files: files,
+    };
+
+    setLoading(true);
+
+    try {
+      data = await processApi<any>("file-upload", filePara);
     } catch (error) {
       data = null;
     }
 
-    if (data != null) {
-      // unsaved 첨부파일 초기화
-      if (workType == "D") {
-        setDeletedAttadatnums((prev) => ({
-          type: [...prev.type, "answer"],
-          attdatnums: [...prev.attdatnums, Information.answer_attdatnum],
-        }));
-      }
-      setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
-      reload();
-      setVisible(false);
+    setLoading(false);
+
+    if (data !== null) {
+      return data.attachmentNumber;
+    } else {
+      return data;
     }
   };
 
@@ -582,6 +689,8 @@ const SignWindow = ({ setVisible, para, reload }: IWindow) => {
           para={Information != undefined ? Information.answer_attdatnum : ""}
           permission={{ upload: true, download: true, delete: true }}
           type={"answer"}
+          fileLists={fileList}
+          savenmLists={savenmList}
         />
       )}
     </>

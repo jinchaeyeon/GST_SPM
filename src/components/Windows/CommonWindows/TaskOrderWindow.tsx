@@ -22,7 +22,7 @@ import {
   GridTitleContainer,
 } from "../../../CommonStyled";
 import { Button } from "@progress/kendo-react-buttons";
-import { IAttachmentData, IWindowPosition } from "../../../hooks/interfaces";
+import { IWindowPosition } from "../../../hooks/interfaces";
 import {
   UseParaPc,
   convertDateToStr,
@@ -30,16 +30,13 @@ import {
   getGridItemChangedData,
 } from "../../CommonFunction";
 import {
-  DEFAULT_ATTDATNUMS,
   EDIT_FIELD,
   SELECTED_FIELD,
 } from "../../CommonString";
 import { useRecoilState, useSetRecoilState } from "recoil";
 import {
-  deletedAttadatnumsState,
   isLoading,
   loginResultState,
-  unsavedAttadatnumsState,
 } from "../../../store/atoms";
 import { CellRender, RowRender } from "../../Renderers/Renderers";
 import { Iparameters, TEditorHandle } from "../../../store/types";
@@ -57,6 +54,7 @@ import {
 import PopUpAttachmentsWindow from "./PopUpAttachmentsWindow";
 import CheckBoxReadOnlyCell from "../../Cells/CheckBoxReadOnlyCell";
 import ErrorWindow from "./ErrorWindow";
+import { useLocation } from "react-router-dom";
 
 type IKendoWindow = {
   setVisible(t: boolean): void;
@@ -149,8 +147,12 @@ const WorkTypeContext = createContext<{
 export const FilesContext = createContext<{
   attdatnum: string;
   attach_exists: string;
+  fileList: FileList | any[];
+  savenmList: string[];
   setAttdatnum: (d: any) => void;
   setAttach_exists: (d: any) => void;
+  setFileList: (d: any) => void;
+  setSavenmList: (d: any) => void;
   mainDataState: State;
   setMainDataState: (d: any) => void;
   // fetchGrid: (n: number) => any;
@@ -202,7 +204,13 @@ const FilesCell = (props: GridCellProps) => {
     onChange,
     className = "",
   } = props;
-  const { setAttdatnum, setAttach_exists } = useContext(FilesContext);
+  const {
+    setAttdatnum,
+    setAttach_exists,
+    setFileList,
+    setSavenmList,
+    attdatnum,
+  } = useContext(FilesContext);
   let isInEdit = field === dataItem.inEdit;
   const value = field && dataItem[field] ? dataItem[field] : "";
 
@@ -237,9 +245,25 @@ const FilesCell = (props: GridCellProps) => {
     </td>
   );
 
-  const getAttachmentsData = (data: IAttachmentData) => {
-    setAttdatnum(data.attdatnum);
-    if (data.rowCount == 0) {
+  const getAttachmentsData = (
+    data: any,
+    fileList?: FileList | any[],
+    savenmList?: string[]
+  ) => {
+    setAttdatnum(data.length > 0 ? data[0].attdatnum : attdatnum);
+    if (fileList) {
+      setFileList(fileList);
+    } else {
+      setFileList([]);
+    }
+
+    if (savenmList) {
+      setSavenmList(savenmList);
+    } else {
+      setSavenmList([]);
+    }
+
+    if (data.length == 0) {
       setAttach_exists("N");
     } else {
       setAttach_exists("Y");
@@ -258,6 +282,8 @@ const FilesCell = (props: GridCellProps) => {
           para={dataItem.attdatnum}
           permission={{ upload: true, download: true, delete: true }}
           type={"task"}
+          fileLists={dataItem.fileList}
+          savenmLists={dataItem.savenmList}
         />
       )}
     </>
@@ -386,13 +412,6 @@ const KendoWindow = ({
     );
   };
 
-  // 서버 업로드는 되었으나 DB에는 저장안된 첨부파일 리스트
-  const [unsavedAttadatnums, setUnsavedAttadatnums] = useRecoilState(
-    unsavedAttadatnumsState
-  );
-  // 삭제할 첨부파일 리스트를 담는 함수
-  const setDeletedAttadatnums = useSetRecoilState(deletedAttadatnumsState);
-
   const setLoading = useSetRecoilState(isLoading);
 
   const handleMove = (event: WindowMoveEvent) => {
@@ -409,24 +428,28 @@ const KendoWindow = ({
 
   const removeHTML = () => {
     setLoading(true);
-    mainDataResult.data.map((item) => {
-      localStorage.removeItem(item[DATA_ITEM_KEY]);
-      localStorage.removeItem(item[DATA_ITEM_KEY] + "key");
-    });
+    for (let key of Object.keys(localStorage)) {
+      if (
+        key != "passwordExpirationInfo" &&
+        key != "accessToken" &&
+        key != "loginResult" &&
+        key != "refreshToken"
+      ) {
+        localStorage.removeItem(key);
+      }
+    }
     setLoading(false);
   };
 
   const onClose = () => {
     removeHTML();
-    if (unsavedAttadatnums.attdatnums.length > 0) {
-      setDeletedAttadatnums(unsavedAttadatnums);
-    }
-    setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
-
+    setFileList([]);
+    setSavenmList([]);
     setVisible(false);
   };
   const processApi = useApi();
-
+  const location = useLocation();
+  const pathname = location.pathname.replace("/", "");
   const [mainDataState, setMainDataState] = useState<State>({
     sort: [],
   });
@@ -899,7 +922,8 @@ const KendoWindow = ({
       });
     }
   };
-
+  const [fileList, setFileList] = useState<FileList | any[]>([]);
+  const [savenmList, setSavenmList] = useState<string[]>([]);
   const [attdatnum, setAttdatnum] = useState<string>("");
   const [attach_exists, setAttach_exists] = useState<string>("");
   const [errorWindowVisible, setErrorWindowVisible] = useState<boolean>(false);
@@ -907,41 +931,38 @@ const KendoWindow = ({
     setErrorWindowVisible(true);
   };
   useEffect(() => {
-    if (attdatnum && !unsavedAttadatnums.attdatnums.includes(attdatnum)) {
-      setUnsavedAttadatnums((prev) => ({
-        type: [...prev.type, "task"],
-        attdatnums: [...prev.attdatnums, ...[attdatnum]],
-      }));
-    }
-    const newData = mainDataResult.data.map((item) =>
-      item[DATA_ITEM_KEY] ==
-      parseInt(Object.getOwnPropertyNames(selectedState)[0])
-        ? {
-            ...item,
-            rowstatus: item.rowstatus == "N" ? "N" : "U",
-            attdatnum: attach_exists == "N" ? "" : attdatnum,
-            attach_exists: attach_exists,
-          }
-        : {
-            ...item,
-          }
-    );
+    if (fileList.length > 0 || savenmList.length > 0) {
+      const newData = mainDataResult.data.map((item) =>
+        item[DATA_ITEM_KEY] ==
+        parseInt(Object.getOwnPropertyNames(selectedState)[0])
+          ? {
+              ...item,
+              rowstatus: item.rowstatus == "N" ? "N" : "U",
+              attdatnum: attdatnum,
+              attach_exists: attach_exists,
+              fileList: fileList,
+              savenmList: savenmList,
+            }
+          : {
+              ...item,
+            }
+      );
 
-    if (attach_exists == "N") {
-      setAttdatnum("");
+      setMainDataResult((prev) => {
+        return {
+          data: newData,
+          total: prev.total,
+        };
+      });
+      setTempResult((prev) => {
+        return {
+          data: newData,
+          total: prev.total,
+        };
+      });
+      setFileList([]);
+      setSavenmList([]);
     }
-    setMainDataResult((prev) => {
-      return {
-        data: newData,
-        total: prev.total,
-      };
-    });
-    setTempResult((prev) => {
-      return {
-        data: newData,
-        total: prev.total,
-      };
-    });
   }, [attdatnum, attach_exists]);
 
   const onAddClick = () => {
@@ -1105,7 +1126,7 @@ const KendoWindow = ({
         item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
           ? {
               ...item,
-              rowstatus: item.rowstatus == "N" ? "N" : "U",
+              rowstatus: item.rowstatus == "N" ? "N" : item.rowstatus == "U" ? "U" : "",
             }
           : {
               ...item,
@@ -1224,7 +1245,6 @@ const KendoWindow = ({
             exphh = "",
             expmm = "",
             custperson = "",
-            attdatnum = "",
             value_code3 = "",
 
             ref_type = "",
@@ -1277,7 +1297,6 @@ const KendoWindow = ({
           rowsArr.exphh_s.push(exphh == "" ? 0 : exphh);
           rowsArr.expmm_s.push(expmm == "" ? 0 : expmm);
           rowsArr.custperson_s.push(custperson);
-          rowsArr.attdatnum_s.push(attdatnum);
           rowsArr.value_code3_s.push(value_code3);
 
           rowsArr.ref_type_s.push(ref_type);
@@ -1305,7 +1324,6 @@ const KendoWindow = ({
             exphh = "",
             expmm = "",
             custperson = "",
-            attdatnum = "",
             value_code3 = "",
 
             ref_type = "",
@@ -1354,13 +1372,87 @@ const KendoWindow = ({
           rowsArr.exphh_s.push(exphh == "" ? 0 : exphh);
           rowsArr.expmm_s.push(expmm == "" ? 0 : expmm);
           rowsArr.custperson_s.push(custperson);
-          rowsArr.attdatnum_s.push(attdatnum);
           rowsArr.value_code3_s.push(value_code3);
 
           rowsArr.ref_type_s.push(ref_type);
           rowsArr.ref_key_s.push(ref_key);
           rowsArr.ref_seq_s.push(ref_seq);
         });
+
+        setLoading(true);
+        for (const item of dataItem) {
+          let newAttachmentNumber = "";
+
+          const promises = [];
+          if(item.fileList != undefined) {
+            for (const file of item.fileList) {
+              // 최초 등록 시, 업로드 후 첨부번호를 가져옴 (다중 업로드 대응)
+              if (item.attdatnum == "" && newAttachmentNumber == "") {
+                newAttachmentNumber = await uploadFile(
+                  file,
+                  "task",
+                  item.attdatnum
+                );
+                const promise = newAttachmentNumber;
+                promises.push(promise);
+                continue;
+              }
+  
+              const promise = newAttachmentNumber
+                ? await uploadFile(
+                    file,
+                    "task",
+                    item.attdatnum,
+                    newAttachmentNumber
+                  )
+                : await uploadFile(file, "task", item.attdatnum);
+              promises.push(promise);
+            }
+  
+            const results = await Promise.all(promises);
+  
+            // 실패한 파일이 있는지 확인
+            if (results.includes(null)) {
+              alert("파일 업로드에 실패했습니다.");
+            } else {
+              rowsArr.attdatnum_s.push(
+                results[0] == undefined ? item.attdatnum : results[0]
+              );
+            }
+  
+            let datas: any;
+            let type = "task";
+            item.savenmList.map(async (parameter: any) => {
+              try {
+                datas = await processApi<any>("file-delete", {
+                  type,
+                  attached: parameter,
+                });
+              } catch (error) {
+                datas = null;
+              }
+            });
+  
+            if (datas != null) {
+              rowsArr.attdatnum_s.push(item.attdatnum);
+            }
+          }
+        }
+
+        for (const item of deletedRows) {
+          let data2: any;
+          try {
+            data2 = await processApi<any>("attachment-delete", {
+              attached: "attachment?type=task&attachmentNumber=" + item.attdatnum + "&id=",
+            });
+          } catch (error) {
+            data2 = null;
+          }
+  
+          if (data2 != null) {
+            rowsArr.attdatnum_s.push(item.attdatnum);
+          }
+        }
 
         let data: any;
 
@@ -1402,19 +1494,21 @@ const KendoWindow = ({
           data = null;
         }
 
-        mainDataResult.data.map((item) => {
-          localStorage.removeItem(item[DATA_ITEM_KEY]);
-          localStorage.removeItem(item[DATA_ITEM_KEY] + "key");
-        });
-        deletedRows.map((item) =>
-          setDeletedAttadatnums((prev) => ({
-            type: [...prev.type, "task"],
-            attdatnums: [...prev.attdatnums, item.attdatnum],
-          }))
-        );
+        for (let key of Object.keys(localStorage)) {
+          if (
+            key != "passwordExpirationInfo" &&
+            key != "accessToken" &&
+            key != "loginResult" &&
+            key != "refreshToken"
+          ) {
+            localStorage.removeItem(key);
+          }
+        }
         deletedRows = [];
         reload();
-        setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
+        setFileList([]);
+        setSavenmList([]);
+        setLoading(false);
         if (dataItem.filter((item) => item.rowstatus == "U").length == 0) {
           setVisible(false);
         }
@@ -1490,7 +1584,6 @@ const KendoWindow = ({
           exphh = "",
           expmm = "",
           custperson = "",
-          attdatnum = "",
           value_code3 = "",
 
           ref_type = "",
@@ -1533,7 +1626,6 @@ const KendoWindow = ({
         rowsArr.exphh_s.push(exphh == "" ? 0 : exphh);
         rowsArr.expmm_s.push(expmm == "" ? 0 : expmm);
         rowsArr.custperson_s.push(custperson);
-        rowsArr.attdatnum_s.push(attdatnum);
         rowsArr.value_code3_s.push(value_code3);
 
         rowsArr.ref_type_s.push(ref_type);
@@ -1542,6 +1634,21 @@ const KendoWindow = ({
       });
 
       let data: any;
+
+      for (const item of deletedRows) {
+        let data2: any;
+        try {
+          data2 = await processApi<any>("attachment-delete", {
+            attached: "attachment?type=task&attachmentNumber=" + item.attdatnum + "&id=",
+          });
+        } catch (error) {
+          data2 = null;
+        }
+
+        if (data2 != null) {
+          rowsArr.attdatnum_s.push(item.attdatnum);
+        }
+      }
 
       //추가, 수정 프로시저 파라미터
       const paras = {
@@ -1582,21 +1689,65 @@ const KendoWindow = ({
       }
 
       if (data != null) {
-        mainDataResult.data.map((item) => {
-          localStorage.removeItem(item[DATA_ITEM_KEY]);
-          localStorage.removeItem(item[DATA_ITEM_KEY] + "key");
-        });
-        deletedRows.map((item) =>
-          setDeletedAttadatnums((prev) => ({
-            type: [...prev.type, "task"],
-            attdatnums: [...prev.attdatnums, item.attdatnum],
-          }))
-        );
-        setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
+        for (let key of Object.keys(localStorage)) {
+          if (
+            key != "passwordExpirationInfo" &&
+            key != "accessToken" &&
+            key != "loginResult" &&
+            key != "refreshToken"
+          ) {
+            localStorage.removeItem(key);
+          }
+        }
+        setFileList([]);
+        setSavenmList([]);
         deletedRows = [];
         reload();
         onClose();
       }
+    }
+  };
+
+  const uploadFile = async (
+    files: File,
+    type: string,
+    attdatnum?: string,
+    newAttachmentNumber?: string
+  ) => {
+    let data: any;
+
+    const queryParams = new URLSearchParams();
+
+    if (newAttachmentNumber != undefined) {
+      queryParams.append("attachmentNumber", newAttachmentNumber);
+    } else if (attdatnum != undefined) {
+      queryParams.append("attachmentNumber", attdatnum == "" ? "" : attdatnum);
+    }
+
+    const formid = "%28web%29" + pathname;
+
+    queryParams.append("type", type);
+    queryParams.append("formId", formid);
+
+    const filePara = {
+      attached: "attachment?" + queryParams.toString(),
+      files: files,
+    };
+
+    setLoading(true);
+
+    try {
+      data = await processApi<any>("file-upload", filePara);
+    } catch (error) {
+      data = null;
+    }
+
+    setLoading(false);
+
+    if (data !== null) {
+      return data.attachmentNumber;
+    } else {
+      return data;
     }
   };
 
@@ -1670,8 +1821,12 @@ const KendoWindow = ({
           value={{
             attdatnum,
             attach_exists,
+            fileList,
+            savenmList,
             setAttdatnum,
             setAttach_exists,
+            setFileList,
+            setSavenmList,
             mainDataState,
             setMainDataState,
             // fetchGrid,

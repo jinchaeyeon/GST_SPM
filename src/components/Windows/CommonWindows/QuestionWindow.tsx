@@ -1,18 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { useRecoilState, useSetRecoilState } from "recoil";
 import {
-  IAttachmentData,
   ICustData,
   IWindowPosition,
 } from "../../../hooks/interfaces";
 import {
-  deletedAttadatnumsState,
   isLoading,
   loginResultState,
-  unsavedAttadatnumsState,
 } from "../../../store/atoms";
 import { Window, WindowMoveEvent } from "@progress/kendo-react-dialogs";
-import { DEFAULT_ATTDATNUMS } from "../../CommonString";
 import {
   BottomContainer,
   ButtonContainer,
@@ -44,6 +40,7 @@ import RichEditor from "../../RichEditor";
 import { TEditorHandle } from "../../../store/types";
 import PopUpAttachmentsWindow from "./PopUpAttachmentsWindow";
 import { UseParaPc, convertDateToStr, toDate } from "../../CommonFunction";
+import { useLocation } from "react-router-dom";
 
 type IKendoWindow = {
   setVisible(t: boolean): void;
@@ -89,13 +86,12 @@ const KendoWindow = ({
     width: isMobile == true ? deviceWidth : 1200,
     height: 900,
   });
-  // 서버 업로드는 되었으나 DB에는 저장안된 첨부파일 리스트
-  const [unsavedAttadatnums, setUnsavedAttadatnums] = useRecoilState(
-    unsavedAttadatnumsState
-  );
-  // 삭제할 첨부파일 리스트를 담는 함수
-  const setDeletedAttadatnums = useSetRecoilState(deletedAttadatnumsState);
-
+  const [fileList, setFileList] = useState<FileList | any[]>([]);
+  const [savenmList, setSavenmList] = useState<string[]>([]);
+  const [fileList2, setFileList2] = useState<FileList | any[]>([]);
+  const [savenmList2, setSavenmList2] = useState<string[]>([]);
+  const location = useLocation();
+  const pathname = location.pathname.replace("/", "");
   const handleMove = (event: WindowMoveEvent) => {
     setPosition({ ...position, left: event.left, top: event.top });
   };
@@ -109,10 +105,10 @@ const KendoWindow = ({
   };
 
   const onClose = () => {
-    if (unsavedAttadatnums.attdatnums.length > 0) {
-      setDeletedAttadatnums(unsavedAttadatnums);
-    }
-    setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
+    setFileList([]);
+    setSavenmList([]);
+    setFileList2([]);
+    setSavenmList2([]);
     reload(para.document_id);
     setVisible(false);
   };
@@ -395,36 +391,62 @@ const KendoWindow = ({
     }));
   };
 
-  const getAttachmentsData = (data: IAttachmentData) => {
-    if (!Information.attach_number) {
-      setUnsavedAttadatnums((prev) => ({
-        type: [...prev.type, "receipt"],
-        attdatnums: [...prev.attdatnums, ...[data.attdatnum]],
-      }));
+  const getAttachmentsData = (
+    data: any,
+    fileList?: FileList | any[],
+    savenmList?: string[]
+  ) => {
+    if (fileList) {
+      setFileList(fileList);
+    } else {
+      setFileList([]);
     }
+
+    if (savenmList) {
+      setSavenmList(savenmList);
+    } else {
+      setSavenmList([]);
+    }
+
     setInformation((prev) => ({
       ...prev,
-      attach_number: data.attdatnum,
-      attach_files:
-        data.original_name +
-        (data.rowCount > 1 ? " 등 " + String(data.rowCount) + "건" : ""),
+      attach_number: data.length > 0 ? data[0].attdatnum : prev.attach_number,
+      attach_files: data.length > 1
+      ? data[0].realnm + " 등 " + String(data.length - 1) + "건"
+      : data.length == 0
+      ? ""
+      : data[0].realnm,
     }));
   };
-  const getAttachmentsData2 = (data: IAttachmentData) => {
-    if (!Information.attdatnum) {
-      setUnsavedAttadatnums((prev) => ({
-        type: [...prev.type, "question"],
-        attdatnums: [...prev.attdatnums, ...[data.attdatnum]],
-      }));
+
+  const getAttachmentsData2 = (data: any,
+    fileList?: FileList | any[],
+    savenmList?: string[]
+  ) => {
+    if (fileList) {
+      setFileList2(fileList);
+    } else {
+      setFileList2([]);
     }
+
+    if (savenmList) {
+      setSavenmList2(savenmList);
+    } else {
+      setSavenmList2([]);
+    }
+
     setInformation((prev) => ({
       ...prev,
-      attdatnum: data.attdatnum,
+      attdatnum: data.length > 0 ? data[0].attdatnum : prev.attdatnum,
       files:
-        data.original_name +
-        (data.rowCount > 1 ? " 등 " + String(data.rowCount) + "건" : ""),
+        data.length > 1
+          ? data[0].realnm + " 등 " + String(data.length - 1) + "건"
+          : data.length == 0
+          ? ""
+          : data[0].realnm,
     }));
   };
+
   const refEditorRef = useRef<TEditorHandle>(null);
   const parseDate = (input: any) => {
     // 값이 없는 경우 null 반환
@@ -455,6 +477,54 @@ const KendoWindow = ({
       return date;
     }
   };
+
+  const uploadFile = async (
+    files: File,
+    type: string,
+    attdatnum? :string,
+    newAttachmentNumber?: string
+  ) => {
+    let data: any;
+
+    const queryParams = new URLSearchParams();
+
+    if (newAttachmentNumber != undefined) {
+      queryParams.append("attachmentNumber", newAttachmentNumber);
+    } else if (attdatnum != undefined) {
+      queryParams.append(
+        "attachmentNumber",
+        attdatnum == "" ? "" : attdatnum
+      );
+    }
+
+    const formid = "%28web%29" + pathname;
+
+    queryParams.append("type", type);
+    queryParams.append("formId", formid);
+
+    const filePara = {
+      attached: "attachment?" + queryParams.toString(),
+      files: files,
+    };
+
+    setLoading(true);
+
+    try {
+      data = await processApi<any>("file-upload", filePara);
+    } catch (error) {
+      data = null;
+    }
+
+    setLoading(false);
+
+    if (data !== null) {
+      return data.attachmentNumber;
+    } else {
+      return data;
+    }
+  };
+
+
   const onConfirmClick = async () => {
     if (
       Information.custnm.custnm == "" ||
@@ -473,6 +543,92 @@ const KendoWindow = ({
     ) {
       alert("필수 항목을 채워주세요.");
     } else {
+      let newAttachmentNumber = "";
+      let newAttachmentNumber2 = "";
+
+      const promises = [];
+      const promises2 = [];
+
+      for (const file of fileList) {
+        // 최초 등록 시, 업로드 후 첨부번호를 가져옴 (다중 업로드 대응)
+        if (Information.attach_number == "" && newAttachmentNumber == "") {
+          newAttachmentNumber = await uploadFile(file, "receipt", Information.attach_number);
+          const promise = newAttachmentNumber;
+          promises.push(promise);
+          continue;
+        }
+
+        const promise = newAttachmentNumber
+          ? await uploadFile(file, "receipt", Information.attach_number, newAttachmentNumber)
+          : await uploadFile(file, "receipt", Information.attach_number);
+        promises.push(promise);
+      }
+
+      const results = await Promise.all(promises);
+
+      // 실패한 파일이 있는지 확인
+      if (results.includes(null)) {
+        alert("파일 업로드에 실패했습니다.");
+      } else {
+        setInformation((prev) => ({
+          ...prev,
+          attach_number: results[0],
+        }));
+      }
+
+      let data2: any;
+      var type = "receipt";
+      savenmList.map(async (parameter: any) => {
+        try {
+          data2 = await processApi<any>("file-delete", {
+            type,
+            attached: parameter,
+          });
+        } catch (error) {
+          data2 = null;
+        }
+      });
+
+      for (const file of fileList2) {
+        // 최초 등록 시, 업로드 후 첨부번호를 가져옴 (다중 업로드 대응)
+        if (Information.attdatnum == "" && newAttachmentNumber2 == "") {
+          newAttachmentNumber2 = await uploadFile(file, "question", Information.attdatnum);
+          const promise = newAttachmentNumber2;
+          promises2.push(promise);
+          continue;
+        }
+
+        const promise = newAttachmentNumber2
+          ? await uploadFile(file, "question", Information.attdatnum, newAttachmentNumber2)
+          : await uploadFile(file, "question", Information.attdatnum);
+          promises2.push(promise);
+      }
+
+      const results2 = await Promise.all(promises2);
+
+      // 실패한 파일이 있는지 확인
+      if (results2.includes(null)) {
+        alert("파일 업로드에 실패했습니다.");
+      } else {
+        setInformation((prev) => ({
+          ...prev,
+          attdatnum: results2[0],
+        }));
+      }
+
+      let data3: any;
+      var type = "question";
+      savenmList2.map(async (parameter: any) => {
+        try {
+          data3 = await processApi<any>("file-delete", {
+            type,
+            attached: parameter,
+          });
+        } catch (error) {
+          data3 = null;
+        }
+      });
+
       let editorContent: any = "";
       if (refEditorRef.current) {
         editorContent = refEditorRef.current.getContent();
@@ -535,11 +691,11 @@ const KendoWindow = ({
               : convertDateToStr(Information.be_finished_date),
           "@p_completion_date_s": para == "" ? "" : para.completion_date,
           "@p_status_s": para == "" ? "U" : para.status,
-          "@p_attach_number_s": Information.attach_number,
+          "@p_attach_number_s": results[0] == undefined ? Information.attach_number : results[0],
           "@p_ref_number_s": para == "" ? "U" : para.ref_number,
 
           "@p_contents": textContent,
-          "@p_attdatnum": Information.attdatnum,
+          "@p_attdatnum": results2[0] == undefined ? Information.attdatnum : results2[0],
 
           "@p_id": userId,
           "@p_pc": pc,
@@ -553,7 +709,10 @@ const KendoWindow = ({
       }
       if (data != null) {
         reload(data.returnString);
-        setUnsavedAttadatnums(DEFAULT_ATTDATNUMS);
+        setFileList([]);
+        setSavenmList([]);
+        setFileList2([]);
+        setSavenmList2([]);
         setVisible(false);
       } else {
         console.log("[오류 발생]");
@@ -803,6 +962,8 @@ const KendoWindow = ({
           para={Information.attach_number}
           permission={{ upload: true, download: true, delete: true }}
           type={"receipt"}
+          fileLists={fileList}
+          savenmLists={savenmList}
         />
       )}
       {attachmentsWindowVisible2 && (
@@ -812,6 +973,8 @@ const KendoWindow = ({
           para={Information.attdatnum}
           permission={{ upload: true, download: true, delete: true }}
           type={"question"}
+          fileLists={fileList2}
+          savenmLists={savenmList2}
         />
       )}
       {custWindowVisible && (
