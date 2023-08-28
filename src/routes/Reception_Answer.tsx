@@ -953,7 +953,7 @@ const App = () => {
       setFileList([]);
       setSavenmList([]);
     }
-  }, [attdatnum, attach_exists]);
+  }, [fileList, savenmList]);
 
   const docEditorRef = useRef<TEditorHandle>(null);
   const docEditorRef2 = useRef<TEditorHandle>(null);
@@ -1089,7 +1089,11 @@ const App = () => {
     setAttachmentsWindowVisible3(true);
   };
   const onAnswerWndClick = () => {
-    setAnswerWindowVisible(true);
+    if(mainDataResult.data.length > 0) {
+      setAnswerWindowVisible(true);
+    } else {
+      alert("데이터가 없습니다.");
+    }
   };
 
   const onAddClick = () => {

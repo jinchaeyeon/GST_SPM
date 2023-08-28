@@ -158,7 +158,7 @@ const KendoWindow = ({
     if (name == "custnm") {
       setInformation((prev) => ({
         ...prev,
-        custcd: value.custcd,
+        custcd: value == null ? "" : value.custcd,
         [name]: value,
       }));
     } else {
@@ -412,7 +412,7 @@ const KendoWindow = ({
       ...prev,
       attach_number: data.length > 0 ? data[0].attdatnum : prev.attach_number,
       attach_files: data.length > 1
-      ? data[0].realnm + " 등 " + String(data.length - 1) + "건"
+      ? data[0].realnm + " 등 " + String(data.length) + "건"
       : data.length == 0
       ? ""
       : data[0].realnm,
@@ -440,7 +440,7 @@ const KendoWindow = ({
       attdatnum: data.length > 0 ? data[0].attdatnum : prev.attdatnum,
       files:
         data.length > 1
-          ? data[0].realnm + " 등 " + String(data.length - 1) + "건"
+          ? data[0].realnm + " 등 " + String(data.length) + "건"
           : data.length == 0
           ? ""
           : data[0].realnm,

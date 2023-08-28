@@ -201,7 +201,7 @@ const KendoWindow = ({
         } else {
           setMainDataResult((prev) => {
             return {
-              data: [...prev.data, ...rows],
+              data: rows,
               total: totalRowCnt,
             };
           });
@@ -370,8 +370,11 @@ const KendoWindow = ({
         data: [...prev.data, newData],
         total: prev.total + 1,
       }));
-      setFileList((prev) => [...prev, ...files]);
     }
+    setFileList((prev) => [
+      ...prev,
+      ...files
+    ])
   };
 
   const [values2, setValues2] = React.useState<boolean>(false);
@@ -380,7 +383,6 @@ const KendoWindow = ({
       const newData = mainDataResult.data.map((item) => ({
         ...item,
         chk: !values2,
-        [EDIT_FIELD]: props.field,
       }));
       setValues2(!values2);
       setMainDataResult((prev) => {
@@ -431,6 +433,7 @@ const KendoWindow = ({
         item[DATA_ITEM_KEY] == dataItem[DATA_ITEM_KEY]
           ? {
               ...item,
+              chk : !item.chk,
               [EDIT_FIELD]: field,
             }
           : {

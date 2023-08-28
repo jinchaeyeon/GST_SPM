@@ -245,7 +245,7 @@ const SignWindow = ({ setVisible, para, reload }: IWindow) => {
       answer_attdatnum: data.length > 0 ? data[0].attdatnum : prev.answer_attdatnum,
       answer_files:
         data.length > 1
-          ? data[0].realnm + " 등 " + String(data.length - 1) + "건"
+          ? data[0].realnm + " 등 " + String(data.length) + "건"
           : data.length == 0
           ? ""
           : data[0].realnm,

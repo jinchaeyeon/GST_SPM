@@ -309,7 +309,7 @@ const FilesCell2 = (props: GridCellProps) => {
     setAttdatnum2(data.length > 0 ? data[0].attdatnum : attdatnum2);
     setFiles2(
       data.length > 1
-        ? data[0].realnm + " 등 " + String(data.length - 1) + "건"
+        ? data[0].realnm + " 등 " + String(data.length) + "건"
         : data.length == 0
         ? ""
         : data[0].realnm
@@ -1006,6 +1006,8 @@ const App = () => {
       const rows = data.tables[0].Rows.map((row: any) => {
         return {
           ...row,
+          fileList: [],
+          savenmList: [],
         };
       });
 
@@ -1582,6 +1584,7 @@ const App = () => {
   const [savenmList, setSavenmList] = useState<string[]>([]);
   const [fileList2, setFileList2] = useState<FileList | any[]>([]);
   const [savenmList2, setSavenmList2] = useState<string[]>([]);
+
   useEffect(() => {
     if (fileList2.length > 0 || savenmList2.length > 0) {
       const newData = subDataResult.data.map((item) =>
@@ -1609,7 +1612,7 @@ const App = () => {
       setFileList2([]);
       setSavenmList2([]);
     }
-  }, [attdatnum2, files2]);
+  }, [fileList2, savenmList2]);
 
   const saveProject = async () => {
     if (mainDataResult.total > 0) {
@@ -1943,6 +1946,14 @@ const App = () => {
     paraData.work_type = "";
   };
 
+  const onChangeClick = () => {
+    if(subDataResult.data.length > 0) {
+
+    } else {
+      alert("데이터가 없습니다.")
+    }
+  }
+  
   return (
     <>
       <TitleContainer>
@@ -2270,6 +2281,13 @@ const App = () => {
                             themeColor={"primary"}
                             icon="minus"
                             title="행 삭제"
+                          ></Button>
+                          <Button
+                            onClick={onChangeClick}
+                            fillMode="outline"
+                            themeColor={"primary"}
+                            icon="pencil"
+                            title="내용 수정"
                           ></Button>
                         </ButtonContainer>
                       </GridTitleContainer>
