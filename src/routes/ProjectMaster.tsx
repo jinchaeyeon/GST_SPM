@@ -1,20 +1,29 @@
 import {
   DataResult,
   FilterDescriptor,
-  getter,
-  process,
+  GroupDescriptor,
+  GroupResult,
   State,
   filterBy,
-  GroupDescriptor,
+  getter,
   groupBy,
-  GroupResult,
+  process,
 } from "@progress/kendo-data-query";
 import { Button } from "@progress/kendo-react-buttons";
+import {
+  setExpandedState,
+  setGroupIds,
+} from "@progress/kendo-react-data-tools";
 import { DatePicker } from "@progress/kendo-react-dateinputs";
 import {
-  getSelectedState,
-  Grid,
+  ComboBoxFilterChangeEvent,
+  MultiColumnComboBox,
+  MultiSelect,
+  MultiSelectChangeEvent,
+} from "@progress/kendo-react-dropdowns";
+import {
   GRID_COL_INDEX_ATTRIBUTE,
+  Grid,
   GridCellProps,
   GridColumn,
   GridDataStateChangeEvent,
@@ -24,18 +33,21 @@ import {
   GridPageChangeEvent,
   GridRowDoubleClickEvent,
   GridSelectionChangeEvent,
+  getSelectedState,
 } from "@progress/kendo-react-grid";
-import { v4 as uuidv4 } from "uuid";
 import { Checkbox, Input, TextArea } from "@progress/kendo-react-inputs";
+import { TabStrip, TabStripTab } from "@progress/kendo-react-layout";
 import { bytesToBase64 } from "byte-base64";
 import React, {
-  useState,
-  useRef,
-  useEffect,
   createContext,
   useContext,
+  useEffect,
+  useRef,
+  useState,
 } from "react";
+import { useHistory, useLocation } from "react-router-dom";
 import { useRecoilState, useSetRecoilState } from "recoil";
+import { v4 as uuidv4 } from "uuid";
 import {
   ButtonContainer,
   ButtonInInput,
@@ -50,14 +62,21 @@ import {
   Title,
   TitleContainer,
 } from "../CommonStyled";
+import CenterCell from "../components/Cells/CenterCell";
+import CheckBoxCell from "../components/Cells/CheckBoxCell";
+import ComboBoxCell from "../components/Cells/ComboBoxCell";
+import DateCell from "../components/Cells/DateCell";
+import NumberCell from "../components/Cells/NumberCell";
+import ProgressCell from "../components/Cells/ProgressCell";
+import RadioGroupCell from "../components/Cells/RadioGroupCell";
 import {
-  convertDateToStr,
-  getGridItemChangedData,
-  handleKeyPressSearch,
   UseParaPc,
-  isValidDate,
+  convertDateToStr,
   dateformat,
+  getGridItemChangedData,
   getGroupGridItemChangedData,
+  handleKeyPressSearch,
+  isValidDate,
 } from "../components/CommonFunction";
 import {
   EDIT_FIELD,
@@ -65,51 +84,29 @@ import {
   PAGE_SIZE,
   SELECTED_FIELD,
 } from "../components/CommonString";
-import { useApi } from "../hooks/api";
-import {
-  isLoading,
-  loginResultState,
-} from "../store/atoms";
-import { Iparameters } from "../store/types";
-import { ICustData } from "../hooks/interfaces";
-import ValueBoxWindow from "../components/Windows/CommonWindows/ValueBoxWindow";
-import CustomersWindow from "../components/Windows/CommonWindows/CustomersWindow";
-import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
-import CenterCell from "../components/Cells/CenterCell";
-import { CellRender, RowRender } from "../components/Renderers/Renderers";
+import CommonDateRangePicker from "../components/DateRangePicker/CommonDateRangePicker";
 import {
   CellRender as CellRender2,
   RowRender as RowRender2,
 } from "../components/Renderers/GroupRenderers";
-import CheckBoxCell from "../components/Cells/CheckBoxCell";
-import DateCell from "../components/Cells/DateCell";
-import ComboBoxCell from "../components/Cells/ComboBoxCell";
+import { CellRender, RowRender } from "../components/Renderers/Renderers";
+import RequiredHeader from "../components/RequiredHeader";
+import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
+import CustomersWindow from "../components/Windows/CommonWindows/CustomersWindow";
+import ValueBoxWindow from "../components/Windows/CommonWindows/ValueBoxWindow";
+import ValueBoxWindow2 from "../components/Windows/CommonWindows/ValueBoxWindow2";
+import { useApi } from "../hooks/api";
+import { ICustData } from "../hooks/interfaces";
+import { isLoading, loginResultState } from "../store/atoms";
 import {
-  ComboBoxFilterChangeEvent,
-  MultiColumnComboBox,
-  MultiSelect,
-  MultiSelectChangeEvent,
-} from "@progress/kendo-react-dropdowns";
-import { useHistory, useLocation } from "react-router-dom";
-import {
-  dateTypeColumns,
   custTypeColumns,
-  userColumns,
   dataTypeColumns,
   dataTypeColumns2,
   dataTypeColumns3,
+  dateTypeColumns,
+  userColumns,
 } from "../store/columns/common-columns";
-import NumberCell from "../components/Cells/NumberCell";
-import ProgressCell from "../components/Cells/ProgressCell";
-import RadioGroupCell from "../components/Cells/RadioGroupCell";
-import { TabStrip, TabStripTab } from "@progress/kendo-react-layout";
-import RequiredHeader from "../components/RequiredHeader";
-import ValueBoxWindow2 from "../components/Windows/CommonWindows/ValueBoxWindow2";
-import {
-  setExpandedState,
-  setGroupIds,
-} from "@progress/kendo-react-data-tools";
-import CommonDateRangePicker from "../components/DateRangePicker/CommonDateRangePicker";
+import { Iparameters } from "../store/types";
 
 const DATA_ITEM_KEY = "devmngnum";
 const SUB_DATA_ITEM_KEY = "devmngseq";
@@ -428,7 +425,7 @@ const App = () => {
       setInformation((prev) => ({
         ...prev,
         [name]: value,
-        custcd: value.custcd,
+        custcd: value == null ? "" : value.custcd,
       }));
     } else {
       setInformation((prev) => ({
@@ -587,7 +584,7 @@ const App = () => {
       attdatnum: data.length > 0 ? data[0].attdatnum : prev.attdatnum,
       files:
         data.length > 1
-          ? data[0].realnm + " 등 " + String(data.length - 1) + "건"
+          ? data[0].realnm + " 등 " + String(data.length) + "건"
           : data.length == 0
           ? ""
           : data[0].realnm,
@@ -636,6 +633,15 @@ const App = () => {
 
   const [subFilters, setSubFilters] = useState<TSubFilters>({
     workType: "detail",
+    devmngnum: "",
+    findRowValue: "",
+    pgSize: PAGE_SIZE,
+    pgNum: 1,
+    isSearch: false,
+  });
+
+  const [subFilters2, setSubFilters2] = useState<TSubFilters>({
+    workType: "main_schedule",
     devmngnum: "",
     findRowValue: "",
     pgSize: PAGE_SIZE,
@@ -813,6 +819,12 @@ const App = () => {
             isSearch: true,
             pgNum: 1,
           }));
+          setSubFilters2((prev) => ({
+            ...prev,
+            devmngnum: selectedRow.devmngnum,
+            isSearch: true,
+            pgNum: 1,
+          }));
           setWorkType("U");
         } else {
           const pjtmanager: any = usersData.find(
@@ -875,6 +887,12 @@ const App = () => {
             revperson: rows[0].revperson,
           });
           setSubFilters((prev) => ({
+            ...prev,
+            devmngnum: rows[0].devmngnum,
+            isSearch: true,
+            pgNum: 1,
+          }));
+          setSubFilters2((prev) => ({
             ...prev,
             devmngnum: rows[0].devmngnum,
             isSearch: true,
@@ -981,7 +999,6 @@ const App = () => {
     } catch (error) {
       data = null;
     }
-
     if (data.isSuccess === true) {
       let idx = 0;
       const totalRowCnt = data.tables[0].TotalRowCount;
@@ -993,6 +1010,7 @@ const App = () => {
           idx: idx++,
         };
       });
+
       if (subfilters.findRowValue !== "") {
         // find_row_value 행으로 스크롤 이동
         if (gridRef2.current) {
@@ -1013,21 +1031,37 @@ const App = () => {
           targetRowIndex2 = 0;
         }
       }
-      if (AlltabSelected == 2) {
-        const newDataState = processWithGroups(rows, group);
-        setSubDataTotal(totalRowCnt);
-        setSubDataResult(newDataState);
-      } else {
+
+      if (subfilters.workType == "main_schedule") {
         setSubDataResult2((prev) => {
           return {
             data: rows,
             total: totalRowCnt == -1 ? 0 : totalRowCnt,
           };
         });
+      } else {
+        const newDataState = processWithGroups(rows, group);
+        setSubDataTotal(totalRowCnt);
+        setSubDataResult(newDataState);
       }
 
       if (totalRowCnt > 0) {
-        if (AlltabSelected == 2) {
+        if (subfilters.workType == "main_schedule") {
+          const selectedRow2 =
+            subfilters.find_row_value == ""
+              ? rows[0]
+              : rows.find(
+                  (row: any) =>
+                    row[SUB_DATA_ITEM_KEY2] == subfilters.find_row_value
+                );
+          if (selectedRow2 != undefined) {
+            setSelectedsubDataState2({
+              [selectedRow2[SUB_DATA_ITEM_KEY2]]: true,
+            });
+          } else {
+            setSelectedsubDataState2({ [rows[0][SUB_DATA_ITEM_KEY2]]: true });
+          }
+        } else {
           const selectedRow =
             subfilters.find_row_value == ""
               ? rows[0]
@@ -1040,36 +1074,32 @@ const App = () => {
           } else {
             setSelectedsubDataState({ [rows[0][SUB_DATA_ITEM_KEY]]: true });
           }
-        } else {
-          const selectedRow =
-            subfilters.find_row_value == ""
-              ? rows[0]
-              : rows.find(
-                  (row: any) =>
-                    row[SUB_DATA_ITEM_KEY2] == subfilters.find_row_value
-                );
-          if (selectedRow != undefined) {
-            setSelectedsubDataState2({
-              [selectedRow[SUB_DATA_ITEM_KEY2]]: true,
-            });
-          } else {
-            setSelectedsubDataState2({ [rows[0][SUB_DATA_ITEM_KEY2]]: true });
-          }
         }
       }
     } else {
       console.log("[오류 발생]");
       console.log(data);
     }
-    // 필터 isSearch false처리, pgNum 세팅
-    setSubFilters((prev) => ({
-      ...prev,
-      pgNum:
-        data && data.hasOwnProperty("pageNumber")
-          ? data.pageNumber
-          : prev.pgNum,
-      isSearch: false,
-    }));
+    if (subfilters.workType == "main_schedule") {
+      // 필터 isSearch false처리, pgNum 세팅
+      setSubFilters((prev) => ({
+        ...prev,
+        pgNum:
+          data && data.hasOwnProperty("pageNumber")
+            ? data.pageNumber
+            : prev.pgNum,
+        isSearch: false,
+      }));
+    } else {
+      setSubFilters2((prev) => ({
+        ...prev,
+        pgNum:
+          data && data.hasOwnProperty("pageNumber")
+            ? data.pageNumber
+            : prev.pgNum,
+        isSearch: false,
+      }));
+    }
     setLoading(false);
   };
 
@@ -1094,6 +1124,19 @@ const App = () => {
       fetchSubGrid(deepCopiedFilters);
     }
   }, [subFilters]);
+
+  useEffect(() => {
+    if (subFilters2.isSearch) {
+      const _ = require("lodash");
+      const deepCopiedFilters = _.cloneDeep(subFilters2);
+      setSubFilters2((prev) => ({
+        ...prev,
+        find_row_value: "",
+        isSearch: false,
+      })); // 한번만 조회되도록
+      fetchSubGrid(deepCopiedFilters);
+    }
+  }, [subFilters2]);
 
   const [dateTypeData, setDateTypeData] = useState<any[]>([]);
   const [progressStatusData, setProgressStateData] = useState<any[]>([]);
@@ -1342,7 +1385,7 @@ const App = () => {
 
     setAllTabSelected(1);
 
-    setSubFilters((prev) => ({
+    setSubFilters2((prev) => ({
       ...prev,
       workType: "main_schedule",
       devmngnum: selectedRowData.devmngnum,
@@ -1411,6 +1454,21 @@ const App = () => {
       remark: selectedRowData.remark,
       revperson: selectedRowData.revperson,
     });
+
+    const selectedRowData2 = mainDataResult.data.filter(
+      (item) =>
+        item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
+    )[0];
+
+    setSubFilters((prev) => ({
+      ...prev,
+      workType: "detail",
+      devmngnum: selectedRowData2.devmngnum,
+      pgNum: 1,
+      isSearch: true,
+    }));
+    deletedRows = [];
+
     setWorkType("U");
   };
 
@@ -1628,11 +1686,10 @@ const App = () => {
     }
   };
 
-
   const uploadFile = async (
     files: File,
     type: string,
-    attdatnum? :string,
+    attdatnum?: string,
     newAttachmentNumber?: string
   ) => {
     let data: any;
@@ -1642,10 +1699,7 @@ const App = () => {
     if (newAttachmentNumber != undefined) {
       queryParams.append("attachmentNumber", newAttachmentNumber);
     } else if (attdatnum != undefined) {
-      queryParams.append(
-        "attachmentNumber",
-        attdatnum == "" ? "" : attdatnum
-      );
+      queryParams.append("attachmentNumber", attdatnum == "" ? "" : attdatnum);
     }
 
     const formid = "%28web%29" + pathname;
@@ -1711,9 +1765,7 @@ const App = () => {
       CustSignyn_s: string[];
       indicator_s: string[];
       CustPerson_s: string[];
-    };
-    type TRowsArr2 = {
-      row_status: string[];
+
       guid: string[];
       sort_order: string[];
       date: string[];
@@ -1757,9 +1809,7 @@ const App = () => {
       CustSignyn_s: [],
       indicator_s: [],
       CustPerson_s: [],
-    };
-    let rowsArr2: TRowsArr2 = {
-      row_status: [],
+
       guid: [],
       sort_order: [],
       date: [],
@@ -1790,213 +1840,352 @@ const App = () => {
         });
       });
 
-      if (AlltabSelected == 2) {
-        dataItem.forEach((item: any) => {
+      dataItem.forEach((item: any) => {
+        const {
+          rowstatus,
+          devmngseq,
+          pgmid,
+          pgmnm,
+          value_code3,
+          devdiv,
+          prgrate,
+          listyn,
+          lvl,
+          modrate,
+          fnscore,
+          exptime,
+          devperson,
+          devstrdt,
+          finexpdt,
+          findt,
+          chkperson,
+          chkdt,
+          finamt,
+          discscore,
+          remark,
+          useyn,
+          DesignEstTime,
+          DesignExphh,
+          DesignExpmm,
+          DesignStartDate,
+          DesignEndEstDate,
+          DesignEndDate,
+          CustCheckDate,
+          CustSignyn,
+          indicator,
+          CustPerson,
+        } = item;
+
+        rowsArr.row_status.push(rowstatus);
+        rowsArr.devmngseq_s.push(devmngseq);
+        rowsArr.pgmid_s.push(pgmid);
+        rowsArr.pgmnm_s.push(pgmnm);
+        rowsArr.value_code3.push(value_code3);
+        rowsArr.devdiv_s.push(devdiv);
+        rowsArr.prgrate_s.push(prgrate);
+        rowsArr.listyn_s.push(listyn);
+        rowsArr.lvl_s.push(lvl);
+        rowsArr.modrate_s.push(modrate);
+        rowsArr.fnscore_s.push(fnscore);
+        rowsArr.exptime_s.push(exptime);
+
+        rowsArr.devperson_s.push(devperson);
+        rowsArr.devstrdt_s.push(
+          devstrdt.length > 8 ? devstrdt : convertDateToStr(devstrdt)
+        );
+        rowsArr.finexpdt_s.push(
+          finexpdt.length > 8 ? finexpdt : convertDateToStr(finexpdt)
+        );
+        rowsArr.findt_s.push(
+          findt.length > 8 ? findt : convertDateToStr(findt)
+        );
+        rowsArr.chkperson_s.push(chkperson);
+        rowsArr.chkdt_s.push(
+          chkdt.length > 8 ? chkdt : convertDateToStr(chkdt)
+        );
+        rowsArr.finamt_s.push(finamt);
+        rowsArr.discscore_s.push(discscore);
+        rowsArr.remark_s.push(remark);
+        rowsArr.useyn_s.push(
+          useyn == true ? "Y" : useyn == false ? "N" : useyn
+        );
+
+        rowsArr.DesignEstTime_s.push(
+          DesignEstTime.length > 8
+            ? DesignEstTime
+            : convertDateToStr(DesignEstTime)
+        );
+        rowsArr.DesignExphh_s.push(DesignExphh);
+        rowsArr.DesignExpmm_s.push(DesignExpmm);
+        rowsArr.DesignStartDate_s.push(
+          DesignStartDate.length > 8
+            ? DesignStartDate
+            : convertDateToStr(DesignStartDate)
+        );
+        rowsArr.DesignEndEstDate_s.push(
+          DesignEndEstDate.length > 8
+            ? DesignEndEstDate
+            : convertDateToStr(DesignEndEstDate)
+        );
+        rowsArr.DesignEndDate_s.push(
+          DesignEndDate.length > 8
+            ? DesignEndDate
+            : convertDateToStr(DesignEndDate)
+        );
+        rowsArr.CustCheckDate_s.push(
+          CustCheckDate.length > 8
+            ? CustCheckDate
+            : convertDateToStr(CustCheckDate)
+        );
+        rowsArr.CustSignyn_s.push(
+          CustSignyn == true ? "Y" : CustSignyn == false ? "N" : CustSignyn
+        );
+        rowsArr.indicator_s.push(indicator);
+        rowsArr.CustPerson_s.push(CustPerson);
+
+        rowsArr.guid.push("");
+        rowsArr.sort_order.push("");
+        rowsArr.date.push("");
+        rowsArr.title.push("");
+        rowsArr.finyn.push("");
+        rowsArr.is_monitoring.push("");
+      });
+
+      deletedRows.forEach((item: any) => {
+        const {
+          rowstatus,
+          devmngseq,
+          pgmid,
+          pgmnm,
+          value_code3,
+          devdiv,
+          prgrate,
+          listyn,
+          lvl,
+          modrate,
+          fnscore,
+          exptime,
+          devperson,
+          devstrdt,
+          finexpdt,
+          findt,
+          chkperson,
+          chkdt,
+          finamt,
+          discscore,
+          remark,
+          useyn,
+          DesignEstTime,
+          DesignExphh,
+          DesignExpmm,
+          DesignStartDate,
+          DesignEndEstDate,
+          DesignEndDate,
+          CustCheckDate,
+          CustSignyn,
+          indicator,
+          CustPerson,
+        } = item;
+
+        rowsArr.row_status.push(rowstatus);
+        rowsArr.devmngseq_s.push(devmngseq);
+        rowsArr.pgmid_s.push(pgmid);
+        rowsArr.pgmnm_s.push(pgmnm);
+        rowsArr.value_code3.push(value_code3);
+        rowsArr.devdiv_s.push(devdiv);
+        rowsArr.prgrate_s.push(prgrate);
+        rowsArr.listyn_s.push(listyn);
+        rowsArr.lvl_s.push(lvl);
+        rowsArr.modrate_s.push(modrate);
+        rowsArr.fnscore_s.push(fnscore);
+        rowsArr.exptime_s.push(exptime);
+
+        rowsArr.devperson_s.push(devperson);
+        rowsArr.devstrdt_s.push(
+          devstrdt.length > 8 ? devstrdt : convertDateToStr(devstrdt)
+        );
+        rowsArr.finexpdt_s.push(
+          finexpdt.length > 8 ? finexpdt : convertDateToStr(finexpdt)
+        );
+        rowsArr.findt_s.push(
+          findt.length > 8 ? findt : convertDateToStr(findt)
+        );
+        rowsArr.chkperson_s.push(chkperson);
+        rowsArr.chkdt_s.push(
+          chkdt.length > 8 ? chkdt : convertDateToStr(chkdt)
+        );
+        rowsArr.finamt_s.push(finamt);
+        rowsArr.discscore_s.push(discscore);
+        rowsArr.remark_s.push(remark);
+        rowsArr.useyn_s.push(
+          useyn == true ? "Y" : useyn == false ? "N" : useyn
+        );
+
+        rowsArr.DesignEstTime_s.push(
+          DesignEstTime.length > 8
+            ? DesignEstTime
+            : convertDateToStr(DesignEstTime)
+        );
+        rowsArr.DesignExphh_s.push(DesignExphh);
+        rowsArr.DesignExpmm_s.push(DesignExpmm);
+        rowsArr.DesignStartDate_s.push(
+          DesignStartDate.length > 8
+            ? DesignStartDate
+            : convertDateToStr(DesignStartDate)
+        );
+        rowsArr.DesignEndEstDate_s.push(
+          DesignEndEstDate.length > 8
+            ? DesignEndEstDate
+            : convertDateToStr(DesignEndEstDate)
+        );
+        rowsArr.DesignEndDate_s.push(
+          DesignEndDate.length > 8
+            ? DesignEndDate
+            : convertDateToStr(DesignEndDate)
+        );
+        rowsArr.CustCheckDate_s.push(
+          CustCheckDate.length > 8
+            ? CustCheckDate
+            : convertDateToStr(CustCheckDate)
+        );
+        rowsArr.CustSignyn_s.push(
+          CustSignyn == true ? "Y" : CustSignyn == false ? "N" : CustSignyn
+        );
+        rowsArr.indicator_s.push(indicator);
+        rowsArr.CustPerson_s.push(CustPerson);
+
+        rowsArr.guid.push("");
+        rowsArr.sort_order.push("");
+        rowsArr.date.push("");
+        rowsArr.title.push("");
+        rowsArr.finyn.push("");
+        rowsArr.is_monitoring.push("");
+      });
+
+      let valid = true;
+      subDataResult2.data.map((item: any) => {
+        if (
+          (item.title == "" || parseDate(convertDateToStr(item.date)) == "") &&
+          valid == true
+        ) {
+          valid = false;
+          alert("필수값을 입력해주세요.");
+        }
+      });
+
+      if (valid == true) {
+        subDataResult2.data.forEach((item: any) => {
           const {
             rowstatus,
-            devmngseq,
-            pgmid,
-            pgmnm,
-            value_code3,
-            devdiv,
-            prgrate,
-            listyn,
-            lvl,
-            modrate,
-            fnscore,
-            exptime,
-            devperson,
-            devstrdt,
-            finexpdt,
-            findt,
-            chkperson,
-            chkdt,
-            finamt,
-            discscore,
-            remark,
-            useyn,
-            DesignEstTime,
-            DesignExphh,
-            DesignExpmm,
-            DesignStartDate,
-            DesignEndEstDate,
-            DesignEndDate,
-            CustCheckDate,
-            CustSignyn,
-            indicator,
-            CustPerson,
+            date,
+            finyn,
+            guid,
+            is_monitoring,
+            sort_order,
+            title,
           } = item;
 
           rowsArr.row_status.push(rowstatus);
-          rowsArr.devmngseq_s.push(devmngseq);
-          rowsArr.pgmid_s.push(pgmid);
-          rowsArr.pgmnm_s.push(pgmnm);
-          rowsArr.value_code3.push(value_code3);
-          rowsArr.devdiv_s.push(devdiv);
-          rowsArr.prgrate_s.push(prgrate);
-          rowsArr.listyn_s.push(listyn);
-          rowsArr.lvl_s.push(lvl);
-          rowsArr.modrate_s.push(modrate);
-          rowsArr.fnscore_s.push(fnscore);
-          rowsArr.exptime_s.push(exptime);
+          rowsArr.devmngseq_s.push("");
+          rowsArr.pgmid_s.push("");
+          rowsArr.pgmnm_s.push("");
+          rowsArr.value_code3.push("");
+          rowsArr.devdiv_s.push("");
+          rowsArr.prgrate_s.push("");
+          rowsArr.listyn_s.push("");
+          rowsArr.lvl_s.push("");
+          rowsArr.modrate_s.push("");
+          rowsArr.fnscore_s.push("");
+          rowsArr.exptime_s.push("");
 
-          rowsArr.devperson_s.push(devperson);
-          rowsArr.devstrdt_s.push(
-            devstrdt.length > 8 ? devstrdt : convertDateToStr(devstrdt)
-          );
-          rowsArr.finexpdt_s.push(
-            finexpdt.length > 8 ? finexpdt : convertDateToStr(finexpdt)
-          );
-          rowsArr.findt_s.push(
-            findt.length > 8 ? findt : convertDateToStr(findt)
-          );
-          rowsArr.chkperson_s.push(chkperson);
-          rowsArr.chkdt_s.push(
-            chkdt.length > 8 ? chkdt : convertDateToStr(chkdt)
-          );
-          rowsArr.finamt_s.push(finamt);
-          rowsArr.discscore_s.push(discscore);
-          rowsArr.remark_s.push(remark);
-          rowsArr.useyn_s.push(
-            useyn == true ? "Y" : useyn == false ? "N" : useyn
-          );
+          rowsArr.devperson_s.push("");
+          rowsArr.devstrdt_s.push("");
+          rowsArr.finexpdt_s.push("");
+          rowsArr.findt_s.push("");
+          rowsArr.chkperson_s.push("");
+          rowsArr.chkdt_s.push("");
+          rowsArr.finamt_s.push("");
+          rowsArr.discscore_s.push("");
+          rowsArr.remark_s.push("");
+          rowsArr.useyn_s.push("");
 
-          rowsArr.DesignEstTime_s.push(
-            DesignEstTime.length > 8
-              ? DesignEstTime
-              : convertDateToStr(DesignEstTime)
+          rowsArr.DesignEstTime_s.push("");
+          rowsArr.DesignExphh_s.push("");
+          rowsArr.DesignExpmm_s.push("");
+          rowsArr.DesignStartDate_s.push("");
+          rowsArr.DesignEndEstDate_s.push("");
+          rowsArr.DesignEndDate_s.push("");
+          rowsArr.CustCheckDate_s.push("");
+          rowsArr.CustSignyn_s.push("");
+          rowsArr.indicator_s.push("");
+          rowsArr.CustPerson_s.push("");
+
+          rowsArr.guid.push(guid);
+          rowsArr.sort_order.push(sort_order);
+          rowsArr.date.push(date.length > 8 ? date : convertDateToStr(date));
+          rowsArr.title.push(title);
+          rowsArr.finyn.push(
+            finyn == true ? "Y" : finyn == false ? "N" : finyn
           );
-          rowsArr.DesignExphh_s.push(DesignExphh);
-          rowsArr.DesignExpmm_s.push(DesignExpmm);
-          rowsArr.DesignStartDate_s.push(
-            DesignStartDate.length > 8
-              ? DesignStartDate
-              : convertDateToStr(DesignStartDate)
+          rowsArr.is_monitoring.push(
+            is_monitoring == true
+              ? "Y"
+              : is_monitoring == false
+              ? "N"
+              : is_monitoring
           );
-          rowsArr.DesignEndEstDate_s.push(
-            DesignEndEstDate.length > 8
-              ? DesignEndEstDate
-              : convertDateToStr(DesignEndEstDate)
-          );
-          rowsArr.DesignEndDate_s.push(
-            DesignEndDate.length > 8
-              ? DesignEndDate
-              : convertDateToStr(DesignEndDate)
-          );
-          rowsArr.CustCheckDate_s.push(
-            CustCheckDate.length > 8
-              ? CustCheckDate
-              : convertDateToStr(CustCheckDate)
-          );
-          rowsArr.CustSignyn_s.push(
-            CustSignyn == true ? "Y" : CustSignyn == false ? "N" : CustSignyn
-          );
-          rowsArr.indicator_s.push(indicator);
-          rowsArr.CustPerson_s.push(CustPerson);
         });
 
-        deletedRows.forEach((item: any) => {
-          const {
-            rowstatus,
-            devmngseq,
-            pgmid,
-            pgmnm,
-            value_code3,
-            devdiv,
-            prgrate,
-            listyn,
-            lvl,
-            modrate,
-            fnscore,
-            exptime,
-            devperson,
-            devstrdt,
-            finexpdt,
-            findt,
-            chkperson,
-            chkdt,
-            finamt,
-            discscore,
-            remark,
-            useyn,
-            DesignEstTime,
-            DesignExphh,
-            DesignExpmm,
-            DesignStartDate,
-            DesignEndEstDate,
-            DesignEndDate,
-            CustCheckDate,
-            CustSignyn,
-            indicator,
-            CustPerson,
-          } = item;
+        let newAttachmentNumber = "";
+        const promises = [];
 
-          rowsArr.row_status.push(rowstatus);
-          rowsArr.devmngseq_s.push(devmngseq);
-          rowsArr.pgmid_s.push(pgmid);
-          rowsArr.pgmnm_s.push(pgmnm);
-          rowsArr.value_code3.push(value_code3);
-          rowsArr.devdiv_s.push(devdiv);
-          rowsArr.prgrate_s.push(prgrate);
-          rowsArr.listyn_s.push(listyn);
-          rowsArr.lvl_s.push(lvl);
-          rowsArr.modrate_s.push(modrate);
-          rowsArr.fnscore_s.push(fnscore);
-          rowsArr.exptime_s.push(exptime);
+        for (const file of fileList) {
+          // 최초 등록 시, 업로드 후 첨부번호를 가져옴 (다중 업로드 대응)
+          if (information.attdatnum == "" && newAttachmentNumber == "") {
+            newAttachmentNumber = await uploadFile(
+              file,
+              "project",
+              information.attdatnum
+            );
+            const promise = newAttachmentNumber;
+            promises.push(promise);
+            continue;
+          }
 
-          rowsArr.devperson_s.push(devperson);
-          rowsArr.devstrdt_s.push(
-            devstrdt.length > 8 ? devstrdt : convertDateToStr(devstrdt)
-          );
-          rowsArr.finexpdt_s.push(
-            finexpdt.length > 8 ? finexpdt : convertDateToStr(finexpdt)
-          );
-          rowsArr.findt_s.push(
-            findt.length > 8 ? findt : convertDateToStr(findt)
-          );
-          rowsArr.chkperson_s.push(chkperson);
-          rowsArr.chkdt_s.push(
-            chkdt.length > 8 ? chkdt : convertDateToStr(chkdt)
-          );
-          rowsArr.finamt_s.push(finamt);
-          rowsArr.discscore_s.push(discscore);
-          rowsArr.remark_s.push(remark);
-          rowsArr.useyn_s.push(
-            useyn == true ? "Y" : useyn == false ? "N" : useyn
-          );
+          const promise = newAttachmentNumber
+            ? await uploadFile(
+                file,
+                "project",
+                information.attdatnum,
+                newAttachmentNumber
+              )
+            : await uploadFile(file, "project", information.attdatnum);
+          promises.push(promise);
+        }
 
-          rowsArr.DesignEstTime_s.push(
-            DesignEstTime.length > 8
-              ? DesignEstTime
-              : convertDateToStr(DesignEstTime)
-          );
-          rowsArr.DesignExphh_s.push(DesignExphh);
-          rowsArr.DesignExpmm_s.push(DesignExpmm);
-          rowsArr.DesignStartDate_s.push(
-            DesignStartDate.length > 8
-              ? DesignStartDate
-              : convertDateToStr(DesignStartDate)
-          );
-          rowsArr.DesignEndEstDate_s.push(
-            DesignEndEstDate.length > 8
-              ? DesignEndEstDate
-              : convertDateToStr(DesignEndEstDate)
-          );
-          rowsArr.DesignEndDate_s.push(
-            DesignEndDate.length > 8
-              ? DesignEndDate
-              : convertDateToStr(DesignEndDate)
-          );
-          rowsArr.CustCheckDate_s.push(
-            CustCheckDate.length > 8
-              ? CustCheckDate
-              : convertDateToStr(CustCheckDate)
-          );
-          rowsArr.CustSignyn_s.push(
-            CustSignyn == true ? "Y" : CustSignyn == false ? "N" : CustSignyn
-          );
-          rowsArr.indicator_s.push(indicator);
-          rowsArr.CustPerson_s.push(CustPerson);
+        const results = await Promise.all(promises);
+
+        // 실패한 파일이 있는지 확인
+        if (results.includes(null)) {
+          alert("파일 업로드에 실패했습니다.");
+        } else {
+          setInformation((prev) => ({
+            ...prev,
+            attdatnum: results[0],
+          }));
+        }
+
+        let data: any;
+        let type = "project";
+        savenmList.map(async (parameter: any) => {
+          try {
+            data = await processApi<any>("file-delete", {
+              type,
+              attached: parameter,
+            });
+          } catch (error) {
+            data = null;
+          }
         });
 
         setParaData({
@@ -2030,7 +2219,7 @@ const App = () => {
           pjtperson:
             information.pjtperson == "" ? "" : information.pjtperson.user_id,
           remark: information.remark,
-          attdatnum: information.attdatnum,
+          attdatnum: results[0] == undefined ? information.attdatnum : results[0],
           midchkdt:
             information.midchkdt == null
               ? ""
@@ -2082,184 +2271,13 @@ const App = () => {
           indicator_s: rowsArr.indicator_s.join("|"),
           CustPerson_s: rowsArr.CustPerson_s.join("|"),
 
-          guid: "",
-          sort_order: "",
-          date: "",
-          title: "",
-          finyn: "",
-          is_monitoring: "",
+          guid: rowsArr.guid.join("|"),
+          sort_order: rowsArr.sort_order.join("|"),
+          date: rowsArr.date.join("|"),
+          title: rowsArr.title.join("|"),
+          finyn: rowsArr.finyn.join("|"),
+          is_monitoring: rowsArr.is_monitoring.join("|"),
         });
-      } else {
-        let valid = true;
-        subDataResult2.data.map((item: any) => {
-          if (
-            (item.title == "" ||
-              parseDate(convertDateToStr(item.date)) == "") &&
-            valid == true
-          ) {
-            valid = false;
-            alert("필수값을 입력해주세요.");
-          }
-        });
-
-        if (valid == true) {
-          subDataResult2.data.forEach((item: any) => {
-            const { date, finyn, guid, is_monitoring, sort_order, title } =
-              item;
-
-            rowsArr2.guid.push(guid);
-            rowsArr2.sort_order.push(sort_order);
-            rowsArr2.date.push(date.length > 8 ? date : convertDateToStr(date));
-            rowsArr2.title.push(title);
-            rowsArr2.finyn.push(
-              finyn == true ? "Y" : finyn == false ? "N" : finyn
-            );
-            rowsArr2.is_monitoring.push(
-              is_monitoring == true
-                ? "Y"
-                : is_monitoring == false
-                ? "N"
-                : is_monitoring
-            );
-          });
-
-          let newAttachmentNumber = "";
-          const promises = [];
-
-          for (const file of fileList) {
-            // 최초 등록 시, 업로드 후 첨부번호를 가져옴 (다중 업로드 대응)
-            if (information.attdatnum == "" && newAttachmentNumber == "") {
-              newAttachmentNumber = await uploadFile(file, "project", information.attdatnum);
-              const promise = newAttachmentNumber;
-              promises.push(promise);
-              continue;
-            }
-
-            const promise = newAttachmentNumber
-              ? await uploadFile(file, "project", information.attdatnum, newAttachmentNumber)
-              : await uploadFile(file, "project", information.attdatnum);
-            promises.push(promise);
-          }
-
-          const results = await Promise.all(promises);
-
-          // 실패한 파일이 있는지 확인
-          if (results.includes(null)) {
-            alert("파일 업로드에 실패했습니다.");
-          } else {
-            setInformation((prev) => ({
-              ...prev,
-              attdatnum: results[0],
-            }));
-          }
-
-          let data: any;
-          let type = "project";
-          savenmList.map(async (parameter: any) => {
-            try {
-              data = await processApi<any>("file-delete", {
-                type,
-                attached: parameter,
-              });
-            } catch (error) {
-              data = null;
-            }
-          });
-
-          setParaData({
-            work_type: workType,
-            devmngnum: information.devmngnum,
-            custcd: information.custcd,
-            number: information.number,
-            project: information.project,
-            recdt:
-              information.recdt == null
-                ? ""
-                : convertDateToStr(information.recdt),
-            cotracdt:
-              information.cotracdt == null
-                ? ""
-                : convertDateToStr(information.cotracdt),
-            finexpdt:
-              information.finexpdt == null
-                ? ""
-                : convertDateToStr(information.finexpdt),
-            compl_chk_date:
-              information.compl_chk_date == null
-                ? ""
-                : convertDateToStr(information.compl_chk_date),
-            findt:
-              information.findt == null
-                ? ""
-                : convertDateToStr(information.findt),
-            pjtmanager:
-              information.pjtmanager == ""
-                ? ""
-                : information.pjtmanager.user_id,
-            pjtperson:
-              information.pjtperson == "" ? "" : information.pjtperson.user_id,
-            remark: information.remark,
-            attdatnum:
-              results[0] == undefined ? information.attdatnum : results[0],
-            midchkdt:
-              information.midchkdt == null
-                ? ""
-                : convertDateToStr(information.midchkdt),
-            finchkdt:
-              information.finchkdt == null
-                ? ""
-                : convertDateToStr(information.finchkdt),
-            progress_status:
-              information.progress_status == true
-                ? "Y"
-                : information.progress_status == false
-                ? "N"
-                : information.progress_status,
-            revperson: information.revperson,
-
-            row_status: "",
-            devmngseq_s: "",
-            pgmid_s: "",
-            pgmnm_s: "",
-            value_code3: "",
-            devdiv_s: "",
-            prgrate_s: "",
-            listyn_s: "",
-            lvl_s: "",
-            modrate_s: "",
-            fnscore_s: "",
-            exptime_s: "",
-
-            devperson_s: "",
-            devstrdt_s: "",
-            finexpdt_s: "",
-            findt_s: "",
-            chkperson_s: "",
-            chkdt_s: "",
-            finamt_s: "",
-            discscore_s: "",
-            remark_s: "",
-            useyn_s: "",
-
-            DesignEstTime_s: "",
-            DesignExphh_s: "",
-            DesignExpmm_s: "",
-            DesignStartDate_s: "",
-            DesignEndEstDate_s: "",
-            DesignEndDate_s: "",
-            CustCheckDate_s: "",
-            CustSignyn_s: "",
-            indicator_s: "",
-            CustPerson_s: "",
-
-            guid: rowsArr2.guid.join("|"),
-            sort_order: rowsArr2.sort_order.join("|"),
-            date: rowsArr2.date.join("|"),
-            title: rowsArr2.title.join("|"),
-            finyn: rowsArr2.finyn.join("|"),
-            is_monitoring: rowsArr2.is_monitoring.join("|"),
-          });
-        }
       }
     }
   };
@@ -2517,7 +2535,10 @@ const App = () => {
         let data2: any;
         try {
           data2 = await processApi<any>("attachment-delete", {
-            attached: "attachment?type=project&attachmentNumber=" + mainDataResult.data[findRowIndex].attdatnum + "&id=",
+            attached:
+              "attachment?type=project&attachmentNumber=" +
+              mainDataResult.data[findRowIndex].attdatnum +
+              "&id=",
           });
         } catch (error) {
           data2 = null;
@@ -2647,9 +2668,6 @@ const App = () => {
         finyn: "",
         is_monitoring: "",
       });
-      // unsaved 첨부파일 초기화
-      setFileList([]);
-      setSavenmList([]);
       setFilters((prev) => ({
         ...prev,
         find_row_value: data.returnString,
@@ -2947,6 +2965,8 @@ const App = () => {
     const newDataState = processWithGroups(newData, group);
     setSubDataResult(newDataState);
     setSelectedsubDataState({ [newDataItem[SUB_DATA_ITEM_KEY]]: true });
+    setFileList([]);
+    setSavenmList([]);
   };
 
   const onRemoveClick = () => {
@@ -3010,13 +3030,26 @@ const App = () => {
     if (workType != "N") {
       setFileList([]);
       setSavenmList([]);
-      if (e.selected == 1) {
+      if (e.selected == 0) {
         const selectedRowData = mainDataResult.data.filter(
           (item) =>
             item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
         )[0];
 
-        setSubFilters((prev) => ({
+        setFilters((prev) => ({
+          ...prev,
+          find_row_value:
+            selectedRowData != undefined ? selectedRowData[DATA_ITEM_KEY] : "",
+          pgNum: 1,
+          isSearch: true,
+        }));
+      } else if (AlltabSelected == 0 && e.selected != 0) {
+        const selectedRowData = mainDataResult.data.filter(
+          (item) =>
+            item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
+        )[0];
+
+        setSubFilters2((prev) => ({
           ...prev,
           workType: "main_schedule",
           devmngnum: selectedRowData.devmngnum,
@@ -3085,8 +3118,8 @@ const App = () => {
           remark: selectedRowData.remark,
           revperson: selectedRowData.revperson,
         });
-      } else if (e.selected == 2) {
-        const selectedRowData = mainDataResult.data.filter(
+
+        const selectedRowData2 = mainDataResult.data.filter(
           (item) =>
             item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
         )[0];
@@ -3094,27 +3127,14 @@ const App = () => {
         setSubFilters((prev) => ({
           ...prev,
           workType: "detail",
-          devmngnum: selectedRowData.devmngnum,
+          devmngnum: selectedRowData2.devmngnum,
           pgNum: 1,
           isSearch: true,
         }));
-      } else {
-        const selectedRowData = mainDataResult.data.filter(
-          (item) =>
-            item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
-        )[0];
-
-        setFilters((prev) => ({
-          ...prev,
-          find_row_value:
-            selectedRowData != undefined ? selectedRowData[DATA_ITEM_KEY] : "",
-          pgNum: 1,
-          isSearch: true,
-        }));
+        deletedRows = [];
       }
     }
 
-    deletedRows = [];
     setAllTabSelected(e.selected);
   };
 
@@ -3165,7 +3185,6 @@ const App = () => {
           rowstatus: "D",
         };
         Object.push(index);
-        deletedRows.push(newData2);
       }
     });
 

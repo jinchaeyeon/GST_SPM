@@ -36,6 +36,7 @@ import { useRecoilState, useSetRecoilState } from "recoil";
 import CheckBoxCell from "../../Cells/CheckBoxCell";
 import { CellRender, RowRender } from "../../Renderers/Renderers";
 import { Checkbox } from "@progress/kendo-react-inputs";
+import CheckBoxReadOnlyCell from "../../Cells/CheckBoxReadOnlyCell";
 
 type permission = {
   upload: boolean;
@@ -195,7 +196,7 @@ const KendoWindow = ({
         } else {
           setMainDataResult((prev) => {
             return {
-              data: [...prev.data, ...rows],
+              data: rows,
               total: totalRowCnt,
             };
           });
@@ -349,7 +350,6 @@ const KendoWindow = ({
 
   const handleFileUpload = async (files: FileList | null) => {
     if (files === null) return false;
-
     for (var i = 0; i < files.length; i++) {
       const newData = {
         attdatnum: !attachmentNumber ? "" : attachmentNumber,
@@ -366,35 +366,11 @@ const KendoWindow = ({
         data: [...prev.data, newData],
         total: prev.total + 1,
       }));
-      setFileList((prev) => [
-        ...prev,
-        ...files
-      ])
     }
-  };
-
-  const [values2, setValues2] = React.useState<boolean>(false);
-  const CustomCheckBoxCell2 = (props: GridHeaderCellProps) => {
-    const changeCheck = () => {
-      const newData = mainDataResult.data.map((item) => ({
-        ...item,
-        chk: !values2,
-        [EDIT_FIELD]: props.field,
-      }));
-      setValues2(!values2);
-      setMainDataResult((prev) => {
-        return {
-          data: newData,
-          total: prev.total,
-        };
-      });
-    };
-
-    return (
-      <div style={{ textAlign: "center" }}>
-        <Checkbox value={values2} onClick={changeCheck}></Checkbox>
-      </div>
-    );
+    setFileList((prev) => [
+      ...prev,
+      ...files
+    ])
   };
 
   const onMainItemChange = (event: GridItemChangeEvent) => {
@@ -430,6 +406,7 @@ const KendoWindow = ({
         item[DATA_ITEM_KEY] == dataItem[DATA_ITEM_KEY]
           ? {
               ...item,
+              chk : !item.chk,
               [EDIT_FIELD]: field,
             }
           : {
@@ -437,7 +414,6 @@ const KendoWindow = ({
               [EDIT_FIELD]: undefined,
             }
       );
-
       setMainDataResult((prev) => {
         return {
           data: newData,
@@ -459,6 +435,31 @@ const KendoWindow = ({
       };
     });
   };
+
+  
+  const [values2, setValues2] = React.useState<boolean>(false);
+  const CustomCheckBoxCell2 = (props: GridHeaderCellProps) => {
+    function changeCheck(){
+      const newData = mainDataResult.data.map((item) => ({
+        ...item,
+        chk: !values2,
+      }));
+      setValues2(!values2);
+      setMainDataResult((prev) => {
+        return {
+          data: newData,
+          total: prev.total,
+        };
+      });
+    };
+
+    return (
+      <div style={{ textAlign: "center" }}>
+        <Checkbox value={values2} onClick={changeCheck}></Checkbox>
+      </div>
+    );
+  };
+
 
   return (
     <Window
@@ -591,13 +592,13 @@ const KendoWindow = ({
         rowRender={customRowRender}
         editField={EDIT_FIELD}
       >
-        <GridColumn
-          field="chk"
-          title=" "
-          width="45px"
-          headerCell={CustomCheckBoxCell2}
-          cell={CheckBoxCell}
-        />
+          <GridColumn
+            field="chk"
+            title=" "
+            width="45px"
+            headerCell={CustomCheckBoxCell2}
+            cell={CheckBoxCell}
+          />
         <GridColumn field="realnm" title="파일명" width="600" />
         <GridColumn
           field="filesize"
