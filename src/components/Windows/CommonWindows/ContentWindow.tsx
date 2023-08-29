@@ -87,7 +87,7 @@ const ContentWindow = ({
         onClose={onClose}
         modal={true}
       >
-        <GridContainer height={`calc(100% - 60px)`}>
+        <GridContainer height={`calc(100% - 50px)`}>
           <FormBoxWrap>
             <FormBox>
               <tbody>
@@ -108,16 +108,14 @@ const ContentWindow = ({
                     <TextArea
                       value={Information.content}
                       name="content"
-                      rows={15}
+                      rows={isMobile ? 10 : 15}
                       onChange={InputChange}
                     />
                   </td>
                 </tr>
               </tbody>
             </FormBox>
-          </FormBoxWrap>
-        </GridContainer>
-        <BottomContainer>
+            <BottomContainer>
           <ButtonContainer style={{ justifyContent: "space-between" }}>
             <Button
               themeColor={"primary"}
@@ -135,6 +133,8 @@ const ContentWindow = ({
             </Button>
           </ButtonContainer>
         </BottomContainer>
+          </FormBoxWrap>
+        </GridContainer>
       </Window>
     </>
   );
