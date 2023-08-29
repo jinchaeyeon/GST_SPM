@@ -1,7 +1,10 @@
-import { useEffect, useRef, useState } from "react";
-import * as React from "react";
+import { Button } from "@progress/kendo-react-buttons";
 import { Window, WindowMoveEvent } from "@progress/kendo-react-dialogs";
-import { useApi } from "../../../hooks/api";
+import { Checkbox, Input } from "@progress/kendo-react-inputs";
+import { bytesToBase64 } from "byte-base64";
+import { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
+import { useRecoilState, useSetRecoilState } from "recoil";
 import {
   BottomContainer,
   ButtonContainer,
@@ -12,27 +15,18 @@ import {
   GridTitle,
   GridTitleContainer,
 } from "../../../CommonStyled";
-import { Button } from "@progress/kendo-react-buttons";
+import { useApi } from "../../../hooks/api";
+import { IWindowPosition } from "../../../hooks/interfaces";
+import { isLoading, loginResultState } from "../../../store/atoms";
+import { Iparameters, TEditorHandle } from "../../../store/types";
 import {
   UseParaPc,
   dateformat2,
   extractDownloadFilename,
 } from "../../CommonFunction";
-import { IAttachmentData, IWindowPosition } from "../../../hooks/interfaces";
-import { useRecoilState, useSetRecoilState } from "recoil";
-import {
-  deletedAttadatnumsState,
-  isLoading,
-  loginResultState,
-  unsavedAttadatnumsState,
-} from "../../../store/atoms";
-import { Input, Checkbox } from "@progress/kendo-react-inputs";
-import { Iparameters, TEditorHandle } from "../../../store/types";
+import { PAGE_SIZE } from "../../CommonString";
 import RichEditor from "../../RichEditor";
-import { DEFAULT_ATTDATNUMS, PAGE_SIZE } from "../../CommonString";
 import PopUpAttachmentsWindow from "./PopUpAttachmentsWindow";
-import { bytesToBase64 } from "byte-base64";
-import { useLocation } from "react-router-dom";
 
 interface IAnswer {
   reception_document_id: string;
@@ -223,6 +217,7 @@ const SignWindow = ({ setVisible, para, reload }: IWindow) => {
     setAttachmentsWindowVisible(true);
   };
 
+
   const getAttachmentsData = (
     data: any,
     fileList?: FileList | any[],
@@ -242,7 +237,8 @@ const SignWindow = ({ setVisible, para, reload }: IWindow) => {
 
     setInformation((prev) => ({
       ...prev,
-      answer_attdatnum: data.length > 0 ? data[0].attdatnum : prev.answer_attdatnum,
+      answer_attdatnum:
+        data.length > 0 ? data[0].attdatnum : prev.answer_attdatnum,
       answer_files:
         data.length > 1
           ? data[0].realnm + " 등 " + String(data.length) + "건"
@@ -296,12 +292,12 @@ const SignWindow = ({ setVisible, para, reload }: IWindow) => {
   });
 
   const onSave = async (workType: string) => {
-    if(workType == "D") {
+    if (workType == "D") {
       if (!window.confirm("삭제하시겠습니까?")) {
         return false;
       }
     }
-    
+
     let data2: any;
     const parameters: Iparameters = {
       procedureName: "pw6_sel_answers",
@@ -339,14 +335,23 @@ const SignWindow = ({ setVisible, para, reload }: IWindow) => {
     for (const file of fileList) {
       // 최초 등록 시, 업로드 후 첨부번호를 가져옴 (다중 업로드 대응)
       if (Information.answer_attdatnum == "" && newAttachmentNumber == "") {
-        newAttachmentNumber = await uploadFile(file, "answer", Information.answer_attdatnum);
+        newAttachmentNumber = await uploadFile(
+          file,
+          "answer",
+          Information.answer_attdatnum
+        );
         const promise = newAttachmentNumber;
         promises.push(promise);
         continue;
       }
 
       const promise = newAttachmentNumber
-        ? await uploadFile(file, "answer", Information.answer_attdatnum, newAttachmentNumber)
+        ? await uploadFile(
+            file,
+            "answer",
+            Information.answer_attdatnum,
+            newAttachmentNumber
+          )
         : await uploadFile(file, "answer", Information.answer_attdatnum);
       promises.push(promise);
     }
@@ -394,7 +399,8 @@ const SignWindow = ({ setVisible, para, reload }: IWindow) => {
         "@p_document_id": Information.answer_document_id,
         "@p_ref_document_id": para,
         "@p_contents": textContent,
-        "@p_attdatnum":  results[0] == undefined ? Information.answer_attdatnum : results[0],
+        "@p_attdatnum":
+          results[0] == undefined ? Information.answer_attdatnum : results[0],
         "@p_is_finish":
           Information.is_finish == undefined
             ? "N"
@@ -415,11 +421,14 @@ const SignWindow = ({ setVisible, para, reload }: IWindow) => {
     }
 
     if (data3 != null) {
-      if(workType == "D") {
+      if (workType == "D") {
         let data2: any;
         try {
           data2 = await processApi<any>("attachment-delete", {
-            attached: "attachment?type=answer&attachmentNumber=" + Information.answer_attdatnum + "&id=",
+            attached:
+              "attachment?type=answer&attachmentNumber=" +
+              Information.answer_attdatnum +
+              "&id=",
           });
         } catch (error) {
           data2 = null;
@@ -433,7 +442,7 @@ const SignWindow = ({ setVisible, para, reload }: IWindow) => {
   const uploadFile = async (
     files: File,
     type: string,
-    attdatnum? :string,
+    attdatnum?: string,
     newAttachmentNumber?: string
   ) => {
     let data: any;
@@ -443,10 +452,7 @@ const SignWindow = ({ setVisible, para, reload }: IWindow) => {
     if (newAttachmentNumber != undefined) {
       queryParams.append("attachmentNumber", newAttachmentNumber);
     } else if (attdatnum != undefined) {
-      queryParams.append(
-        "attachmentNumber",
-        attdatnum == "" ? "" : attdatnum
-      );
+      queryParams.append("attachmentNumber", attdatnum == "" ? "" : attdatnum);
     }
 
     const formid = "%28web%29" + pathname;

@@ -1,4 +1,35 @@
+import {
+  DataResult,
+  FilterDescriptor,
+  State,
+  filterBy,
+  getter,
+  process,
+} from "@progress/kendo-data-query";
 import { Button } from "@progress/kendo-react-buttons";
+import {
+  ComboBoxFilterChangeEvent,
+  MultiColumnComboBox,
+  MultiSelect,
+  MultiSelectChangeEvent,
+} from "@progress/kendo-react-dropdowns";
+import {
+  Grid,
+  GridCellProps,
+  GridColumn,
+  GridDataStateChangeEvent,
+  GridFooterCellProps,
+  GridItemChangeEvent,
+  GridPageChangeEvent,
+  GridSelectionChangeEvent,
+  getSelectedState,
+} from "@progress/kendo-react-grid";
+import { Input, TextArea } from "@progress/kendo-react-inputs";
+import { TabStrip, TabStripTab } from "@progress/kendo-react-layout";
+import { bytesToBase64 } from "byte-base64";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
+import { useRecoilState, useSetRecoilState } from "recoil";
 import {
   ButtonContainer,
   ButtonInGridInput,
@@ -13,8 +44,12 @@ import {
   Title,
   TitleContainer,
 } from "../CommonStyled";
-import { isLoading, loginResultState } from "../store/atoms";
-import { useRecoilState, useSetRecoilState } from "recoil";
+import CenterCell from "../components/Cells/CenterCell";
+import CheckBoxCell from "../components/Cells/CheckBoxCell";
+import CheckBoxReadOnlyCell from "../components/Cells/CheckBoxReadOnlyCell";
+import ComboBoxCell from "../components/Cells/ComboBoxCell";
+import DateCell from "../components/Cells/DateCell";
+import NumberCell from "../components/Cells/NumberCell";
 import {
   UseParaPc,
   convertDateToStr,
@@ -24,60 +59,26 @@ import {
   handleKeyPressSearch,
 } from "../components/CommonFunction";
 import {
-  ComboBoxFilterChangeEvent,
-  MultiColumnComboBox,
-  MultiSelect,
-  MultiSelectChangeEvent,
-} from "@progress/kendo-react-dropdowns";
-import {
-  dataTypeColumns,
-  dataTypeColumns2,
-  userColumns,
-} from "../store/columns/common-columns";
-import {
-  DataResult,
-  FilterDescriptor,
-  State,
-  filterBy,
-  getter,
-  process,
-} from "@progress/kendo-data-query";
-import {
   EDIT_FIELD,
   GAP,
   PAGE_SIZE,
   SELECTED_FIELD,
 } from "../components/CommonString";
-import { Input, TextArea } from "@progress/kendo-react-inputs";
-import { bytesToBase64 } from "byte-base64";
-import { useApi } from "../hooks/api";
-import {
-  Grid,
-  GridCellProps,
-  GridColumn,
-  GridDataStateChangeEvent,
-  GridFooterCellProps,
-  GridItemChangeEvent,
-  GridPageChangeEvent,
-  GridSelectionChangeEvent,
-  getSelectedState,
-} from "@progress/kendo-react-grid";
-import { Iparameters, TEditorHandle } from "../store/types";
-import CheckBoxReadOnlyCell from "../components/Cells/CheckBoxReadOnlyCell";
-import DateCell from "../components/Cells/DateCell";
-import CenterCell from "../components/Cells/CenterCell";
 import CommonDateRangePicker from "../components/DateRangePicker/CommonDateRangePicker";
-import CheckBoxCell from "../components/Cells/CheckBoxCell";
-import RequiredHeader from "../components/RequiredHeader";
-import NumberCell from "../components/Cells/NumberCell";
 import { CellRender, RowRender } from "../components/Renderers/Renderers";
-import ComboBoxCell from "../components/Cells/ComboBoxCell";
+import RequiredHeader from "../components/RequiredHeader";
 import RichEditor from "../components/RichEditor";
-import { TabStrip, TabStripTab } from "@progress/kendo-react-layout";
-import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
 import AnswerWindow from "../components/Windows/CommonWindows/AnswerWindow";
-import { createContext, useContext, useEffect, useRef, useState } from "react";
-import { useLocation } from "react-router-dom";
+import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
+import ContentWindow from "../components/Windows/CommonWindows/ContentWindow";
+import { useApi } from "../hooks/api";
+import { isLoading, loginResultState } from "../store/atoms";
+import {
+  dataTypeColumns,
+  dataTypeColumns2,
+  userColumns,
+} from "../store/columns/common-columns";
+import { Iparameters, TEditorHandle } from "../store/types";
 
 const workTypeQueryStr = `select sub_code, code_name FROM comCodeMaster where group_code = 'CR004'`;
 
@@ -399,6 +400,42 @@ const App = () => {
   const onAnswerWndClick = () => {
     setAnswerWindowVisible(true);
   };
+  const [contentWindowVisible, setContentWindowVisible] =
+    useState<boolean>(false);
+  const onContentWndClick = () => {
+    if (subDataResult.data.length > 0) {
+      setContentWindowVisible(true);
+    } else {
+      alert("데이터가 없습니다.");
+    }
+  };
+  const getContentData = (title: string, content: string) => {
+    const newData = subDataResult.data.map((item) =>
+      item[SUB_DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedsubDataState)[0]
+        ? {
+            ...item,
+            rowstatus: item.rowstatus == "N" ? "N" : "U",
+            title: title,
+            contents: content,
+          }
+        : {
+            ...item,
+          }
+    );
+    setTempResult((prev) => {
+      return {
+        data: newData,
+        total: prev.total,
+      };
+    });
+    setSubDataResult((prev) => {
+      return {
+        data: newData,
+        total: prev.total,
+      };
+    });
+  };
+
   const location = useLocation();
   const pathname = location.pathname.replace("/", "");
   let gridRef: any = useRef(null);
@@ -806,6 +843,7 @@ const App = () => {
           filters.work_category != null ? filters.work_category.sub_code : "",
         "@p_ref_type": type,
         "@p_ref_key": "",
+        "@p_find_row_value": filters.findRowValue,
       },
     };
     try {
@@ -822,7 +860,7 @@ const App = () => {
         // find_row_value 행으로 스크롤 이동
         if (gridRef.current) {
           const findRowIndex = rows.findIndex(
-            (row: any) => row[DATA_ITEM_KEY] == filters.findRowValue
+            (row: any) => row.docunum == filters.findRowValue
           );
           targetRowIndex = findRowIndex;
         }
@@ -851,7 +889,7 @@ const App = () => {
           filters.findRowValue == ""
             ? rows[0]
             : rows.find(
-                (row: any) => row[DATA_ITEM_KEY] == filters.findRowValue
+                (row: any) => row.docunum == filters.findRowValue
               );
 
         if (selectedRow != undefined) {
@@ -991,7 +1029,7 @@ const App = () => {
           filters.work_category != null ? filters.work_category.sub_code : "",
         "@p_ref_type": type,
         "@p_ref_key": subfilters.docunum,
-        //"@p_find_row_value": filters.find_row_value,
+        "@p_find_row_value": "",
       },
     };
     try {
@@ -1020,9 +1058,9 @@ const App = () => {
 
       if (totalRowCnt > 0) {
         const selectedRow =
-          subfilters.find_row_value == ""
+          subfilters.findRowValue == ""
             ? rows[0]
-            : rows.find((row: any) => row.datnum == subfilters.find_row_value);
+            : rows.find((row: any) => row.datnum == subfilters.findRowValue);
 
         if (selectedRow != undefined) {
           setSelectedsubDataState({ [selectedRow[SUB_DATA_ITEM_KEY]]: true });
@@ -1050,7 +1088,7 @@ const App = () => {
     if (filters.isSearch) {
       const _ = require("lodash");
       const deepCopiedFilters = _.cloneDeep(filters);
-      setFilters((prev) => ({ ...prev, find_row_value: "", isSearch: false })); // 한번만 조회되도록
+      setFilters((prev) => ({ ...prev, findRowValue: "", isSearch: false })); // 한번만 조회되도록
       fetchMainGrid(deepCopiedFilters);
     }
   }, [filters]);
@@ -1061,7 +1099,7 @@ const App = () => {
       const deepCopiedFilters = _.cloneDeep(subFilters);
       setSubFilters((prev) => ({
         ...prev,
-        find_row_value: "",
+        findRowValue: "",
         isSearch: false,
       })); // 한번만 조회되도록
       fetchSubGrid(deepCopiedFilters);
@@ -1165,6 +1203,8 @@ const App = () => {
     } else {
       temp = 0;
       deletedRows = [];
+      setFileList([]);
+      setSavenmList([]);
       setFileList2([]);
       setSavenmList2([]);
       setPage(initialPageState); // 페이지 초기화
@@ -1173,7 +1213,7 @@ const App = () => {
       setFilters((prev) => ({
         ...prev,
         pgNum: 1,
-        find_row_value: "",
+        findRowValue: "",
         isSearch: true,
       }));
     }
@@ -1934,7 +1974,7 @@ const App = () => {
       setSavenmList2([]);
       setFilters((prev) => ({
         ...prev,
-        find_row_value: Object.getOwnPropertyNames(selectedState)[0],
+        findRowValue: data.returnString,
         isSearch: true,
       }));
     } else {
@@ -1946,14 +1986,6 @@ const App = () => {
     paraData.work_type = "";
   };
 
-  const onChangeClick = () => {
-    if(subDataResult.data.length > 0) {
-
-    } else {
-      alert("데이터가 없습니다.")
-    }
-  }
-  
   return (
     <>
       <TitleContainer>
@@ -2283,7 +2315,7 @@ const App = () => {
                             title="행 삭제"
                           ></Button>
                           <Button
-                            onClick={onChangeClick}
+                            onClick={onContentWndClick}
                             fillMode="outline"
                             themeColor={"primary"}
                             icon="pencil"
@@ -3061,6 +3093,38 @@ const App = () => {
               isSearch: true,
             }));
           }}
+        />
+      )}
+      {contentWindowVisible && (
+        <ContentWindow
+          setVisible={setContentWindowVisible}
+          title={
+            subDataResult.data.filter(
+              (item) =>
+                item[SUB_DATA_ITEM_KEY] ==
+                Object.getOwnPropertyNames(selectedsubDataState)[0]
+            ) != undefined
+              ? subDataResult.data.filter(
+                  (item) =>
+                    item[SUB_DATA_ITEM_KEY] ==
+                    Object.getOwnPropertyNames(selectedsubDataState)[0]
+                )[0].title
+              : ""
+          }
+          content={
+            subDataResult.data.filter(
+              (item) =>
+                item[SUB_DATA_ITEM_KEY] ==
+                Object.getOwnPropertyNames(selectedsubDataState)[0]
+            ) != undefined
+              ? subDataResult.data.filter(
+                  (item) =>
+                    item[SUB_DATA_ITEM_KEY] ==
+                    Object.getOwnPropertyNames(selectedsubDataState)[0]
+                )[0].contents
+              : ""
+          }
+          reload={getContentData}
         />
       )}
     </>

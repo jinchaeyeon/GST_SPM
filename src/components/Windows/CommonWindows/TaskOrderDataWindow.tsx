@@ -74,8 +74,7 @@ const valueCodeQueryStr = `select sub_code, code_name
 from comCodeMaster
 where group_code ='BA012_GST'`;
 
-const usersQueryStr = `SELECT user_id, user_name 
-FROM sysUserMaster`;
+const usersQueryStr = `SELECT user_id, user_name + (CASE WHEN rtrchk = 'Y' THEN '-퇴' ELSE '' END) as user_name FROM sysUserMaster ORDER BY (CASE WHEN rtrchk = 'Y' THEN 2 ELSE 1 END), user_id`;
 
 const receptionTypeQueryStr = `SELECT a.sub_code,
 a.code_name

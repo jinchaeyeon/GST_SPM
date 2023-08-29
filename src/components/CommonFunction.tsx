@@ -1086,9 +1086,7 @@ project_itemnm,
 remark
 FROM BizGST.dbo.CR504T`;
 
-export const usersQueryStr = `SELECT user_id, user_name 
-FROM sysUserMaster 
-WHERE rtrchk <> 'Y'`;
+export const usersQueryStr = `SELECT user_id, user_name + (CASE WHEN rtrchk = 'Y' THEN '-퇴' ELSE '' END) as user_name FROM sysUserMaster ORDER BY (CASE WHEN rtrchk = 'Y' THEN 2 ELSE 1 END), user_id`;
 
 export const isWithinOneMonth = (dateString: string) => {
   // dateString 형식은 "YYYYMMDD" 여야 합니다.
