@@ -1,5 +1,8 @@
-import { useEffect, useState } from "react";
-import * as React from "react";
+import { DialogContent, DialogTitle } from "@mui/material";
+import Dialog from "@mui/material/Dialog";
+import Paper, { PaperProps } from "@mui/material/Paper";
+import { DataResult, getter, process } from "@progress/kendo-data-query";
+import { Button } from "@progress/kendo-react-buttons";
 import {
   Grid,
   GridColumn,
@@ -7,19 +10,26 @@ import {
   GridHeaderSelectionChangeEvent,
   GridItemChangeEvent,
   GridSelectionChangeEvent,
-  getSelectedState,
+  getSelectedState
 } from "@progress/kendo-react-grid";
-import { DataResult, process, getter } from "@progress/kendo-data-query";
-import { useApi } from "../../../hooks/api";
+import { Checkbox } from "@progress/kendo-react-inputs";
+import * as React from "react";
+import { useCallback, useEffect, useState } from "react";
+import Draggable from "react-draggable";
+import { useLocation } from "react-router-dom";
+import { useRecoilState, useSetRecoilState } from "recoil";
 import {
   BottomContainer,
   ButtonContainer,
   TitleContainer,
 } from "../../../CommonStyled";
-import { Button } from "@progress/kendo-react-buttons";
+import { useApi } from "../../../hooks/api";
 import { IAttachmentData, IWindowPosition } from "../../../hooks/interfaces";
-import NumberCell from "../../Cells/NumberCell";
+import { isLoading, loginResultState } from "../../../store/atoms";
+import { TAttachmentType } from "../../../store/types";
 import CenterCell from "../../Cells/CenterCell";
+import CheckBoxCell from "../../Cells/CheckBoxCell";
+import NumberCell from "../../Cells/NumberCell";
 import {
   UseParaPc,
   convertDateToStrWithTime2,
@@ -28,17 +38,7 @@ import {
   getGridItemChangedData,
 } from "../../CommonFunction";
 import { EDIT_FIELD, SELECTED_FIELD } from "../../CommonString";
-import { useLocation } from "react-router-dom";
-import { TAttachmentType } from "../../../store/types";
-import { isLoading, loginResultState } from "../../../store/atoms";
-import { useRecoilState, useSetRecoilState } from "recoil";
-import Dialog from "@mui/material/Dialog";
-import { DialogContent, DialogTitle } from "@mui/material";
-import Paper, { PaperProps } from "@mui/material/Paper";
-import Draggable from "react-draggable";
-import CheckBoxCell from "../../Cells/CheckBoxCell";
 import { CellRender, RowRender } from "../../Renderers/Renderers";
-import { Checkbox } from "@progress/kendo-react-inputs";
 
 type permission = {
   upload: boolean;
@@ -137,7 +137,7 @@ const KendoWindow = ({
     let data: any;
 
     if (attachmentNumber === "") {
-      if(fileLists.length != 0) {
+      if (fileLists.length != 0) {
         for (var i = 0; i < fileLists.length; i++) {
           const newData = {
             attdatnum: !attachmentNumber ? "" : attachmentNumber,
@@ -161,35 +161,35 @@ const KendoWindow = ({
       const parameters = {
         attached: "list?type=" + type + "&attachmentNumber=" + attachmentNumber,
       };
-  
+
       try {
         data = await processApi<any>("file-list", parameters);
       } catch (error) {
         data = null;
       }
-  
+
       let result: IAttachmentData = {
         attdatnum: "",
         original_name: "",
         rowCount: 0,
       };
-  
+
       if (data !== null) {
         const totalRowCnt = data.tables[0].RowCount;
-  
+
         if (totalRowCnt > 0) {
           const rows = data.tables[0].Rows.map((item: any) => ({
             ...item,
             idx: idx++,
             rowstatus: "U",
           }));
-  
+
           if (savenmLists.length != 0) {
             const newData = rows.filter(
               (item: { savenm: string }) =>
                 savenmLists.includes(item.savenm) != true
             );
-  
+
             setMainDataResult((prev) => ({
               data: newData,
               total: newData.length,
@@ -203,7 +203,7 @@ const KendoWindow = ({
               };
             });
           }
-  
+
           result = {
             attdatnum: rows[0].attdatnum,
             original_name: rows[0].realnm,
@@ -216,14 +216,14 @@ const KendoWindow = ({
               total: 0,
             };
           });
-  
+
           result = {
             attdatnum: attachmentNumber,
             original_name: "",
             rowCount: 0,
           };
         }
-        if(fileLists.length != 0) {
+        if (fileLists.length != 0) {
           for (var i = 0; i < fileLists.length; i++) {
             const newData = {
               attdatnum: !attachmentNumber ? "" : attachmentNumber,
@@ -340,7 +340,7 @@ const KendoWindow = ({
     }
 
     parameters.map((item: any) => {
-      setSavenmList((prev) => ([...prev, ...[item.savenm]]));
+      setSavenmList((prev) => [...prev, ...[item.savenm]]);
     });
 
     const newData = mainDataResult.data.filter((item) => item.chk != true);
@@ -389,16 +389,13 @@ const KendoWindow = ({
         total: prev.total + 1,
       }));
     }
-    setFileList((prev) => [
-      ...prev,
-      ...files
-    ])
+    setFileList((prev) => [...prev, ...files]);
   };
 
   const [values2, setValues2] = React.useState<boolean>(false);
-  const CustomCheckBoxCell2 = (props: GridHeaderCellProps) => {
-    const changeCheck = () => {
-      const newData = mainDataResult.data.map((item) => ({
+  const CustomCheckBoxCell2 = useCallback((props: GridHeaderCellProps) => {
+    function changeCheck() {
+      const newData = mainDataResult.data.map((item: any) => ({
         ...item,
         chk: !values2,
       }));
@@ -409,14 +406,14 @@ const KendoWindow = ({
           total: prev.total,
         };
       });
-    };
+    }
 
     return (
       <div style={{ textAlign: "center" }}>
         <Checkbox value={values2} onClick={changeCheck}></Checkbox>
       </div>
     );
-  };
+  }, [values2, mainDataResult.data])
 
   const onMainItemChange = (event: GridItemChangeEvent) => {
     getGridItemChangedData(
@@ -451,7 +448,7 @@ const KendoWindow = ({
         item[DATA_ITEM_KEY] == dataItem[DATA_ITEM_KEY]
           ? {
               ...item,
-              chk : !item.chk,
+              chk: !item.chk,
               [EDIT_FIELD]: field,
             }
           : {
@@ -624,8 +621,8 @@ const KendoWindow = ({
             field="chk"
             title=" "
             width="45px"
-            headerCell={CustomCheckBoxCell2}
             cell={CheckBoxCell}
+            headerCell={CustomCheckBoxCell2}
           />
           <GridColumn field="realnm" title="파일명" width="500" />
           <GridColumn

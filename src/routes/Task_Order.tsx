@@ -2651,16 +2651,48 @@ const App = () => {
     }
   };
 
-  const onRemoveClick = () => {
+  const onRemoveClick = async () => {
     if (mainDataResult4.total > 0) {
       const datas = mainDataResult4.data.filter(
         (item) =>
           item[DATA_ITEM_KEY4] == Object.getOwnPropertyNames(selectedState4)[0]
       )[0];
       if (userId == datas.indicator) {
-        if (datas.is_defective == "Y") {
+        const defectiveQueryStr = `SELECT ISNULL(MIN(ref_key),'') as ref_key FROM PR240T WHERE orgdiv = '01' AND ref_key = '${datas.docunum}'`;
+        let data: any;
+
+        const bytes = require("utf8-bytes");
+        const convertedQueryStr = bytesToBase64(bytes(defectiveQueryStr));
+    
+        let query = {
+          query: convertedQueryStr,
+        };
+    
+        try {
+          data = await processApi<any>("bizgst-query", query);
+        } catch (error) {
+          data = null;
+        }
+
+        const finynQueryStr = `SELECT ISNULL(MIN(docunum),'') as docunum FROM CR020T WHERE orgdiv = '01' AND docunum = '${datas.docunum}'`;
+        let data2: any;
+
+        const bytes2 = require("utf8-bytes");
+        const convertedQueryStr2 = bytesToBase64(bytes2(finynQueryStr));
+    
+        let query2 = {
+          query: convertedQueryStr2,
+        };
+    
+        try {
+          data2 = await processApi<any>("bizgst-query", query2);
+        } catch (error) {
+          data2 = null;
+        }
+
+        if (data.tables[0].Rows[0].ref_key != "") {
           alert("불량처리가 된 데이터는 삭제가 불가능합니다.");
-        } else if(datas.finyn == "Y") {
+        } else if(data2.tables[0].Rows[0].docunum != "") {
           alert("처리일지가 등록된 데이터는 삭제가 불가능합니다.");
         } else {
           //삭제 안 할 데이터 newData에 push, 삭제 데이터 deletedRows에 push
