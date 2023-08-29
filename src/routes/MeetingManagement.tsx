@@ -182,7 +182,7 @@ const App = () => {
   const pathname = location.pathname.replace("/", "");
   const history = useHistory();
   const filterRef = useRef<HTMLDivElement>(null);
-
+  const [workType, setWorktype] = useState("U");
   useEffect(() => {
     // 접근 권한 검증
     if (loginResult) {
@@ -307,6 +307,7 @@ const App = () => {
     setSavenmList([]);
     setFileList2([]);
     setSavenmList2([]);
+    setWorktype("U");
     const selectedIdx = event.startRowIndex;
     const selectedRowData = event.dataItems[selectedIdx];
 
@@ -552,12 +553,14 @@ const App = () => {
             };
           });
         }
+        setWorktype("U");
       } else {
         // 조회 데이터 없을 시 초기화
         setMainDataResult(process([], mainDataState));
         setDetailData(defaultDetailData);
         setDetailRows(process([], mainDataState));
         setSelectedState({});
+        setWorktype("N");
       }
     } else {
       console.log("[에러발생]");
@@ -920,56 +923,60 @@ const App = () => {
 
   const downloadDoc = async () => {
     let response: any;
+    if(workType == "N") {
+      alert("신규 등록은 다운로드가 불가능합니다.");
+    } else if(mainDataResult.total == 0) {
+      alert("데이터가 없습니다.");
+    } else {
+      const mainDataId = Object.getOwnPropertyNames(selectedState)[0];
 
-    const mainDataId = Object.getOwnPropertyNames(selectedState)[0];
-
-    if (!mainDataId) {
-      alert("선택된 자료가 없습니다.");
-      return false;
+      if (!mainDataId) {
+        alert("선택된 자료가 없습니다.");
+        return false;
+      }
+      const selectedRow = mainDataResult.data.find(
+        (item) => item[DATA_ITEM_KEY] === mainDataId
+      );
+  
+      const id = selectedRow.orgdiv + "_" + selectedRow.meetingnum;
+      const para = {
+        para: "doc?type=Meeting&id=" + id,
+      };
+  
+      setLoading(true);
+      try {
+        response = await processApi<any>("doc-download", para);
+      } catch (error) {
+        response = null;
+      }
+  
+      if (response !== null) {
+        const blob = new Blob([response.data]);
+  
+        // blob을 사용해 객체 URL을 생성합니다.
+        const fileObjectUrl = window.URL.createObjectURL(blob);
+  
+        // blob 객체 URL을 설정할 링크를 만듭니다.
+        const link = document.createElement("a");
+        link.href = fileObjectUrl;
+        link.style.display = "none";
+  
+        // 다운로드 파일 이름을 지정 할 수 있습니다.
+        // 일반적으로 서버에서 전달해준 파일 이름은 응답 Header의 Content-Disposition에 설정됩니다.
+  
+        let name = extractDownloadFilename(response);
+        link.download = name.replace("회의록", detailData.title);
+        // 다운로드 파일의 이름은 직접 지정 할 수 있습니다.
+        // link.download = "sample-file.xlsx";
+  
+        // 링크를 body에 추가하고 강제로 click 이벤트를 발생시켜 파일 다운로드를 실행시킵니다.
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+  
+        // 다운로드가 끝난 리소스(객체 URL)를 해제합니다
+      }
     }
-    const selectedRow = mainDataResult.data.find(
-      (item) => item[DATA_ITEM_KEY] === mainDataId
-    );
-
-    const id = selectedRow.orgdiv + "_" + selectedRow.meetingnum;
-    const para = {
-      para: "doc?type=Meeting&id=" + id,
-    };
-
-    setLoading(true);
-    try {
-      response = await processApi<any>("doc-download", para);
-    } catch (error) {
-      response = null;
-    }
-
-    if (response !== null) {
-      const blob = new Blob([response.data]);
-
-      // blob을 사용해 객체 URL을 생성합니다.
-      const fileObjectUrl = window.URL.createObjectURL(blob);
-
-      // blob 객체 URL을 설정할 링크를 만듭니다.
-      const link = document.createElement("a");
-      link.href = fileObjectUrl;
-      link.style.display = "none";
-
-      // 다운로드 파일 이름을 지정 할 수 있습니다.
-      // 일반적으로 서버에서 전달해준 파일 이름은 응답 Header의 Content-Disposition에 설정됩니다.
-
-      let name = extractDownloadFilename(response);
-      link.download = name.replace("회의록", detailData.title);
-      // 다운로드 파일의 이름은 직접 지정 할 수 있습니다.
-      // link.download = "sample-file.xlsx";
-
-      // 링크를 body에 추가하고 강제로 click 이벤트를 발생시켜 파일 다운로드를 실행시킵니다.
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-
-      // 다운로드가 끝난 리소스(객체 URL)를 해제합니다
-    }
-
     setLoading(false);
   };
 
@@ -1198,6 +1205,7 @@ const App = () => {
     if (refEditorRef.current) {
       refEditorRef.current.setHtml("");
     }
+    setWorktype("N");
   };
 
   const deleteMeeting = async () => {

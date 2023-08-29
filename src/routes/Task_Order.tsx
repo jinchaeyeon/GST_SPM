@@ -351,7 +351,7 @@ const FilesCell2 = (props: GridCellProps) => {
         ? null
         : render?.call(undefined, defaultRendering, props)}
       {attachmentsWindowVisible && (
-        <PopUpAttachmentsWindow
+        <AttachmentsWindow
           setVisible={setAttachmentsWindowVisible}
           setData={getAttachmentsData}
           para={dataItem.attdatnum}
@@ -1825,7 +1825,11 @@ const App = () => {
 
     if (data.isSuccess === true) {
       const totalRowCnt = data.tables[0].TotalRowCount;
-      const rows = data.tables[0].Rows;
+      const rows = data.tables[0].Rows.map((item: { guid: undefined }) => ({
+        ...item,
+        fileList: [],
+        savenmList: [],
+      }));
 
       if (filters.findRowValue !== "") {
         // find_row_value 행으로 스크롤 이동
@@ -2084,7 +2088,8 @@ const App = () => {
     const parser = new DOMParser();
     const doc = parser.parseFromString(editorContent2, "text/html");
     const textContent = doc.body.textContent || ""; //기존행 문자열
-
+    setFileList([]);
+    setSavenmList([]);
     //web저장된 문서
     if (
       localStorage.getItem(currentRow[DATA_ITEM_KEY4]) == undefined ||
@@ -2347,39 +2352,43 @@ const App = () => {
           item[DATA_ITEM_KEY4] == Object.getOwnPropertyNames(selectedState4)[0]
       )[0];
 
-      const para = {
-        para: "doc?type=Task&id=" + datas.orgdiv + "_" + datas.docunum,
-      };
+      if (datas.rowstatus == "N") {
+        alert("신규행은 다운로드가 불가능합니다.");
+      } else {
+        const para = {
+          para: "doc?type=Task&id=" + datas.orgdiv + "_" + datas.docunum,
+        };
 
-      try {
-        response = await processApi<any>("doc-download", para);
-      } catch (error) {
-        response = null;
-      }
+        try {
+          response = await processApi<any>("doc-download", para);
+        } catch (error) {
+          response = null;
+        }
 
-      if (response !== null) {
-        const blob = new Blob([response.data]);
-        // 특정 타입을 정의해야 경우에는 옵션을 사용해 MIME 유형을 정의 할 수 있습니다.
-        // const blob = new Blob([this.content], {type: 'text/plain'})
+        if (response !== null) {
+          const blob = new Blob([response.data]);
+          // 특정 타입을 정의해야 경우에는 옵션을 사용해 MIME 유형을 정의 할 수 있습니다.
+          // const blob = new Blob([this.content], {type: 'text/plain'})
 
-        // blob을 사용해 객체 URL을 생성합니다.
-        const fileObjectUrl = window.URL.createObjectURL(blob);
+          // blob을 사용해 객체 URL을 생성합니다.
+          const fileObjectUrl = window.URL.createObjectURL(blob);
 
-        // blob 객체 URL을 설정할 링크를 만듭니다.
-        const link = document.createElement("a");
-        link.href = fileObjectUrl;
-        link.style.display = "none";
+          // blob 객체 URL을 설정할 링크를 만듭니다.
+          const link = document.createElement("a");
+          link.href = fileObjectUrl;
+          link.style.display = "none";
 
-        // 다운로드 파일 이름을 지정 할 수 있습니다.
-        // 일반적으로 서버에서 전달해준 파일 이름은 응답 Header의 Content-Disposition에 설정됩니다.
-        link.download = extractDownloadFilename(response);
+          // 다운로드 파일 이름을 지정 할 수 있습니다.
+          // 일반적으로 서버에서 전달해준 파일 이름은 응답 Header의 Content-Disposition에 설정됩니다.
+          link.download = extractDownloadFilename(response);
 
-        // 링크를 body에 추가하고 강제로 click 이벤트를 발생시켜 파일 다운로드를 실행시킵니다.
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
+          // 링크를 body에 추가하고 강제로 click 이벤트를 발생시켜 파일 다운로드를 실행시킵니다.
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
 
-        // 다운로드가 끝난 리소스(객체 URL)를 해제합니다
+          // 다운로드가 끝난 리소스(객체 URL)를 해제합니다
+        }
       }
     }
     setLoading(false);
@@ -2509,7 +2518,17 @@ const App = () => {
   const [attach_exists, setAttach_exists] = useState<string>("");
   const [errorWindowVisible, setErrorWindowVisible] = useState<boolean>(false);
   const onErrorWndClick = () => {
-    setErrorWindowVisible(true);
+    const data = mainDataResult4.data.filter(
+      (item) =>
+        item[DATA_ITEM_KEY4] == Object.getOwnPropertyNames(selectedState4)[0]
+    )[0];
+    if (mainDataResult4.total == 0) {
+      alert("데이터가 없습니다.");
+    } else if (data.rowstatus == "N") {
+      alert("신규행을 불량 팝업조회가 불가능합니다.");
+    } else {
+      setErrorWindowVisible(true);
+    }
   };
   const [fileList, setFileList] = useState<FileList | any[]>([]);
   const [savenmList, setSavenmList] = useState<string[]>([]);
@@ -2547,7 +2566,7 @@ const App = () => {
       setFileList([]);
       setSavenmList([]);
     }
-  }, [attdatnum, attach_exists]);
+  }, [fileList, savenmList]);
 
   useEffect(() => {
     const newData = mainDataResult4.data.map((item) =>
@@ -2634,45 +2653,63 @@ const App = () => {
 
   const onRemoveClick = () => {
     if (mainDataResult4.total > 0) {
-      //삭제 안 할 데이터 newData에 push, 삭제 데이터 deletedRows에 push
-      let newData: any[] = [];
-      let Object: any[] = [];
-      let Object2: any[] = [];
-      let data;
-      mainDataResult4.data.forEach((item: any, index: number) => {
-        if (!selectedState4[item[DATA_ITEM_KEY4]]) {
-          newData.push(item);
-          Object2.push(index);
+      const datas = mainDataResult4.data.filter(
+        (item) =>
+          item[DATA_ITEM_KEY4] == Object.getOwnPropertyNames(selectedState4)[0]
+      )[0];
+      if (userId == datas.indicator) {
+        if (datas.is_defective == "Y") {
+          alert("불량처리가 된 데이터는 삭제가 불가능합니다.");
+        } else if(datas.finyn == "Y") {
+          alert("처리일지가 등록된 데이터는 삭제가 불가능합니다.");
         } else {
-          const newData2 = {
-            ...item,
-            rowstatus: "D",
-          };
-          Object.push(index);
-          deletedRows.push(newData2);
-          localStorage.removeItem(newData2[DATA_ITEM_KEY4]);
-          localStorage.removeItem(newData2[DATA_ITEM_KEY4] + "key");
+          //삭제 안 할 데이터 newData에 push, 삭제 데이터 deletedRows에 push
+          let newData: any[] = [];
+          let Object: any[] = [];
+          let Object2: any[] = [];
+          let data;
+          mainDataResult4.data.forEach((item: any, index: number) => {
+            if (!selectedState4[item[DATA_ITEM_KEY4]]) {
+              newData.push(item);
+              Object2.push(index);
+            } else {
+              const newData2 = {
+                ...item,
+                rowstatus: "D",
+              };
+              Object.push(index);
+              deletedRows.push(newData2);
+              localStorage.removeItem(newData2[DATA_ITEM_KEY4]);
+              localStorage.removeItem(newData2[DATA_ITEM_KEY4] + "key");
+            }
+          });
+
+          if (Math.min(...Object) < Math.min(...Object2)) {
+            data = mainDataResult4.data[Math.min(...Object2)];
+          } else {
+            data = mainDataResult4.data[Math.min(...Object) - 1];
+          }
+
+          //newData 생성
+          setMainDataResult4((prev) => ({
+            data: newData,
+            total: prev.total - Object.length,
+          }));
+          setSelectedState4({
+            [data != undefined ? data[DATA_ITEM_KEY4] : newData[0]]: true,
+          });
+          if (data != undefined) {
+            const row =
+              data != undefined
+                ? data
+                : newData[0] != undefined
+                ? newData[0]
+                : "";
+            fetchDocument("Task", row.orgdiv + "_" + row.docunum, row);
+          }
         }
-      });
-
-      if (Math.min(...Object) < Math.min(...Object2)) {
-        data = mainDataResult4.data[Math.min(...Object2)];
       } else {
-        data = mainDataResult4.data[Math.min(...Object) - 1];
-      }
-
-      //newData 생성
-      setMainDataResult4((prev) => ({
-        data: newData,
-        total: prev.total - Object.length,
-      }));
-      setSelectedState4({
-        [data != undefined ? data[DATA_ITEM_KEY4] : newData[0]]: true,
-      });
-      if (data != undefined) {
-        const row =
-          data != undefined ? data : newData[0] != undefined ? newData[0] : "";
-        fetchDocument("Task", row.orgdiv + "_" + row.docunum, row);
+        alert("지시자 본인만 삭제가 가능합니다.");
       }
     }
   };

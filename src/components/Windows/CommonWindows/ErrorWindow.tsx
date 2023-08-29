@@ -1140,7 +1140,7 @@ const KendoWindow = ({ setVisible, para, reload2 }: TKendoWindow) => {
                     <GridTitle>불량 정보</GridTitle>
                   </GridTitleContainer>
                   <Grid
-                    style={{ height: "425px" }}
+                    style={{ height: "420px" }}
                     data={process(
                       mainDataResult.data.map((row) => ({
                         ...row,
@@ -1212,7 +1212,7 @@ const KendoWindow = ({ setVisible, para, reload2 }: TKendoWindow) => {
                     </ButtonContainer>
                   </GridTitleContainer>
                   <Grid
-                    style={{ height: "425px" }}
+                    style={{ height: "420px" }}
                     data={process(
                       mainDataResult2.data.map((row) => ({
                         ...row,

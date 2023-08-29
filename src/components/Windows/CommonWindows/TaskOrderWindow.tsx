@@ -29,15 +29,9 @@ import {
   extractDownloadFilename,
   getGridItemChangedData,
 } from "../../CommonFunction";
-import {
-  EDIT_FIELD,
-  SELECTED_FIELD,
-} from "../../CommonString";
+import { EDIT_FIELD, SELECTED_FIELD } from "../../CommonString";
 import { useRecoilState, useSetRecoilState } from "recoil";
-import {
-  isLoading,
-  loginResultState,
-} from "../../../store/atoms";
+import { isLoading, loginResultState } from "../../../store/atoms";
 import { CellRender, RowRender } from "../../Renderers/Renderers";
 import { Iparameters, TEditorHandle } from "../../../store/types";
 import DateCell from "../../Cells/DateCell";
@@ -249,7 +243,6 @@ const FilesCell = (props: GridCellProps) => {
     fileList?: FileList | any[],
     savenmList?: string[]
   ) => {
-    setAttdatnum(data.length > 0 ? data[0].attdatnum : attdatnum);
     if (fileList) {
       setFileList(fileList);
     } else {
@@ -261,7 +254,7 @@ const FilesCell = (props: GridCellProps) => {
     } else {
       setSavenmList([]);
     }
-
+    setAttdatnum(data.length > 0 ? data[0].attdatnum : attdatnum);
     if (data.length == 0) {
       setAttach_exists("N");
     } else {
@@ -333,46 +326,48 @@ const KendoWindow = ({
   const Check_ynCell = (props: GridCellProps) => {
     const data = props.dataItem;
     const changeCheck = async () => {
-      if (data.indicator == userId) {
-        const checkQueryStr = `UPDATE CR005T SET finyn = '${
-          data.check_yn == "N" || data.check_yn == ""
-            ? "Y"
-            : data.check_yn == "Y"
-            ? "N"
-            : ""
-        }' WHERE orgdiv = '${data.orgdiv}' AND docunum = '${data.docunum}'`;
-        fetchCheck(checkQueryStr);
-        const newData = mainDataResult.data.map((item) =>
-          item[DATA_ITEM_KEY] == data[DATA_ITEM_KEY]
-            ? {
-                ...item,
-                check_yn:
-                  item.check_yn == "N" || item.check_yn == ""
-                    ? true
-                    : item.check_yn == "Y"
-                    ? false
-                    : !item.check_yn,
-                [EDIT_FIELD]: props.field,
-              }
-            : {
-                ...item,
-                [EDIT_FIELD]: undefined,
-              }
-        );
-        setTempResult((prev) => {
-          return {
-            data: newData,
-            total: prev.total,
-          };
-        });
-        setMainDataResult((prev) => {
-          return {
-            data: newData,
-            total: prev.total,
-          };
-        });
-      } else {
-        alert("지시자가 본인인 경우만 확인 처리 가능합니다.");
+      if (data.rowstatus != "N") {
+        if (data.indicator == userId) {
+          const checkQueryStr = `UPDATE CR005T SET finyn = '${
+            data.check_yn == "N" || data.check_yn == ""
+              ? "Y"
+              : data.check_yn == "Y"
+              ? "N"
+              : ""
+          }' WHERE orgdiv = '${data.orgdiv}' AND docunum = '${data.docunum}'`;
+          fetchCheck(checkQueryStr);
+          const newData = mainDataResult.data.map((item) =>
+            item[DATA_ITEM_KEY] == data[DATA_ITEM_KEY]
+              ? {
+                  ...item,
+                  check_yn:
+                    item.check_yn == "N" || item.check_yn == ""
+                      ? true
+                      : item.check_yn == "Y"
+                      ? false
+                      : !item.check_yn,
+                  [EDIT_FIELD]: props.field,
+                }
+              : {
+                  ...item,
+                  [EDIT_FIELD]: undefined,
+                }
+          );
+          setTempResult((prev) => {
+            return {
+              data: newData,
+              total: prev.total,
+            };
+          });
+          setMainDataResult((prev) => {
+            return {
+              data: newData,
+              total: prev.total,
+            };
+          });
+        } else {
+          alert("지시자가 본인인 경우만 확인 처리 가능합니다.");
+        }
       }
     };
 
@@ -605,6 +600,8 @@ const KendoWindow = ({
       const rows = data.tables[0].Rows.map((item: { guid: undefined }) => ({
         ...item,
         guid: item.guid == undefined || item.guid == "" ? uuidv4() : item.guid,
+        fileList: [],
+        savenmList: [],
       }));
 
       setMainDataResult((prev) => {
@@ -734,6 +731,8 @@ const KendoWindow = ({
         refEditorRef.current.setHtml(editorContent3);
       }
     }
+    setFileList([]);
+    setSavenmList([]);
   };
 
   useEffect(() => {
@@ -767,39 +766,43 @@ const KendoWindow = ({
           item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
       )[0];
 
-      const para = {
-        para: "doc?type=Task&id=" + datas.orgdiv + "_" + datas.docunum,
-      };
+      if (datas.rowstatus == "N") {
+        alert("신규 행을 다운로드가 불가능합니다.");
+      } else {
+        const para = {
+          para: "doc?type=Task&id=" + datas.orgdiv + "_" + datas.docunum,
+        };
 
-      try {
-        response = await processApi<any>("doc-download", para);
-      } catch (error) {
-        response = null;
-      }
+        try {
+          response = await processApi<any>("doc-download", para);
+        } catch (error) {
+          response = null;
+        }
 
-      if (response !== null) {
-        const blob = new Blob([response.data]);
-        // 특정 타입을 정의해야 경우에는 옵션을 사용해 MIME 유형을 정의 할 수 있습니다.
-        // const blob = new Blob([this.content], {type: 'text/plain'})
+        if (response !== null) {
+          const blob = new Blob([response.data]);
+          // 특정 타입을 정의해야 경우에는 옵션을 사용해 MIME 유형을 정의 할 수 있습니다.
+          // const blob = new Blob([this.content], {type: 'text/plain'})
 
-        // blob을 사용해 객체 URL을 생성합니다.
-        const fileObjectUrl = window.URL.createObjectURL(blob);
+          // blob을 사용해 객체 URL을 생성합니다.
+          const fileObjectUrl = window.URL.createObjectURL(blob);
 
-        // blob 객체 URL을 설정할 링크를 만듭니다.
-        const link = document.createElement("a");
-        link.href = fileObjectUrl;
-        link.style.display = "none";
+          // blob 객체 URL을 설정할 링크를 만듭니다.
+          const link = document.createElement("a");
+          link.href = fileObjectUrl;
+          link.style.display = "none";
 
-        // 다운로드 파일 이름을 지정 할 수 있습니다.
-        // 일반적으로 서버에서 전달해준 파일 이름은 응답 Header의 Content-Disposition에 설정됩니다.
-        link.download = extractDownloadFilename(response);
+          // 다운로드 파일 이름을 지정 할 수 있습니다.
+          // 일반적으로 서버에서 전달해준 파일 이름은 응답 Header의 Content-Disposition에 설정됩니다.
+          link.download = extractDownloadFilename(response);
 
-        // 링크를 body에 추가하고 강제로 click 이벤트를 발생시켜 파일 다운로드를 실행시킵니다.
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
+          // 링크를 body에 추가하고 강제로 click 이벤트를 발생시켜 파일 다운로드를 실행시킵니다.
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
 
-        // 다운로드가 끝난 리소스(객체 URL)를 해제합니다
+          // 다운로드가 끝난 리소스(객체 URL)를 해제합니다
+        }
       }
     }
     setLoading(false);
@@ -927,7 +930,17 @@ const KendoWindow = ({
   const [attach_exists, setAttach_exists] = useState<string>("");
   const [errorWindowVisible, setErrorWindowVisible] = useState<boolean>(false);
   const onErrorWndClick = () => {
-    setErrorWindowVisible(true);
+    const data = mainDataResult.data.filter(
+      (item) =>
+        item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
+    )[0];
+    if (mainDataResult.total == 0) {
+      alert("데이터가 없습니다.");
+    } else if (data.rowstatus == "N") {
+      alert("신규행을 불량 팝업조회가 불가능합니다.");
+    } else {
+      setErrorWindowVisible(true);
+    }
   };
   useEffect(() => {
     if (fileList.length > 0 || savenmList.length > 0) {
@@ -953,16 +966,10 @@ const KendoWindow = ({
           total: prev.total,
         };
       });
-      setTempResult((prev) => {
-        return {
-          data: newData,
-          total: prev.total,
-        };
-      });
       setFileList([]);
       setSavenmList([]);
     }
-  }, [attdatnum, attach_exists]);
+  }, [fileList, savenmList]);
 
   const onAddClick = () => {
     mainDataResult.data.map((item) => {
@@ -1031,50 +1038,64 @@ const KendoWindow = ({
 
   const onRemoveClick = () => {
     if (mainDataResult.total > 0) {
-      //삭제 안 할 데이터 newData에 push, 삭제 데이터 deletedRows에 push
-      let newData: any[] = [];
-      let Object: any[] = [];
-      let Object2: any[] = [];
-      let data;
-      mainDataResult.data.forEach((item: any, index: number) => {
-        if (!selectedState[item[DATA_ITEM_KEY]]) {
-          newData.push(item);
-          Object2.push(index);
+      const datas = mainDataResult.data.filter(
+        (item) =>
+          item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
+      )[0];
+      if (userId == datas.indicator) {
+        if (datas.is_defective == "Y") {
+          alert("불량처리가 된 데이터는 삭제가 불가능합니다.");
+        } else if(datas.finyn == "Y") {
+          alert("처리일지가 등록된 데이터는 삭제가 불가능합니다.");
         } else {
-          const newData2 = {
-            ...item,
-            rowstatus: "D",
-          };
-          Object.push(index);
-          deletedRows.push(newData2);
-          localStorage.removeItem(newData2[DATA_ITEM_KEY]);
-          localStorage.removeItem(newData2[DATA_ITEM_KEY] + "key");
+          //삭제 안 할 데이터 newData에 push, 삭제 데이터 deletedRows에 push
+          let newData: any[] = [];
+          let Object3: any[] = [];
+          let Object2: any[] = [];
+          let data;
+          mainDataResult.data.forEach((item: any, index: number) => {
+            if (!selectedState[item[DATA_ITEM_KEY]]) {
+              newData.push(item);
+              Object2.push(index);
+            } else {
+              const newData2 = {
+                ...item,
+                rowstatus: "D",
+              };
+              Object3.push(index);
+              deletedRows.push(newData2);
+              localStorage.removeItem(newData2[DATA_ITEM_KEY]);
+              localStorage.removeItem(newData2[DATA_ITEM_KEY] + "key");
+            }
+          });
+
+          if (Math.min(...Object3) < Math.min(...Object2)) {
+            data = mainDataResult.data[Math.min(...Object2)];
+          } else {
+            data = mainDataResult.data[Math.min(...Object3) - 1];
+          }
+
+          //newData 생성
+          setMainDataResult((prev) => ({
+            data: newData,
+            total: prev.total - Object3.length,
+          }));
+          setSelectedState({
+            [data != undefined ? data[DATA_ITEM_KEY] : newData[0]]: true,
+          });
+
+          if (data != undefined) {
+            const row =
+              data != undefined
+                ? data[DATA_ITEM_KEY]
+                : newData[0] != undefined
+                ? newData[0][DATA_ITEM_KEY]
+                : "";
+            fetchDocument("Task", row.orgdiv + "_" + row.docunum, row);
+          }
         }
-      });
-
-      if (Math.min(...Object) < Math.min(...Object2)) {
-        data = mainDataResult.data[Math.min(...Object2)];
       } else {
-        data = mainDataResult.data[Math.min(...Object) - 1];
-      }
-
-      //newData 생성
-      setMainDataResult((prev) => ({
-        data: newData,
-        total: prev.total - Object.length,
-      }));
-      setSelectedState({
-        [data != undefined ? data[DATA_ITEM_KEY] : newData[0]]: true,
-      });
-
-      if (data != undefined) {
-        const row =
-          data != undefined
-            ? data[DATA_ITEM_KEY]
-            : newData[0] != undefined
-            ? newData[0][DATA_ITEM_KEY]
-            : "";
-        fetchDocument("Task", row.orgdiv + "_" + row.docunum, row);
+        alert("지시자 본인만 삭제가 가능합니다.");
       }
     }
   };
@@ -1125,7 +1146,8 @@ const KendoWindow = ({
         item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
           ? {
               ...item,
-              rowstatus: item.rowstatus == "N" ? "N" : item.rowstatus == "U" ? "U" : "",
+              rowstatus:
+                item.rowstatus == "N" ? "N" : item.rowstatus == "U" ? "U" : "",
             }
           : {
               ...item,
@@ -1383,7 +1405,7 @@ const KendoWindow = ({
           let newAttachmentNumber = "";
 
           const promises = [];
-          if(item.fileList != undefined) {
+          if (item.fileList != undefined) {
             for (const file of item.fileList) {
               // 최초 등록 시, 업로드 후 첨부번호를 가져옴 (다중 업로드 대응)
               if (item.attdatnum == "" && newAttachmentNumber == "") {
@@ -1396,7 +1418,7 @@ const KendoWindow = ({
                 promises.push(promise);
                 continue;
               }
-  
+
               const promise = newAttachmentNumber
                 ? await uploadFile(
                     file,
@@ -1407,9 +1429,9 @@ const KendoWindow = ({
                 : await uploadFile(file, "task", item.attdatnum);
               promises.push(promise);
             }
-  
+
             const results = await Promise.all(promises);
-  
+
             // 실패한 파일이 있는지 확인
             if (results.includes(null)) {
               alert("파일 업로드에 실패했습니다.");
@@ -1418,7 +1440,7 @@ const KendoWindow = ({
                 results[0] == undefined ? item.attdatnum : results[0]
               );
             }
-  
+
             let datas: any;
             let type = "task";
             item.savenmList.map(async (parameter: any) => {
@@ -1431,7 +1453,7 @@ const KendoWindow = ({
                 datas = null;
               }
             });
-  
+
             if (datas != null) {
               rowsArr.attdatnum_s.push(item.attdatnum);
             }
@@ -1442,12 +1464,15 @@ const KendoWindow = ({
           let data2: any;
           try {
             data2 = await processApi<any>("attachment-delete", {
-              attached: "attachment?type=task&attachmentNumber=" + item.attdatnum + "&id=",
+              attached:
+                "attachment?type=task&attachmentNumber=" +
+                item.attdatnum +
+                "&id=",
             });
           } catch (error) {
             data2 = null;
           }
-  
+
           if (data2 != null) {
             rowsArr.attdatnum_s.push(item.attdatnum);
           }
@@ -1490,27 +1515,30 @@ const KendoWindow = ({
         try {
           data = await processApi<any>("taskorder-save", paras);
         } catch (error) {
-          data = null;
+          data = error;
         }
 
-        for (let key of Object.keys(localStorage)) {
-          if (
-            key != "passwordExpirationInfo" &&
-            key != "accessToken" &&
-            key != "loginResult" &&
-            key != "refreshToken"
-          ) {
-            localStorage.removeItem(key);
+        if (!data.hasOwnProperty("message")) {
+          for (let key of Object.keys(localStorage)) {
+            if (
+              key != "passwordExpirationInfo" &&
+              key != "accessToken" &&
+              key != "loginResult" &&
+              key != "refreshToken"
+            ) {
+              localStorage.removeItem(key);
+            }
           }
+          deletedRows = [];
+        } else {
+          console.log("[오류 발생]");
+          console.log(data);
+          alert(data.message);
         }
-        deletedRows = [];
         reload();
         setFileList([]);
         setSavenmList([]);
         setLoading(false);
-        if (dataItem.filter((item) => item.rowstatus == "U").length == 0) {
-          setVisible(false);
-        }
       }
     } else {
       type TRowsArr = {
@@ -1638,7 +1666,10 @@ const KendoWindow = ({
         let data2: any;
         try {
           data2 = await processApi<any>("attachment-delete", {
-            attached: "attachment?type=task&attachmentNumber=" + item.attdatnum + "&id=",
+            attached:
+              "attachment?type=task&attachmentNumber=" +
+              item.attdatnum +
+              "&id=",
           });
         } catch (error) {
           data2 = null;
@@ -1684,10 +1715,10 @@ const KendoWindow = ({
       try {
         data = await processApi<any>("taskorder-save", paras);
       } catch (error) {
-        data = null;
+        data = error;
       }
 
-      if (data != null) {
+      if (!data.hasOwnProperty("message")) {
         for (let key of Object.keys(localStorage)) {
           if (
             key != "passwordExpirationInfo" &&
@@ -1698,12 +1729,16 @@ const KendoWindow = ({
             localStorage.removeItem(key);
           }
         }
-        setFileList([]);
-        setSavenmList([]);
         deletedRows = [];
-        reload();
-        onClose();
+      } else {
+        console.log("[오류 발생]");
+        console.log(data);
+        alert(data.message);
       }
+      reload();
+      setFileList([]);
+      setSavenmList([]);
+      setLoading(false);
     }
   };
 

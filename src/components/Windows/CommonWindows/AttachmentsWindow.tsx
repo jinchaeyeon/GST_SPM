@@ -128,99 +128,119 @@ const KendoWindow = ({
 
   useEffect(() => {
     fetchGrid();
-  }, [attachmentNumber]);
-
-  useEffect(() => {
-    if(fileLists.length != 0) {
-      for (var i = 0; i < fileLists.length; i++) {
-        const newData = {
-          attdatnum: !attachmentNumber ? "" : attachmentNumber,
-          filesize: fileLists[i].size,
-          realnm: fileLists[i].name,
-          user_name: username,
-          insert_user_id: userId,
-          insert_pc: pc,
-          insert_time: convertDateToStrWithTime3(new Date()),
-          rowstatus: "N",
-          idx: idx++,
-        };
-        setMainDataResult((prev) => ({
-          data: [...prev.data, newData],
-          total: prev.total + 1,
-        }));
-        setFileList(fileLists);
-      }
-    }
   }, []);
 
   //그리드 조회
   const fetchGrid = async () => {
     let data: any;
 
-    if (attachmentNumber === "") return false;
-    const parameters = {
-      attached: "list?type=" + type + "&attachmentNumber=" + attachmentNumber,
-    };
-
-    try {
-      data = await processApi<any>("file-list", parameters);
-    } catch (error) {
-      data = null;
-    }
-
-    let result: IAttachmentData = {
-      attdatnum: "",
-      original_name: "",
-      rowCount: 0,
-    };
-
-    if (data !== null) {
-      const totalRowCnt = data.tables[0].RowCount;
-
-      if (totalRowCnt > 0) {
-        const rows = data.tables[0].Rows.map((item: any) => ({
-          ...item,
-          idx: idx++,
-          rowstatus: "U",
-        }));
-
-        if(savenmLists.length != 0) {
-          const newData = rows.filter((item: { savenm: string; }) => 
-            savenmLists.includes(item.savenm) != true );
-  
+    if (attachmentNumber === "") {
+      if(fileLists.length != 0) {
+        for (var i = 0; i < fileLists.length; i++) {
+          const newData = {
+            attdatnum: !attachmentNumber ? "" : attachmentNumber,
+            filesize: fileLists[i].size,
+            realnm: fileLists[i].name,
+            user_name: username,
+            insert_user_id: userId,
+            insert_pc: pc,
+            insert_time: convertDateToStrWithTime3(new Date()),
+            rowstatus: "N",
+            idx: idx++,
+          };
           setMainDataResult((prev) => ({
-            data: newData,
-            total: newData.length,
+            data: [...prev.data, newData],
+            total: prev.total + 1,
           }));
-          setSavenmList(savenmLists);
+          setFileList(fileLists);
+        }
+      }
+    } else {
+      const parameters = {
+        attached: "list?type=" + type + "&attachmentNumber=" + attachmentNumber,
+      };
+  
+      try {
+        data = await processApi<any>("file-list", parameters);
+      } catch (error) {
+        data = null;
+      }
+  
+      let result: IAttachmentData = {
+        attdatnum: "",
+        original_name: "",
+        rowCount: 0,
+      };
+  
+      if (data !== null) {
+        const totalRowCnt = data.tables[0].RowCount;
+  
+        if (totalRowCnt > 0) {
+          const rows = data.tables[0].Rows.map((item: any) => ({
+            ...item,
+            idx: idx++,
+            rowstatus: "U",
+          }));
+  
+          if (savenmLists.length != 0) {
+            const newData = rows.filter(
+              (item: { savenm: string }) =>
+                savenmLists.includes(item.savenm) != true
+            );
+  
+            setMainDataResult((prev) => ({
+              data: newData,
+              total: newData.length,
+            }));
+            setSavenmList(savenmLists);
+          } else {
+            setMainDataResult((prev) => {
+              return {
+                data: rows,
+                total: totalRowCnt,
+              };
+            });
+          }
+  
+          result = {
+            attdatnum: rows[0].attdatnum,
+            original_name: rows[0].realnm,
+            rowCount: totalRowCnt,
+          };
         } else {
           setMainDataResult((prev) => {
             return {
-              data: rows,
-              total: totalRowCnt,
+              data: [],
+              total: 0,
             };
           });
   
-        }
-
-        result = {
-          attdatnum: rows[0].attdatnum,
-          original_name: rows[0].realnm,
-          rowCount: totalRowCnt,
-        };
-      } else {
-        setMainDataResult((prev) => {
-          return {
-            data: [],
-            total: 0,
+          result = {
+            attdatnum: attachmentNumber,
+            original_name: "",
+            rowCount: 0,
           };
-        });
-
-        result = {
-          attdatnum: attachmentNumber,
-          original_name: "",
-          rowCount: 0,
-        };
+        }
+        if(fileLists.length != 0) {
+          for (var i = 0; i < fileLists.length; i++) {
+            const newData = {
+              attdatnum: !attachmentNumber ? "" : attachmentNumber,
+              filesize: fileLists[i].size,
+              realnm: fileLists[i].name,
+              user_name: username,
+              insert_user_id: userId,
+              insert_pc: pc,
+              insert_time: convertDateToStrWithTime3(new Date()),
+              rowstatus: "N",
+              idx: idx++,
+            };
+            setMainDataResult((prev) => ({
+              data: [...prev.data, newData],
+              total: prev.total + 1,
+            }));
+            setFileList(fileLists);
+          }
+        }
       }
     }
   };
@@ -259,7 +279,7 @@ const KendoWindow = ({
     parameters.forEach(async (parameter: any) => {
       try {
         response = await processApi<any>("file-download", {
-          attached: mainDataResult.data[parameter].savenm,
+          attached: parameter.savenm,
           type,
         });
       } catch (error) {
