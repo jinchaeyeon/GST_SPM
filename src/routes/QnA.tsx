@@ -63,7 +63,7 @@ import { IAttachmentData } from "../hooks/interfaces";
 import jwtDecode from "jwt-decode";
 import CheckCell from "../components/Cells/CheckCell";
 import { filter } from "@progress/kendo-data-query/dist/npm/transducers";
-import { useLocation } from "react-router-dom";
+import { useHistory, useLocation } from "react-router-dom";
 
 type TItem = {
   sub_code: string;
@@ -152,6 +152,7 @@ const App = () => {
   const [isDataLocked, setIsDataLocked] = useState(false);
   const [fileList, setFileList] = useState<FileList | any[]>([]);
   const [savenmList, setSavenmList] = useState<string[]>([]);
+  const history = useHistory();
   const location = useLocation();
   const pathname = location.pathname.replace("/", "");
   const pwInputRef: any = useRef(null);
@@ -755,6 +756,20 @@ const App = () => {
       pwInputRef.current.focus();
     }
   }, [isDataLocked, detailData]);
+
+  /* 푸시 알림 클릭시 이동 테스트 코드 */
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search)
+    if (queryParams.has('go')) {
+      history.replace({}, "");
+      setFilters((prev) => ({
+        ...prev,
+        isFetch: true,
+        isReset: true,
+        findRowValue: queryParams.get('go') as string,
+      }));
+    }
+  }, []);
 
   const addData = () => {
     setDetailData((prev) => ({
