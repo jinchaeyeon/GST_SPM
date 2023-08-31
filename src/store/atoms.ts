@@ -70,7 +70,7 @@ export const isMobileMenuOpendState = atom<boolean>({
 
 export const titles = atom<string>({
   key: "titles",
-  default: "Home",
+  default: "",
 });
 
 export const isMenuOpendState = atom<boolean>({

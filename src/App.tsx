@@ -436,7 +436,7 @@ const AppInner: React.FC = () => {
                   {isMobile ? (
                     ""
                   ) : (
-                    <div style={{ fontSize: "28px", fontWeight: 600 }}>
+                    <div style={{ fontSize: "28px", fontWeight: 600, color: "#7A76CE" }}>
                       {title}
                     </div>
                   )}

@@ -147,7 +147,7 @@ const Main: React.FC = () => {
   useEffect(() => {
     // switcher({ theme: "dark" });
     search();
-    setTitle("Home");
+    setTitle("");
   }, []);
 
   const search = () => {
