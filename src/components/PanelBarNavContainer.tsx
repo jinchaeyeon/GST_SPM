@@ -4,7 +4,7 @@ import {
   PanelBarItem,
   PanelBarSelectEventArguments,
 } from "@progress/kendo-react-layout";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useThemeSwitcher } from "react-css-theme-switcher";
 import { useHistory, withRouter } from "react-router-dom";
 import { useRecoilState } from "recoil";
@@ -18,7 +18,7 @@ import {
   PageWrap,
   SmallGnv,
   TopTitle,
-  Wrapper
+  Wrapper,
 } from "../CommonStyled";
 import { useApi } from "../hooks/api";
 import {
@@ -30,13 +30,28 @@ import {
   passwordExpirationInfoState,
   unsavedAttadatnumsState,
 } from "../store/atoms";
-import { UseGetIp, getBrowser } from "./CommonFunction";
+import { UseGetIp, getBrowser, resetLocalStorage } from "./CommonFunction";
 import { DEFAULT_ATTDATNUMS } from "./CommonString";
 import Loader from "./Loader";
 import Loading from "./Loading";
 import ChangePasswordWindow from "./Windows/CommonWindows/ChangePasswordWindow";
 import SystemOptionWindow from "./Windows/CommonWindows/SystemOptionWindow";
 import UserOptionsWindow from "./Windows/CommonWindows/UserOptionsWindow";
+import { Popup } from "@progress/kendo-react-popup";
+import { ListView, ListViewItemProps } from "@progress/kendo-react-listview";
+import { getMessaging, getToken, onMessage } from "firebase/messaging";
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+
+const firebaseConfig = {
+  apiKey: process.env.REACT_APP_API_KEY,
+  authDomain: process.env.REACT_APP_AUTH_DOMAIN,
+  projectId: process.env.REACT_APP_PROJECT_ID,
+  storageBucket: process.env.REACT_APP_STORAGE_BUCKET,
+  messagingSenderId: process.env.REACT_APP_MESSAGING_SENDER_ID,
+  appId: process.env.REACT_APP_APP_ID,
+  measurementId: process.env.REACT_APP_MEASUREMENT_ID,
+};
 
 const paths = [
   {
@@ -111,6 +126,9 @@ const PanelBarNavContainer = (props: any) => {
   const isAdmin = role === "ADMIN";
   const userName = loginResult ? loginResult.userName : "";
   const [isLoaded, setIsLoaded] = useState(false);
+
+  const anchor = useRef<HTMLButtonElement | null>(null);
+  const [show, setShow] = useState(false);
   // Kendo Chart에 Theme 적용하는데 간헐적으로 오류 발생하여 0.5초후 렌더링되도록 처리함 (모든 메뉴 새로고침 시 적용)
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -130,7 +148,9 @@ const PanelBarNavContainer = (props: any) => {
   const [unsavedAttadatnums, setUnsavedAttadatnums] = useRecoilState(
     unsavedAttadatnumsState
   );
-
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+  const messaging = getMessaging(app);
   const [previousRoute, setPreviousRoute] = useState("");
   const [formKey, setFormKey] = useState("");
 
@@ -405,7 +425,6 @@ const PanelBarNavContainer = (props: any) => {
 
   const selected = setSelectedIndex(props.location.pathname);
 
-
   const onMenuBtnClick = () => {
     setIsMobileMenuOpend((prev) => !prev);
   };
@@ -484,6 +503,130 @@ const PanelBarNavContainer = (props: any) => {
     return <Loader />;
   }
 
+  const onClick = () => {
+    setShow(!show);
+  };
+  const contracts = [
+    {
+      title: "알림 구독",
+    },
+    {
+      title: "알림 구독 해제",
+    },
+    {
+      title: "비밀번호 변경",
+    },
+    {
+      title: "로그아웃",
+    },
+  ];
+
+  const click = (title: string) => {
+    if (title == "비밀번호 변경") {
+      setChangePasswordWindowVisible(true);
+    } else if (title == "로그아웃") {
+      logout();
+    } else if (title == "알림 구독") {
+      callApi("subscribe");
+    } else if (title == "알림 구독 해제") {
+      callApi("unsubscribe");
+    }
+  };
+  const logout = () => {
+    // switcher({ theme: "light" });
+    setShow(false);
+    fetchLogout();
+    resetLocalStorage();
+    setIsMobileMenuOpend(false);
+    history.push("/");
+    // window.location.href = "/";
+  };
+  async function requestPermission() {
+    const permission = await Notification.requestPermission();
+    if (permission != "granted") {
+      alert(`알림 권한이 허용되지 않았습니다. (permission: ${permission})`);
+      return;
+    }
+
+    const token = await getToken(messaging, {
+      vapidKey: process.env.REACT_APP_VAPID_KEY,
+    });
+
+    onMessage(messaging, (payload: any) => {
+      console.log("메시지가 도착했습니다.", payload);
+    });
+    return token;
+  }
+
+  const callApi = async (path: string) => {
+    const token = await requestPermission();
+
+    if (!token) {
+      console.log("토큰이 유효하지 않습니다.");
+      return;
+    }
+
+    const requestOptions = {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        /* SPM 사용자 계정 인증 필요 */
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ token: token }),
+    };
+    fetch("https://pw6.gsti.co.kr/api/fcm/" + path, requestOptions)
+      //fetch('https://localhost:44358/api/fcm/' + path, requestOptions)
+      .then(async (response) => {
+        const isJson = response.headers
+          .get("Content-type")
+          ?.includes("application/json");
+        if (isJson) {
+          const data = await response.json();
+          if (path == "subscribe") alert("정상적으로 등록되었습니다!");
+          else alert("정상적으로 해제되었습니다!");
+        } else {
+          console.log("status:" + response.status);
+          alert("실패");
+        }
+      });
+  };
+
+  const fetchLogout = async () => {
+    let data: any;
+
+    const para = {
+      accessToken: accessToken,
+    };
+
+    try {
+      data = await processApi<any>("logout", para);
+    } catch (error) {
+      data = null;
+    }
+    if (data === null) {
+      console.log("[An error occured to log for logout]");
+      console.log(data);
+    }
+  };
+  const MyItemRender = (props: ListViewItemProps) => {
+    let item = props.dataItem;
+    return (
+      <div
+        className="k-listview-item row p-2 border-bottom align-middle"
+        style={{
+          margin: 0,
+          cursor: "pointer",
+          marginTop: "8px",
+          marginBottom: "8px",
+        }}
+        onClick={() => click(item.title)}
+      >
+        <div className="col">{item.title}</div>
+      </div>
+    );
+  };
+
   return (
     <>
       <Wrapper isMobileMenuOpend={isMobileMenuOpend} theme={currentTheme}>
@@ -549,16 +692,46 @@ const PanelBarNavContainer = (props: any) => {
         )}
         <Content isMenuOpen={isMenuOpend}>
           <TopTitle>
-          <Button
+            <Button
               icon="menu"
               themeColor={"primary"}
               fillMode={"flat"}
               onClick={onMenuBtnClick}
             />
             <AppName theme={currentTheme}>
-              <Logo size="32px" />
+              <Logo size="20px" />
             </AppName>
-            <div style={{ width: "30px" }}></div>
+            <button
+              className={
+                "k-button k-button-md k-rounded-md k-button-solid k-button-solid-base"
+              }
+              onClick={onClick}
+              ref={anchor}
+              style={{
+                minWidth: "40px",
+                float: "right",
+                display: "inline-block",
+                border: "1px solid #7a76ce",
+                color: "#7a76ce",
+              }}
+            >
+              <span
+                className="k-icon k-i-user k-icon-lg"
+                style={{ color: "#7a76ce" }}
+              ></span>
+            </button>
+            <Popup
+              anchor={anchor.current}
+              show={show}
+              className={"wrapper"}
+              popupClass={"inner-wrapper"}
+            >
+              <ListView
+                data={contracts}
+                item={MyItemRender}
+                style={{ width: "100%" }}
+              />
+            </Popup>
           </TopTitle>
           <PageWrap>{props.children}</PageWrap>
         </Content>

@@ -1389,7 +1389,7 @@ const App = () => {
     findRowValue: "",
     pgSize: PAGE_SIZE,
     pgNum: 1,
-    isSearch: false,
+    isSearch: true,
   });
 
   function getName(data: { sub_code: string }[]) {

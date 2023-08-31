@@ -255,9 +255,10 @@ const AppInner: React.FC = () => {
   //개발 모드
   if (path.includes("localhost:3000/admin")) {
     isAdmin = true;
+  } else if(path.includes("spm-admin")){
+    isAdmin = true;
   } else {
-    index = path.indexOf("spm");
-    isAdmin = path[index + 1] == "-" ? true : false;
+    isAdmin = false;
   }
 
   const [isMenuOpend, setIsMenuOpend] = useRecoilState(isMenuOpendState);
