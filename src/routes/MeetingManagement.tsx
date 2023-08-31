@@ -1,10 +1,10 @@
 import {
   DataResult,
   FilterDescriptor,
-  getter,
-  process,
   State,
   filterBy,
+  getter,
+  process,
 } from "@progress/kendo-data-query";
 import { Button } from "@progress/kendo-react-buttons";
 import {
@@ -12,7 +12,11 @@ import {
   DatePickerChangeEvent,
 } from "@progress/kendo-react-dateinputs";
 import {
-  getSelectedState,
+  ComboBoxChangeEvent,
+  ComboBoxFilterChangeEvent,
+  MultiColumnComboBox,
+} from "@progress/kendo-react-dropdowns";
+import {
   Grid,
   GridCellProps,
   GridColumn,
@@ -22,6 +26,7 @@ import {
   GridItemChangeEvent,
   GridSelectionChangeEvent,
   GridToolbar,
+  getSelectedState,
 } from "@progress/kendo-react-grid";
 import {
   Checkbox,
@@ -30,12 +35,13 @@ import {
 } from "@progress/kendo-react-inputs";
 import { bytesToBase64 } from "byte-base64";
 import React, {
-  useState,
-  useRef,
-  useEffect,
   createContext,
   useContext,
+  useEffect,
+  useRef,
+  useState,
 } from "react";
+import { useHistory, useLocation } from "react-router-dom";
 import { useRecoilState, useSetRecoilState } from "recoil";
 import {
   ButtonContainer,
@@ -50,17 +56,22 @@ import {
   Title,
   TitleContainer,
 } from "../CommonStyled";
+import CenterCell from "../components/Cells/CenterCell";
+import CheckBoxCell from "../components/Cells/CheckBoxCell";
+import ComboBoxCell from "../components/Cells/ComboBoxCell";
+import DateCell from "../components/Cells/DateCell";
+import NameCell from "../components/Cells/NameCell";
 import {
+  UseParaPc,
   chkScrollHandler,
   convertDateToStr,
   dateformat2,
+  extractDownloadFilename,
+  getCodeFromValue,
   getGridItemChangedData,
   getYn,
   handleKeyPressSearch,
   toDate,
-  UseParaPc,
-  getCodeFromValue,
-  extractDownloadFilename,
 } from "../components/CommonFunction";
 import {
   EDIT_FIELD,
@@ -68,30 +79,16 @@ import {
   PAGE_SIZE,
   SELECTED_FIELD,
 } from "../components/CommonString";
-import RichEditor from "../components/RichEditor";
-import { useApi } from "../hooks/api";
-import {
-  isLoading,
-  loginResultState,
-} from "../store/atoms";
-import { TEditorHandle } from "../store/types";
-import { ICustData, IPrjData } from "../hooks/interfaces";
-import ProjectsWindow from "../components/Windows/CommonWindows/ProjectsWindow";
-import CustomersWindow from "../components/Windows/CommonWindows/CustomersWindow";
-import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
-import CenterCell from "../components/Cells/CenterCell";
 import { CellRender, RowRender } from "../components/Renderers/Renderers";
-import CheckBoxCell from "../components/Cells/CheckBoxCell";
-import DateCell from "../components/Cells/DateCell";
-import ComboBoxCell from "../components/Cells/ComboBoxCell";
-import {
-  ComboBoxChangeEvent,
-  ComboBoxFilterChangeEvent,
-  MultiColumnComboBox,
-} from "@progress/kendo-react-dropdowns";
-import NameCell from "../components/Cells/NameCell";
-import { useHistory, useLocation } from "react-router-dom";
+import RichEditor from "../components/RichEditor";
+import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
+import CustomersWindow from "../components/Windows/CommonWindows/CustomersWindow";
+import ProjectsWindow from "../components/Windows/CommonWindows/ProjectsWindow";
 import SignWindow from "../components/Windows/CommonWindows/SignWindow";
+import { useApi } from "../hooks/api";
+import { ICustData, IPrjData } from "../hooks/interfaces";
+import { isLoading, loginResultState, titles } from "../store/atoms";
+import { TEditorHandle } from "../store/types";
 
 const DATA_ITEM_KEY = "meetingnum";
 const DETAIL_ITEM_KEY = "meetingseq";
@@ -179,6 +176,9 @@ const App = () => {
   const [fileList2, setFileList2] = useState<FileList | any[]>([]);
   const [savenmList2, setSavenmList2] = useState<string[]>([]);
   const location = useLocation();
+  const [title, setTitle] = useRecoilState(titles);
+  let deviceWidth = window.innerWidth;
+  let isMobile = deviceWidth <= 1200;
   const pathname = location.pathname.replace("/", "");
   const history = useHistory();
   const filterRef = useRef<HTMLDivElement>(null);
@@ -923,9 +923,9 @@ const App = () => {
 
   const downloadDoc = async () => {
     let response: any;
-    if(workType == "N") {
+    if (workType == "N") {
       alert("신규 등록은 다운로드가 불가능합니다.");
-    } else if(mainDataResult.total == 0) {
+    } else if (mainDataResult.total == 0) {
       alert("데이터가 없습니다.");
     } else {
       const mainDataId = Object.getOwnPropertyNames(selectedState)[0];
@@ -937,43 +937,43 @@ const App = () => {
       const selectedRow = mainDataResult.data.find(
         (item) => item[DATA_ITEM_KEY] === mainDataId
       );
-  
+
       const id = selectedRow.orgdiv + "_" + selectedRow.meetingnum;
       const para = {
         para: "doc?type=Meeting&id=" + id,
       };
-  
+
       setLoading(true);
       try {
         response = await processApi<any>("doc-download", para);
       } catch (error) {
         response = null;
       }
-  
+
       if (response !== null) {
         const blob = new Blob([response.data]);
-  
+
         // blob을 사용해 객체 URL을 생성합니다.
         const fileObjectUrl = window.URL.createObjectURL(blob);
-  
+
         // blob 객체 URL을 설정할 링크를 만듭니다.
         const link = document.createElement("a");
         link.href = fileObjectUrl;
         link.style.display = "none";
-  
+
         // 다운로드 파일 이름을 지정 할 수 있습니다.
         // 일반적으로 서버에서 전달해준 파일 이름은 응답 Header의 Content-Disposition에 설정됩니다.
-  
+
         let name = extractDownloadFilename(response);
         link.download = name.replace("회의록", detailData.title);
         // 다운로드 파일의 이름은 직접 지정 할 수 있습니다.
         // link.download = "sample-file.xlsx";
-  
+
         // 링크를 body에 추가하고 강제로 click 이벤트를 발생시켜 파일 다운로드를 실행시킵니다.
         document.body.appendChild(link);
         link.click();
         link.remove();
-  
+
         // 다운로드가 끝난 리소스(객체 URL)를 해제합니다
       }
     }
@@ -984,6 +984,7 @@ const App = () => {
     // ComboBox에 사용할 코드 리스트 조회
     fetchValueCodes();
     fetchCustomers();
+    setTitle("회의록 관리");
   }, []);
 
   useEffect(() => {
@@ -1629,7 +1630,7 @@ const App = () => {
         value={{ valueCodes: valueCodesState, customers: customersState }}
       >
         <TitleContainer>
-          <Title>회의록 관리</Title>
+          {!isMobile ? "" : <Title>회의록 관리</Title>}
           <ButtonContainer>
             <Button onClick={search} icon="search" themeColor={"primary"}>
               조회
@@ -1669,7 +1670,7 @@ const App = () => {
           </ButtonContainer>
         </TitleContainer>
 
-        <GridContainerWrap height={"90%"}>
+        <GridContainerWrap height={"88%"}>
           <GridContainer width={`25%`}>
             <GridTitleContainer>
               <GridTitle>조회조건</GridTitle>

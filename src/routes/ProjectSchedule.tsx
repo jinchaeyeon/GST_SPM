@@ -1,65 +1,13 @@
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
-import Gantt, {
-  Tasks,
-  Dependencies,
-  Resources,
-  ResourceAssignments,
-  Column,
-  Editing,
-  Toolbar,
-  Item,
-  Validation,
-} from "devextreme-react/gantt";
-import "devextreme/dist/css/dx.light.css";
-import "devexpress-gantt/dist/dx-gantt.min.css";
 import {
-  DependencyDeletedEvent,
-  DependencyInsertedEvent,
-  DependencyInsertingEvent,
-  ResourceAssignedEvent,
-  ResourceUnassignedEvent,
-  ScaleCellPreparedEvent,
-  TaskDeletedEvent,
-  TaskEditDialogShowingEvent,
-  TaskInsertedEvent,
-  TaskInsertingEvent,
-  TaskUpdatedEvent,
-} from "devextreme/ui/gantt";
-import { useApi } from "../hooks/api";
-import { Iparameters } from "../store/types";
-import {
-  convertDateToStr,
-  convertDateToStrWithTime2,
-  dateformat2,
-  getCodeFromValue,
-  getGridItemChangedData,
-  handleKeyPressSearch,
-  projectItemQueryStr,
-  UseGetValueFromSessionItem,
-  UseParaPc,
-} from "../components/CommonFunction";
-import {
-  ButtonContainer,
-  FilterBox,
-  FilterBoxWrap,
-  GridContainer,
-  GridContainerWrap,
-  GridTitle,
-  GridTitleContainer,
-  Title,
-  TitleContainer,
-} from "../CommonStyled";
-import { DatePicker } from "@progress/kendo-react-dateinputs";
-import { Input, RadioGroup } from "@progress/kendo-react-inputs";
+  DataResult,
+  FilterDescriptor,
+  State,
+  filterBy,
+  process,
+} from "@progress/kendo-data-query";
 import { Button } from "@progress/kendo-react-buttons";
+import { getter } from "@progress/kendo-react-common";
 import {
-  ComboBox,
   ComboBoxFilterChangeEvent,
   MultiColumnComboBox,
 } from "@progress/kendo-react-dropdowns";
@@ -74,34 +22,80 @@ import {
   GridToolbar,
   getSelectedState,
 } from "@progress/kendo-react-grid";
-import { EDIT_FIELD, SELECTED_FIELD } from "../components/CommonString";
+import { Input, RadioGroup } from "@progress/kendo-react-inputs";
+import { bytesToBase64 } from "byte-base64";
+import "devexpress-gantt/dist/dx-gantt.min.css";
+import Gantt, {
+  Column,
+  Dependencies,
+  Editing,
+  Item,
+  Tasks,
+  Toolbar,
+  Validation,
+} from "devextreme-react/gantt";
+import "devextreme/dist/css/dx.light.css";
+import { locale } from "devextreme/localization";
 import {
-  DataResult,
-  FilterDescriptor,
-  State,
-  filterBy,
-  process,
-} from "@progress/kendo-data-query";
-import { getter } from "@progress/kendo-react-common";
-import { CellRender, RowRender } from "../components/Renderers/Renderers";
+  DependencyDeletedEvent,
+  DependencyInsertedEvent,
+  DependencyInsertingEvent,
+  ScaleCellPreparedEvent,
+  TaskDeletedEvent,
+  TaskEditDialogShowingEvent,
+  TaskInsertedEvent,
+  TaskInsertingEvent,
+  TaskUpdatedEvent,
+} from "devextreme/ui/gantt";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import { useRecoilState, useSetRecoilState } from "recoil";
+import { v4 as uuidv4 } from "uuid";
+import {
+  ButtonContainer,
+  FilterBox,
+  FilterBoxWrap,
+  GridContainer,
+  GridTitle,
+  GridTitleContainer,
+  Title,
+  TitleContainer,
+} from "../CommonStyled";
+import ComboBoxCell from "../components/Cells/ComboBoxCell";
 import DateCell from "../components/Cells/DateCell";
 import NameCell from "../components/Cells/NameCell";
-import NumberCell from "../components/Cells/NumberCell";
-import { bytesToBase64 } from "byte-base64";
-import ComboBoxCell from "../components/Cells/ComboBoxCell";
-import { v4 as uuidv4 } from "uuid";
-import { filterValueState, isLoading, loginResultState } from "../store/atoms";
-import { useRecoilState, useSetRecoilState } from "recoil";
-import { locale } from "devextreme/localization";
-import { IAttachmentData } from "../hooks/interfaces";
+import {
+  UseParaPc,
+  convertDateToStrWithTime2,
+  dateformat2,
+  getCodeFromValue,
+  getGridItemChangedData,
+  handleKeyPressSearch,
+  projectItemQueryStr,
+} from "../components/CommonFunction";
+import { EDIT_FIELD, SELECTED_FIELD } from "../components/CommonString";
+import { CellRender, RowRender } from "../components/Renderers/Renderers";
+import { useApi } from "../hooks/api";
+import {
+  filterValueState,
+  isLoading,
+  loginResultState,
+  titles,
+} from "../store/atoms";
 import {
   projectColumns,
   projectItemsColumns,
 } from "../store/columns/common-columns";
+import { Iparameters } from "../store/types";
 
-import DetailWindow from "../components/Windows/CommonWindows/ProjectScheduleDetailWindow";
-import RequiredHeader from "../components/RequiredHeader";
 import NumberPercentCell from "../components/Cells/NumberPercentCell";
+import RequiredHeader from "../components/RequiredHeader";
+import DetailWindow from "../components/Windows/CommonWindows/ProjectScheduleDetailWindow";
 type TSavedPara = {
   row_status?: "N" | "U" | "D";
   guid?: string;
@@ -190,7 +184,9 @@ const App = () => {
   const [pc, setPc] = useState("");
   UseParaPc(setPc);
   const [filterValue, setFilterValue] = useRecoilState(filterValueState);
-
+  const [title, setTitle] = useRecoilState(titles);
+  let deviceWidth = window.innerWidth;
+  let isMobile = deviceWidth <= 1200;
   const [loginResult] = useRecoilState(loginResultState);
   const userId = loginResult ? loginResult.userId : "";
   const role = loginResult ? loginResult.role : "";
@@ -314,6 +310,7 @@ const App = () => {
   useEffect(() => {
     fetchProjectList();
     fetchProjectItems();
+    setTitle("프로젝트 일정계획");
   }, []);
 
   useEffect(() => {
@@ -1151,7 +1148,7 @@ const App = () => {
     <>
       <CodesContext.Provider value={{ projectItems: projectItems }}>
         <TitleContainer>
-          <Title>프로젝트 일정계획</Title>
+          {!isMobile ? "" : <Title>프로젝트 일정계획</Title>}
           <ButtonContainer>
             <Button onClick={search} icon="search" themeColor={"primary"}>
               조회
@@ -1249,7 +1246,7 @@ const App = () => {
           </FilterBox>
         </FilterBoxWrap>
 
-        <GridContainer height={"80%"}>
+        <GridContainer height={"78%"}>
           {view === "Scheduler" ? (
             <Gantt
               taskListWidth={500}

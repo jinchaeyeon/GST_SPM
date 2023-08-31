@@ -43,6 +43,26 @@ div.k-animation-container {
   display: none;
 }
 
+.wrapper {
+  color: #ffffff;
+  background-color: #eeeeee;
+}
+
+.inner-wrapper {
+  padding: 20px;
+  background-color: #fcfcfc;
+}
+
+.popup-content {
+  padding: 30px;
+  color: #787878;
+  background-color: #fcf7f8;
+  border: 1px solid rgba(0,0,0,.05);
+}
+
+.k-listview-item:hover{
+  color: #7a76ce;
+}
 /* 주석 해제 시 그리드 페이저의 우측 info 보임 */
 @media screen and (min-width: 600px) {
   .k-pager-md .k-pager-info {

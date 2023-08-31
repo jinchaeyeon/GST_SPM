@@ -1,38 +1,38 @@
-import React, { useEffect, useState } from "react";
+import { DataResult, State, process } from "@progress/kendo-data-query";
+import { getter } from "@progress/kendo-react-common";
 import {
   GridDataStateChangeEvent,
-  GridSelectionChangeEvent,
   GridFooterCellProps,
   GridRowDoubleClickEvent,
+  GridSelectionChangeEvent,
   getSelectedState,
 } from "@progress/kendo-react-grid";
-import { getter } from "@progress/kendo-react-common";
-import { DataResult, process, State } from "@progress/kendo-data-query";
+import React, { useEffect, useState } from "react";
 // ES2015 module syntax
-import {
-  GridContainer,
-  GridTitle,
-  GridContainerWrap,
-  GridTitleContainer,
-  TextBox,
-  ButtonContainer,
-  TitleContainer,
-  Title,
-  AdminQuestionBox,
-  ScrollableContainer,
-  AdminProjectBox,
-  AdminCustSummaryBox,
-} from "../CommonStyled";
-import { useRecoilState, useSetRecoilState } from "recoil";
-import { useApi } from "../hooks/api";
-import { filterValueState, isLoading, loginResultState } from "../store/atoms";
-import { useThemeSwitcher } from "react-css-theme-switcher";
-import "hammerjs";
-import CurrentTime from "../components/CurrentTime";
-import { useHistory } from "react-router-dom";
-import Loader from "../components/Loader";
 import { Button } from "@progress/kendo-react-buttons";
+import "hammerjs";
+import { useThemeSwitcher } from "react-css-theme-switcher";
+import { useHistory } from "react-router-dom";
+import { useRecoilState, useSetRecoilState } from "recoil";
+import {
+  AdminCustSummaryBox,
+  AdminProjectBox,
+  AdminQuestionBox,
+  ButtonContainer,
+  GridContainer,
+  GridContainerWrap,
+  GridTitle,
+  GridTitleContainer,
+  ScrollableContainer,
+  TextBox,
+  Title,
+  TitleContainer,
+} from "../CommonStyled";
 import { dateformat2 } from "../components/CommonFunction";
+import CurrentTime from "../components/CurrentTime";
+import Loader from "../components/Loader";
+import { useApi } from "../hooks/api";
+import { filterValueState, isLoading, loginResultState, titles } from "../store/atoms";
 
 const QUESTION_ITEM_KEY = "document_id";
 const CUST_SUMMARY_ITEM_KEY = "customer_code";
@@ -48,7 +48,7 @@ const Main: React.FC = () => {
   const processApi = useApi();
   const [loginResult, setLoginResult] = useRecoilState(loginResultState);
   const [filterValue, setFilterValue] = useRecoilState(filterValueState);
-
+  const [title, setTitle] = useRecoilState(titles);
   const userName = loginResult ? loginResult.userName : "";
   const { switcher, currentTheme = "" } = useThemeSwitcher();
 
@@ -147,6 +147,7 @@ const Main: React.FC = () => {
   useEffect(() => {
     // switcher({ theme: "dark" });
     search();
+    setTitle("Home");
   }, []);
 
   const search = () => {
@@ -250,7 +251,7 @@ const Main: React.FC = () => {
   }
 
   return (
-    <GridContainer style={{ paddingBottom: "20px" }}>
+    <GridContainer style={{ paddingBottom: "20px",height: "95%"}}>
       <TitleContainer
         style={{
           minHeight: "80px",

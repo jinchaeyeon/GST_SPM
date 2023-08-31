@@ -794,6 +794,24 @@ export const Footer = styled.div`
     display: none;
   }
 `;
+
+export const Header = styled.div`
+  width: 100%;
+  height: 50px;
+  position: fixed;
+  top: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 10001;
+  padding: 1rem;
+  min-width: 150px;
+  position: relative;
+  @media (max-width: 1200px) {
+    display: none;
+  }
+`;
+
 type ContentType = {
   isMenuOpen: boolean;
 };
@@ -836,10 +854,7 @@ export const AppName = styled.h1<TAppName>`
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 3px;
   background-color: ${(props) => (props.theme === "dark" ? "#000" : "#fff")};
-  border-right: ${(props) =>
-    props.theme === "dark" ? "none" : "1px solid #ebebeb"};
   cursor: pointer;
 
   @media (max-width: 1200px) {
@@ -990,7 +1005,7 @@ export const QnaPwBox = styled.div`
 type TTextBox = { type?: "Admin" | "General" };
 
 export const TextBox = styled.div<TTextBox>`
-  min-height: ${(props) => (props.type === "Admin" ? "60px" : "150px")};
+  min-height: ${(props) => (props.type === "Admin" ? "60px" : "130px")};
   height: 100%;
   display: flex;
   align-items: center;

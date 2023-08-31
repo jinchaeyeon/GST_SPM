@@ -31,6 +31,7 @@
     "@progress/kendo-react-inputs": "^5.14.1",
     "@progress/kendo-react-intl": "^5.14.1",
     "@progress/kendo-react-layout": "^5.14.1",
+    "@progress/kendo-react-listview": "^5.17.0",
     "@progress/kendo-react-pdf": "^5.9.0",
     "@progress/kendo-react-popup": "^5.14.1",
     "@progress/kendo-react-progressbars": "^5.14.1",

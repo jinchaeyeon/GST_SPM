@@ -9,6 +9,11 @@ import {
 import { Button } from "@progress/kendo-react-buttons";
 import { DatePicker } from "@progress/kendo-react-dateinputs";
 import {
+  ComboBoxChangeEvent,
+  ComboBoxFilterChangeEvent,
+  MultiColumnComboBox,
+} from "@progress/kendo-react-dropdowns";
+import {
   getSelectedState,
   Grid,
   GridColumn,
@@ -18,7 +23,10 @@ import {
   GridSelectionChangeEvent,
 } from "@progress/kendo-react-grid";
 import { Input } from "@progress/kendo-react-inputs";
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import { bytesToBase64 } from "byte-base64";
+import Cookies from "js-cookie";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useRecoilState, useSetRecoilState } from "recoil";
 import {
   ButtonContainer,
   FilterBox,
@@ -32,6 +40,7 @@ import {
   Title,
   TitleContainer,
 } from "../CommonStyled";
+import CenterCell from "../components/Cells/CenterCell";
 import {
   chkScrollHandler,
   convertDateToStr,
@@ -41,28 +50,20 @@ import {
   toDate,
 } from "../components/CommonFunction";
 import { GAP, PAGE_SIZE, SELECTED_FIELD } from "../components/CommonString";
+import RichEditor from "../components/RichEditor";
+import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
+import SignWindow from "../components/Windows/CommonWindows/SignWindow";
+import { useApi } from "../hooks/api";
+import { IAttachmentData } from "../hooks/interfaces";
 import {
   deletedAttadatnumsState,
   isLoading,
   loginResultState,
+  titles,
   unsavedAttadatnumsState,
 } from "../store/atoms";
-import { useRecoilState, useSetRecoilState } from "recoil";
-import RichEditor from "../components/RichEditor";
-import { Iparameters, TEditorHandle } from "../store/types";
-import { useApi } from "../hooks/api";
-import CenterCell from "../components/Cells/CenterCell";
-import { bytesToBase64 } from "byte-base64";
-import { IAttachmentData } from "../hooks/interfaces";
-import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
-import Cookies from "js-cookie";
-import {
-  ComboBoxChangeEvent,
-  ComboBoxFilterChangeEvent,
-  MultiColumnComboBox,
-} from "@progress/kendo-react-dropdowns";
 import { dataTypeColumns } from "../store/columns/common-columns";
-import SignWindow from "../components/Windows/CommonWindows/SignWindow";
+import { TEditorHandle } from "../store/types";
 
 type TFilters = {
   fromDate: Date;
@@ -112,7 +113,9 @@ const App = () => {
   const isAdmin = loginResult && loginResult.role === "ADMIN";
   const userId = loginResult ? loginResult.userId : "";
   const editorRef = useRef<TEditorHandle>(null);
-
+  const [title, setTitle] = useRecoilState(titles);
+  let deviceWidth = window.innerWidth;
+  let isMobile = deviceWidth <= 1200;
   const processApi = useApi();
 
   // 삭제할 첨부파일 리스트를 담는 함수
@@ -190,6 +193,7 @@ const App = () => {
   useEffect(() => {
     // ComboBox에 사용할 코드 리스트 조회
     fetchTypes();
+    setTitle("공유문서 열람");
   }, []);
 
   const search = () => {
@@ -480,8 +484,9 @@ const App = () => {
 
   return (
     <>
+      {" "}
       <TitleContainer>
-        <Title>공유문서 열람</Title>
+        {!isMobile ? "" : <Title>공유문서 열람</Title>}
         <ButtonContainer>
           <Button onClick={search} icon="search" themeColor={"primary"}>
             조회
@@ -554,7 +559,7 @@ const App = () => {
           </tbody>
         </FilterBox>
       </FilterBoxWrap>
-      <GridContainerWrap height={"80%"}>
+      <GridContainerWrap height={"78%"}>
         <GridContainer width={`30%`}>
           <GridTitleContainer>
             <GridTitle>요약정보</GridTitle>

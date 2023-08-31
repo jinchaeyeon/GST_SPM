@@ -1,4 +1,34 @@
+import {
+  DataResult,
+  FilterDescriptor,
+  State,
+  filterBy,
+  getter,
+  process,
+} from "@progress/kendo-data-query";
 import { Button } from "@progress/kendo-react-buttons";
+import {
+  ComboBoxFilterChangeEvent,
+  MultiColumnComboBox,
+  MultiSelect,
+  MultiSelectChangeEvent,
+} from "@progress/kendo-react-dropdowns";
+import {
+  Grid,
+  GridCellProps,
+  GridColumn,
+  GridDataStateChangeEvent,
+  GridFooterCellProps,
+  GridItemChangeEvent,
+  GridPageChangeEvent,
+  GridSelectionChangeEvent,
+  getSelectedState,
+} from "@progress/kendo-react-grid";
+import { Checkbox, Input } from "@progress/kendo-react-inputs";
+import { bytesToBase64 } from "byte-base64";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { useHistory, useLocation } from "react-router-dom";
+import { useRecoilState, useSetRecoilState } from "recoil";
 import {
   ButtonContainer,
   ButtonInGridInput,
@@ -13,6 +43,11 @@ import {
   Title,
   TitleContainer,
 } from "../CommonStyled";
+import CheckBoxReadOnlyCell from "../components/Cells/CheckBoxReadOnlyCell";
+import ComboBoxCell from "../components/Cells/ComboBoxCell";
+import DateCell from "../components/Cells/DateCell";
+import NumberCell from "../components/Cells/NumberCell";
+import StatusComboBoxCell from "../components/Cells/StatusComboBoxCell";
 import {
   UseParaPc,
   convertDateToStr,
@@ -21,64 +56,26 @@ import {
   handleKeyPressSearch,
 } from "../components/CommonFunction";
 import {
-  ComboBoxFilterChangeEvent,
-  MultiColumnComboBox,
-  MultiSelect,
-  MultiSelectChangeEvent,
-} from "@progress/kendo-react-dropdowns";
-import CommonDateRangePicker from "../components/DateRangePicker/CommonDateRangePicker";
-import {
   EDIT_FIELD,
   GAP,
   PAGE_SIZE,
   SELECTED_FIELD,
 } from "../components/CommonString";
-import { createContext, useContext, useEffect, useRef, useState } from "react";
-import {
-  isLoading,
-  loginResultState,
-} from "../store/atoms";
-import { useRecoilState, useSetRecoilState } from "recoil";
-import {
-  DataResult,
-  FilterDescriptor,
-  State,
-  filterBy,
-  getter,
-  process,
-} from "@progress/kendo-data-query";
+import CommonDateRangePicker from "../components/DateRangePicker/CommonDateRangePicker";
+import { CellRender, RowRender } from "../components/Renderers/Renderers";
+import RichEditor from "../components/RichEditor";
+import AnswerWindow from "../components/Windows/CommonWindows/AnswerWindow";
+import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
+import QuestionWindow from "../components/Windows/CommonWindows/QuestionWindow";
+import TaskOrderListWindow from "../components/Windows/CommonWindows/TaskOrderListWindow";
+import { useApi } from "../hooks/api";
+import { isLoading, loginResultState, titles } from "../store/atoms";
 import {
   dataTypeColumns,
   dataTypeColumns2,
   userColumns,
 } from "../store/columns/common-columns";
-import { Input, Checkbox } from "@progress/kendo-react-inputs";
-import { bytesToBase64 } from "byte-base64";
-import { useApi } from "../hooks/api";
 import { Iparameters, TEditorHandle } from "../store/types";
-import {
-  Grid,
-  GridCellProps,
-  GridColumn,
-  GridDataStateChangeEvent,
-  GridFooterCellProps,
-  GridItemChangeEvent,
-  GridPageChangeEvent,
-  GridSelectionChangeEvent,
-  getSelectedState,
-} from "@progress/kendo-react-grid";
-import DateCell from "../components/Cells/DateCell";
-import NumberCell from "../components/Cells/NumberCell";
-import { CellRender, RowRender } from "../components/Renderers/Renderers";
-import CheckBoxReadOnlyCell from "../components/Cells/CheckBoxReadOnlyCell";
-import ComboBoxCell from "../components/Cells/ComboBoxCell";
-import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
-import RichEditor from "../components/RichEditor";
-import AnswerWindow from "../components/Windows/CommonWindows/AnswerWindow";
-import QuestionWindow from "../components/Windows/CommonWindows/QuestionWindow";
-import TaskOrderListWindow from "../components/Windows/CommonWindows/TaskOrderListWindow";
-import StatusComboBoxCell from "../components/Cells/StatusComboBoxCell";
-import { useLocation } from "react-router-dom";
 
 const valueCodeQueryStr = `select sub_code, code_name
 from comCodeMaster
@@ -309,7 +306,7 @@ const App = () => {
   // 서버 업로드는 되었으나 DB에는 저장안된 첨부파일 리스트
   let deviceWidth = window.innerWidth;
   let isMobile = deviceWidth <= 1200;
-
+  const [title, setTitle] = useRecoilState(titles);
   const setLoading = useSetRecoilState(isLoading);
   const [loginResult] = useRecoilState(loginResultState);
   const userId = loginResult ? loginResult.userId : "";
@@ -320,6 +317,7 @@ const App = () => {
   let gridRef: any = useRef(null);
   const initialPageState = { skip: 0, take: PAGE_SIZE };
   const [page, setPage] = useState(initialPageState);
+  const history = useHistory();
   const location = useLocation();
   const pathname = location.pathname.replace("/", "");
   const pageChange = (event: GridPageChangeEvent) => {
@@ -554,6 +552,16 @@ const App = () => {
     fetchValueCode();
     fetchUsers();
     fetchReceptionType();
+    const queryParams = new URLSearchParams(location.search);
+    if (queryParams.has("go")) {
+      history.replace({}, "");
+      setFilters((prev) => ({
+        ...prev,
+        findRowValue: queryParams.get("go") as string,
+        isSearch: true,
+      }));
+    }
+    setTitle("접수 및 답변");
   }, []);
 
   const currentDate = new Date();
@@ -606,7 +614,7 @@ const App = () => {
     findRowValue: "",
     pgSize: PAGE_SIZE,
     pgNum: 1,
-    isSearch: true,
+    isSearch: false,
   });
 
   function getName(data: { sub_code: string }[]) {
@@ -749,7 +757,7 @@ const App = () => {
     if (filters.isSearch) {
       const _ = require("lodash");
       const deepCopiedFilters = _.cloneDeep(filters);
-      setFilters((prev) => ({ ...prev, findRowValue: "", isSearch: false })); // 한번만 조회되도록
+      setFilters((prev) => ({ ...prev, isSearch: false })); // 한번만 조회되도록
       fetchMainGrid(deepCopiedFilters);
     }
   }, [filters]);
@@ -1089,7 +1097,7 @@ const App = () => {
     setAttachmentsWindowVisible3(true);
   };
   const onAnswerWndClick = () => {
-    if(mainDataResult.data.length > 0) {
+    if (mainDataResult.data.length > 0) {
       setAnswerWindowVisible(true);
     } else {
       alert("데이터가 없습니다.");
@@ -1262,10 +1270,13 @@ const App = () => {
         let newAttachmentNumber = "";
 
         const promises = [];
-        if(item.fileList != undefined) {
+        if (item.fileList != undefined) {
           for (const file of item.fileList) {
             // 최초 등록 시, 업로드 후 첨부번호를 가져옴 (다중 업로드 대응)
-            if (item.reception_attach_number == "" && newAttachmentNumber == "") {
+            if (
+              item.reception_attach_number == "" &&
+              newAttachmentNumber == ""
+            ) {
               newAttachmentNumber = await uploadFile(
                 file,
                 "receipt",
@@ -1294,7 +1305,9 @@ const App = () => {
             alert("파일 업로드에 실패했습니다.");
           } else {
             rowsArr.attach_number_s.push(
-              results[0] == undefined ? item.reception_attach_number : results[0]
+              results[0] == undefined
+                ? item.reception_attach_number
+                : results[0]
             );
           }
 
@@ -1440,11 +1453,14 @@ const App = () => {
         data = null;
       }
       if (data != null) {
-        if(datas.reception_type == "Q") {
+        if (datas.reception_type == "Q") {
           let data2: any;
           try {
             data2 = await processApi<any>("attachment-delete", {
-              attached: "attachment?type=receipt&attachmentNumber=" + datas.reception_attach_number + "&id=",
+              attached:
+                "attachment?type=receipt&attachmentNumber=" +
+                datas.reception_attach_number +
+                "&id=",
             });
           } catch (error) {
             data2 = null;
@@ -1453,32 +1469,40 @@ const App = () => {
           let data2: any;
           try {
             data2 = await processApi<any>("attachment-delete", {
-              attached: "attachment?type=receipt&attachmentNumber=" + datas.reception_attach_number + "&id=",
+              attached:
+                "attachment?type=receipt&attachmentNumber=" +
+                datas.reception_attach_number +
+                "&id=",
             });
           } catch (error) {
             data2 = null;
           }
-  
+
           let data3: any;
           try {
             data3 = await processApi<any>("attachment-delete", {
-              attached: "attachment?type=question&attachmentNumber=" + datas.attdatnum + "&id=",
+              attached:
+                "attachment?type=question&attachmentNumber=" +
+                datas.attdatnum +
+                "&id=",
             });
           } catch (error) {
             data3 = null;
           }
-  
-         let data4: any;
+
+          let data4: any;
           try {
             data4 = await processApi<any>("attachment-delete", {
-              attached: "attachment?type=answer&attachmentNumber=" + datas.answer_attdatnum + "&id=",
+              attached:
+                "attachment?type=answer&attachmentNumber=" +
+                datas.answer_attdatnum +
+                "&id=",
             });
           } catch (error) {
             data4 = null;
           }
-
         }
-      
+
         if (mainDataResult.data.length === 1 && filters.pgNum == 1) {
           setFilters((prev) => ({
             ...prev,
@@ -1519,7 +1543,7 @@ const App = () => {
   return (
     <>
       <TitleContainer>
-        <Title>접수 및 답변</Title>
+        {!isMobile ? "" : <Title>접수 및 답변</Title>}
         <ButtonContainer>
           <Button themeColor={"primary"} icon="file-add" onClick={onAddClick}>
             신규

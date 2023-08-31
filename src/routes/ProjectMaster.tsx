@@ -97,7 +97,7 @@ import ValueBoxWindow from "../components/Windows/CommonWindows/ValueBoxWindow";
 import ValueBoxWindow2 from "../components/Windows/CommonWindows/ValueBoxWindow2";
 import { useApi } from "../hooks/api";
 import { ICustData } from "../hooks/interfaces";
-import { isLoading, loginResultState } from "../store/atoms";
+import { isLoading, loginResultState, titles } from "../store/atoms";
 import {
   custTypeColumns,
   dataTypeColumns,
@@ -273,6 +273,9 @@ const App = () => {
       take: initialPageState.take,
     });
   };
+  const [title, setTitle] = useRecoilState(titles);
+  let deviceWidth = window.innerWidth;
+  let isMobile = deviceWidth <= 1200;
   const idGetter = getter(DATA_ITEM_KEY);
   const idGetter2 = getter(SUB_DATA_ITEM_KEY);
   const idGetter3 = getter(SUB_DATA_ITEM_KEY2);
@@ -1358,6 +1361,7 @@ const App = () => {
     fetchUsers();
     fetchDevdiv();
     fetchValueCode();
+    setTitle("프로젝트 마스터");
   }, []);
 
   const onMainSortChange = (e: any) => {
@@ -3453,7 +3457,7 @@ const App = () => {
   return (
     <>
       <TitleContainer>
-        <Title>프로젝트 마스터</Title>
+        {!isMobile ? ("") : (<Title>프로젝트 마스터</Title>)}
         <ButtonContainer>
           <Button onClick={Add} icon="file-add" themeColor={"primary"}>
             신규

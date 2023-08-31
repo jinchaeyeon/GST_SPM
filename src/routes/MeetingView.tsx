@@ -14,7 +14,7 @@ import {
   GridSelectionChangeEvent,
 } from "@progress/kendo-react-grid";
 import { Input, InputChangeEvent } from "@progress/kendo-react-inputs";
-import React, { useState, useRef, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRecoilState, useSetRecoilState } from "recoil";
 import {
   ButtonContainer,
@@ -29,6 +29,7 @@ import {
   Title,
   TitleContainer,
 } from "../CommonStyled";
+import CenterCell from "../components/Cells/CenterCell";
 import {
   chkScrollHandler,
   convertDateToStr,
@@ -39,13 +40,12 @@ import {
 } from "../components/CommonFunction";
 import { GAP, PAGE_SIZE, SELECTED_FIELD } from "../components/CommonString";
 import RichEditor from "../components/RichEditor";
-import { useApi } from "../hooks/api";
-import { filterValueState, isLoading } from "../store/atoms";
-import { TEditorHandle } from "../store/types";
-import { IAttachmentData } from "../hooks/interfaces";
 import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
-import CenterCell from "../components/Cells/CenterCell";
 import SignWindow from "../components/Windows/CommonWindows/SignWindow";
+import { useApi } from "../hooks/api";
+import { IAttachmentData } from "../hooks/interfaces";
+import { filterValueState, isLoading, titles } from "../store/atoms";
+import { TEditorHandle } from "../store/types";
 
 const DATA_ITEM_KEY = "meetingnum";
 
@@ -77,7 +77,9 @@ const App = () => {
       isReset: true,
     }));
   };
-
+  const [title, setTitle] = useRecoilState(titles);
+  let deviceWidth = window.innerWidth;
+  let isMobile = deviceWidth <= 1200;
   const idGetter = getter(DATA_ITEM_KEY);
 
   const [mainDataState, setMainDataState] = useState<State>({
@@ -206,13 +208,13 @@ const App = () => {
           setMeetingnum(id);
           setMainDataResult({
             data: rows,
-             total: totalRowCnt == -1 ? 0 : totalRowCnt,
+            total: totalRowCnt == -1 ? 0 : totalRowCnt,
           });
         } else if (filters.isReset) {
           // 일반 데이터 조회
           setMainDataResult({
             data: rows,
-             total: totalRowCnt == -1 ? 0 : totalRowCnt,
+            total: totalRowCnt == -1 ? 0 : totalRowCnt,
           });
 
           const firstRowData = rows[0];
@@ -232,7 +234,7 @@ const App = () => {
           setMainDataResult((prev) => {
             return {
               data: [...prev.data, ...rows],
-               total: totalRowCnt == -1 ? 0 : totalRowCnt,
+              total: totalRowCnt == -1 ? 0 : totalRowCnt,
             };
           });
         }
@@ -307,46 +309,48 @@ const App = () => {
     let response: any;
     setLoading(true);
 
-    if(mainDataResult.total == 0) {
-      alert("데이터가 없습니다.")
+    if (mainDataResult.total == 0) {
+      alert("데이터가 없습니다.");
     } else {
       const id = detailData.orgdiv + "_" + detailData.meetingnum;
       const para = {
         para: "doc?type=Meeting&id=" + id,
       };
-  
+
       try {
         response = await processApi<any>("doc-download", para);
       } catch (error) {
         response = null;
       }
-  
+
       if (response !== null) {
         const blob = new Blob([response.data]);
         // 특정 타입을 정의해야 경우에는 옵션을 사용해 MIME 유형을 정의 할 수 있습니다.
         // const blob = new Blob([this.content], {type: 'text/plain'})
-  
+
         // blob을 사용해 객체 URL을 생성합니다.
         const fileObjectUrl = window.URL.createObjectURL(blob);
-  
+
         // blob 객체 URL을 설정할 링크를 만듭니다.
         const link = document.createElement("a");
         link.href = fileObjectUrl;
         link.style.display = "none";
-  
+
         // 다운로드 파일 이름을 지정 할 수 있습니다.
         // 일반적으로 서버에서 전달해준 파일 이름은 응답 Header의 Content-Disposition에 설정됩니다.
         let name = extractDownloadFilename(response);
-        let datas = mainDataResult.data.filter((item) => item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0])[0];
-        link.download = name.replace("회의록", datas.title)
+        let datas = mainDataResult.data.filter(
+          (item) =>
+            item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
+        )[0];
+        link.download = name.replace("회의록", datas.title);
         // 링크를 body에 추가하고 강제로 click 이벤트를 발생시켜 파일 다운로드를 실행시킵니다.
         document.body.appendChild(link);
         link.click();
         link.remove();
-  
+
         // 다운로드가 끝난 리소스(객체 URL)를 해제합니다
       }
-  
     }
     setLoading(false);
   };
@@ -395,6 +399,9 @@ const App = () => {
     }
   }, [meetingnum]);
 
+  useEffect(() => {
+    setTitle("회의록 열람");
+  }, []);
   const getAttachmentsData = (data: IAttachmentData) => {
     setDetailData((prev) => ({
       ...prev,
@@ -417,7 +424,7 @@ const App = () => {
   return (
     <>
       <TitleContainer>
-        <Title>회의록 열람</Title>
+        {!isMobile ? "" : <Title>회의록 열람</Title>}
         <ButtonContainer>
           <Button onClick={search} icon="search" themeColor={"primary"}>
             조회
@@ -473,7 +480,7 @@ const App = () => {
           </tbody>
         </FilterBox>
       </FilterBoxWrap>
-      <GridContainerWrap height={"80%"}>
+      <GridContainerWrap height={"78%"}>
         <GridContainer width={`25%`}>
           <GridTitleContainer>
             <GridTitle>요약정보</GridTitle>
@@ -546,12 +553,13 @@ const App = () => {
                           (item) =>
                             item[DATA_ITEM_KEY] ==
                             Object.getOwnPropertyNames(selectedState)[0]
-                        )[0] == undefined ? "" :
-                        mainDataResult.data.filter(
-                          (item) =>
-                            item[DATA_ITEM_KEY] ==
-                            Object.getOwnPropertyNames(selectedState)[0]
-                        )[0].title
+                        )[0] == undefined
+                          ? ""
+                          : mainDataResult.data.filter(
+                              (item) =>
+                                item[DATA_ITEM_KEY] ==
+                                Object.getOwnPropertyNames(selectedState)[0]
+                            )[0].title
                       }
                       className="readonly"
                     />
@@ -563,10 +571,13 @@ const App = () => {
                       themeColor={"primary"}
                       style={{ width: "100%" }}
                       onClick={() => {
-                        if(Object.getOwnPropertyNames(selectedState)[0] != undefined) {
-                          setSignWindowVisible(true)
+                        if (
+                          Object.getOwnPropertyNames(selectedState)[0] !=
+                          undefined
+                        ) {
+                          setSignWindowVisible(true);
                         } else {
-                          alert("선택된 데이터가 없습니다.")
+                          alert("선택된 데이터가 없습니다.");
                         }
                       }}
                     >
@@ -603,11 +614,11 @@ const App = () => {
         </GridContainer>
       </GridContainerWrap>
       {signWindowVisible && (
-          <SignWindow
-            setVisible={setSignWindowVisible}
-            reference_key={detailData.orgdiv+"_"+detailData.meetingnum}
-          />
-        )}
+        <SignWindow
+          setVisible={setSignWindowVisible}
+          reference_key={detailData.orgdiv + "_" + detailData.meetingnum}
+        />
+      )}
       {attachmentsWindowVisible && (
         <AttachmentsWindow
           type="meeting"

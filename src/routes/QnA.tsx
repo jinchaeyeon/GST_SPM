@@ -1,6 +1,12 @@
 import { DataResult, getter, process, State } from "@progress/kendo-data-query";
 import { Button } from "@progress/kendo-react-buttons";
+import { Icon } from "@progress/kendo-react-common";
 import { DatePicker } from "@progress/kendo-react-dateinputs";
+import {
+  DropDownList,
+  MultiSelect,
+  MultiSelectChangeEvent,
+} from "@progress/kendo-react-dropdowns";
 import {
   getSelectedState,
   Grid,
@@ -11,7 +17,11 @@ import {
   GridSelectionChangeEvent,
 } from "@progress/kendo-react-grid";
 import { Input, RadioGroup } from "@progress/kendo-react-inputs";
-import React, { useState, useCallback, useEffect, useRef } from "react";
+import { bytesToBase64 } from "byte-base64";
+import jwtDecode from "jwt-decode";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useHistory, useLocation } from "react-router-dom";
+import { useRecoilState, useSetRecoilState } from "recoil";
 import {
   ButtonContainer,
   FilterBox,
@@ -26,6 +36,9 @@ import {
   Title,
   TitleContainer,
 } from "../CommonStyled";
+import CenterCell from "../components/Cells/CenterCell";
+import CheckCell from "../components/Cells/CheckCell";
+import QnaStateCell from "../components/Cells/QnaStateCell";
 import {
   chkScrollHandler,
   convertDateToStr,
@@ -34,36 +47,19 @@ import {
   toDate,
 } from "../components/CommonFunction";
 import {
-  DEFAULT_ATTDATNUMS,
   PAGE_SIZE,
-  SELECTED_FIELD,
+  SELECTED_FIELD
 } from "../components/CommonString";
-import { useRecoilState, useSetRecoilState } from "recoil";
+import RichEditor from "../components/RichEditor";
+import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
+import { useApi } from "../hooks/api";
 import {
-  deletedAttadatnumsState,
   filterValueState,
   isLoading,
   loginResultState,
-  unsavedAttadatnumsState,
+  titles
 } from "../store/atoms";
-import { useApi } from "../hooks/api";
 import { TEditorHandle } from "../store/types";
-import RichEditor from "../components/RichEditor";
-import {
-  DropDownList,
-  MultiSelect,
-  MultiSelectChangeEvent,
-} from "@progress/kendo-react-dropdowns";
-import CenterCell from "../components/Cells/CenterCell";
-import QnaStateCell from "../components/Cells/QnaStateCell";
-import { bytesToBase64 } from "byte-base64";
-import { Icon } from "@progress/kendo-react-common";
-import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
-import { IAttachmentData } from "../hooks/interfaces";
-import jwtDecode from "jwt-decode";
-import CheckCell from "../components/Cells/CheckCell";
-import { filter } from "@progress/kendo-data-query/dist/npm/transducers";
-import { useHistory, useLocation } from "react-router-dom";
 
 type TItem = {
   sub_code: string;
@@ -145,6 +141,9 @@ const App = () => {
   const { customercode = "" } = decodedToken || {};
   const [filterValue, setFilterValue] = useRecoilState(filterValueState);
   const setLoading = useSetRecoilState(isLoading);
+  const [title, setTitle] = useRecoilState(titles);
+  let deviceWidth = window.innerWidth;
+  let isMobile = deviceWidth <= 1200;
   const idGetter = getter(DATA_ITEM_KEY);
   const processApi = useApi();
   const qEditorRef = useRef<TEditorHandle>(null);
@@ -206,7 +205,7 @@ const App = () => {
     pgNum: 1,
     pgSize: PAGE_SIZE,
     isFetch: true, // 조회여부 초기값
-    isReset: true, // 리셋여부 초기값
+    isReset: false, // 리셋여부 초기값
   });
 
   const search = () => {
@@ -304,15 +303,9 @@ const App = () => {
     if (data.isSuccess === true) {
       const totalRowCnt = data.tables[0].TotalRowCount;
       const rows = data.tables[0].Rows;
+
       if (totalRowCnt > 0) {
-        if (filters.findRowValue !== "") {
-          // 데이터 저장 후 조회
-          setSelectedState({ [filters.findRowValue]: true });
-          setMainDataResult({
-            data: rows,
-            total: totalRowCnt == -1 ? 0 : totalRowCnt,
-          });
-        } else if (filters.isReset) {
+        if (filters.isReset) {
           // 일반 데이터 조회
           const firstRowData = rows[0];
           setSelectedState({ [firstRowData[DATA_ITEM_KEY]]: true });
@@ -321,13 +314,24 @@ const App = () => {
             total: totalRowCnt == -1 ? 0 : totalRowCnt,
           });
         } else {
-          // 스크롤하여 다른 페이지 조회
+          const selectedRow =
+            filters.findRowValue == ""
+              ? rows[0]
+              : rows.find(
+                  (row: any) => row[DATA_ITEM_KEY] == filters.findRowValue
+                );
+
           setMainDataResult((prev) => {
             return {
-              data: [...prev.data, ...rows],
+              data: rows,
               total: totalRowCnt == -1 ? 0 : totalRowCnt,
             };
           });
+          if (selectedRow != undefined) {
+            setSelectedState({ [selectedRow[DATA_ITEM_KEY]]: true });
+          } else {
+            setSelectedState({ [rows[0][DATA_ITEM_KEY]]: true });
+          }
         }
       } else {
         // 결과 행이 0인 경우 데이터 리셋
@@ -430,7 +434,6 @@ const App = () => {
     }
   };
 
-  
   const uploadFile = async (
     files: File,
     type: string,
@@ -588,7 +591,8 @@ const App = () => {
         "@p_contents": textContent,
         "@p_is_lock": detailData.is_lock ? "Y" : "N",
         "@p_is_public": detailData.is_public,
-        "@p_attdatnum": results[0] == undefined ? detailData.attdatnum : results[0],
+        "@p_attdatnum":
+          results[0] == undefined ? detailData.attdatnum : results[0],
         "@p_pc": "",
       },
     };
@@ -617,7 +621,7 @@ const App = () => {
 
     setLoading(false);
   }, [setLoading, detailData, setSelectedState]);
-  console.log(mainDataResult.data)
+
   const deleteData = useCallback(async () => {
     const mainDataId = Object.getOwnPropertyNames(selectedState)[0];
 
@@ -678,7 +682,6 @@ const App = () => {
       setFilters((prev) => ({
         ...prev,
         isFetch: true,
-        isReset: true,
       }));
     } else {
       console.log("[에러발생]");
@@ -759,16 +762,16 @@ const App = () => {
 
   /* 푸시 알림 클릭시 이동 테스트 코드 */
   useEffect(() => {
-    const queryParams = new URLSearchParams(location.search)
-    if (queryParams.has('go')) {
+    const queryParams = new URLSearchParams(location.search);
+    if (queryParams.has("go")) {
       history.replace({}, "");
       setFilters((prev) => ({
         ...prev,
         isFetch: true,
-        isReset: true,
-        findRowValue: queryParams.get('go') as string,
+        findRowValue: queryParams.get("go") as string,
       }));
     }
+    setTitle("회의록 열람");
   }, []);
 
   const addData = () => {
@@ -793,9 +796,11 @@ const App = () => {
     }
   };
 
-  const getAttachmentsDataQ = (    data: any,
+  const getAttachmentsDataQ = (
+    data: any,
     fileList?: FileList | any[],
-    savenmList?: string[]) => {
+    savenmList?: string[]
+  ) => {
     if (fileList) {
       setFileList(fileList);
     } else {
@@ -820,18 +825,21 @@ const App = () => {
     }));
   };
 
-  const getAttachmentsDataA = (    data: any,
+  const getAttachmentsDataA = (
+    data: any,
     fileList?: FileList | any[],
-    savenmList?: string[]) => {
+    savenmList?: string[]
+  ) => {
     setDetailData((prev) => ({
       ...prev,
-      answer_attdatnum: data.length > 0 ? data[0].attdatnum : prev.answer_attdatnum,
+      answer_attdatnum:
+        data.length > 0 ? data[0].attdatnum : prev.answer_attdatnum,
       answer_files:
         data.length > 1
           ? data[0].realnm + " 등 " + String(data.length) + "건"
           : data.length == 0
           ? ""
-          : data[0].realnm
+          : data[0].realnm,
     }));
   };
 
@@ -909,7 +917,7 @@ const App = () => {
   return (
     <>
       <TitleContainer>
-        <Title>QnA</Title>
+        {!isMobile ? "" : <Title>QnA</Title>}
         <ButtonContainer>
           <Button onClick={search} icon="search" themeColor={"primary"}>
             조회
@@ -940,7 +948,7 @@ const App = () => {
         </ButtonContainer>
       </TitleContainer>
 
-      <GridContainerWrap height={"90%"}>
+      <GridContainerWrap height={"88%"}>
         <GridContainer width={`40%`}>
           <GridTitleContainer>
             <GridTitle>조회조건</GridTitle>

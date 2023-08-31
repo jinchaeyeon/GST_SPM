@@ -9,6 +9,11 @@ import {
 import { Button } from "@progress/kendo-react-buttons";
 import { DatePicker } from "@progress/kendo-react-dateinputs";
 import {
+  ComboBoxChangeEvent,
+  ComboBoxFilterChangeEvent,
+  MultiColumnComboBox,
+} from "@progress/kendo-react-dropdowns";
+import {
   getSelectedState,
   Grid,
   GridColumn,
@@ -18,7 +23,11 @@ import {
   GridSelectionChangeEvent,
 } from "@progress/kendo-react-grid";
 import { Input } from "@progress/kendo-react-inputs";
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import { bytesToBase64 } from "byte-base64";
+import Cookies from "js-cookie";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
+import { useRecoilState, useSetRecoilState } from "recoil";
 import {
   ButtonContainer,
   FilterBox,
@@ -32,6 +41,7 @@ import {
   Title,
   TitleContainer,
 } from "../CommonStyled";
+import CenterCell from "../components/Cells/CenterCell";
 import {
   chkScrollHandler,
   convertDateToStr,
@@ -41,39 +51,19 @@ import {
   toDate,
   UseParaPc,
 } from "../components/CommonFunction";
-import {
-  DEFAULT_ATTDATNUMS,
-  GAP,
-  PAGE_SIZE,
-  SELECTED_FIELD,
-} from "../components/CommonString";
-import {
-  deletedAttadatnumsState,
-  isLoading,
-  loginResultState,
-  unsavedAttadatnumsState,
-} from "../store/atoms";
-import { useRecoilState, useSetRecoilState } from "recoil";
+import { GAP, PAGE_SIZE, SELECTED_FIELD } from "../components/CommonString";
 import RichEditor from "../components/RichEditor";
-import { TEditorHandle } from "../store/types";
-import { useApi } from "../hooks/api";
-import CenterCell from "../components/Cells/CenterCell";
-import { bytesToBase64 } from "byte-base64";
-import { IAttachmentData, ICustData } from "../hooks/interfaces";
 import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
-import Cookies from "js-cookie";
 import CustomersWindow from "../components/Windows/CommonWindows/CustomersWindow";
-import {
-  ComboBoxChangeEvent,
-  ComboBoxFilterChangeEvent,
-  MultiColumnComboBox,
-} from "@progress/kendo-react-dropdowns";
+import SignWindow from "../components/Windows/CommonWindows/SignWindow";
+import { useApi } from "../hooks/api";
+import { ICustData } from "../hooks/interfaces";
+import { isLoading, loginResultState, titles } from "../store/atoms";
 import {
   custTypeColumns,
   dataTypeColumns,
 } from "../store/columns/common-columns";
-import SignWindow from "../components/Windows/CommonWindows/SignWindow";
-import { useLocation } from "react-router-dom";
+import { TEditorHandle } from "../store/types";
 
 type TFilters = {
   fromDate: Date;
@@ -127,6 +117,9 @@ const App = () => {
   const [savenmList, setSavenmList] = useState<string[]>([]);
   const [pc, setPc] = useState("");
   UseParaPc(setPc);
+  const [title, setTitle] = useRecoilState(titles);
+  let deviceWidth = window.innerWidth;
+  let isMobile = deviceWidth <= 1200;
   const location = useLocation();
   const pathname = location.pathname.replace("/", "");
   const processApi = useApi();
@@ -230,6 +223,7 @@ const App = () => {
     // ComboBox에 사용할 코드 리스트 조회
     fetchCustomers();
     fetchTypes();
+    setTitle("공유문서 관리");
   }, []);
 
   const search = () => {
@@ -536,7 +530,7 @@ const App = () => {
   const uploadFile = async (
     files: File,
     type: string,
-    attdatnum? :string,
+    attdatnum?: string,
     newAttachmentNumber?: string
   ) => {
     let data: any;
@@ -546,10 +540,7 @@ const App = () => {
     if (newAttachmentNumber != undefined) {
       queryParams.append("attachmentNumber", newAttachmentNumber);
     } else if (attdatnum != undefined) {
-      queryParams.append(
-        "attachmentNumber",
-        attdatnum == "" ? "" : attdatnum
-      );
+      queryParams.append("attachmentNumber", attdatnum == "" ? "" : attdatnum);
     }
 
     const formid = "%28web%29" + pathname;
@@ -603,14 +594,23 @@ const App = () => {
     for (const file of fileList) {
       // 최초 등록 시, 업로드 후 첨부번호를 가져옴 (다중 업로드 대응)
       if (detailData.attdatnum == "" && newAttachmentNumber == "") {
-        newAttachmentNumber = await uploadFile(file, "sharedDocument", detailData.attdatnum);
+        newAttachmentNumber = await uploadFile(
+          file,
+          "sharedDocument",
+          detailData.attdatnum
+        );
         const promise = newAttachmentNumber;
         promises.push(promise);
         continue;
       }
 
       const promise = newAttachmentNumber
-        ? await uploadFile(file, "sharedDocument", detailData.attdatnum, newAttachmentNumber)
+        ? await uploadFile(
+            file,
+            "sharedDocument",
+            detailData.attdatnum,
+            newAttachmentNumber
+          )
         : await uploadFile(file, "sharedDocument", detailData.attdatnum);
       promises.push(promise);
     }
@@ -651,7 +651,8 @@ const App = () => {
         "@p_write_date": convertDateToStr(detailData.write_date),
         "@p_title": detailData.title,
         "@p_contents": detailData.contents,
-        "@p_attdatnum": results[0] == undefined ? detailData.attdatnum : results[0],
+        "@p_attdatnum":
+          results[0] == undefined ? detailData.attdatnum : results[0],
         "@p_customer_code": detailData.customer.custcd,
         "@p_type": detailData.type.sub_code,
         "@p_id": userId,
@@ -699,7 +700,7 @@ const App = () => {
     setLoading(true);
 
     const para = { id: selectedRow.document_id };
-    
+
     try {
       data = await processApi<any>("shared_document-delete", para);
     } catch (error: any) {
@@ -711,7 +712,10 @@ const App = () => {
       let data2: any;
       try {
         data2 = await processApi<any>("attachment-delete", {
-          attached: "attachment?type=sharedDocument&attachmentNumber=" + detailData.attdatnum + "&id=",
+          attached:
+            "attachment?type=sharedDocument&attachmentNumber=" +
+            detailData.attdatnum +
+            "&id=",
         });
       } catch (error) {
         data2 = null;
@@ -729,7 +733,8 @@ const App = () => {
     setLoading(false);
   }, [detailData]);
 
-  const getAttachmentsData = (    data: any,
+  const getAttachmentsData = (
+    data: any,
     fileList?: FileList | any[],
     savenmList?: string[]
   ) => {
@@ -749,11 +754,11 @@ const App = () => {
       ...prev,
       attdatnum: data.length > 0 ? data[0].attdatnum : prev.attdatnum,
       files:
-      data.length > 1
-        ? data[0].realnm + " 등 " + String(data.length) + "건"
-        : data.length == 0
-        ? ""
-        : data[0].realnm
+        data.length > 1
+          ? data[0].realnm + " 등 " + String(data.length) + "건"
+          : data.length == 0
+          ? ""
+          : data[0].realnm,
     }));
   };
 
@@ -767,8 +772,9 @@ const App = () => {
 
   return (
     <>
+      {" "}
       <TitleContainer>
-        <Title>공유문서 관리</Title>
+        {!isMobile ? "" : <Title>공유문서 관리</Title>}
         <ButtonContainer>
           <Button onClick={search} icon="search" themeColor={"primary"}>
             조회
@@ -868,7 +874,7 @@ const App = () => {
           </tbody>
         </FilterBox>
       </FilterBoxWrap>
-      <GridContainerWrap height={"80%"}>
+      <GridContainerWrap height={"78%"}>
         <GridContainer width={`30%`}>
           <GridTitleContainer>
             <GridTitle>요약정보</GridTitle>

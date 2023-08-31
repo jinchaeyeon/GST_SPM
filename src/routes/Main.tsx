@@ -1,32 +1,17 @@
-import React, { useEffect, useState } from "react";
+import { DataResult, State, process } from "@progress/kendo-data-query";
+import { getter } from "@progress/kendo-react-common";
 import {
   Grid,
   GridColumn,
   GridDataStateChangeEvent,
-  GridSelectionChangeEvent,
   GridFooterCellProps,
   GridRowDoubleClickEvent,
+  GridSelectionChangeEvent,
   getSelectedState,
 } from "@progress/kendo-react-grid";
-import { getter } from "@progress/kendo-react-common";
-import { DataResult, process, State } from "@progress/kendo-data-query";
+import React, { useEffect, useState } from "react";
 // ES2015 module syntax
-import {
-  GridContainer,
-  GridTitle,
-  GridContainerWrap,
-  GridTitleContainer,
-  TextBox,
-  ButtonContainer,
-  TitleContainer,
-  Title,
-} from "../CommonStyled";
-import { useRecoilState, useSetRecoilState } from "recoil";
-import { useApi } from "../hooks/api";
-import { filterValueState, isLoading, loginResultState } from "../store/atoms";
-import { SELECTED_FIELD } from "../components/CommonString";
-import CenterCell from "../components/Cells/CenterCell";
-import { useThemeSwitcher } from "react-css-theme-switcher";
+import { Button } from "@progress/kendo-react-buttons";
 import {
   Chart,
   ChartCategoryAxis,
@@ -39,14 +24,34 @@ import {
   ChartValueAxisItem,
 } from "@progress/kendo-react-charts";
 import "hammerjs";
-import CurrentTime from "../components/CurrentTime";
-import DateCell from "../components/Cells/DateCell";
-import { useHistory } from "react-router-dom";
-import Loader from "../components/Loader";
-import QnaStateCell from "../components/Cells/QnaStateCell";
-import { Button } from "@progress/kendo-react-buttons";
 import Cookies from "js-cookie";
+import { useThemeSwitcher } from "react-css-theme-switcher";
+import { useHistory } from "react-router-dom";
+import { useRecoilState, useSetRecoilState } from "recoil";
+import {
+  ButtonContainer,
+  GridContainer,
+  GridContainerWrap,
+  GridTitle,
+  GridTitleContainer,
+  TextBox,
+  Title,
+  TitleContainer,
+} from "../CommonStyled";
+import CenterCell from "../components/Cells/CenterCell";
+import DateCell from "../components/Cells/DateCell";
+import QnaStateCell from "../components/Cells/QnaStateCell";
 import { convertDateToStr } from "../components/CommonFunction";
+import { SELECTED_FIELD } from "../components/CommonString";
+import CurrentTime from "../components/CurrentTime";
+import Loader from "../components/Loader";
+import { useApi } from "../hooks/api";
+import {
+  filterValueState,
+  isLoading,
+  loginResultState,
+  titles,
+} from "../store/atoms";
 
 const QUESTION_ITEM_KEY = "document_id";
 const MEETING_ITEM_KEY = "meetingnum";
@@ -72,7 +77,7 @@ const Main: React.FC = () => {
   const meetingIdGetter = getter(MEETING_ITEM_KEY);
   const projectIdGetter = getter(PROJECT_ITEM_KEY);
   const setLoading = useSetRecoilState(isLoading);
-
+  const [title, setTitle] = useRecoilState(titles);
   const processApi = useApi();
   const [loginResult, setLoginResult] = useRecoilState(loginResultState);
   const [filterValue, setFilterValue] = useRecoilState(filterValueState);
@@ -102,14 +107,14 @@ const Main: React.FC = () => {
   });
 
   const [questionDataResult, setQuestionDataResult] = useState<DataResult>(
-    process([], questionDataState),
+    process([], questionDataState)
   );
 
   const [meetingDataResult, setMeetingDataResult] = useState<DataResult>(
-    process([], meetingDataState),
+    process([], meetingDataState)
   );
   const [projectDataResult, setProjectDataResult] = useState<DataResult>(
-    process([], projectDataState),
+    process([], projectDataState)
   );
   const [noticeSum, setNoticeSum] = useState(0);
 
@@ -195,6 +200,7 @@ const Main: React.FC = () => {
   useEffect(() => {
     // switcher({ theme: "dark" });
     search();
+    setTitle("Home");
   }, []);
 
   const search = () => {
@@ -304,7 +310,7 @@ const Main: React.FC = () => {
 
     const para = {
       para: `list?fromDate=${convertDateToStr(
-        lastMonth,
+        lastMonth
       )}&toDate=${convertDateToStr(today)}&page=1&pageSize=1000`,
     };
 
@@ -325,7 +331,7 @@ const Main: React.FC = () => {
         const savedNotices = JSON.parse(savedNoticesRaw);
         const fetchedNotcies = rows.map((row: any) => row.document_id);
         const filteredArray = fetchedNotcies.filter(
-          (value: any) => !savedNotices.includes(value),
+          (value: any) => !savedNotices.includes(value)
         );
 
         setNoticeSum(filteredArray.length);
@@ -340,7 +346,7 @@ const Main: React.FC = () => {
   }
 
   return (
-    <GridContainer style={{ paddingBottom: "20px" }}>
+    <GridContainer style={{ paddingBottom: "20px", height: "95%" }}>
       <TitleContainer
         style={{
           minHeight: "80px",
@@ -486,7 +492,7 @@ const Main: React.FC = () => {
                         data={item.data}
                         name={item.name}
                       />
-                    ),
+                    )
                   )}
                 </ChartSeries>
               </Chart>
@@ -505,7 +511,7 @@ const Main: React.FC = () => {
                     [SELECTED_FIELD]:
                       questionSelectedState[questionIdGetter(row)],
                   })),
-                  questionDataState,
+                  questionDataState
                 )}
                 {...questionDataState}
                 onDataStateChange={onQuestionDataStateChange}
@@ -561,7 +567,7 @@ const Main: React.FC = () => {
                     [SELECTED_FIELD]:
                       projectSelectedState[projectIdGetter(row)],
                   })),
-                  projectDataState,
+                  projectDataState
                 )}
                 {...projectDataState}
                 onDataStateChange={onProjectDataStateChange}
@@ -608,7 +614,7 @@ const Main: React.FC = () => {
                     [SELECTED_FIELD]:
                       meetingSelectedState[meetingIdGetter(row)],
                   })),
-                  meetingDataState,
+                  meetingDataState
                 )}
                 {...meetingDataState}
                 onDataStateChange={onMeetingDataStateChange}

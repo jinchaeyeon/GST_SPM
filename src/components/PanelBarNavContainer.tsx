@@ -1,49 +1,42 @@
-import { useCallback, useState, useEffect } from "react";
+import { Button } from "@progress/kendo-react-buttons";
 import {
   PanelBar,
   PanelBarItem,
   PanelBarSelectEventArguments,
 } from "@progress/kendo-react-layout";
-import { useHistory, useLocation, withRouter } from "react-router-dom";
-import { Button } from "@progress/kendo-react-buttons";
+import { useCallback, useEffect, useState } from "react";
+import { useThemeSwitcher } from "react-css-theme-switcher";
+import { useHistory, withRouter } from "react-router-dom";
 import { useRecoilState } from "recoil";
 import {
-  isMobileMenuOpendState,
-  menusState,
-  passwordExpirationInfoState,
-  loginResultState,
-  isMenuOpendState,
-  deletedAttadatnumsState,
-  unsavedAttadatnumsState,
-} from "../store/atoms";
-import UserOptionsWindow from "./Windows/CommonWindows/UserOptionsWindow";
-import ChangePasswordWindow from "./Windows/CommonWindows/ChangePasswordWindow";
-import SystemOptionWindow from "./Windows/CommonWindows/SystemOptionWindow";
-import { useApi } from "../hooks/api";
-import { Iparameters, TLogParaVal, TPath } from "../store/types";
-import Loading from "./Loading";
-import {
   AppName,
-  ButtonContainer,
   Content,
   Footer,
   Gnv,
   Logo,
-  MenuSearchBox,
   Modal,
   PageWrap,
   SmallGnv,
   TopTitle,
-  Wrapper,
+  Wrapper
 } from "../CommonStyled";
-import { getBrowser, resetLocalStorage, UseGetIp } from "./CommonFunction";
+import { useApi } from "../hooks/api";
 import {
-  AutoComplete,
-  AutoCompleteCloseEvent,
-} from "@progress/kendo-react-dropdowns";
+  deletedAttadatnumsState,
+  isMenuOpendState,
+  isMobileMenuOpendState,
+  loginResultState,
+  menusState,
+  passwordExpirationInfoState,
+  unsavedAttadatnumsState,
+} from "../store/atoms";
+import { UseGetIp, getBrowser } from "./CommonFunction";
 import { DEFAULT_ATTDATNUMS } from "./CommonString";
-import { useThemeSwitcher } from "react-css-theme-switcher";
 import Loader from "./Loader";
+import Loading from "./Loading";
+import ChangePasswordWindow from "./Windows/CommonWindows/ChangePasswordWindow";
+import SystemOptionWindow from "./Windows/CommonWindows/SystemOptionWindow";
+import UserOptionsWindow from "./Windows/CommonWindows/UserOptionsWindow";
 
 const paths = [
   {
@@ -412,36 +405,6 @@ const PanelBarNavContainer = (props: any) => {
 
   const selected = setSelectedIndex(props.location.pathname);
 
-  const logout = () => {
-    // switcher({ theme: "light" });
-    fetchLogout();
-    resetLocalStorage();
-    setIsMobileMenuOpend(false);
-    if (isAdmin) {
-      history.push("/Admin");
-    } else {
-      history.push("/");
-    }
-    // window.location.href = "/";
-  };
-
-  const fetchLogout = async () => {
-    let data: any;
-
-    const para = {
-      accessToken: accessToken,
-    };
-
-    try {
-      data = await processApi<any>("logout", para);
-    } catch (error) {
-      data = null;
-    }
-    if (data === null) {
-      console.log("[An error occured to log for logout]");
-      console.log(data);
-    }
-  };
 
   const onMenuBtnClick = () => {
     setIsMobileMenuOpend((prev) => !prev);
@@ -527,9 +490,6 @@ const PanelBarNavContainer = (props: any) => {
         <Modal isMobileMenuOpend={isMobileMenuOpend} onClick={onMenuBtnClick} />
         {isMenuOpend ? (
           <Gnv isMobileMenuOpend={isMobileMenuOpend} theme={currentTheme}>
-            <AppName onClick={() => setIsMenuOpend(false)} theme={currentTheme}>
-              <Logo size="32px" />
-            </AppName>
             {isAdmin ? (
               <PanelBar
                 selected={String(selected)}
@@ -566,13 +526,6 @@ const PanelBarNavContainer = (props: any) => {
                   title={"프로젝트 마스터"}
                   route="/ProjectMaster"
                 />
-                <PanelBarItem title={"설정"} icon={"gear"}>
-                  <PanelBarItem
-                    title={"비밀번호 변경"}
-                    route={undefined}
-                    className="change-password"
-                  ></PanelBarItem>
-                </PanelBarItem>
               </PanelBar>
             ) : (
               <PanelBar
@@ -588,52 +541,24 @@ const PanelBarNavContainer = (props: any) => {
                   title={"프로젝트 일정계획"}
                   route="/ProjectSchedule"
                 />
-                <PanelBarItem title={"설정"} icon={"gear"}>
-                  <PanelBarItem
-                    title={"비밀번호 변경"}
-                    route={undefined}
-                    className="change-password"
-                  ></PanelBarItem>
-                </PanelBarItem>
               </PanelBar>
             )}
-
-            <ButtonContainer
-              flexDirection={"column"}
-              style={{ marginTop: "10px", gap: "5px" }}
-            >
-              <Button
-                onClick={logout}
-                icon={"logout"}
-                fillMode={"flat"}
-                themeColor={"secondary"}
-              >
-                로그아웃
-              </Button>
-            </ButtonContainer>
           </Gnv>
         ) : (
-          <SmallGnv theme={currentTheme}>
-            <Button
-              icon="menu"
-              fillMode={"flat"}
-              themeColor={"primary"}
-              onClick={() => setIsMenuOpend(true)}
-            />
-          </SmallGnv>
+          <SmallGnv theme={currentTheme} />
         )}
         <Content isMenuOpen={isMenuOpend}>
           <TopTitle>
-            <div style={{ width: "30px" }}></div>
-            <AppName theme={currentTheme}>
-              <Logo size="32px" />
-            </AppName>
-            <Button
+          <Button
               icon="menu"
               themeColor={"primary"}
               fillMode={"flat"}
               onClick={onMenuBtnClick}
             />
+            <AppName theme={currentTheme}>
+              <Logo size="32px" />
+            </AppName>
+            <div style={{ width: "30px" }}></div>
           </TopTitle>
           <PageWrap>{props.children}</PageWrap>
         </Content>

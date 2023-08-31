@@ -1,4 +1,36 @@
+import {
+  DataResult,
+  FilterDescriptor,
+  State,
+  filterBy,
+  getter,
+  process,
+} from "@progress/kendo-data-query";
 import { Button } from "@progress/kendo-react-buttons";
+import {
+  ComboBoxFilterChangeEvent,
+  MultiColumnComboBox,
+  MultiSelect,
+  MultiSelectChangeEvent,
+} from "@progress/kendo-react-dropdowns";
+import {
+  Grid,
+  GridCellProps,
+  GridColumn,
+  GridDataStateChangeEvent,
+  GridFooterCellProps,
+  GridItemChangeEvent,
+  GridPageChangeEvent,
+  GridSelectionChangeEvent,
+  getSelectedState,
+} from "@progress/kendo-react-grid";
+import { Input, RadioGroup } from "@progress/kendo-react-inputs";
+import { TabStrip, TabStripTab } from "@progress/kendo-react-layout";
+import { bytesToBase64 } from "byte-base64";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { useHistory, useLocation } from "react-router-dom";
+import { useRecoilState, useSetRecoilState } from "recoil";
+import { v4 as uuidv4 } from "uuid";
 import {
   ButtonContainer,
   ButtonInGridInput,
@@ -14,16 +46,11 @@ import {
   Title,
   TitleContainer,
 } from "../CommonStyled";
-import { v4 as uuidv4 } from "uuid";
-import { useApi } from "../hooks/api";
-import { TabStrip, TabStripTab } from "@progress/kendo-react-layout";
-import { createContext, useContext, useEffect, useRef, useState } from "react";
-import {
-  ComboBoxFilterChangeEvent,
-  MultiColumnComboBox,
-  MultiSelect,
-  MultiSelectChangeEvent,
-} from "@progress/kendo-react-dropdowns";
+import CheckBoxReadOnlyCell from "../components/Cells/CheckBoxReadOnlyCell";
+import ComboBoxCell from "../components/Cells/ComboBoxCell";
+import DateCell from "../components/Cells/DateCell";
+import NumberCell from "../components/Cells/NumberCell";
+import ProgressCell from "../components/Cells/ProgressCell";
 import {
   UseParaPc,
   convertDateToStr,
@@ -32,64 +59,28 @@ import {
   handleKeyPressSearch,
 } from "../components/CommonFunction";
 import {
-  DataResult,
-  FilterDescriptor,
-  State,
-  filterBy,
-  getter,
-  process,
-} from "@progress/kendo-data-query";
-import {
-  custTypeColumns,
-  dataTypeColumns,
-  dataTypeColumns2,
-  userColumns,
-} from "../store/columns/common-columns";
-import {
-  DEFAULT_ATTDATNUMS,
   EDIT_FIELD,
   GAP,
   PAGE_SIZE,
   SELECTED_FIELD,
 } from "../components/CommonString";
 import CommonDateRangePicker from "../components/DateRangePicker/CommonDateRangePicker";
-import { Input, RadioGroup } from "@progress/kendo-react-inputs";
-import { bytesToBase64 } from "byte-base64";
-import { useRecoilState, useSetRecoilState } from "recoil";
-import {
-  deletedAttadatnumsState,
-  isLoading,
-  loginResultState,
-  unsavedAttadatnumsState,
-} from "../store/atoms";
-import { Iparameters, TEditorHandle } from "../store/types";
-import {
-  Grid,
-  GridCellProps,
-  GridColumn,
-  GridDataStateChangeEvent,
-  GridFooterCellProps,
-  GridItemChangeEvent,
-  GridPageChangeEvent,
-  GridSelectionChangeEvent,
-  getSelectedState,
-} from "@progress/kendo-react-grid";
-import CheckBoxReadOnlyCell from "../components/Cells/CheckBoxReadOnlyCell";
-import DateCell from "../components/Cells/DateCell";
-import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
-import RichEditor from "../components/RichEditor";
-import TaskOrderWindow from "../components/Windows/CommonWindows/TaskOrderWindow";
-import ProgressCell from "../components/Cells/ProgressCell";
-import RadioGroupCell from "../components/Cells/RadioGroupCell";
-import NumberCell from "../components/Cells/NumberCell";
 import { CellRender, RowRender } from "../components/Renderers/Renderers";
-import { IAttachmentData } from "../hooks/interfaces";
-import PopUpAttachmentsWindow from "../components/Windows/CommonWindows/PopUpAttachmentsWindow";
 import RequiredHeader from "../components/RequiredHeader";
+import RichEditor from "../components/RichEditor";
+import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
 import ErrorWindow from "../components/Windows/CommonWindows/ErrorWindow";
-import ComboBoxCell from "../components/Cells/ComboBoxCell";
 import TaskOrderDataWindow from "../components/Windows/CommonWindows/TaskOrderDataWindow";
-import { useLocation } from "react-router-dom";
+import TaskOrderWindow from "../components/Windows/CommonWindows/TaskOrderWindow";
+import { useApi } from "../hooks/api";
+import { isLoading, loginResultState, titles } from "../store/atoms";
+import {
+  custTypeColumns,
+  dataTypeColumns,
+  dataTypeColumns2,
+  userColumns,
+} from "../store/columns/common-columns";
+import { Iparameters, TEditorHandle } from "../store/types";
 
 const StatusContext = createContext<{
   statusListData: any[];
@@ -544,6 +535,7 @@ const App = () => {
   const idGetter4 = getter(DATA_ITEM_KEY4);
   let deviceWidth = window.innerWidth;
   let isMobile = deviceWidth <= 1200;
+  const [title, setTitle] = useRecoilState(titles);
   const initialPageState = { skip: 0, take: PAGE_SIZE };
   const [page, setPage] = useState(initialPageState);
   const [page2, setPage2] = useState(initialPageState);
@@ -551,6 +543,7 @@ const App = () => {
   const [page4, setPage4] = useState(initialPageState);
   const [pc, setPc] = useState("");
   UseParaPc(setPc);
+  const history = useHistory();
   const location = useLocation();
   const pathname = location.pathname.replace("/", "");
 
@@ -1188,6 +1181,49 @@ const App = () => {
     fetchUsers();
     fetchReceptionType();
     fetchCust();
+    const queryParams = new URLSearchParams(location.search);
+    if (queryParams.has("go")) {
+      const paras = queryParams.get("go") as string;
+      if (paras.includes("-")) {
+        if (paras.split("-")[1].charAt(0) == "D") {
+          setTabSelected(1);
+          setFilters((prev) => ({
+            ...prev,
+            workType: "project",
+            findRowValue: paras,
+            isSearch: true,
+          }));
+        } else {
+          setTabSelected(2);
+          setFilters((prev) => ({
+            ...prev,
+            workType: "meeting",
+            findRowValue: paras,
+            isSearch: true,
+          }));
+        }
+      } else {
+        if (paras.charAt(0) == "Q") {
+          setTabSelected(0);
+          setFilters((prev) => ({
+            ...prev,
+            workType: "received",
+            findRowValue: paras,
+            isSearch: true,
+          }));
+        } else {
+          setTabSelected(3);
+          setFilters((prev) => ({
+            ...prev,
+            workType: "task_order_all",
+            findRowValue: paras,
+            isSearch: true,
+          }));
+        }
+      }
+      history.replace({}, "");
+    }
+    setTitle("업무 지시");
   }, []);
 
   const fetchCheck = async (str: string) => {
@@ -1353,7 +1389,7 @@ const App = () => {
     findRowValue: "",
     pgSize: PAGE_SIZE,
     pgNum: 1,
-    isSearch: true,
+    isSearch: false,
   });
 
   function getName(data: { sub_code: string }[]) {
@@ -1739,7 +1775,7 @@ const App = () => {
         } else {
           setSelectedState3({ [rows[0][DATA_ITEM_KEY3]]: true });
 
-          fetchDocument("Meeting", selectedRow.document_id);
+          fetchDocument("Meeting", rows[0].document_id);
         }
       } else {
         fetchDocument("", "");
@@ -2663,11 +2699,11 @@ const App = () => {
 
         const bytes = require("utf8-bytes");
         const convertedQueryStr = bytesToBase64(bytes(defectiveQueryStr));
-    
+
         let query = {
           query: convertedQueryStr,
         };
-    
+
         try {
           data = await processApi<any>("bizgst-query", query);
         } catch (error) {
@@ -2679,11 +2715,11 @@ const App = () => {
 
         const bytes2 = require("utf8-bytes");
         const convertedQueryStr2 = bytesToBase64(bytes2(finynQueryStr));
-    
+
         let query2 = {
           query: convertedQueryStr2,
         };
-    
+
         try {
           data2 = await processApi<any>("bizgst-query", query2);
         } catch (error) {
@@ -2692,7 +2728,7 @@ const App = () => {
 
         if (data.tables[0].Rows[0].ref_key != "") {
           alert("불량처리가 된 데이터는 삭제가 불가능합니다.");
-        } else if(data2.tables[0].Rows[0].docunum != "") {
+        } else if (data2.tables[0].Rows[0].docunum != "") {
           alert("처리일지가 등록된 데이터는 삭제가 불가능합니다.");
         } else {
           //삭제 안 할 데이터 newData에 push, 삭제 데이터 deletedRows에 push
@@ -3600,7 +3636,7 @@ const App = () => {
   return (
     <>
       <TitleContainer>
-        <Title>업무 지시</Title>
+        {!isMobile ? "" : <Title>업무 지시</Title>}
         <ButtonContainer>
           {tabSelected == 3 ? (
             <Button

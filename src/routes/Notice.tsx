@@ -12,7 +12,11 @@ import {
   GridSelectionChangeEvent,
 } from "@progress/kendo-react-grid";
 import { Input } from "@progress/kendo-react-inputs";
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import { bytesToBase64 } from "byte-base64";
+import Cookies from "js-cookie";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useHistory, useLocation } from "react-router-dom";
+import { useRecoilState, useSetRecoilState } from "recoil";
 import {
   ButtonContainer,
   FilterBox,
@@ -26,6 +30,7 @@ import {
   Title,
   TitleContainer,
 } from "../CommonStyled";
+import CenterCell from "../components/Cells/CenterCell";
 import {
   chkScrollHandler,
   convertDateToStr,
@@ -36,28 +41,19 @@ import {
   UseParaPc,
 } from "../components/CommonFunction";
 import {
-  DEFAULT_ATTDATNUMS,
   GAP,
   PAGE_SIZE,
-  SELECTED_FIELD,
+  SELECTED_FIELD
 } from "../components/CommonString";
+import RichEditor from "../components/RichEditor";
+import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
+import { useApi } from "../hooks/api";
 import {
-  deletedAttadatnumsState,
   isLoading,
   loginResultState,
-  unsavedAttadatnumsState,
+  titles
 } from "../store/atoms";
-import { useRecoilState, useSetRecoilState } from "recoil";
-import RichEditor from "../components/RichEditor";
 import { TEditorHandle } from "../store/types";
-import { useApi } from "../hooks/api";
-import CenterCell from "../components/Cells/CenterCell";
-import { bytesToBase64 } from "byte-base64";
-import { IAttachmentData } from "../hooks/interfaces";
-import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
-import { useThemeSwitcher } from "react-css-theme-switcher";
-import Cookies from "js-cookie";
-import { useLocation } from "react-router-dom";
 
 const DraggableGridRowRender = (properties: any) => {
   const {
@@ -131,10 +127,13 @@ const App = () => {
   const location = useLocation();
   const pathname = location.pathname.replace("/", "");
   const processApi = useApi();
+  const history = useHistory();
 
   const [attachmentsWindowVisible, setAttachmentsWindowVisible] =
     useState<boolean>(false);
-
+  const [title, setTitle] = useRecoilState(titles);
+  let deviceWidth = window.innerWidth;
+  let isMobile = deviceWidth <= 1200;
   const idGetter = getter(DATA_ITEM_KEY);
 
   const [mainDataState, setMainDataState] = useState<State>({
@@ -176,7 +175,7 @@ const App = () => {
     pgNum: 1,
     pgSize: PAGE_SIZE,
     isFetch: true, // 조회여부 초기값
-    isReset: true, // 리셋여부 초기값
+    isReset: false, // 리셋여부 초기값
   });
 
   //조회조건 Input Change 함수 => 사용자가 Input에 입력한 값을 조회 파라미터로 세팅
@@ -276,6 +275,20 @@ const App = () => {
     setRefCustDataState((prev) => ({ ...prev, sort: e.sort }));
   };
 
+  /* 푸시 알림 클릭시 이동 테스트 코드 */
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    if (queryParams.has("go")) {
+      history.replace({}, "");
+      setFilters((prev) => ({
+        ...prev,
+        isFetch: true,
+        findRowValue: queryParams.get("go") as string,
+      }));
+    }
+    setTitle("공지사항");
+  }, []);
+
   //그리드 데이터 조회
   const fetchGrid = useCallback(async (filters: TFilters) => {
     let data: any;
@@ -300,14 +313,7 @@ const App = () => {
       const rows = data.tables[0].Rows;
 
       if (totalRowCnt > 0) {
-        if (filters.findRowValue !== "") {
-          // 데이터 저장 후 조회
-          setSelectedState({ [filters.findRowValue]: true });
-          setMainDataResult({
-            data: rows,
-            total: totalRowCnt == -1 ? 0 : totalRowCnt,
-          });
-        } else if (filters.isReset) {
+        if (filters.isReset) {
           // 일반 데이터 조회
           const firstRowData = rows[0];
           setSelectedState({ [firstRowData[DATA_ITEM_KEY]]: true });
@@ -316,13 +322,24 @@ const App = () => {
             total: totalRowCnt == -1 ? 0 : totalRowCnt,
           });
         } else {
-          // 스크롤하여 다른 페이지 조회
+          const selectedRow =
+            filters.findRowValue == ""
+              ? rows[0]
+              : rows.find(
+                  (row: any) => row[DATA_ITEM_KEY] == filters.findRowValue
+                );
+
           setMainDataResult((prev) => {
             return {
-              data: [...prev.data, ...rows],
+              data: rows,
               total: totalRowCnt == -1 ? 0 : totalRowCnt,
             };
           });
+          if (selectedRow != undefined) {
+            setSelectedState({ [selectedRow[DATA_ITEM_KEY]]: true });
+          } else {
+            setSelectedState({ [rows[0][DATA_ITEM_KEY]]: true });
+          }
         }
       } else {
         // 결과 행이 0인 경우 데이터 리셋
@@ -566,7 +583,6 @@ const App = () => {
     return customers.map((customer) => customer["customer_code"]).join("|");
   };
 
-  
   const uploadFile = async (
     files: File,
     type: string,
@@ -625,7 +641,6 @@ const App = () => {
       return false;
     }
 
-    
     let newAttachmentNumber = "";
     const promises = [];
 
@@ -695,7 +710,8 @@ const App = () => {
         "@p_notice_date": convertDateToStr(detailData.notice_date),
         "@p_title": detailData.title,
         "@p_contents": detailData.contents,
-        "@p_attdatnum": results[0] == undefined ? detailData.attdatnum : results[0],
+        "@p_attdatnum":
+          results[0] == undefined ? detailData.attdatnum : results[0],
         "@p_customer_code_s": getCustomerCodes(refCustData.data),
         "@p_id": userId,
         "@p_pc": pc,
@@ -765,7 +781,6 @@ const App = () => {
       setFilters((prev) => ({
         ...prev,
         isFetch: true,
-        isReset: true,
       }));
     } else {
       console.log("[에러발생]");
@@ -836,7 +851,7 @@ const App = () => {
   return (
     <>
       <TitleContainer>
-        <Title>공지사항</Title>
+        {!isMobile ? "" : <Title>공지사항</Title>}
         <ButtonContainer>
           <Button onClick={search} icon="search" themeColor={"primary"}>
             조회
@@ -918,7 +933,7 @@ const App = () => {
           </tbody>
         </FilterBox>
       </FilterBoxWrap>
-      <GridContainerWrap height={"80%"}>
+      <GridContainerWrap height={"78%"}>
         <GridContainer width={isAdmin ? "25%" : `30%`}>
           <GridTitleContainer>
             <GridTitle>요약정보</GridTitle>

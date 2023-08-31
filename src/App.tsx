@@ -1,61 +1,79 @@
+import React, { useEffect, useState } from "react";
+import {
+  Route,
+  BrowserRouter as Router,
+  Switch,
+  useHistory,
+} from "react-router-dom";
 import { RecoilRoot, useRecoilState, useRecoilValue } from "recoil";
-import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
-import React from "react";
 // import "./index.scss";
 
 import { createGlobalStyle } from "styled-components";
-import PanelBarNavContainer from "./components/PanelBarNavContainer";
 import AuthRoute from "./components/AuthRoute";
+import PanelBarNavContainer from "./components/PanelBarNavContainer";
 import Login from "./routes/Login";
 import LoginAdmin from "./routes/LoginAdmin";
 import Main from "./routes/Main";
 import MainAdmin from "./routes/MainAdmin";
-import MeetingView from "./routes/MeetingView";
 import MeetingManagement from "./routes/MeetingManagement";
-import QnA from "./routes/QnA";
+import MeetingView from "./routes/MeetingView";
 import Notice from "./routes/Notice";
 import ProjectSchedule from "./routes/ProjectSchedule";
+import QnA from "./routes/QnA";
 
 import SharedDocumentManagement from "./routes/SharedDocumentManagement";
 import SharedDocumentView from "./routes/SharedDocumentView";
 
-import { isMobileMenuOpendState, loginResultState } from "./store/atoms";
 import {
   IntlProvider,
+  LocalizationProvider,
   load,
   loadMessages,
-  LocalizationProvider,
 } from "@progress/kendo-react-intl";
+import {
+  isMenuOpendState,
+  isMobileMenuOpendState,
+  loginResultState,
+  titles,
+} from "./store/atoms";
 
-import likelySubtags from "cldr-core/supplemental/likelySubtags.json";
 import currencyData from "cldr-core/supplemental/currencyData.json";
+import likelySubtags from "cldr-core/supplemental/likelySubtags.json";
 import weekData from "cldr-core/supplemental/weekData.json";
 
-import numbersKo from "cldr-numbers-full/main/ko/numbers.json";
 import caGregorianKo from "cldr-dates-full/main/ko/ca-gregorian.json";
 import dateFieldsKo from "cldr-dates-full/main/ko/dateFields.json";
 import timeZoneNamesKo from "cldr-dates-full/main/ko/timeZoneNames.json";
+import numbersKo from "cldr-numbers-full/main/ko/numbers.json";
 
-import numbersEn from "cldr-numbers-full/main/en/numbers.json";
 import caGregorianEn from "cldr-dates-full/main/en/ca-gregorian.json";
 import dateFieldsEn from "cldr-dates-full/main/en/dateFields.json";
 import timeZoneNamesEn from "cldr-dates-full/main/en/timeZoneNames.json";
+import numbersEn from "cldr-numbers-full/main/en/numbers.json";
 
-import numbersJa from "cldr-numbers-full/main/ja/numbers.json";
 import caGregorianJa from "cldr-dates-full/main/ja/ca-gregorian.json";
 import dateFieldsJa from "cldr-dates-full/main/ja/dateFields.json";
 import timeZoneNamesJa from "cldr-dates-full/main/ja/timeZoneNames.json";
+import numbersJa from "cldr-numbers-full/main/ja/numbers.json";
 
-import numbersZh from "cldr-numbers-full/main/zh/numbers.json";
 import caGregorianZh from "cldr-dates-full/main/zh/ca-gregorian.json";
 import dateFieldsZh from "cldr-dates-full/main/zh/dateFields.json";
 import timeZoneNamesZh from "cldr-dates-full/main/zh/timeZoneNames.json";
+import numbersZh from "cldr-numbers-full/main/zh/numbers.json";
 
-import koMessages from "./store/cultures/ko.json";
 import ProjectMaster from "./routes/ProjectMaster";
+import Reception_Answer from "./routes/Reception_Answer";
 import Record from "./routes/Record";
 import Task_Order from "./routes/Task_Order";
-import Reception_Answer from "./routes/Reception_Answer";
+import koMessages from "./store/cultures/ko.json";
+import { AppName, Header, Logo } from "./CommonStyled";
+import { useThemeSwitcher } from "react-css-theme-switcher";
+import { Popup } from "@progress/kendo-react-popup";
+import { ListView, ListViewItemProps } from "@progress/kendo-react-listview";
+import { resetLocalStorage } from "./components/CommonFunction";
+import { useApi } from "./hooks/api";
+import ChangePasswordWindow from "./components/Windows/CommonWindows/ChangePasswordWindow";
+import { Button } from "@progress/kendo-react-buttons";
 
 load(
   likelySubtags,
@@ -215,11 +233,108 @@ const App: React.FC = () => {
   );
 };
 const AppInner: React.FC = () => {
-  const isMobileMenuOpend = useRecoilValue(isMobileMenuOpendState);
+  const path = window.location.href;
+  var index = 0;
+  var isAdmin = false;
+  //개발 모드
+  if (path.includes("localhost:3000/admin")) {
+    isAdmin = true;
+  } else {
+    index = path.indexOf("spm");
+    isAdmin = path[index + 1] == "-" ? true : false;
+  }
 
+  const [isMenuOpend, setIsMenuOpend] = useRecoilState(isMenuOpendState);
+  const [isMobileMenuOpend, setIsMobileMenuOpend] = useRecoilState(
+    isMobileMenuOpendState
+  );
+  const processApi = useApi();
+  const accessToken = localStorage.getItem("accessToken");
+  const { switcher, themes, currentTheme = "" } = useThemeSwitcher();
   const [loginResult] = useRecoilState(loginResultState);
-  const role = loginResult ? loginResult.role : "";
-  const isAdmin = role === "ADMIN";
+  const userName = loginResult ? loginResult.userName : "";
+  const userId = loginResult ? loginResult.userId : "";
+  const anchor = React.useRef<HTMLButtonElement | null>(null);
+  const [show, setShow] = React.useState(false);
+  const [title, setTitle] = useRecoilState(titles);
+  const [changePasswordWindowVisible, setChangePasswordWindowVisible] =
+    useState<boolean>(false);
+  const history = useHistory();
+  let deviceWidth = window.innerWidth;
+  let isMobile = deviceWidth <= 1200;
+  const logout = () => {
+    // switcher({ theme: "light" });
+    setShow(false);
+    fetchLogout();
+    resetLocalStorage();
+    setIsMobileMenuOpend(false);
+    history.push("/");
+    // window.location.href = "/";
+  };
+
+  const fetchLogout = async () => {
+    let data: any;
+
+    const para = {
+      accessToken: accessToken,
+    };
+
+    try {
+      data = await processApi<any>("logout", para);
+    } catch (error) {
+      data = null;
+    }
+    if (data === null) {
+      console.log("[An error occured to log for logout]");
+      console.log(data);
+    }
+  };
+
+  const contracts = [
+    {
+      title: "알림 구독",
+    },
+    {
+      title: "알림 구독 해제",
+    },
+    {
+      title: "비밀번호 변경",
+    },
+    {
+      title: "로그아웃",
+    },
+  ];
+
+  const click = (title: string) => {
+    if (title == "비밀번호 변경") {
+      setChangePasswordWindowVisible(true);
+    } else {
+      logout();
+    }
+  };
+
+  const MyItemRender = (props: ListViewItemProps) => {
+    let item = props.dataItem;
+    return (
+      <div
+        className="k-listview-item row p-2 border-bottom align-middle"
+        style={{
+          margin: 0,
+          cursor: "pointer",
+          marginTop: "8px",
+          marginBottom: "8px",
+        }}
+        onClick={() => click(item.title)}
+      >
+        <div className="col">{item.title}</div>
+      </div>
+    );
+  };
+
+  const onClick = () => {
+    setShow(!show);
+  };
+
   return (
     <>
       <GlobalStyle isMobileMenuOpend={isMobileMenuOpend} />
@@ -227,46 +342,123 @@ const AppInner: React.FC = () => {
         <IntlProvider locale={"ko"}>
           <Router>
             <Switch>
-              <Route path="/" component={Login} exact />
-              <Route path="/Admin" component={LoginAdmin} exact />
-              <PanelBarNavContainer>
-                {/* 메인 홈 */}
-                {isAdmin ? (
-                  <AuthRoute path="/Home" component={MainAdmin} exact />
-                ) : (
-                  <AuthRoute path="/Home" component={Main} exact />
-                )}
+              {isAdmin ? (
+                <Route path="/" component={LoginAdmin} exact />
+              ) : (
+                <Route path="/" component={Login} exact />
+              )}
+              <div>
+                <Header>
+                  <AppName theme={currentTheme}>
+                    <Button
+                      icon="menu"
+                      themeColor={"primary"}
+                      fillMode={"flat"}
+                      onClick={() => setIsMenuOpend(!isMenuOpend)}
+                    />
+                    <Logo
+                      size="33px"
+                      onClick={() => (window.location.href = "/")}
+                    />
+                  </AppName>
+                  {isMobile ? (
+                    ""
+                  ) : (
+                    <div style={{ fontSize: "28px", fontWeight: 600 }}>
+                      {title}
+                    </div>
+                  )}
+                  <button
+                    className={
+                      "k-button k-button-md k-rounded-md k-button-solid k-button-solid-base"
+                    }
+                    onClick={onClick}
+                    ref={anchor}
+                    style={{
+                      minWidth: "100px",
+                      float: "right",
+                      display: "inline-block",
+                      border: "1px solid #7a76ce",
+                      color: "#7a76ce",
+                    }}
+                  >
+                    <span
+                      className="k-icon k-i-user k-icon-lg"
+                      style={{ marginRight: "5px", color: "#7a76ce" }}
+                    ></span>
+                    {userName}({userId})
+                  </button>
+                  <Popup
+                    anchor={anchor.current}
+                    show={show}
+                    className={"wrapper"}
+                    popupClass={"inner-wrapper"}
+                  >
+                    <ListView
+                      data={contracts}
+                      item={MyItemRender}
+                      style={{ width: "100%" }}
+                    />
+                  </Popup>
+                </Header>
+                <PanelBarNavContainer>
+                  {/* 메인 홈 */}
+                  {isAdmin ? (
+                    <AuthRoute path="/Home" component={MainAdmin} exact />
+                  ) : (
+                    <AuthRoute path="/Home" component={Main} exact />
+                  )}
 
-                {/* SPM */}
-                <AuthRoute path="/MeetingView" component={MeetingView} exact />
-                <AuthRoute
-                  path="/MeetingManagement"
-                  component={MeetingManagement}
-                  exact
-                />
-                <AuthRoute path="/Qna" component={QnA} exact />
-                <AuthRoute path="/Notice" component={Notice} exact />
-                <AuthRoute
-                  path="/ProjectSchedule"
-                  component={ProjectSchedule}
-                  exact
-                />
-                <AuthRoute path="/Reception_Answer" component={Reception_Answer} exact />
-                <AuthRoute path="/Task_Order" component={Task_Order} exact />
-                <AuthRoute path="/Record" component={Record} exact />
-                <AuthRoute
-                  path="/ProjectMaster"
-                  component={ProjectMaster}
-                  exact
-                />
+                  {/* SPM */}
+                  <AuthRoute
+                    path="/MeetingView"
+                    component={MeetingView}
+                    exact
+                  />
+                  <AuthRoute
+                    path="/MeetingManagement"
+                    component={MeetingManagement}
+                    exact
+                  />
+                  <AuthRoute path="/Qna" component={QnA} exact />
+                  <AuthRoute path="/Notice" component={Notice} exact />
+                  <AuthRoute
+                    path="/ProjectSchedule"
+                    component={ProjectSchedule}
+                    exact
+                  />
+                  <AuthRoute
+                    path="/Reception_Answer"
+                    component={Reception_Answer}
+                    exact
+                  />
+                  <AuthRoute path="/Task_Order" component={Task_Order} exact />
+                  <AuthRoute path="/Record" component={Record} exact />
+                  <AuthRoute
+                    path="/ProjectMaster"
+                    component={ProjectMaster}
+                    exact
+                  />
 
-                <AuthRoute path="/SharedDocumentManagement" component={SharedDocumentManagement} exact />
-                <AuthRoute path="/SharedDocumentView" component={SharedDocumentView} exact />
-              </PanelBarNavContainer>
+                  <AuthRoute
+                    path="/SharedDocumentManagement"
+                    component={SharedDocumentManagement}
+                    exact
+                  />
+                  <AuthRoute
+                    path="/SharedDocumentView"
+                    component={SharedDocumentView}
+                    exact
+                  />
+                </PanelBarNavContainer>
+              </div>
             </Switch>
           </Router>
         </IntlProvider>
       </LocalizationProvider>
+      {changePasswordWindowVisible && (
+        <ChangePasswordWindow setVisible={setChangePasswordWindowVisible} />
+      )}
     </>
   );
   //}

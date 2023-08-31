@@ -72,7 +72,7 @@ import AnswerWindow from "../components/Windows/CommonWindows/AnswerWindow";
 import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
 import ContentWindow from "../components/Windows/CommonWindows/ContentWindow";
 import { useApi } from "../hooks/api";
-import { isLoading, loginResultState } from "../store/atoms";
+import { isLoading, loginResultState, titles } from "../store/atoms";
 import {
   dataTypeColumns,
   dataTypeColumns2,
@@ -346,7 +346,9 @@ const App = () => {
   const userName = loginResult ? loginResult.userName : "";
   const [pc, setPc] = useState("");
   UseParaPc(setPc);
-
+  const [title, setTitle] = useRecoilState(titles);
+  let deviceWidth = window.innerWidth;
+  let isMobile = deviceWidth <= 1200;
   const [tabSelected, setTabSelected] = useState(0);
   const handleSelectTab = (e: any) => {
     setTabSelected(e.selected);
@@ -411,7 +413,8 @@ const App = () => {
   };
   const getContentData = (title: string, content: string) => {
     const newData = subDataResult.data.map((item) =>
-      item[SUB_DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedsubDataState)[0]
+      item[SUB_DATA_ITEM_KEY] ==
+      Object.getOwnPropertyNames(selectedsubDataState)[0]
         ? {
             ...item,
             rowstatus: item.rowstatus == "N" ? "N" : "U",
@@ -505,6 +508,7 @@ const App = () => {
     fetchUsers();
     fetchValueCode();
     fetchTypeCode();
+    setTitle("처리일지 작성");
   }, []);
 
   const fetchWorkType = async () => {
@@ -888,9 +892,7 @@ const App = () => {
         const selectedRow =
           filters.findRowValue == ""
             ? rows[0]
-            : rows.find(
-                (row: any) => row.docunum == filters.findRowValue
-              );
+            : rows.find((row: any) => row.docunum == filters.findRowValue);
 
         if (selectedRow != undefined) {
           setSelectedState({ [selectedRow[DATA_ITEM_KEY]]: true });
@@ -1989,7 +1991,7 @@ const App = () => {
   return (
     <>
       <TitleContainer>
-        <Title>처리일지 작성</Title>
+        {!isMobile ? "" : <Title>처리일지 작성</Title>}
         <ButtonContainer>
           <Button
             themeColor={"primary"}
@@ -2324,7 +2326,7 @@ const App = () => {
                         </ButtonContainer>
                       </GridTitleContainer>
                       <Grid
-                        style={{ height: `35vh` }}
+                        style={{ height: `37vh` }}
                         data={process(
                           subDataResult.data.map((row) => ({
                             ...row,

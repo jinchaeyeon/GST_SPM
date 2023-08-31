@@ -8,7 +8,7 @@ export const FORM_DATA_INDEX = "formDataIndex";
 export const CLIENT_WIDTH = document.documentElement.clientWidth; // Client 너비값
 export const GRID_MARGIN = 30; //그리드 양쪽 마진값
 export const GNV_WIDTH = 150; //gnv 너비값
-export const CLOSED_GNV_WIDTH = 29.563; // Menu closed 상태의 gnv 너비값
+export const CLOSED_GNV_WIDTH = 0; // Menu closed 상태의 gnv 너비값
 export const PAGE_SIZE = 20; //한번에 조회할 데이터 수 디폴트 값
 export const GAP = 15; // 그리드 사이 갭
 
