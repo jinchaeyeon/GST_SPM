@@ -35,6 +35,7 @@ import {
   isMobileMenuOpendState,
   loginResultState,
   titles,
+  fcmTokenState
 } from "./store/atoms";
 
 import currencyData from "cldr-core/supplemental/currencyData.json";
@@ -74,7 +75,9 @@ import { resetLocalStorage } from "./components/CommonFunction";
 import { useApi } from "./hooks/api";
 import ChangePasswordWindow from "./components/Windows/CommonWindows/ChangePasswordWindow";
 import { Button } from "@progress/kendo-react-buttons";
-
+import { initializeApp } from "firebase/app";
+import { getMessaging, getToken, onMessage, isSupported } from "firebase/messaging";
+import { getAnalytics } from "firebase/analytics";
 load(
   likelySubtags,
   currencyData,
@@ -225,6 +228,16 @@ input.readonly {
 
 `;
 
+const firebaseConfig = {
+  apiKey: process.env.REACT_APP_API_KEY,
+  authDomain: process.env.REACT_APP_AUTH_DOMAIN,
+  projectId: process.env.REACT_APP_PROJECT_ID,
+  storageBucket: process.env.REACT_APP_STORAGE_BUCKET,
+  messagingSenderId: process.env.REACT_APP_MESSAGING_SENDER_ID,
+  appId: process.env.REACT_APP_APP_ID,
+  measurementId: process.env.REACT_APP_MEASUREMENT_ID,
+};
+
 const App: React.FC = () => {
   return (
     <RecoilRoot>
@@ -234,6 +247,9 @@ const App: React.FC = () => {
 };
 const AppInner: React.FC = () => {
   const path = window.location.href;
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+  const messaging = getMessaging(app);
   var index = 0;
   var isAdmin = false;
   //개발 모드
@@ -262,6 +278,7 @@ const AppInner: React.FC = () => {
   const history = useHistory();
   let deviceWidth = window.innerWidth;
   let isMobile = deviceWidth <= 1200;
+
   const logout = () => {
     // switcher({ theme: "light" });
     setShow(false);
@@ -271,6 +288,56 @@ const AppInner: React.FC = () => {
     history.push("/");
     // window.location.href = "/";
   };
+  async function requestPermission() {
+    const permission = await Notification.requestPermission();
+    if (permission != "granted") {
+      alert(`알림 권한이 허용되지 않았습니다. (permission: ${permission})`)
+      return;
+    }
+    
+    const token = await getToken(messaging, {
+      vapidKey: process.env.REACT_APP_VAPID_KEY,
+    });
+
+    onMessage(messaging, (payload) => {
+      console.log("메시지가 도착했습니다.", payload);
+    });
+    return token;
+  }
+
+  const callApi = async (path: string) => {
+    const token = await requestPermission();
+  
+    if (!token) {
+      console.log('토큰이 유효하지 않습니다.');
+      return;
+    }
+
+    const requestOptions = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        /* SPM 사용자 계정 인증 필요 */
+        'Authorization' : `Bearer ${accessToken}`
+      },
+      body: JSON.stringify({ 'token': token })
+    };
+    fetch('https://pw6.gsti.co.kr/api/fcm/' + path, requestOptions)
+    //fetch('https://localhost:44358/api/fcm/' + path, requestOptions)
+      .then(async response => {
+        const isJson = response.headers.get('Content-type')?.includes('application/json');
+        if (isJson) {
+          const data = await response.json();
+          if (path == 'subscribe')
+            alert('정상적으로 등록되었습니다!')
+          else
+            alert('정상적으로 해제되었습니다!')
+        } else {
+          console.log('status:' + response.status)
+          alert('실패')
+        }
+      })
+  }
 
   const fetchLogout = async () => {
     let data: any;
@@ -308,8 +375,12 @@ const AppInner: React.FC = () => {
   const click = (title: string) => {
     if (title == "비밀번호 변경") {
       setChangePasswordWindowVisible(true);
-    } else {
+    } else if(title =="로그아웃"){
       logout();
+    } else if(title =="알림 구독"){
+      callApi('subscribe');
+    } else if(title =="알림 구독 해제"){
+      callApi('unsubscribe');
     }
   };
 
