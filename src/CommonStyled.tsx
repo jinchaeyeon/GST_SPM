@@ -971,7 +971,7 @@ export const StatusIcon = styled.span<TStatusIcon>`
   margin-right: 5px;
 `;
 
-export const QnaPwBox = styled.div`
+export const QnAPwBox = styled.div`
   height: 100%;
   display: flex;
   flex-direction: column;

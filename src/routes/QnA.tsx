@@ -32,13 +32,13 @@ import {
   GridContainerWrap,
   GridTitle,
   GridTitleContainer,
-  QnaPwBox,
+  QnAPwBox,
   Title,
   TitleContainer,
 } from "../CommonStyled";
 import CenterCell from "../components/Cells/CenterCell";
 import CheckCell from "../components/Cells/CheckCell";
-import QnaStateCell from "../components/Cells/QnaStateCell";
+import QnAStateCell from "../components/Cells/QnAStateCell";
 import {
   chkScrollHandler,
   convertDateToStr,
@@ -1095,7 +1095,7 @@ const App = () => {
               field="status"
               title="상태"
               width={80}
-              cell={QnaStateCell}
+              cell={QnAStateCell}
               footerCell={mainTotalFooterCell}
             />
             <GridColumn
@@ -1386,7 +1386,7 @@ const App = () => {
             </FormBoxWrap>
           </GridContainer>
           {!isAdmin && isDataLocked && (
-            <QnaPwBox onKeyPress={handleKeyPressSearchDetail}>
+            <QnAPwBox onKeyPress={handleKeyPressSearchDetail}>
               <div className="inner">
                 <Icon name="lock" themeColor="primary" size={"xlarge"} />
                 <p>비밀번호를 입력해주세요.</p>
@@ -1404,7 +1404,7 @@ const App = () => {
                   확인
                 </Button>
               </div>
-            </QnaPwBox>
+            </QnAPwBox>
           )}
         </GridContainerWrap>
       </GridContainerWrap>

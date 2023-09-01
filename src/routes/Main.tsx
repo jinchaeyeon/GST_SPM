@@ -40,7 +40,7 @@ import {
 } from "../CommonStyled";
 import CenterCell from "../components/Cells/CenterCell";
 import DateCell from "../components/Cells/DateCell";
-import QnaStateCell from "../components/Cells/QnaStateCell";
+import QnAStateCell from "../components/Cells/QnAStateCell";
 import { convertDateToStr } from "../components/CommonFunction";
 import { SELECTED_FIELD } from "../components/CommonString";
 import CurrentTime from "../components/CurrentTime";
@@ -551,7 +551,7 @@ const Main: React.FC = () => {
                   field="status"
                   title="상태"
                   width={80}
-                  cell={QnaStateCell}
+                  cell={QnAStateCell}
                 />
               </Grid>
             </GridContainer>

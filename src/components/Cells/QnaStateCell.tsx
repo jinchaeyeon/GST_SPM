@@ -1,7 +1,7 @@
 import { GridCellProps } from "@progress/kendo-react-grid";
 import { StatusIcon } from "../../CommonStyled";
 
-const QnaStateCell = (props: GridCellProps) => {
+const QnAStateCell = (props: GridCellProps) => {
   const { ariaColumnIndex, columnIndex, dataItem, field = "" } = props;
   return (
     <td
@@ -23,4 +23,4 @@ const QnaStateCell = (props: GridCellProps) => {
   );
 };
 
-export default QnaStateCell;
+export default QnAStateCell;

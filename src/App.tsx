@@ -523,7 +523,7 @@ const AppInner: React.FC = () => {
                     component={MeetingManagement}
                     exact
                   />
-                  <AuthRoute path="/Qna" component={QnA} exact />
+                  <AuthRoute path="/QnA" component={QnA} exact />
                   <AuthRoute path="/Notice" component={Notice} exact />
                   <AuthRoute
                     path="/ProjectSchedule"
