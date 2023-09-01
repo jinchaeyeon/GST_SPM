@@ -51103,6 +51103,25 @@ kendo-grid.k-grid .k-table-row.k-hover .k-grid-content-sticky.k-selected {
     border-width: 0;
     flex: 1 1 0%;
 }
+
+
+.wrapper {
+  color: #ffffff;
+  background-color: #eeeeee;
+}
+
+.inner-wrapper {
+  padding: 20px;
+  background-color: #fcfcfc;
+}
+
+.popup-content {
+  padding: 30px;
+  color: #787878;
+  background-color: #fcf7f8;
+  border: 1px solid rgba(0,0,0,.05);
+}
+
 .k-listview-item:hover{
     color: #7a76ce;
   }
