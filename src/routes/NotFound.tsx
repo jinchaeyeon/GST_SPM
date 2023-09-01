@@ -1,4 +1,12 @@
+import { useEffect } from "react";
+import { useRecoilState } from "recoil";
+import { titles } from "../store/atoms";
+
 const NotFound: React.FC = () => {
+  const [title, setTitle] = useRecoilState(titles);
+  useEffect(() => {
+    setTitle("");
+  },[])
   return (
     <>
       <div style={{display: "flex", height: "100%"}}>
@@ -18,9 +26,9 @@ const NotFound: React.FC = () => {
                 <span className="inner-detail">
                   We can not find the page you're looking for.
                 </span>
-                <a href="/Home" className="btn btn-info mtl">
+                <div onClick = {() => window.location.href = "/"}className="btn btn-info mtl">
                     <i className="fa fa-home"></i>&nbsp; Return home
-                </a>
+                </div>
               </div>
             </div>
           </div>

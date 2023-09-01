@@ -14,7 +14,7 @@ function AuthRoute({ component, ...rest }: RouteProps) {
       link == "Home" ||
       link == "MeetingView" ||
       link == "MeetingManagement" ||
-      link == "Qna" ||
+      link == "QnA" ||
       link == "Notice" ||
       link == "ProjectSchedule" ||
       link == "Reception_Answer" ||
