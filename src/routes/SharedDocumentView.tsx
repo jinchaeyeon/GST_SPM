@@ -484,7 +484,6 @@ const App = () => {
 
   return (
     <>
-      {" "}
       <TitleContainer>
         {!isMobile ? "" : <Title>공유문서 열람</Title>}
         <ButtonContainer>

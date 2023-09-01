@@ -503,7 +503,8 @@ const PanelBarNavContainer = (props: any) => {
     return <Loader />;
   }
 
-  const onClick = () => {
+  const onClick = (e: { stopPropagation: () => void; }) => {
+    e.stopPropagation(); // 이벤트 캡쳐링 방지
     setShow(!show);
   };
   const contracts = [
@@ -522,6 +523,7 @@ const PanelBarNavContainer = (props: any) => {
   ];
 
   const click = (title: string) => {
+    setShow(false);
     if (title == "비밀번호 변경") {
       setChangePasswordWindowVisible(true);
     } else if (title == "로그아웃") {
@@ -629,7 +631,7 @@ const PanelBarNavContainer = (props: any) => {
 
   return (
     <>
-      <Wrapper isMobileMenuOpend={isMobileMenuOpend} theme={currentTheme}>
+      <Wrapper onClick={() => setShow(false)} isMobileMenuOpend={isMobileMenuOpend} theme={currentTheme}>
         <Modal isMobileMenuOpend={isMobileMenuOpend} onClick={onMenuBtnClick} />
         {isMenuOpend ? (
           <Gnv isMobileMenuOpend={isMobileMenuOpend} theme={currentTheme}>
@@ -699,7 +701,7 @@ const PanelBarNavContainer = (props: any) => {
               onClick={onMenuBtnClick}
             />
             <AppName theme={currentTheme}>
-              <Logo size="20px" />
+              <Logo size="20px" onClick={() => (window.location.href = "/")} />
             </AppName>
             <button
               className={

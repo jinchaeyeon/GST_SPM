@@ -1,11 +1,15 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useState } from "react";
 import {
   Route,
   BrowserRouter as Router,
   Switch,
   useHistory,
 } from "react-router-dom";
-import { RecoilRoot, useRecoilState, useRecoilValue } from "recoil";
+import {
+  RecoilRoot,
+  useRecoilState,
+  useSetRecoilState
+} from "recoil";
 // import "./index.scss";
 
 import { createGlobalStyle } from "styled-components";
@@ -31,11 +35,11 @@ import {
   loadMessages,
 } from "@progress/kendo-react-intl";
 import {
+  isLoading,
   isMenuOpendState,
   isMobileMenuOpendState,
   loginResultState,
-  titles,
-  fcmTokenState
+  titles
 } from "./store/atoms";
 
 import currencyData from "cldr-core/supplemental/currencyData.json";
@@ -62,22 +66,27 @@ import dateFieldsZh from "cldr-dates-full/main/zh/dateFields.json";
 import timeZoneNamesZh from "cldr-dates-full/main/zh/timeZoneNames.json";
 import numbersZh from "cldr-numbers-full/main/zh/numbers.json";
 
+import { Button } from "@progress/kendo-react-buttons";
+import { ListView, ListViewItemProps } from "@progress/kendo-react-listview";
+import { Popup } from "@progress/kendo-react-popup";
+import { getAnalytics } from "firebase/analytics";
+import { initializeApp } from "firebase/app";
+import {
+  getMessaging,
+  getToken,
+  onMessage
+} from "firebase/messaging";
+import { useThemeSwitcher } from "react-css-theme-switcher";
+import { AppName, Header, Logo } from "./CommonStyled";
+import { resetLocalStorage } from "./components/CommonFunction";
+import ChangePasswordWindow from "./components/Windows/CommonWindows/ChangePasswordWindow";
+import { useApi } from "./hooks/api";
+import NotFound from "./routes/NotFound";
 import ProjectMaster from "./routes/ProjectMaster";
 import Reception_Answer from "./routes/Reception_Answer";
 import Record from "./routes/Record";
 import Task_Order from "./routes/Task_Order";
 import koMessages from "./store/cultures/ko.json";
-import { AppName, Header, Logo } from "./CommonStyled";
-import { useThemeSwitcher } from "react-css-theme-switcher";
-import { Popup } from "@progress/kendo-react-popup";
-import { ListView, ListViewItemProps } from "@progress/kendo-react-listview";
-import { resetLocalStorage } from "./components/CommonFunction";
-import { useApi } from "./hooks/api";
-import ChangePasswordWindow from "./components/Windows/CommonWindows/ChangePasswordWindow";
-import { Button } from "@progress/kendo-react-buttons";
-import { initializeApp } from "firebase/app";
-import { getMessaging, getToken, onMessage, isSupported } from "firebase/messaging";
-import { getAnalytics } from "firebase/analytics";
 load(
   likelySubtags,
   currencyData,
@@ -255,12 +264,12 @@ const AppInner: React.FC = () => {
   //개발 모드
   if (path.includes("localhost:3000/admin")) {
     isAdmin = true;
-  } else if(path.includes("spm-admin")){
+  } else if (path.includes("spm-admin")) {
     isAdmin = true;
   } else {
     isAdmin = false;
   }
-
+  const setLoading = useSetRecoilState(isLoading);
   const [isMenuOpend, setIsMenuOpend] = useRecoilState(isMenuOpendState);
   const [isMobileMenuOpend, setIsMobileMenuOpend] = useRecoilState(
     isMobileMenuOpendState
@@ -296,61 +305,64 @@ const AppInner: React.FC = () => {
     }
     const permission = await Notification.requestPermission();
     if (permission != "granted") {
-      alert(`알림 권한이 허용되지 않았습니다. (permission: ${permission})`)
+      alert(`알림 권한이 허용되지 않았습니다. (permission: ${permission})`);
       return;
     }
     console.log("알림 권한이 허용됨");
     console.log("Registering service worker...");
-    const register = await navigator.serviceWorker.register("firebase-messaging-sw.js", {
-      scope: "/"
-    });
+    const register = await navigator.serviceWorker.register(
+      "firebase-messaging-sw.js",
+      {
+        scope: "/",
+      }
+    );
     console.log("Service Worker Registered...");
- 
-    await navigator.serviceWorker.ready;  // <---------- WAIT
+
+    await navigator.serviceWorker.ready; // <---------- WAIT
     console.log("Registering Push...");
     const token = await getToken(messaging, {
       vapidKey: process.env.REACT_APP_VAPID_KEY,
     });
 
-    onMessage(messaging, (payload) => {
-    });
+    onMessage(messaging, (payload) => {});
     return token;
   }
 
   const callApi = async (path: string) => {
     const token = await requestPermission();
-
-    console.log('>> ', JSON.stringify({ 'token': token }))
+    setLoading(true);
+    console.log(">> ", JSON.stringify({ token: token }));
     if (!token) {
-      console.log('토큰이 유효하지 않습니다.');
+      console.log("토큰이 유효하지 않습니다.");
       return;
     }
 
     const requestOptions = {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         /* SPM 사용자 계정 인증 필요 */
-        'Authorization' : `Bearer ${accessToken}`
+        Authorization: `Bearer ${accessToken}`,
       },
-      body: JSON.stringify({ 'token': token })
+      body: JSON.stringify({ token: token }),
     };
-    fetch('https://pw6.gsti.co.kr/api/fcm/' + path, requestOptions)
-    //fetch('https://localhost:44358/api/fcm/' + path, requestOptions)
-      .then(async response => {
-        const isJson = response.headers.get('Content-type')?.includes('application/json');
+    fetch("https://pw6.gsti.co.kr/api/fcm/" + path, requestOptions)
+      //fetch('https://localhost:44358/api/fcm/' + path, requestOptions)
+      .then(async (response) => {
+        const isJson = response.headers
+          .get("Content-type")
+          ?.includes("application/json");
         if (isJson) {
           const data = await response.json();
-          if (path == 'subscribe')
-            alert('정상적으로 등록되었습니다!')
-          else
-            alert('정상적으로 해제되었습니다!')
+          if (path == "subscribe") alert("정상적으로 등록되었습니다!");
+          else alert("정상적으로 해제되었습니다!");
         } else {
-          console.log('status:' + response.status)
-          alert('실패')
+          console.log("status:" + response.status);
+          alert("실패");
         }
-      })
-  }
+      });
+    setLoading(false);
+  };
 
   const fetchLogout = async () => {
     let data: any;
@@ -386,14 +398,15 @@ const AppInner: React.FC = () => {
   ];
 
   const click = (title: string) => {
+    setShow(false);
     if (title == "비밀번호 변경") {
       setChangePasswordWindowVisible(true);
-    } else if(title =="로그아웃"){
+    } else if (title == "로그아웃") {
       logout();
-    } else if(title =="알림 구독"){
-      callApi('subscribe');
-    } else if(title =="알림 구독 해제"){
-      callApi('unsubscribe');
+    } else if (title == "알림 구독") {
+      callApi("subscribe");
+    } else if (title == "알림 구독 해제") {
+      callApi("unsubscribe");
     }
   };
 
@@ -415,10 +428,6 @@ const AppInner: React.FC = () => {
     );
   };
 
-  const onClick = () => {
-    setShow(!show);
-  };
-
   return (
     <>
       <GlobalStyle isMobileMenuOpend={isMobileMenuOpend} />
@@ -431,7 +440,7 @@ const AppInner: React.FC = () => {
               ) : (
                 <Route path="/" component={Login} exact />
               )}
-              <div>
+              <div style={{backgroundColor: "white"}} onClick={() => setShow(false)}>
                 <Header>
                   <AppName theme={currentTheme}>
                     <Button
@@ -448,7 +457,13 @@ const AppInner: React.FC = () => {
                   {isMobile ? (
                     ""
                   ) : (
-                    <div style={{ fontSize: "28px", fontWeight: 600, color:  "7A76CE"}}>
+                    <div
+                      style={{
+                        fontSize: "28px",
+                        fontWeight: 600,
+                        color: "7A76CE",
+                      }}
+                    >
                       {title}
                     </div>
                   )}
@@ -456,7 +471,6 @@ const AppInner: React.FC = () => {
                     className={
                       "k-button k-button-md k-rounded-md k-button-solid k-button-solid-base"
                     }
-                    onClick={onClick}
                     ref={anchor}
                     style={{
                       minWidth: "100px",
@@ -464,6 +478,11 @@ const AppInner: React.FC = () => {
                       display: "inline-block",
                       border: "1px solid #7a76ce",
                       color: "#7a76ce",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (show != true) {
+                        setShow(true);
+                      }
                     }}
                   >
                     <span
@@ -534,6 +553,7 @@ const AppInner: React.FC = () => {
                     component={SharedDocumentView}
                     exact
                   />
+                  <AuthRoute path="/Error" component={NotFound} exact/>
                 </PanelBarNavContainer>
               </div>
             </Switch>
