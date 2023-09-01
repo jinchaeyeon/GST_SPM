@@ -39,14 +39,6 @@ const firebaseConfig = {
     measurementId: "G-0LBX8JS8D0",
   };
 firebase.initializeApp(firebaseConfig);
-const messaging = firebase.messaging();
-messaging.setBackgroundMessageHandler(function(payload) {
-	const title  =  payload.notification.title;
-	const options  = {
-		body: payload.notification.body,
-	};
-	return self.registration.showNotification(title, options);
-})
 
 self.addEventListener("notificationclick", function (event) {
     let url = "/";
