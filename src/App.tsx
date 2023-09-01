@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Route,
   BrowserRouter as Router,
@@ -290,25 +290,37 @@ const AppInner: React.FC = () => {
     // window.location.href = "/";
   };
   async function requestPermission() {
+    console.log("권한 요청 중...");
+    if (!Notification) {
+      return;
+    }
     const permission = await Notification.requestPermission();
     if (permission != "granted") {
       alert(`알림 권한이 허용되지 않았습니다. (permission: ${permission})`)
       return;
     }
-    
+    console.log("알림 권한이 허용됨");
+    console.log("Registering service worker...");
+    const register = await navigator.serviceWorker.register("firebase-messaging-sw.js", {
+      scope: "/"
+    });
+    console.log("Service Worker Registered...");
+ 
+    await navigator.serviceWorker.ready;  // <---------- WAIT
+    console.log("Registering Push...");
     const token = await getToken(messaging, {
       vapidKey: process.env.REACT_APP_VAPID_KEY,
     });
 
     onMessage(messaging, (payload) => {
-      console.log("메시지가 도착했습니다.", payload);
     });
     return token;
   }
 
   const callApi = async (path: string) => {
     const token = await requestPermission();
-  
+
+    console.log('>> ', JSON.stringify({ 'token': token }))
     if (!token) {
       console.log('토큰이 유효하지 않습니다.');
       return;
@@ -436,7 +448,7 @@ const AppInner: React.FC = () => {
                   {isMobile ? (
                     ""
                   ) : (
-                    <div style={{ fontSize: "28px", fontWeight: 600, color: "#7A76CE" }}>
+                    <div style={{ fontSize: "28px", fontWeight: 600, color:  "7A76CE"}}>
                       {title}
                     </div>
                   )}
