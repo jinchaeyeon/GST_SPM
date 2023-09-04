@@ -1540,6 +1540,30 @@ const App = () => {
       setLoading(false);
     }
   };
+
+  const onAlertClick = async () => {
+    if(mainDataResult.data.length > 0) {
+      const datas = mainDataResult.data.filter((item) => item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0])[0];
+      if(datas.answer_document_id == "" || datas.answer_document_id == null || datas.answer_document_id == undefined){
+        alert("답변이 존재하지 않습니다.");
+      } else {
+        if (!window.confirm("알림을 전송하시겠습니까?")) {
+          return false;
+        }
+        let alerts: any;
+        const alertPara = {
+          para: `fcm-send?type=Answer&id=${datas.answer_document_id}`,
+        };
+        try {
+          alerts = await processApi<any>("alert", alertPara);
+        } catch (error) {
+          alerts = null;
+        }
+      }
+    } else {
+      alert("선택된 행이 없습니다.")
+    }
+  }
   return (
     <>
       <TitleContainer>
@@ -2034,6 +2058,14 @@ const App = () => {
                     fillMode={"outline"}
                   >
                     수정
+                  </Button>
+                  <Button
+                    icon={"notification"}
+                    onClick={onAlertClick}
+                    themeColor={"primary"}
+                    fillMode={"outline"}
+                  >
+                    답변 알림 전송
                   </Button>
                 </ButtonContainer>
               </GridTitleContainer>

@@ -848,6 +848,29 @@ const App = () => {
       total: [...prev.data, ...[{ ...dataItem, work_type: "N" }]].length,
     }));
   };
+
+  const onAlertClick = async () => {
+    if(mainDataResult.data.length > 0) {
+      if(detailData.work_type == "N"){
+        alert("신규 데이터는 공지 알림 전송이 불가능합니다.");
+      } else {
+        if (!window.confirm("알림을 전송하시겠습니까?")) {
+          return false;
+        }
+        let alerts: any;
+        const alertPara = {
+          para: `fcm-send?type=Notice&id=${detailData.document_id}`,
+        };
+        try {
+          alerts = await processApi<any>("alert", alertPara);
+        } catch (error) {
+          alerts = null;
+        }
+      }
+    } else {
+      alert("선택된 행이 없습니다.")
+    }
+  }
   return (
     <>
       <TitleContainer>
@@ -1025,6 +1048,18 @@ const App = () => {
                       readOnly={!isAdmin}
                     />
                   </td>
+                  {isAdmin && (
+              <td>
+                              <Button
+                    icon={"notification"}
+                    onClick={onAlertClick}
+                    themeColor={"primary"}
+                    fillMode={"outline"}
+                  >
+                    공지 알림 전송
+                  </Button>
+              </td>
+            )}
                 </tr>
               </tbody>
             </FormBox>

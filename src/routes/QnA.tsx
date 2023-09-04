@@ -605,6 +605,18 @@ const App = () => {
     }
 
     if (data && data.isSuccess === true) {
+      if(detailData.work_type == "N") {
+        let alerts: any;
+        const alertPara = {
+          para: `fcm-send?type=Question&id=${data.returnString}`,
+        };
+        try {
+          alerts = await processApi<any>("alert", alertPara);
+        } catch (error) {
+          alerts = null;
+        }
+      }
+      
       setFileList([]);
       setSavenmList([]);
       // 조회
@@ -771,7 +783,7 @@ const App = () => {
         findRowValue: queryParams.get("go") as string,
       }));
     }
-    setTitle("회의록 열람");
+    setTitle("QnA");
   }, []);
 
   const addData = () => {
