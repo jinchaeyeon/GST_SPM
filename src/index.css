@@ -54,6 +54,7 @@ body {
     border-radius: 50%;
     background-color: #ffffff;
 }
+.pane-content { padding: 0 10px; height: 100%; }
 .page-404 .outer .middle .inner .inner-circle i {
     font-size: 5em;
     line-height: 1em;
