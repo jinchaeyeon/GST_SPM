@@ -779,6 +779,12 @@ const App = () => {
       history.replace({}, "");
       setFilters((prev) => ({
         ...prev,
+        status: [
+          { sub_code: "1", code_name: "대기" },
+          { sub_code: "2", code_name: "진행중" },
+          { sub_code: "4", code_name: "보류" },
+          { sub_code: "8", code_name: "완료" },
+        ],
         isFetch: true,
         findRowValue: queryParams.get("go") as string,
       }));
