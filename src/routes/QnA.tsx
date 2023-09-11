@@ -14,6 +14,7 @@ import {
   GridDataStateChangeEvent,
   GridEvent,
   GridFooterCellProps,
+  GridPageChangeEvent,
   GridSelectionChangeEvent,
 } from "@progress/kendo-react-grid";
 import { Input, RadioGroup } from "@progress/kendo-react-inputs";
@@ -132,7 +133,7 @@ const defaultDetailData = {
   answer_document_id: "",
   answer_files: "",
 };
-
+let targetRowIndex: null | number = null;
 const App = () => {
   const [loginResult] = useRecoilState(loginResultState);
   const accessToken = localStorage.getItem("accessToken");
@@ -155,7 +156,22 @@ const App = () => {
   const location = useLocation();
   const pathname = location.pathname.replace("/", "");
   const pwInputRef: any = useRef(null);
+  const initialPageState = { skip: 0, take: PAGE_SIZE };
+  const [page, setPage] = useState(initialPageState);
+  const pageChange = (event: GridPageChangeEvent) => {
+    const { page } = event;
 
+    setFilters((prev) => ({
+      ...prev,
+      pgNum: Math.floor(page.skip / initialPageState.take) + 1,
+      isFetch: true,
+    }));
+
+    setPage({
+      skip: page.skip,
+      take: initialPageState.take,
+    });
+  };
   const isAdmin = loginResult && loginResult.role === "ADMIN";
 
   //조회조건 Input Change 함수 => 사용자가 Input에 입력한 값을 조회 파라미터로 세팅
@@ -211,6 +227,7 @@ const App = () => {
   const search = () => {
     setFileList([]);
     setSavenmList([]);
+    setPage(initialPageState); // 페이지 초기화
     // 그리드 재조회
     setFilters((prev) => ({
       ...prev,
@@ -255,14 +272,6 @@ const App = () => {
     setSavenmList([]);
   };
 
-  const onMainScrollHandler = (event: GridEvent) => {
-    if (!filters.isFetch && chkScrollHandler(event, filters.pgNum, PAGE_SIZE))
-      setFilters((prev) => ({
-        ...prev,
-        isFetch: true,
-        pgNum: prev.pgNum + 1,
-      }));
-  };
   const onMainSortChange = (e: any) => {
     setMainDataState((prev) => ({ ...prev, sort: e.sort }));
   };
@@ -303,7 +312,26 @@ const App = () => {
     if (data.isSuccess === true) {
       const totalRowCnt = data.tables[0].TotalRowCount;
       const rows = data.tables[0].Rows;
+      if (filters.findRowValue !== "") {
+        // find_row_value 행으로 스크롤 이동
+        if (gridRef.current) {
+          const findRowIndex = rows.findIndex(
+            (row: any) => row[DATA_ITEM_KEY] == filters.findRowValue
+          );
+          targetRowIndex = findRowIndex;
+        }
 
+        // find_row_value 데이터가 존재하는 페이지로 설정
+        setPage({
+          skip: PAGE_SIZE * (data.pageNumber - 1),
+          take: PAGE_SIZE,
+        });
+      } else {
+        // 첫번째 행으로 스크롤 이동
+        if (gridRef.current) {
+          targetRowIndex = 0;
+        }
+      }
       if (totalRowCnt > 0) {
         if (filters.isReset) {
           // 일반 데이터 조회
@@ -433,6 +461,14 @@ const App = () => {
       aEditorRef.current.updateEditable(false);
     }
   };
+  let gridRef: any = useRef(null);
+  //메인 그리드 데이터 변경 되었을 때
+  useEffect(() => {
+    if (targetRowIndex !== null && gridRef.current) {
+      gridRef.current.scrollIntoView({ rowIndex: targetRowIndex });
+      targetRowIndex = null;
+    }
+  }, [mainDataResult]);
 
   const uploadFile = async (
     files: File,
@@ -1097,10 +1133,15 @@ const App = () => {
               mode: "single",
             }}
             onSelectionChange={onSelectionChange}
-            //스크롤 조회 기능
             fixedScroll={true}
             total={mainDataResult.total}
-            onScroll={onMainScrollHandler}
+            skip={page.skip}
+            take={page.take}
+            pageable={true}
+            onPageChange={pageChange}
+            //원하는 행 위치로 스크롤 기능
+            ref={gridRef}
+            rowHeight={30}
             //정렬기능
             sortable={true}
             onSortChange={onMainSortChange}

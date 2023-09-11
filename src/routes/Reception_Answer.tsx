@@ -547,30 +547,6 @@ const App = () => {
     }
   };
 
-  useEffect(() => {
-    // ComboBox에 사용할 코드 리스트 조회
-    fetchValueCode();
-    fetchUsers();
-    fetchReceptionType();
-    const queryParams = new URLSearchParams(location.search);
-    if (queryParams.has("go")) {
-      history.replace({}, "");
-      setFilters((prev) => ({
-        ...prev,
-        status: [
-          { sub_code: "Wait", code_name: "대기", code: "N" },
-          { sub_code: "Progress", code_name: "진행중", code: "R" },
-          { sub_code: "Hold", code_name: "보류", code: "H" },
-          { sub_code: "Finish", code_name: "완료", code: "Y"}
-        ],
-        receptionist: { user_id: "", user_name: "" },
-        findRowValue: queryParams.get("go") as string,
-        isSearch: true,
-      }));
-    }
-    setTitle("접수 및 답변");
-  }, []);
-
   const currentDate = new Date();
   const fromDate = new Date(
     currentDate.getFullYear(),
@@ -768,6 +744,30 @@ const App = () => {
       fetchMainGrid(deepCopiedFilters);
     }
   }, [filters]);
+
+  useEffect(() => {
+    // ComboBox에 사용할 코드 리스트 조회
+    fetchValueCode();
+    fetchUsers();
+    fetchReceptionType();
+    const queryParams = new URLSearchParams(location.search);
+    if (queryParams.has("go")) {
+      history.replace({}, "");
+      setFilters((prev) => ({
+        ...prev,
+        isSearch: true,
+        status: [
+          { sub_code: "Wait", code_name: "대기", code: "N" },
+          { sub_code: "Progress", code_name: "진행중", code: "R" },
+          { sub_code: "Hold", code_name: "보류", code: "H" },
+          { sub_code: "Finish", code_name: "완료", code: "Y"}
+        ],
+        receptionist: { user_id: "", user_name: "" },
+        findRowValue: queryParams.get("go") as string,
+      }));
+    }
+    setTitle("접수 및 답변");
+  }, []);
 
   //그리드 푸터
   const mainTotalFooterCell = (props: GridFooterCellProps) => {
