@@ -71,6 +71,7 @@ import DateCell from "../components/Cells/DateCell";
 import NameCell from "../components/Cells/NameCell";
 import {
   UseParaPc,
+  convertDateToStr,
   convertDateToStrWithTime2,
   dateformat2,
   getCodeFromValue,
@@ -606,8 +607,8 @@ const App = () => {
       gridDataArr.guid.push(guid);
       gridDataArr.project_itemcd.push(project_itemcd);
       gridDataArr.title.push(title);
-      gridDataArr.strtime.push(convertDateToStrWithTime2(start));
-      gridDataArr.endtime.push(convertDateToStrWithTime2(end));
+      gridDataArr.strtime.push(convertDateToStr(start)); // convertDateToStrWithTime2(start)
+      gridDataArr.endtime.push(convertDateToStr(end)); // convertDateToStrWithTime2(end)
       gridDataArr.rate.push(progress);
       gridDataArr.person.push(person);
       gridDataArr.remark.push(remark);
