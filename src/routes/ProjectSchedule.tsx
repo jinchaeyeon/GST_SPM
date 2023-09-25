@@ -78,6 +78,7 @@ import {
   getGridItemChangedData,
   handleKeyPressSearch,
   projectItemQueryStr,
+  toDate,
 } from "../components/CommonFunction";
 import { EDIT_FIELD, SELECTED_FIELD } from "../components/CommonString";
 import { CellRender, RowRender } from "../components/Renderers/Renderers";
@@ -208,9 +209,7 @@ const App = () => {
   const [gridData, setGridData] = useState<DataResult>(
     process([], gridDataState)
   );
-  const [tempResult, setTempResult] = useState<DataResult>(
-    process([], tempState)
-  );
+  const [tempValue, setTempValue] = useState<any>();
   const [gridSelectedState, setGridSelectedState] = useState<{
     [id: string]: boolean | number[];
   }>({});
@@ -710,38 +709,42 @@ const App = () => {
   };
 
   const enterEdit = (dataItem: any, field: string) => {
-    const newData = gridData.data.map((item) =>
-      item[DATA_ITEM_KEY] === dataItem[DATA_ITEM_KEY]
-        ? {
-            ...item,
-            [EDIT_FIELD]: field,
-          }
-        : {
-            ...item,
-            [EDIT_FIELD]: undefined,
-          }
-    );
-    setTempResult((prev) => {
-      return {
-        data: newData,
-        total: prev.total,
-      };
-    });
-    setGridData((prev) => {
-      return {
-        data: newData,
-        total: prev.total,
-      };
-    });
+    if (!dataItem[EDIT_FIELD]) { // 수정중이 아닐때만
+      const newData = gridData.data.map((item) =>
+        item[DATA_ITEM_KEY] === dataItem[DATA_ITEM_KEY]
+          ? {
+              ...item,
+              [EDIT_FIELD]: field,
+            }
+          : {
+              ...item,
+              [EDIT_FIELD]: undefined,
+            }
+      );
+
+      setTempValue(dataItem[field]);
+
+      setGridData((prev) => {
+        return {
+          data: newData,
+          total: prev.total,
+        };
+      });
+    }
   };
 
   const exitEdit = () => {
-    if (tempResult.data != gridData.data) {
+    const changedRow = gridData.data.find((item) => !!item[EDIT_FIELD]);
+
+    const field = changedRow[EDIT_FIELD];
+    const newValue = changedRow[field];
+
+    if (tempValue != newValue) {
       const newData = gridData.data.map((item) =>
         item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(gridSelectedState)[0]
           ? {
               ...item,
-              rowstatus: item.rowstatus === "N" ? "N" : "U",
+              rowstatus: (item.rowstatus && item.rowstatus === "N") ? "N" : "U",
               [EDIT_FIELD]: undefined,
             }
           : {
@@ -749,29 +752,21 @@ const App = () => {
               [EDIT_FIELD]: undefined,
             }
       );
-      setTempResult((prev) => {
-        return {
-          data: newData,
-          total: prev.total,
-        };
-      });
+      setTempValue(undefined);
+
       setGridData((prev) => {
         return {
           data: newData,
           total: prev.total,
         };
       });
-    } else {
+    } 
+    else {
       const newData = gridData.data.map((item) => ({
         ...item,
         [EDIT_FIELD]: undefined,
       }));
-      setTempResult((prev) => {
-        return {
-          data: newData,
-          total: prev.total,
-        };
-      });
+      setTempValue(undefined);
       setGridData((prev) => {
         return {
           data: newData,
@@ -1308,6 +1303,8 @@ const App = () => {
               data={process(
                 gridData.data.map((row) => ({
                   ...row,
+                  start: (typeof row.start === "string") ? toDate(row.start) : row.start,
+                  end: (typeof row.end === "string") ? toDate(row.end) : row.end,
                   [SELECTED_FIELD]: gridSelectedState[gridIdGetter(row)],
                 })),
                 gridDataState
