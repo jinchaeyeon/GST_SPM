@@ -70,6 +70,7 @@ type TFilters = {
   toDate: Date;
   contents: string;
   type: { sub_code: string; code_name: string };
+  customer_name: string;
   findRowValue: string;
   pgNum: number;
   pgSize: number;
@@ -153,6 +154,7 @@ const App = () => {
     toDate: new Date(),
     contents: "",
     type: { sub_code: "", code_name: "" },
+    customer_name: "",
     findRowValue: "",
     pgNum: 1,
     pgSize: PAGE_SIZE,
@@ -211,9 +213,12 @@ const App = () => {
   };
 
   const [typeFilterTop, setTypeFilterTop] = useState<FilterDescriptor>();
+  const [custFilterTop, setCustFilterTop] = useState<FilterDescriptor>();
   const handleFilterChangeTop = (event: ComboBoxFilterChangeEvent) => {
     if (event) {
-      if (event.target.name == "type") {
+      if (event.target.name == "customer") {
+        setCustFilterTop(event.filter);
+      } else if (event.target.name == "type") {
         setTypeFilterTop(event.filter);
       }
     }
@@ -356,13 +361,23 @@ const App = () => {
     setLoading(true);
 
     const para = {
-      para: `list?fromDate=${convertDateToStr(
-        filters.fromDate
-      )}&toDate=${convertDateToStr(filters.toDate)}&contents=${
+      para: `list?fromDate=${
+        convertDateToStr(filters.fromDate)
+      }&toDate=${
+        convertDateToStr(filters.toDate)
+      }&contents=${
         filters.contents
-      }&type=${filters.type.sub_code}&find_row_value=${
+      }&type=${
+        filters.type?.sub_code ?? ""
+      }&customerName=${
+        filters.customer_name
+      }&find_row_value=${
         filters.findRowValue
-      }&page=${filters.pgNum}&pageSize=${filters.pgSize}`,
+      }&page=${
+        filters.pgNum
+      }&pageSize=${
+        filters.pgSize
+      }`,
     };
 
     try {
@@ -588,6 +603,7 @@ const App = () => {
     if (editorRef.current) {
       editorContent = editorRef.current.getContent();
     }
+
     let newAttachmentNumber = "";
     const promises = [];
 
@@ -650,7 +666,7 @@ const App = () => {
         "@p_document_id": detailData.document_id,
         "@p_write_date": convertDateToStr(detailData.write_date),
         "@p_title": detailData.title,
-        "@p_contents": detailData.contents,
+        "@p_contents": extractTextFromHtmlContent(editorContent),//detailData.contents,
         "@p_attdatnum":
           results[0] == undefined ? detailData.attdatnum : results[0],
         "@p_customer_code": detailData.customer.custcd,
@@ -770,6 +786,22 @@ const App = () => {
     }
   };
 
+  const extractTextFromHtmlContent = (htmlString: string) => {
+    let extractString:string = "";
+
+    const regex = /<body[^>]*>([\s\S]*?)<\/body>/i;
+    const match = htmlString.match(regex);
+
+    if (match && match[1]) {
+      extractString = match[1]; // body 태그 안의 내용만 처리
+    }
+
+    extractString = extractString.replace(/(<([^>]+)>)/gi, ""); // 태그 제거
+    extractString = extractString.replace(/\s\s+/g, ' '); // 연달아 있는 줄바꿈, 공백, 탭을 공백 1개로 줄임
+    
+    return extractString;
+  }
+
   return (
     <>
       {" "}
@@ -858,11 +890,39 @@ const App = () => {
                   onChange={FilterComboBoxChange}
                   filterable={true}
                   onFilterChange={handleFilterChangeTop}
-                  clearButton={false}
+                  clearButton={true}
                 />
               </td>
+              <th>업체명</th>
+              <td >
+                <Input
+                  name="customer_name"
+                  type="text"
+                  value={filters.customer_name}
+                  onChange={filterInputChange}
+                />
+              </td>
+              {/* <td>
+                {customersData && (
+                  <MultiColumnComboBox
+                    name="customer"
+                    data={
+                      custFilterTop
+                        ? filterBy(customersData, custFilterTop)
+                        : customersData
+                    }
+                    value={filters.customer}
+                    columns={custTypeColumns}
+                    textField={"custnm"}
+                    onChange={FilterComboBoxChange}
+                    filterable={true}
+                    onFilterChange={handleFilterChangeTop}
+                    clearButton={true}
+                  />
+                )}
+              </td> */}
               <th>제목 및 내용</th>
-              <td colSpan={2}>
+              <td >
                 <Input
                   name="contents"
                   type="text"
@@ -923,6 +983,12 @@ const App = () => {
               title="구분"
               width={100}
               cell={CenterCell}
+            />
+            <GridColumn
+              field="customer_name"
+              title="업체명"
+              width={120}
+              //cell={CenterCell}
             />
             <GridColumn field="title" title="제목" />
           </Grid>

@@ -301,13 +301,23 @@ const App = () => {
     setLoading(true);
 
     const para = {
-      para: `list?fromDate=${convertDateToStr(
-        filters.fromDate
-      )}&toDate=${convertDateToStr(filters.toDate)}&contents=${
+      para: `list?fromDate=${
+        convertDateToStr(filters.fromDate)
+      }&toDate=${
+        convertDateToStr(filters.toDate)
+      }&contents=${
         filters.contents
-      }&type=${filters.type.sub_code}&find_row_value=${
+      }&type=${
+        filters.type?.sub_code ?? ""
+      }&customerName=${
+        ""
+      }&find_row_value=${
         filters.findRowValue
-      }&page=${filters.pgNum}&pageSize=${filters.pgSize}`,
+      }&page=${
+        filters.pgNum
+      }&pageSize=${
+        filters.pgSize
+      }`,
     };
 
     try {
