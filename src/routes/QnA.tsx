@@ -618,7 +618,7 @@ const App = () => {
         "@p_document_id": detailData.document_id,
         "@p_password": "",
         "@p_salt": "",
-        "@p_customer_code": customercode,
+        "@p_customer_code": customercode == "" ? loginResult.userId : customercode,
         "@p_user_id": loginResult.userId,
         "@p_user_name": detailData.user_name,
         "@p_user_tel": detailData.user_tel,

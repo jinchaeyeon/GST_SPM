@@ -13,17 +13,20 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
     monospace;
 }
+
 .clearfix:before,
 .clearfix:after {
-    display: table;
+  display: table;
 
-    content: ' ';
+  content: ' ';
 }
+
 .clearfix:after {
-    clear: both;
+  clear: both;
 }
+
 body {
-    background: #f0f0f0 !important;
+  background: #f0f0f0 !important;
 }
 
 .page-404 {
@@ -32,85 +35,97 @@ body {
   display: flex;
   align-content: center;
 }
+
 .page-404 .outer {
-    left: 0;
-    display: table;
+  left: 0;
+  display: table;
 
-    width: 100%;
+  width: 100%;
 }
+
 .page-404 .outer .middle {
-    display: table-cell;
+  display: table-cell;
 
-    vertical-align: middle;
+  vertical-align: middle;
 }
+
 .page-404 .outer .middle .inner {
-    width: 350px;
-    margin-right: auto;
-    margin-left: auto;
+  width: 350px;
+  margin-right: auto;
+  margin-left: auto;
 }
+
 .page-404 .outer .middle .inner .inner-circle {
-    height: 300px;
+  height: 300px;
 
-    border-radius: 50%;
-    background-color: #ffffff;
+  border-radius: 50%;
+  background-color: #ffffff;
 }
-.pane-content { padding: 0 10px; height: 100%; }
+
+.pane-content {
+  padding: 0 10px;
+  height: 100%;
+}
+
 .page-404 .outer .middle .inner .inner-circle i {
-    font-size: 5em;
-    line-height: 1em;
+  font-size: 5em;
+  line-height: 1em;
 
-    float: right;
+  float: right;
 
-    width: 1.6em;
-    height: 1.6em;
-    margin-top: -.7em;
-    margin-right: -.5em;
-    padding: 20px;
+  width: 1.6em;
+  height: 1.6em;
+  margin-top: -.7em;
+  margin-right: -.5em;
+  padding: 20px;
 
-    -webkit-transition: all .4s;
-            transition: all .4s;
-    text-align: center;
+  -webkit-transition: all .4s;
+  transition: all .4s;
+  text-align: center;
 
-    color: #f5f5f5!important;
-    border-radius: 50%;
-    background-color: #7A76CE;
-    box-shadow: 0 0 0 15px #f0f0f0;
+  color: #f5f5f5 !important;
+  border-radius: 50%;
+  background-color: #7A76CE;
+  box-shadow: 0 0 0 15px #f0f0f0;
 }
+
 .page-404 .outer .middle .inner .inner-circle span {
-    font-size: 11em;
-    font-weight: 700;
-    line-height: 1.2em;
+  font-size: 11em;
+  font-weight: 700;
+  line-height: 1.2em;
 
-    display: block;
+  display: block;
 
-    -webkit-transition: all .4s;
-            transition: all .4s;
-    text-align: center;
+  -webkit-transition: all .4s;
+  transition: all .4s;
+  text-align: center;
 
-    color: #e0e0e0;
+  color: #e0e0e0;
 }
+
 .page-404 .outer .middle .inner .inner-status {
-    font-size: 20px;
+  font-size: 20px;
 
-    display: block;
+  display: block;
 
-    margin-top: 20px;
-    margin-bottom: 5px;
+  margin-top: 20px;
+  margin-bottom: 5px;
 
-    text-align: center;
+  text-align: center;
 
-    color: #7A76CE;
+  color: #7A76CE;
 }
+
 .page-404 .outer .middle .inner .inner-detail {
-    line-height: 1.4em;
+  line-height: 1.4em;
 
-    display: block;
+  display: block;
 
-    margin-bottom: 30px;
+  margin-bottom: 30px;
 
-    text-align: center;
+  text-align: center;
 
-    color: #999999;
+  color: #999999;
 }
 
 .page-404 .outer .middle .inner .btn {
@@ -121,14 +136,35 @@ body {
   margin-bottom: 10px;
 
   text-align: center;
-  
+
   font-size: 28px;
-  
+
   color: #7A76CE;
 
   border: 2px solid #7A76CE;
 
   border-radius: 10px;
+}
+
+.wrapper {
+  color: #ffffff !important;
+  background-color: #eeeeee !important;
+}
+
+.inner-wrapper {
+  padding: 20px !important;
+  background-color: #fcfcfc !important;
+}
+
+.popup-content {
+  padding: 30px !important;
+  color: #787878 !important;
+  background-color: #fcf7f8 !important;
+  border: 1px solid rgba(0, 0, 0, .05) !important;
+}
+
+.k-listview-item:hover {
+  color: #7a76ce !important;
 }
 
 .k-grid-md .k-grouping-header {
@@ -174,12 +210,13 @@ div.k-animation-container {
   padding: 30px;
   color: #787878;
   background-color: #fcf7f8;
-  border: 1px solid rgba(0,0,0,.05);
+  border: 1px solid rgba(0, 0, 0, .05);
 }
 
-.k-listview-item:hover{
+.k-listview-item:hover {
   color: #7a76ce;
 }
+
 /* 주석 해제 시 그리드 페이저의 우측 info 보임 */
 @media screen and (min-width: 600px) {
   .k-pager-md .k-pager-info {
