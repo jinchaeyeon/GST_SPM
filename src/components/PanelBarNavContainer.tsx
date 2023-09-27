@@ -683,6 +683,10 @@ const PanelBarNavContainer = (props: any) => {
                 <PanelBarItem title={"QnA"} route="/QnA" />
                 <PanelBarItem title={"회의록 열람"} route="/MeetingView" />
                 <PanelBarItem
+                  title={"공유문서 열람"}
+                  route="/SharedDocumentView"
+                />
+                <PanelBarItem
                   title={"프로젝트 일정계획"}
                   route="/ProjectSchedule"
                 />
