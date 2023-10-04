@@ -1,14 +1,13 @@
-import React, { useEffect, useState } from "react";
 import {
   Editor,
-  EditorChangeEvent,
   EditorMountEvent,
   EditorTools,
   EditorUtils,
-  ProseMirror,
+  ProseMirror
 } from "@progress/kendo-react-editor";
-import { InsertImage } from "../components/UploadImgFunction/insertImageTool";
+import React, { useEffect } from "react";
 import { insertImagePlugin } from "../components/UploadImgFunction/insertImagePlugin";
+import { InsertImage } from "../components/UploadImgFunction/insertImageTool";
 import { insertImageFiles } from "../components/UploadImgFunction/utils";
 import { TInsertImageFiles } from "../store/types";
 
@@ -54,7 +53,7 @@ type TRichEditor = {
   id: string;
   hideTools?: boolean;
   className?: string;
-  change?(v: number) : void;
+  change?(v: number): void;
 };
 
 const noticeStyle = `body {
@@ -64,7 +63,7 @@ const noticeStyle = `body {
 const { EditorState, EditorView, Plugin, PluginKey } = ProseMirror;
 
 const RichEditor = React.forwardRef(
-  ({ id, hideTools, className = "", change}: TRichEditor, ref) => {
+  ({ id, hideTools, className = "", change }: TRichEditor, ref) => {
     const editor = React.createRef<Editor>();
 
     // let styles: null | string = null;
@@ -92,7 +91,7 @@ const RichEditor = React.forwardRef(
         {
           ...event.viewProps,
           state: EditorState.create({ doc: state.doc, plugins }),
-        },
+        }
       );
     };
 
@@ -131,7 +130,7 @@ const RichEditor = React.forwardRef(
           if (view) {
             let html = EditorUtils.getHtml(view.state);
             html = addClassToColorStyledElementsInHtmlString(
-              EditorUtils.getHtml(view.state),
+              EditorUtils.getHtml(view.state)
             );
 
             if (className.includes("notice-editor")) {
@@ -148,17 +147,26 @@ const RichEditor = React.forwardRef(
     // 받아온 HTML 문자열에서 style태그 안의 내용을 반환
     const extractStyleTagContents = (htmlString: string): string | null => {
       const styleTagRegex = /<style[^>]*>([\s\S]*?)<\/style>/i;
-      const match = htmlString.match(styleTagRegex);
+      if(htmlString != null && htmlString != "") {
+        const match = htmlString.match(styleTagRegex);
 
-      return match ? match[1] : null;
+        return match ? match[1] : null;
+      } else {
+        return null
+      }
     };
 
     const extractBodyContent = (htmlString: string): string => {
       const regex = /<body[^>]*>([\s\S]*?)<\/body>/i;
-      const match = htmlString.match(regex);
+      if (htmlString != null && htmlString != "") {
+        const match = htmlString.match(regex);
 
-      if (match && match[1]) {
-        return match[1];
+        if (match && match[1]) {
+          return match[1];
+        } else {
+          console.log("No <body> tag found in the given HTML string.");
+          return "";
+        }
       } else {
         console.log("No <body> tag found in the given HTML string.");
         return "";
@@ -170,8 +178,12 @@ const RichEditor = React.forwardRef(
       if (editor.current) {
         const view = editor.current.view;
         if (view) {
-          const htmlContent = extractBodyContent(html);
-          EditorUtils.setHtml(view, htmlContent);
+          if(html == "" || html == null) {
+            EditorUtils.setHtml(view, "");
+          } else {
+            const htmlContent = extractBodyContent(html);
+            EditorUtils.setHtml(view, htmlContent);
+          }
         }
       }
 
@@ -220,7 +232,7 @@ const RichEditor = React.forwardRef(
 
     // HTML 스트링을 받아서 color, background-color에 대한 스타일을 추가하여서 반환하는 함수
     const addClassToColorStyledElementsInHtmlString = (
-      htmlString: string,
+      htmlString: string
     ): string => {
       // HTML 문자열을 가상의 DOM 요소로 변환
       const parser = new DOMParser();
@@ -278,7 +290,7 @@ const RichEditor = React.forwardRef(
             /rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*(\d+(?:\.\d+)?))?\)/g;
           const updatedElementStyle = elementStyle.replace(
             rgbaRegex,
-            (_, r, g, b, a) => rgbaToHex(`rgba(${r}, ${g}, ${b}, ${a || "1"})`),
+            (_, r, g, b, a) => rgbaToHex(`rgba(${r}, ${g}, ${b}, ${a || "1"})`)
           );
 
           element.setAttribute("style", updatedElementStyle);
@@ -291,7 +303,7 @@ const RichEditor = React.forwardRef(
     // 컬러코드 변환 (rgba -> hex 6자리)
     const rgbaToHex = (rgba: string): string => {
       const match = rgba.match(
-        /^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*\d+(?:\.\d+)?)?\)$/,
+        /^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*\d+(?:\.\d+)?)?\)$/
       );
       if (!match) return rgba;
 
@@ -300,13 +312,13 @@ const RichEditor = React.forwardRef(
 
       return `#${hex.toString(16).padStart(6, "0")}`;
     };
- 
+
     var count = 0;
     const textChangeHandler = (e: any) => {
-      if(change != undefined) {
+      if (change != undefined) {
         change(count++);
       }
-    }
+    };
 
     return (
       <div
@@ -345,7 +357,7 @@ const RichEditor = React.forwardRef(
         />
       </div>
     );
-  },
+  }
 );
 
 export default RichEditor;

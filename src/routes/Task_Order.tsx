@@ -2758,14 +2758,6 @@ const App = () => {
             data = mainDataResult4.data[Math.min(...Object) - 1];
           }
 
-          //newData 생성
-          setMainDataResult4((prev) => ({
-            data: newData,
-            total: prev.total - Object.length,
-          }));
-          setSelectedState4({
-            [data != undefined ? data[DATA_ITEM_KEY4] : newData[0]]: true,
-          });
           if (data != undefined) {
             const row =
               data != undefined
@@ -2774,14 +2766,26 @@ const App = () => {
                 ? newData[0]
                 : "";
             fetchDocument("Task", row.orgdiv + "_" + row.docunum, row);
+          } else {
+            fetchDocument("Task", "");
           }
+
+          //newData 생성
+          setMainDataResult4((prev) => ({
+            data: newData,
+            total: prev.total - Object.length,
+          }));
+
+          setSelectedState4({
+            [data != undefined ? data[DATA_ITEM_KEY4] : newData[0]]: true,
+          });
         }
       } else {
         alert("지시자 본인만 삭제가 가능합니다.");
       }
     }
   };
-
+  
   const onSetting = async () => {
     let data: any;
     setLoading(true);
@@ -2902,7 +2906,7 @@ const App = () => {
           ? {
               ...item,
               rowstatus:
-                item.rowstatus == "N" ? "N" : item.rowstatus == "U" ? "U" : "",
+                item.rowstatus == "N" ? "N" : item.rowstatus == "U" ? "U" : item.rowstatus,
             }
           : {
               ...item,
@@ -3210,6 +3214,8 @@ const App = () => {
             if (datas != null) {
               rowsArr.attdatnum_s.push(item.attdatnum);
             }
+          } else {
+            rowsArr.attdatnum_s.push(item.attdatnum);
           }
         }
 
@@ -3227,6 +3233,8 @@ const App = () => {
           }
 
           if (data2 != null) {
+            rowsArr.attdatnum_s.push(item.attdatnum);
+          } else {
             rowsArr.attdatnum_s.push(item.attdatnum);
           }
         }
@@ -3464,6 +3472,8 @@ const App = () => {
         }
 
         if (data2 != null) {
+          rowsArr.attdatnum_s.push(item.attdatnum);
+        } else {
           rowsArr.attdatnum_s.push(item.attdatnum);
         }
       }
