@@ -197,6 +197,8 @@ const App = () => {
     }
   }, [loginResult]);
 
+  const [errorstate, setErrorState] = useState(true);
+
   const [selectedDetailCustcd, setSelectedDetailCustcd] = useState("");
 
   const [custWindowVisible, setCustWindowVisible] = useState<boolean>(false);
@@ -241,6 +243,12 @@ const App = () => {
   };
 
   const search = () => {
+    if (errorstate == false || getState() == false) {
+      if (!window.confirm("작성 중인 내용이 삭제됩니다. 조회하시겠습니까?")) {
+        return false;
+      }
+    }
+    setErrorState(true);
     setFileList([]);
     setSavenmList([]);
     setFileList2([]);
@@ -298,6 +306,12 @@ const App = () => {
 
   //메인 그리드 선택 이벤트 => 디테일 조회
   const onSelectionChange = (event: GridSelectionChangeEvent) => {
+    if (errorstate == false || getState() == false) {
+      if (!window.confirm("작성 중인 내용이 삭제됩니다. 조회하시겠습니까?")) {
+        return false;
+      }
+    }
+    setErrorState(true);
     const newSelectedState = getSelectedState({
       event,
       selectedState: selectedState,
@@ -1200,6 +1214,12 @@ const App = () => {
   );
 
   const createMeeting = () => {
+    if (errorstate == false || getState() == false) {
+      if (!window.confirm("작성 중인 내용이 삭제됩니다. 조회하시겠습니까?")) {
+        return false;
+      }
+    }
+    setErrorState(true);
     setDetailData({ ...defaultDetailData });
     setDetailRows(process([], detailRowsState));
 
@@ -1633,6 +1653,36 @@ const App = () => {
   const onChange = (event: SplitterOnChangeEvent) => {
     setPanes(event.newState);
   };
+
+  const getState = () => {
+    //신규와 내용수정여부 체크
+    let valid = true;
+
+    if (workType == "N") {
+      valid = false;
+    }
+
+    detailRows.data.map((item) => {
+      if (item.rowstatus == "U" || item.rowstatus == "N") {
+        valid = false;
+      }
+    });
+
+    setErrorState(valid);
+
+    return valid;
+  };
+
+  let value = false;
+  const onChanges = (str: any) => {
+    if (str == 0 && value != false) {
+      value = true;
+    } else if (str == 1) {
+      setErrorState(false);
+      value = false;
+    }
+  };
+
   return (
     <>
       <CodesContext.Provider
@@ -2612,7 +2662,7 @@ const App = () => {
                   <GridTitleContainer>
                     <GridTitle>참고자료</GridTitle>
                   </GridTitleContainer>
-                  <RichEditor id="refEditor" ref={refEditorRef} />
+                  <RichEditor id="refEditor" ref={refEditorRef} change={onChanges}/>
                 </GridContainer>
               </div>
             </Splitter>
