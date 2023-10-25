@@ -1673,14 +1673,8 @@ const App = () => {
     return valid;
   };
 
-  let value = false;
-  const onChanges = (str: any) => {
-    if (str == 0 && value != false) {
-      value = true;
-    } else if (str == 1) {
-      setErrorState(false);
-      value = false;
-    }
+  const onChanges = () => {
+    setErrorState(false);
   };
 
   return (
@@ -2189,7 +2183,7 @@ const App = () => {
               <GridTitleContainer>
                 <GridTitle>참고자료</GridTitle>
               </GridTitleContainer>
-              <RichEditor id="refEditor" ref={refEditorRef} />
+              <RichEditor id="refEditor" key={Object.getOwnPropertyNames(selectedState)[0]} ref={refEditorRef} />
             </GridContainer>
           </GridContainerWrap>
         ) : (
@@ -2662,7 +2656,7 @@ const App = () => {
                   <GridTitleContainer>
                     <GridTitle>참고자료</GridTitle>
                   </GridTitleContainer>
-                  <RichEditor id="refEditor" ref={refEditorRef} change={onChanges}/>
+                  <RichEditor id="refEditor" ref={refEditorRef} key={Object.getOwnPropertyNames(selectedState)[0]} change={onChanges}/>
                 </GridContainer>
               </div>
             </Splitter>

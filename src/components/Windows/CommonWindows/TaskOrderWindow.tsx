@@ -1048,11 +1048,11 @@ const KendoWindow = ({
 
         const bytes = require("utf8-bytes");
         const convertedQueryStr = bytesToBase64(bytes(defectiveQueryStr));
-    
+
         let query = {
           query: convertedQueryStr,
         };
-    
+
         try {
           data = await processApi<any>("bizgst-query", query);
         } catch (error) {
@@ -1064,11 +1064,11 @@ const KendoWindow = ({
 
         const bytes2 = require("utf8-bytes");
         const convertedQueryStr2 = bytesToBase64(bytes2(finynQueryStr));
-    
+
         let query2 = {
           query: convertedQueryStr2,
         };
-    
+
         try {
           data2 = await processApi<any>("bizgst-query", query2);
         } catch (error) {
@@ -1077,7 +1077,7 @@ const KendoWindow = ({
 
         if (data.tables[0].Rows[0].ref_key != "") {
           alert("불량처리가 된 데이터는 삭제가 불가능합니다.");
-        } else if(data2.tables[0].Rows[0].docunum != "") {
+        } else if (data2.tables[0].Rows[0].docunum != "") {
           alert("처리일지가 등록된 데이터는 삭제가 불가능합니다.");
         } else {
           //삭제 안 할 데이터 newData에 push, 삭제 데이터 deletedRows에 push
@@ -1817,34 +1817,29 @@ const KendoWindow = ({
     }
   };
 
-  let value = false;
-  const onChanges = (str: any) => {
-    if (str == 0 && value == false) {
-      value = true;
-    } else if (str == 1) {
-      const newData = mainDataResult.data.map((item) =>
-        item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
-          ? {
-              ...item,
-              rowstatus: item.rowstatus == "N" ? "N" : "U",
-            }
-          : {
-              ...item,
-            }
-      );
-      setTempResult((prev) => {
-        return {
-          data: newData,
-          total: prev.total,
-        };
-      });
-      setMainDataResult((prev) => {
-        return {
-          data: newData,
-          total: prev.total,
-        };
-      });
-    }
+  const onChanges = () => {
+    const newData = mainDataResult.data.map((item) =>
+      item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
+        ? {
+            ...item,
+            rowstatus: item.rowstatus == "N" ? "N" : "U",
+          }
+        : {
+            ...item,
+          }
+    );
+    setTempResult((prev) => {
+      return {
+        data: newData,
+        total: prev.total,
+      };
+    });
+    setMainDataResult((prev) => {
+      return {
+        data: newData,
+        total: prev.total,
+      };
+    });
   };
 
   return (
@@ -2048,7 +2043,7 @@ const KendoWindow = ({
             다운로드
           </Button>
         </ButtonContainer>
-        <RichEditor id="refEditor" ref={refEditorRef} change={onChanges} />
+        <RichEditor id="refEditor" ref={refEditorRef} key={Object.getOwnPropertyNames(selectedState)[0]} change={onChanges} />
       </GridContainer>
       <BottomContainer>
         <ButtonContainer>

@@ -2191,6 +2191,10 @@ const App = () => {
       if (refEditorRef.current) {
         refEditorRef.current.setHtml("");
       }
+      setMainDataResult(process([], mainDataState));
+      setMainDataResult2(process([], mainDataState2));
+      setMainDataResult3(process([], mainDataState3));
+      setMainDataResult4(process([], mainDataState4));
       setFilters((prev) => ({
         ...prev,
         pgNum: 1,
@@ -2785,7 +2789,7 @@ const App = () => {
       }
     }
   };
-  
+
   const onSetting = async () => {
     let data: any;
     setLoading(true);
@@ -2906,7 +2910,11 @@ const App = () => {
           ? {
               ...item,
               rowstatus:
-                item.rowstatus == "N" ? "N" : item.rowstatus == "U" ? "U" : item.rowstatus,
+                item.rowstatus == "N"
+                  ? "N"
+                  : item.rowstatus == "U"
+                  ? "U"
+                  : item.rowstatus,
             }
           : {
               ...item,
@@ -3613,34 +3621,29 @@ const App = () => {
     }
   };
 
-  let value = false;
-  const onChanges = (str: any) => {
-    if (str == 0 && value != false) {
-      value = true;
-    } else if (str == 1) {
-      const newData = mainDataResult4.data.map((item) =>
-        item[DATA_ITEM_KEY4] == Object.getOwnPropertyNames(selectedState4)[0]
-          ? {
-              ...item,
-              rowstatus: item.rowstatus == "N" ? "N" : "U",
-            }
-          : {
-              ...item,
-            }
-      );
-      setTempResult((prev) => {
-        return {
-          data: newData,
-          total: prev.total,
-        };
-      });
-      setMainDataResult4((prev) => {
-        return {
-          data: newData,
-          total: prev.total,
-        };
-      });
-    }
+  const onChanges = () => {
+    const newData = mainDataResult4.data.map((item) =>
+      item[DATA_ITEM_KEY4] == Object.getOwnPropertyNames(selectedState4)[0]
+        ? {
+            ...item,
+            rowstatus: item.rowstatus == "N" ? "N" : "U",
+          }
+        : {
+            ...item,
+          }
+    );
+    setTempResult((prev) => {
+      return {
+        data: newData,
+        total: prev.total,
+      };
+    });
+    setMainDataResult4((prev) => {
+      return {
+        data: newData,
+        total: prev.total,
+      };
+    });
   };
 
   return (
@@ -5342,6 +5345,7 @@ const App = () => {
                   id="refEditor"
                   ref={refEditorRef}
                   change={onChanges}
+                  key={Object.getOwnPropertyNames(selectedState4)[0]}
                 />
               </GridContainer>
             </GridContainerWrap>
