@@ -326,7 +326,7 @@ const App = () => {
       data = null;
     }
 
-    if (data.isSuccess === true) {
+    if (data != null) {
       const totalRowCnt = data.tables[0].TotalRowCount;
       const rows = data.tables[0].Rows;
 

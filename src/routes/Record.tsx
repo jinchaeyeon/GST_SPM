@@ -856,7 +856,7 @@ const App = () => {
       data = null;
     }
 
-    if (data.isSuccess === true) {
+    if (data != null) {
       const totalRowCnt = data.tables[0].TotalRowCount;
       const rows = data.tables[0].Rows;
 
@@ -1040,7 +1040,7 @@ const App = () => {
       data = null;
     }
 
-    if (data.isSuccess === true) {
+    if (data != null) {
       let idx = 0;
       const totalRowCnt = data.tables[0].TotalRowCount;
       const rows = data.tables[0].Rows.map((row: any) => {
@@ -1950,7 +1950,7 @@ const App = () => {
       data = null;
     }
 
-    if (data.isSuccess === true) {
+    if (data != null) {
       deletedRows = [];
       setParaData({
         work_type: "",

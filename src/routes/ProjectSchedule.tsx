@@ -372,7 +372,7 @@ const App = () => {
       data = null;
     }
 
-    if (data.isSuccess === true) {
+    if (data != null) {
       const rows = data.tables[0].Rows;
       setProjectsData(rows);
     }
@@ -389,7 +389,7 @@ const App = () => {
       data = null;
     }
 
-    if (data.isSuccess === true) {
+    if (data != null) {
       // 일정항목 데이터
       const parentRows: TTask[] = data.tables[0].Rows.map((row: any) => ({
         ...row,
@@ -526,7 +526,7 @@ const App = () => {
       data = null;
     }
 
-    if (data.isSuccess === true) {
+    if (data != null) {
       fetchProjectDetail(devmngnum);
     } else {
       console.log("[에러발생]");
@@ -666,7 +666,7 @@ const App = () => {
       data = null;
     }
 
-    if (data.isSuccess === true) {
+    if (data != null) {
       fetchProjectDetail(devmngnum);
     } else {
       console.log("[에러발생]");

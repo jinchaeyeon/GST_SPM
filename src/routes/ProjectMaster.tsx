@@ -722,7 +722,7 @@ const App = () => {
       data = null;
     }
 
-    if (data.isSuccess === true) {
+    if (data != null) {
       const totalRowCnt = data.tables[0].TotalRowCount;
       const rows = data.tables[0].Rows;
 
@@ -1002,7 +1002,7 @@ const App = () => {
     } catch (error) {
       data = null;
     }
-    if (data.isSuccess === true) {
+    if (data != null) {
       let idx = 0;
       const totalRowCnt = data.tables[0].TotalRowCount;
       const rows = data.tables[0].Rows.map((row: any) => {
@@ -2529,7 +2529,7 @@ const App = () => {
       data = null;
     }
 
-    if (data.isSuccess === true) {
+    if (data != null) {
       const findRowIndex = mainDataResult.data.findIndex(
         (row: any) =>
           row[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
@@ -2603,7 +2603,7 @@ const App = () => {
       data = null;
     }
 
-    if (data.isSuccess === true) {
+    if (data != null) {
       if (paraData.work_type == "N") {
         setAllTabSelected(0);
       }

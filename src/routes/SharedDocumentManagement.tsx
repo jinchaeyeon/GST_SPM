@@ -361,21 +361,13 @@ const App = () => {
     setLoading(true);
 
     const para = {
-      para: `list?fromDate=${
-        convertDateToStr(filters.fromDate)
-      }&toDate=${
-        convertDateToStr(filters.toDate)
-      }&contents=${
+      para: `list?fromDate=${convertDateToStr(
+        filters.fromDate
+      )}&toDate=${convertDateToStr(filters.toDate)}&contents=${
         filters.contents
-      }&type=${
-        filters.type?.sub_code ?? ""
-      }&customerName=${
+      }&type=${filters.type?.sub_code ?? ""}&customerName=${
         filters.customer_name
-      }&find_row_value=${
-        filters.findRowValue
-      }&page=${
-        filters.pgNum
-      }&pageSize=${
+      }&find_row_value=${filters.findRowValue}&page=${filters.pgNum}&pageSize=${
         filters.pgSize
       }`,
     };
@@ -386,7 +378,7 @@ const App = () => {
       data = null;
     }
 
-    if (data.isSuccess === true) {
+    if (data != null) {
       const totalRowCnt = data.tables[0].TotalRowCount;
       const rows = data.tables[0].Rows;
 
@@ -535,6 +527,20 @@ const App = () => {
     );
   };
 
+  const copySharedDocument = () => {
+    setDetailData((prev) => ({
+      ...prev,
+      work_type: "N",
+      document_id: "",
+      write_date: new Date(),
+      attdatnum: "",
+      files: "",
+    }));
+    setSavenmList([]);
+    setFileList([]);
+    alert("복사되었습니다.");
+  };
+
   const createSharedDocument = () => {
     setDetailData({ ...defaultDetailData, work_type: "N" });
 
@@ -666,7 +672,7 @@ const App = () => {
         "@p_document_id": detailData.document_id,
         "@p_write_date": convertDateToStr(detailData.write_date),
         "@p_title": detailData.title,
-        "@p_contents": extractTextFromHtmlContent(editorContent),//detailData.contents,
+        "@p_contents": extractTextFromHtmlContent(editorContent), //detailData.contents,
         "@p_attdatnum":
           results[0] == undefined ? detailData.attdatnum : results[0],
         "@p_customer_code": detailData.customer.custcd,
@@ -787,7 +793,7 @@ const App = () => {
   };
 
   const extractTextFromHtmlContent = (htmlString: string) => {
-    let extractString:string = "";
+    let extractString: string = "";
 
     const regex = /<body[^>]*>([\s\S]*?)<\/body>/i;
     const match = htmlString.match(regex);
@@ -797,10 +803,10 @@ const App = () => {
     }
 
     extractString = extractString.replace(/(<([^>]+)>)/gi, ""); // 태그 제거
-    extractString = extractString.replace(/\s\s+/g, ' '); // 연달아 있는 줄바꿈, 공백, 탭을 공백 1개로 줄임
-    
+    extractString = extractString.replace(/\s\s+/g, " "); // 연달아 있는 줄바꿈, 공백, 탭을 공백 1개로 줄임
+
     return extractString;
-  }
+  };
 
   return (
     <>
@@ -823,10 +829,10 @@ const App = () => {
               <Button
                 themeColor={"primary"}
                 fillMode={"outline"}
-                icon="save"
-                onClick={saveSharedDocument}
+                icon="copy"
+                onClick={copySharedDocument}
               >
-                저장
+                복사
               </Button>
               <Button
                 themeColor={"primary"}
@@ -835,6 +841,14 @@ const App = () => {
                 onClick={deleteSharedDocument}
               >
                 삭제
+              </Button>
+              <Button
+                themeColor={"primary"}
+                fillMode={"outline"}
+                icon="save"
+                onClick={saveSharedDocument}
+              >
+                저장
               </Button>
             </>
           )}
@@ -894,7 +908,7 @@ const App = () => {
                 />
               </td>
               <th>업체명</th>
-              <td >
+              <td>
                 <Input
                   name="customer_name"
                   type="text"
@@ -922,7 +936,7 @@ const App = () => {
                 )}
               </td> */}
               <th>제목 및 내용</th>
-              <td >
+              <td>
                 <Input
                   name="contents"
                   type="text"
