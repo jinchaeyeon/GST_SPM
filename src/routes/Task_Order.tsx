@@ -2112,7 +2112,6 @@ const App = () => {
     )[0];
     let editorContent2: any = "";
     editorContent2 = refEditorRef.current?.getContent();
-    let editorContent3: any = "";
     const newSelectedState = getSelectedState({
       event,
       selectedState: selectedState4,
@@ -2127,6 +2126,9 @@ const App = () => {
     setFileList([]);
     setSavenmList([]);
     //web저장된 문서
+
+    setSelectedState4(newSelectedState);
+
     if (
       localStorage.getItem(currentRow[DATA_ITEM_KEY4]) == undefined ||
       localStorage.getItem(currentRow[DATA_ITEM_KEY4]) == null
@@ -2144,24 +2146,30 @@ const App = () => {
         );
       }
     }
+  };
 
-    setSelectedState4(newSelectedState);
 
-    if (selectedRowData.rowstatus == undefined) {
-      fetchDocument(
-        "Task",
-        selectedRowData.orgdiv + "_" + selectedRowData.docunum,
-        selectedRowData
-      );
-    } else {
-      editorContent3 = localStorage.getItem(
-        selectedRowData[DATA_ITEM_KEY4] + "key"
-      );
-      if (refEditorRef.current) {
-        refEditorRef.current.setHtml(editorContent3);
+  useEffect(()=> {
+    const selectedRowData = mainDataResult4.data.filter((item) => item[DATA_ITEM_KEY4] == Object.getOwnPropertyNames(selectedState4)[0])[0];
+    let editorContent3: any = "";
+    if(selectedRowData != undefined) {
+      if (selectedRowData.rowstatus == undefined) {
+        fetchDocument(
+          "Task",
+          selectedRowData.orgdiv + "_" + selectedRowData.docunum,
+          selectedRowData
+        );
+      } else {
+        editorContent3 = localStorage.getItem(
+          selectedRowData[DATA_ITEM_KEY4] + "key"
+        );
+        if (refEditorRef.current) {
+          refEditorRef.current.setHtml(editorContent3);
+        }
       }
     }
-  };
+  }, [selectedState4])
+
   const search = () => {
     if (
       filters.date_type == null ||
@@ -2676,9 +2684,14 @@ const App = () => {
       ref_type: "미참조",
       remark: "",
       value_code3: "",
+      savenmList: [],
+      fileList: [],
       rowstatus: "N",
     };
-
+    setPage4((prev) => ({
+      skip: 0,
+      take: prev.take + 1,
+    }));
     setMainDataResult4((prev) => {
       return {
         data: [newDataItem, ...prev.data],
@@ -2686,9 +2699,6 @@ const App = () => {
       };
     });
     setSelectedState4({ [newDataItem[DATA_ITEM_KEY4]]: true });
-    if (refEditorRef.current) {
-      refEditorRef.current.setHtml("");
-    }
   };
 
   const onRemoveClick = async () => {

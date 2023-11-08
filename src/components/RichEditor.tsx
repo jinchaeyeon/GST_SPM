@@ -99,7 +99,6 @@ const RichEditor = React.forwardRef(
 
     useEffect(() => {
       if (view.current && editable) {
-        console.log(view.current.state);
         view.current.updateState(view.current.state);
       }
     }, [editable]);
