@@ -148,8 +148,8 @@ export const FilesContext2 = createContext<{
   setAttach_exists: (d: any) => void;
   setFileList: (d: any) => void;
   setSavenmList: (d: any) => void;
-  mainDataState: State;
-  setMainDataState: (d: any) => void;
+  mainDataState4: State;
+  setMainDataState4: (d: any) => void;
   // fetchGrid: (n: number) => any;
 }>({} as any);
 
@@ -2148,11 +2148,13 @@ const App = () => {
     }
   };
 
-
-  useEffect(()=> {
-    const selectedRowData = mainDataResult4.data.filter((item) => item[DATA_ITEM_KEY4] == Object.getOwnPropertyNames(selectedState4)[0])[0];
+  useEffect(() => {
+    const selectedRowData = mainDataResult4.data.filter(
+      (item) =>
+        item[DATA_ITEM_KEY4] == Object.getOwnPropertyNames(selectedState4)[0]
+    )[0];
     let editorContent3: any = "";
-    if(selectedRowData != undefined) {
+    if (selectedRowData != undefined) {
       if (selectedRowData.rowstatus == undefined) {
         fetchDocument(
           "Task",
@@ -2168,7 +2170,7 @@ const App = () => {
         }
       }
     }
-  }, [selectedState4])
+  }, [selectedState4]);
 
   const search = () => {
     if (
@@ -2480,7 +2482,7 @@ const App = () => {
       field != "ref_key" &&
       field != "ref_seq"
     ) {
-      const newData = mainDataResult4.data.map((item) =>
+      const newData = mainDataResult4.data.map((item: { [x: string]: any }) =>
         item[DATA_ITEM_KEY4] == dataItem[DATA_ITEM_KEY4]
           ? {
               ...item,
@@ -2515,17 +2517,18 @@ const App = () => {
 
   const exitEdit = () => {
     if (tempResult.data != mainDataResult4.data) {
-      const newData = mainDataResult4.data.map((item) =>
-        item[DATA_ITEM_KEY4] == Object.getOwnPropertyNames(selectedState4)[0]
-          ? {
-              ...item,
-              rowstatus: item.rowstatus == "N" ? "N" : "U",
-              [EDIT_FIELD]: undefined,
-            }
-          : {
-              ...item,
-              [EDIT_FIELD]: undefined,
-            }
+      const newData = mainDataResult4.data.map(
+        (item: { [x: string]: string; rowstatus: string }) =>
+          item[DATA_ITEM_KEY4] == Object.getOwnPropertyNames(selectedState4)[0]
+            ? {
+                ...item,
+                rowstatus: item.rowstatus == "N" ? "N" : "U",
+                [EDIT_FIELD]: undefined,
+              }
+            : {
+                ...item,
+                [EDIT_FIELD]: undefined,
+              }
       );
       setTempResult((prev) => {
         return {
@@ -2540,7 +2543,7 @@ const App = () => {
         };
       });
     } else {
-      const newData = mainDataResult4.data.map((item) => ({
+      const newData = mainDataResult4.data.map((item: any) => ({
         ...item,
         [EDIT_FIELD]: undefined,
       }));
@@ -5130,8 +5133,8 @@ const App = () => {
                         setAttach_exists,
                         setFileList,
                         setSavenmList,
-                        mainDataState,
-                        setMainDataState,
+                        mainDataState4,
+                        setMainDataState4,
                         // fetchGrid,
                       }}
                     >
@@ -5273,12 +5276,6 @@ const App = () => {
                                   width={150}
                                 />
                                 <GridColumn
-                                  field="finyn"
-                                  title="완료"
-                                  width={100}
-                                  cell={CheckBoxReadOnlyCell}
-                                />
-                                <GridColumn
                                   field="recdt"
                                   title="지시일"
                                   width={120}
@@ -5312,6 +5309,12 @@ const App = () => {
                                   title="참조번호2"
                                   width={120}
                                   cell={NumberCell}
+                                />
+                                <GridColumn
+                                  field="finyn"
+                                  title="완료"
+                                  width={100}
+                                  cell={CheckBoxReadOnlyCell}
                                 />
                               </Grid>
                             </UserContext.Provider>

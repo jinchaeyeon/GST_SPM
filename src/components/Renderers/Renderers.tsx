@@ -28,6 +28,10 @@ export const CellRender = (props: any) => {
           onClick: () => {
             props.enterEdit(dataItem, cellField);
           },
+          onFocus: () => {
+            props.enterEdit(dataItem, cellField);
+          },
+          tabIndex: "0",
           onKeyDown: (ev: any) => {
             let activeCell = ev.target.closest("TD");
 
@@ -81,6 +85,10 @@ export const CellRender = (props: any) => {
               props.enterEdit(dataItem, cellField);
             }
           },
+          onFocus: () => {
+            props.enterEdit(dataItem, cellField);
+          },
+          tabIndex: "0",
         };
   const clonedProps = { ...props.td.props, ...additionalProps };
   return React.cloneElement(props.td, clonedProps, props.td.props.children);
