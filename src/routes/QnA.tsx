@@ -309,7 +309,7 @@ const App = () => {
       data = null;
     }
 
-    if (data = null) {
+    if (data != null) {
       const totalRowCnt = data.tables[0].TotalRowCount;
       const rows = data.tables[0].Rows;
       if (filters.findRowValue !== "") {
