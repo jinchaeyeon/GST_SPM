@@ -436,7 +436,9 @@ const App = () => {
 
       setGridData(process(childRows, gridDataState));
       if (Object.getOwnPropertyNames(gridSelectedState)[0] == undefined) {
-        setGridSelectedState({ [childRows[0].id]: true });
+        if (childRows[0] != undefined) {
+          setGridSelectedState({ [childRows[0].id]: true });
+        }
       }
       setTask(taskRows);
       setDependency(dependancyRows);
@@ -709,7 +711,8 @@ const App = () => {
   };
 
   const enterEdit = (dataItem: any, field: string) => {
-    if (!dataItem[EDIT_FIELD]) { // 수정중이 아닐때만
+    if (!dataItem[EDIT_FIELD]) {
+      // 수정중이 아닐때만
       const newData = gridData.data.map((item) =>
         item[DATA_ITEM_KEY] === dataItem[DATA_ITEM_KEY]
           ? {
@@ -744,7 +747,7 @@ const App = () => {
         item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(gridSelectedState)[0]
           ? {
               ...item,
-              rowstatus: (item.rowstatus && item.rowstatus === "N") ? "N" : "U",
+              rowstatus: item.rowstatus && item.rowstatus === "N" ? "N" : "U",
               [EDIT_FIELD]: undefined,
             }
           : {
@@ -760,8 +763,7 @@ const App = () => {
           total: prev.total,
         };
       });
-    } 
-    else {
+    } else {
       const newData = gridData.data.map((item) => ({
         ...item,
         [EDIT_FIELD]: undefined,
@@ -1303,8 +1305,11 @@ const App = () => {
               data={process(
                 gridData.data.map((row) => ({
                   ...row,
-                  start: (typeof row.start === "string") ? toDate(row.start) : row.start,
-                  end: (typeof row.end === "string") ? toDate(row.end) : row.end,
+                  start:
+                    typeof row.start === "string"
+                      ? toDate(row.start)
+                      : row.start,
+                  end: typeof row.end === "string" ? toDate(row.end) : row.end,
                   [SELECTED_FIELD]: gridSelectedState[gridIdGetter(row)],
                 })),
                 gridDataState

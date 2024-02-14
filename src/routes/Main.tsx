@@ -45,6 +45,7 @@ import { convertDateToStr } from "../components/CommonFunction";
 import { SELECTED_FIELD } from "../components/CommonString";
 import CurrentTime from "../components/CurrentTime";
 import Loader from "../components/Loader";
+import NoticeWindow from "../components/Windows/CommonWindows/NoticeWindow";
 import { useApi } from "../hooks/api";
 import {
   filterValueState,
@@ -105,7 +106,9 @@ const Main: React.FC = () => {
   const [projectDataState, setProjectDataState] = useState<State>({
     sort: [],
   });
-
+  const [noticeDataState, setNoticeDataState] = useState<State>({
+    sort: [],
+  });
   const [questionDataResult, setQuestionDataResult] = useState<DataResult>(
     process([], questionDataState)
   );
@@ -115,6 +118,9 @@ const Main: React.FC = () => {
   );
   const [projectDataResult, setProjectDataResult] = useState<DataResult>(
     process([], projectDataState)
+  );
+  const [noticeDataResult, setNoticeDataResult] = useState<DataResult>(
+    process([], noticeDataState)
   );
   const [noticeSum, setNoticeSum] = useState(0);
 
@@ -200,8 +206,53 @@ const Main: React.FC = () => {
   useEffect(() => {
     // switcher({ theme: "dark" });
     search();
+    fetchPopUp();
     setTitle("");
   }, []);
+
+  const [currentPopup, setCurrentPopup] = useState(0);
+  const [noticeWindowVisible, setNoticeWindowVisible] =
+    useState<boolean>(false);
+
+  const fetchPopUp = async () => {
+    let data: any;
+
+    const savedNoticesRaw = localStorage.getItem("PopUpNotices");
+    const savedNotices = savedNoticesRaw ? JSON.parse(savedNoticesRaw) : [];
+
+    const ref_key = savedNotices.join(",");
+
+    setLoading(true);
+    const para = {
+      id: `?id=${ref_key}`,
+    };
+
+    try {
+      data = await processApi<any>("home-general-notice", para);
+    } catch (error) {
+      data = null;
+    }
+    setLoading(false);
+
+    if (data !== null) {
+      const { recentNotices } = data;
+      setCurrentPopup(0);
+      setNoticeDataResult({
+        data: recentNotices.Rows,
+        total: recentNotices.RowCount,
+      });
+
+      if (recentNotices.RowCount > 0) {
+        setNoticeWindowVisible(true);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (currentPopup != 0 && noticeDataResult.total > currentPopup) {
+      setNoticeWindowVisible(true);
+    }
+  }, [currentPopup]);
 
   const search = () => {
     fetchHome();
@@ -346,310 +397,320 @@ const Main: React.FC = () => {
   }
 
   return (
-    <GridContainer style={{ paddingBottom: "20px", height: "95%" }}>
-      <TitleContainer
-        style={{
-          minHeight: "80px",
-          fontSize: "24px",
-          paddingTop: "5px",
-        }}
-      >
-        <p className="small">
-          <span style={{ fontWeight: 700 }}>{userName}</span> 님, 좋은 하루
-          되세요
-        </p>
-        <Title></Title>
-        <ButtonContainer>
-          <Button
-            icon="refresh"
-            themeColor={"primary"}
-            fillMode={"flat"}
-            onClick={search}
-          ></Button>
-        </ButtonContainer>
-      </TitleContainer>
-      <GridContainerWrap height="calc(100% - 80px)">
-        <GridContainer
-          width="15%"
-          style={{ gap: "15px", overflow: "overlay" }}
-          type="mainLeft"
+    <>
+      <GridContainer style={{ paddingBottom: "20px", height: "95%" }}>
+        <TitleContainer
+          style={{
+            minHeight: "80px",
+            fontSize: "24px",
+            paddingTop: "5px",
+          }}
         >
-          <TextBox
-            style={{
-              minHeight: "120px",
-              height: "100%",
-              maxHeight: "150px",
-              padding: "20px",
-            }}
+          <p className="small">
+            <span style={{ fontWeight: 700 }}>{userName}</span> 님, 좋은 하루
+            되세요
+          </p>
+          <Title></Title>
+          <ButtonContainer>
+            <Button
+              icon="refresh"
+              themeColor={"primary"}
+              fillMode={"flat"}
+              onClick={search}
+            ></Button>
+          </ButtonContainer>
+        </TitleContainer>
+        <GridContainerWrap height="calc(100% - 80px)">
+          <GridContainer
+            width="15%"
+            style={{ gap: "15px", overflow: "overlay" }}
+            type="mainLeft"
           >
-            <div className="medium" style={{ marginTop: "0" }}>
-              <CurrentTime />
-            </div>
-          </TextBox>
-          <TextBox
-            style={{ cursor: "pointer" }}
-            onClick={() => moveMenu("QnA")}
-          >
-            <p className="small">진행중</p>
-            <p className="large yellow">
-              {taskStatusResult.progress}
-              <span>건</span>
-            </p>
-          </TextBox>
-          <TextBox
-            style={{ cursor: "pointer" }}
-            onClick={() => moveMenu("QnA")}
-          >
-            <p className="small">접수 대기</p>
-            <p className="large gray">
-              {taskStatusResult.wait}
-              <span>건</span>
-            </p>
-          </TextBox>
-          <TextBox>
-            <p className="small">평균 접수일</p>
-            <p className="large blue">
-              {taskStatusResult.avg_reception_days}
-              <span>일</span>
-            </p>
-          </TextBox>
-          <TextBox
-            style={{ cursor: "pointer" }}
-            onClick={() => moveMenu("Notice")}
-          >
-            <p className="small">공지사항</p>
-            <p className="large green">
-              {noticeSum}
-              <span>건</span>
-            </p>
-          </TextBox>
-        </GridContainer>
+            <TextBox
+              style={{
+                minHeight: "120px",
+                height: "100%",
+                maxHeight: "150px",
+                padding: "20px",
+              }}
+            >
+              <div className="medium" style={{ marginTop: "0" }}>
+                <CurrentTime />
+              </div>
+            </TextBox>
+            <TextBox
+              style={{ cursor: "pointer" }}
+              onClick={() => moveMenu("QnA")}
+            >
+              <p className="small">진행중</p>
+              <p className="large yellow">
+                {taskStatusResult.progress}
+                <span>건</span>
+              </p>
+            </TextBox>
+            <TextBox
+              style={{ cursor: "pointer" }}
+              onClick={() => moveMenu("QnA")}
+            >
+              <p className="small">접수 대기</p>
+              <p className="large gray">
+                {taskStatusResult.wait}
+                <span>건</span>
+              </p>
+            </TextBox>
+            <TextBox>
+              <p className="small">평균 접수일</p>
+              <p className="large blue">
+                {taskStatusResult.avg_reception_days}
+                <span>일</span>
+              </p>
+            </TextBox>
+            <TextBox
+              style={{ cursor: "pointer" }}
+              onClick={() => moveMenu("Notice")}
+            >
+              <p className="small">공지사항</p>
+              <p className="large green">
+                {noticeSum}
+                <span>건</span>
+              </p>
+            </TextBox>
+          </GridContainer>
 
-        <GridContainer width="85%" style={{ gap: "15px" }}>
-          <GridContainerWrap height={"50%"}>
-            <GridContainer width="40%">
-              <Chart
-                style={{ height: "100%", border: "solid 1px #e6e6e6" }}
-                transitions={false}
-              >
-                <ChartTitle
-                  text={currentYear + "년 담당자별 문의"}
-                  font={chartTitleFont}
-                />
-                <ChartLegend
-                  position="bottom"
-                  labels={{ font: chartLegendFont }}
-                />
-                <ChartSeries>
-                  <ChartSeriesItem
-                    type="pie"
-                    data={userSummaryResult.total}
-                    field="data"
-                    categoryField="name"
-                    labels={{
-                      visible: true,
-                      content: labelContent,
-                      font: chartSeriesFont,
-                    }}
+          <GridContainer width="85%" style={{ gap: "15px" }}>
+            <GridContainerWrap height={"50%"}>
+              <GridContainer width="40%">
+                <Chart
+                  style={{ height: "100%", border: "solid 1px #e6e6e6" }}
+                  transitions={false}
+                >
+                  <ChartTitle
+                    text={currentYear + "년 담당자별 문의"}
+                    font={chartTitleFont}
                   />
-                </ChartSeries>
-              </Chart>
-            </GridContainer>
-            <GridContainer width="60%">
-              <Chart
-                style={{ height: "100%", border: "solid 1px #e6e6e6" }}
-                transitions={false}
-              >
-                <ChartTitle text="요일별 담당자 문의" font={chartTitleFont} />
-                <ChartLegend
-                  position="bottom"
-                  labels={{ font: chartLegendFont }}
-                />
-
-                <ChartCategoryAxis>
-                  <ChartCategoryAxisItem
-                    categories={categories}
-                    labels={{ font: chartAxisFont }}
-                  ></ChartCategoryAxisItem>
-                </ChartCategoryAxis>
-
-                <ChartValueAxis>
-                  <ChartValueAxisItem
-                    majorUnit={1}
-                    labels={{ font: chartAxisFont }}
+                  <ChartLegend
+                    position="bottom"
+                    labels={{ font: chartLegendFont }}
                   />
-                </ChartValueAxis>
-                <ChartSeries>
-                  {userSummaryResult.weekly.map(
-                    (item: { data: []; name: string }, idx) => (
-                      <ChartSeriesItem
-                        key={idx}
-                        type="column"
-                        tooltip={{
-                          visible: true,
-                          format: item.name + " : {0}건",
-                        }}
-                        data={item.data}
-                        name={item.name}
-                      />
-                    )
+                  <ChartSeries>
+                    <ChartSeriesItem
+                      type="pie"
+                      data={userSummaryResult.total}
+                      field="data"
+                      categoryField="name"
+                      labels={{
+                        visible: true,
+                        content: labelContent,
+                        font: chartSeriesFont,
+                      }}
+                    />
+                  </ChartSeries>
+                </Chart>
+              </GridContainer>
+              <GridContainer width="60%">
+                <Chart
+                  style={{ height: "100%", border: "solid 1px #e6e6e6" }}
+                  transitions={false}
+                >
+                  <ChartTitle text="요일별 담당자 문의" font={chartTitleFont} />
+                  <ChartLegend
+                    position="bottom"
+                    labels={{ font: chartLegendFont }}
+                  />
+
+                  <ChartCategoryAxis>
+                    <ChartCategoryAxisItem
+                      categories={categories}
+                      labels={{ font: chartAxisFont }}
+                    ></ChartCategoryAxisItem>
+                  </ChartCategoryAxis>
+
+                  <ChartValueAxis>
+                    <ChartValueAxisItem
+                      majorUnit={1}
+                      labels={{ font: chartAxisFont }}
+                    />
+                  </ChartValueAxis>
+                  <ChartSeries>
+                    {userSummaryResult.weekly.map(
+                      (item: { data: []; name: string }, idx) => (
+                        <ChartSeriesItem
+                          key={idx}
+                          type="column"
+                          tooltip={{
+                            visible: true,
+                            format: item.name + " : {0}건",
+                          }}
+                          data={item.data}
+                          name={item.name}
+                        />
+                      )
+                    )}
+                  </ChartSeries>
+                </Chart>
+              </GridContainer>
+            </GridContainerWrap>
+            <GridContainerWrap height={"50%"}>
+              <GridContainer>
+                <GridTitleContainer>
+                  <GridTitle theme={currentTheme}>문의 내용</GridTitle>
+                </GridTitleContainer>
+                <Grid
+                  style={{ height: `calc(100% - 35px)` }}
+                  data={process(
+                    questionDataResult.data.map((row) => ({
+                      ...row,
+                      [SELECTED_FIELD]:
+                        questionSelectedState[questionIdGetter(row)],
+                    })),
+                    questionDataState
                   )}
-                </ChartSeries>
-              </Chart>
-            </GridContainer>
-          </GridContainerWrap>
-          <GridContainerWrap height={"50%"}>
-            <GridContainer>
-              <GridTitleContainer>
-                <GridTitle theme={currentTheme}>문의 내용</GridTitle>
-              </GridTitleContainer>
-              <Grid
-                style={{ height: `calc(100% - 35px)` }}
-                data={process(
-                  questionDataResult.data.map((row) => ({
-                    ...row,
-                    [SELECTED_FIELD]:
-                      questionSelectedState[questionIdGetter(row)],
-                  })),
-                  questionDataState
-                )}
-                {...questionDataState}
-                onDataStateChange={onQuestionDataStateChange}
-                //선택기능
-                dataItemKey={QUESTION_ITEM_KEY}
-                selectedField={SELECTED_FIELD}
-                selectable={{
-                  enabled: true,
-                  mode: "single",
-                }}
-                onSelectionChange={onQuestionSelectionChange}
-                //정렬기능
-                sortable={true}
-                onSortChange={onQuestionSortChange}
-                //컬럼순서조정
-                reorderable={true}
-                //컬럼너비조정
-                resizable={true}
-                //행 더블클릭
-                onRowDoubleClick={onQuestionRowDoubleClick}
-              >
-                <GridColumn
-                  field="request_date"
-                  title="날짜"
-                  cell={DateCell}
-                  footerCell={questionTotalFooterCell}
-                  width={100}
-                />
-                <GridColumn
-                  field="user_name"
-                  title="질문자"
-                  cell={CenterCell}
-                  width={65}
-                />
-                <GridColumn field="title" title="제목" />
-                <GridColumn
-                  field="status"
-                  title="상태"
-                  width={80}
-                  cell={QnAStateCell}
-                />
-              </Grid>
-            </GridContainer>
-            <GridContainer>
-              <GridTitleContainer>
-                <GridTitle theme={currentTheme}>프로젝트 진행 현황</GridTitle>
-              </GridTitleContainer>
-              <Grid
-                style={{ height: "calc(100% - 35px)" }}
-                data={process(
-                  projectDataResult.data.map((row) => ({
-                    ...row,
-                    [SELECTED_FIELD]:
-                      projectSelectedState[projectIdGetter(row)],
-                  })),
-                  projectDataState
-                )}
-                {...projectDataState}
-                onDataStateChange={onProjectDataStateChange}
-                //선택기능
-                dataItemKey={PROJECT_ITEM_KEY}
-                selectedField={SELECTED_FIELD}
-                selectable={{
-                  enabled: true,
-                  mode: "single",
-                }}
-                onSelectionChange={onProjectSelectionChange}
-                //정렬기능
-                sortable={true}
-                onSortChange={onProjectSortChange}
-                //컬럼순서조정
-                reorderable={true}
-                //컬럼너비조정
-                resizable={true}
-                //행 더블클릭
-                onRowDoubleClick={onProjectRowDoubleClick}
-              >
-                <GridColumn
-                  field="project"
-                  title="프로젝트"
-                  footerCell={projectTotalFooterCell}
-                />
-                <GridColumn
-                  field="progress"
-                  title="진행률"
-                  width={80}
-                  cell={CenterCell}
-                />
-              </Grid>
-            </GridContainer>
-            <GridContainer>
-              <GridTitleContainer>
-                <GridTitle theme={currentTheme}>회의록</GridTitle>
-              </GridTitleContainer>
-              <Grid
-                style={{ height: "calc(100% - 35px)" }}
-                data={process(
-                  meetingDataResult.data.map((row) => ({
-                    ...row,
-                    [SELECTED_FIELD]:
-                      meetingSelectedState[meetingIdGetter(row)],
-                  })),
-                  meetingDataState
-                )}
-                {...meetingDataState}
-                onDataStateChange={onMeetingDataStateChange}
-                //선택기능
-                dataItemKey={MEETING_ITEM_KEY}
-                selectedField={SELECTED_FIELD}
-                selectable={{
-                  enabled: true,
-                  mode: "single",
-                }}
-                onSelectionChange={onMeetingSelectionChange}
-                //정렬기능
-                sortable={true}
-                onSortChange={onMeetingSortChange}
-                //컬럼순서조정
-                reorderable={true}
-                //컬럼너비조정
-                resizable={true}
-                //행 더블클릭
-                onRowDoubleClick={onMeetingRowDoubleClick}
-              >
-                <GridColumn
-                  field="recdt"
-                  title="작성일"
-                  cell={DateCell}
-                  footerCell={meetingTotalFooterCell}
-                  width={100}
-                />
-                <GridColumn field="title" title="제목" />
-              </Grid>
-            </GridContainer>
-          </GridContainerWrap>
-        </GridContainer>
-      </GridContainerWrap>
-    </GridContainer>
+                  {...questionDataState}
+                  onDataStateChange={onQuestionDataStateChange}
+                  //선택기능
+                  dataItemKey={QUESTION_ITEM_KEY}
+                  selectedField={SELECTED_FIELD}
+                  selectable={{
+                    enabled: true,
+                    mode: "single",
+                  }}
+                  onSelectionChange={onQuestionSelectionChange}
+                  //정렬기능
+                  sortable={true}
+                  onSortChange={onQuestionSortChange}
+                  //컬럼순서조정
+                  reorderable={true}
+                  //컬럼너비조정
+                  resizable={true}
+                  //행 더블클릭
+                  onRowDoubleClick={onQuestionRowDoubleClick}
+                >
+                  <GridColumn
+                    field="request_date"
+                    title="날짜"
+                    cell={DateCell}
+                    footerCell={questionTotalFooterCell}
+                    width={100}
+                  />
+                  <GridColumn
+                    field="user_name"
+                    title="질문자"
+                    cell={CenterCell}
+                    width={65}
+                  />
+                  <GridColumn field="title" title="제목" />
+                  <GridColumn
+                    field="status"
+                    title="상태"
+                    width={80}
+                    cell={QnAStateCell}
+                  />
+                </Grid>
+              </GridContainer>
+              <GridContainer>
+                <GridTitleContainer>
+                  <GridTitle theme={currentTheme}>프로젝트 진행 현황</GridTitle>
+                </GridTitleContainer>
+                <Grid
+                  style={{ height: "calc(100% - 35px)" }}
+                  data={process(
+                    projectDataResult.data.map((row) => ({
+                      ...row,
+                      [SELECTED_FIELD]:
+                        projectSelectedState[projectIdGetter(row)],
+                    })),
+                    projectDataState
+                  )}
+                  {...projectDataState}
+                  onDataStateChange={onProjectDataStateChange}
+                  //선택기능
+                  dataItemKey={PROJECT_ITEM_KEY}
+                  selectedField={SELECTED_FIELD}
+                  selectable={{
+                    enabled: true,
+                    mode: "single",
+                  }}
+                  onSelectionChange={onProjectSelectionChange}
+                  //정렬기능
+                  sortable={true}
+                  onSortChange={onProjectSortChange}
+                  //컬럼순서조정
+                  reorderable={true}
+                  //컬럼너비조정
+                  resizable={true}
+                  //행 더블클릭
+                  onRowDoubleClick={onProjectRowDoubleClick}
+                >
+                  <GridColumn
+                    field="project"
+                    title="프로젝트"
+                    footerCell={projectTotalFooterCell}
+                  />
+                  <GridColumn
+                    field="progress"
+                    title="진행률"
+                    width={80}
+                    cell={CenterCell}
+                  />
+                </Grid>
+              </GridContainer>
+              <GridContainer>
+                <GridTitleContainer>
+                  <GridTitle theme={currentTheme}>회의록</GridTitle>
+                </GridTitleContainer>
+                <Grid
+                  style={{ height: "calc(100% - 35px)" }}
+                  data={process(
+                    meetingDataResult.data.map((row) => ({
+                      ...row,
+                      [SELECTED_FIELD]:
+                        meetingSelectedState[meetingIdGetter(row)],
+                    })),
+                    meetingDataState
+                  )}
+                  {...meetingDataState}
+                  onDataStateChange={onMeetingDataStateChange}
+                  //선택기능
+                  dataItemKey={MEETING_ITEM_KEY}
+                  selectedField={SELECTED_FIELD}
+                  selectable={{
+                    enabled: true,
+                    mode: "single",
+                  }}
+                  onSelectionChange={onMeetingSelectionChange}
+                  //정렬기능
+                  sortable={true}
+                  onSortChange={onMeetingSortChange}
+                  //컬럼순서조정
+                  reorderable={true}
+                  //컬럼너비조정
+                  resizable={true}
+                  //행 더블클릭
+                  onRowDoubleClick={onMeetingRowDoubleClick}
+                >
+                  <GridColumn
+                    field="recdt"
+                    title="작성일"
+                    cell={DateCell}
+                    footerCell={meetingTotalFooterCell}
+                    width={100}
+                  />
+                  <GridColumn field="title" title="제목" />
+                </Grid>
+              </GridContainer>
+            </GridContainerWrap>
+          </GridContainer>
+        </GridContainerWrap>
+      </GridContainer>
+      {noticeWindowVisible && (
+        <NoticeWindow
+          setVisible={setNoticeWindowVisible}
+          current={currentPopup}
+          data={noticeDataResult}
+          setPara={() => setCurrentPopup(currentPopup + 1)}
+        />
+      )}
+    </>
   );
 };
 

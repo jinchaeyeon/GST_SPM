@@ -1,18 +1,20 @@
-import { createContext, useContext, useEffect, useRef, useState } from "react";
-import * as React from "react";
+import { DataResult, State, getter, process } from "@progress/kendo-data-query";
+import { Button } from "@progress/kendo-react-buttons";
 import { Window, WindowMoveEvent } from "@progress/kendo-react-dialogs";
 import {
-  GridDataStateChangeEvent,
-  getSelectedState,
-  GridSelectionChangeEvent,
-  GridItemChangeEvent,
   Grid,
-  GridColumn,
   GridCellProps,
+  GridColumn,
+  GridDataStateChangeEvent,
+  GridItemChangeEvent,
+  GridSelectionChangeEvent,
+  getSelectedState,
 } from "@progress/kendo-react-grid";
-import { DataResult, process, State, getter } from "@progress/kendo-data-query";
+import { bytesToBase64 } from "byte-base64";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
+import { useRecoilState, useSetRecoilState } from "recoil";
 import { v4 as uuidv4 } from "uuid";
-import { useApi } from "../../../hooks/api";
 import {
   BottomContainer,
   ButtonContainer,
@@ -21,8 +23,19 @@ import {
   GridTitle,
   GridTitleContainer,
 } from "../../../CommonStyled";
-import { Button } from "@progress/kendo-react-buttons";
+import { useApi } from "../../../hooks/api";
 import { IWindowPosition } from "../../../hooks/interfaces";
+import { isLoading, loginResultState } from "../../../store/atoms";
+import {
+  dataTypeColumns,
+  dataTypeColumns2,
+  userColumns,
+} from "../../../store/columns/common-columns";
+import { Iparameters, TEditorHandle } from "../../../store/types";
+import CheckBoxReadOnlyCell from "../../Cells/CheckBoxReadOnlyCell";
+import ComboBoxCell from "../../Cells/ComboBoxCell";
+import DateCell from "../../Cells/DateCell";
+import NumberCell from "../../Cells/NumberCell";
 import {
   UseParaPc,
   convertDateToStr,
@@ -30,25 +43,11 @@ import {
   getGridItemChangedData,
 } from "../../CommonFunction";
 import { EDIT_FIELD, SELECTED_FIELD } from "../../CommonString";
-import { useRecoilState, useSetRecoilState } from "recoil";
-import { isLoading, loginResultState } from "../../../store/atoms";
 import { CellRender, RowRender } from "../../Renderers/Renderers";
-import { Iparameters, TEditorHandle } from "../../../store/types";
-import DateCell from "../../Cells/DateCell";
-import NumberCell from "../../Cells/NumberCell";
 import RequiredHeader from "../../RequiredHeader";
 import RichEditor from "../../RichEditor";
-import { bytesToBase64 } from "byte-base64";
-import ComboBoxCell from "../../Cells/ComboBoxCell";
-import {
-  dataTypeColumns,
-  dataTypeColumns2,
-  userColumns,
-} from "../../../store/columns/common-columns";
-import PopUpAttachmentsWindow from "./PopUpAttachmentsWindow";
-import CheckBoxReadOnlyCell from "../../Cells/CheckBoxReadOnlyCell";
 import ErrorWindow from "./ErrorWindow";
-import { useLocation } from "react-router-dom";
+import PopUpAttachmentsWindow from "./PopUpAttachmentsWindow";
 
 type IKendoWindow = {
   setVisible(t: boolean): void;
@@ -427,7 +426,8 @@ const KendoWindow = ({
         key != "passwordExpirationInfo" &&
         key != "accessToken" &&
         key != "loginResult" &&
-        key != "refreshToken"
+        key != "refreshToken" &&
+        key != "PopUpNotices"
       ) {
         localStorage.removeItem(key);
       }
@@ -1556,7 +1556,8 @@ const KendoWindow = ({
               key != "passwordExpirationInfo" &&
               key != "accessToken" &&
               key != "loginResult" &&
-              key != "refreshToken"
+              key != "refreshToken" &&
+              key != "PopUpNotices"
             ) {
               localStorage.removeItem(key);
             }
@@ -1756,7 +1757,8 @@ const KendoWindow = ({
             key != "passwordExpirationInfo" &&
             key != "accessToken" &&
             key != "loginResult" &&
-            key != "refreshToken"
+            key != "refreshToken" &&
+            key != "PopUpNotices"
           ) {
             localStorage.removeItem(key);
           }
@@ -2043,7 +2045,12 @@ const KendoWindow = ({
             다운로드
           </Button>
         </ButtonContainer>
-        <RichEditor id="refEditor" ref={refEditorRef} key={Object.getOwnPropertyNames(selectedState)[0]} change={onChanges} />
+        <RichEditor
+          id="refEditor"
+          ref={refEditorRef}
+          key={Object.getOwnPropertyNames(selectedState)[0]}
+          change={onChanges}
+        />
       </GridContainer>
       <BottomContainer>
         <ButtonContainer>

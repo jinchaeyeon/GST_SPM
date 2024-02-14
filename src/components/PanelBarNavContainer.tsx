@@ -4,6 +4,11 @@ import {
   PanelBarItem,
   PanelBarSelectEventArguments,
 } from "@progress/kendo-react-layout";
+import { ListView, ListViewItemProps } from "@progress/kendo-react-listview";
+import { Popup } from "@progress/kendo-react-popup";
+import { getAnalytics } from "firebase/analytics";
+import { initializeApp } from "firebase/app";
+import { getMessaging, getToken, onMessage } from "firebase/messaging";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useThemeSwitcher } from "react-css-theme-switcher";
 import { useHistory, withRouter } from "react-router-dom";
@@ -37,11 +42,6 @@ import Loading from "./Loading";
 import ChangePasswordWindow from "./Windows/CommonWindows/ChangePasswordWindow";
 import SystemOptionWindow from "./Windows/CommonWindows/SystemOptionWindow";
 import UserOptionsWindow from "./Windows/CommonWindows/UserOptionsWindow";
-import { Popup } from "@progress/kendo-react-popup";
-import { ListView, ListViewItemProps } from "@progress/kendo-react-listview";
-import { getMessaging, getToken, onMessage } from "firebase/messaging";
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
 
 const firebaseConfig = {
   apiKey: process.env.REACT_APP_API_KEY,
@@ -313,7 +313,8 @@ const PanelBarNavContainer = (props: any) => {
         key != "passwordExpirationInfo" &&
         key != "accessToken" &&
         key != "loginResult" &&
-        key != "refreshToken"
+        key != "refreshToken" &&
+        key != "PopUpNotices"
       ) {
         localStorage.removeItem(key);
       }
@@ -503,7 +504,7 @@ const PanelBarNavContainer = (props: any) => {
     return <Loader />;
   }
 
-  const onClick = (e: { stopPropagation: () => void; }) => {
+  const onClick = (e: { stopPropagation: () => void }) => {
     e.stopPropagation(); // 이벤트 캡쳐링 방지
     setShow(!show);
   };
@@ -631,7 +632,11 @@ const PanelBarNavContainer = (props: any) => {
 
   return (
     <>
-      <Wrapper onClick={() => setShow(false)} isMobileMenuOpend={isMobileMenuOpend} theme={currentTheme}>
+      <Wrapper
+        onClick={() => setShow(false)}
+        isMobileMenuOpend={isMobileMenuOpend}
+        theme={currentTheme}
+      >
         <Modal isMobileMenuOpend={isMobileMenuOpend} onClick={onMenuBtnClick} />
         {isMenuOpend ? (
           <Gnv isMobileMenuOpend={isMobileMenuOpend} theme={currentTheme}>

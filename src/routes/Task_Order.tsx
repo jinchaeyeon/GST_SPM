@@ -597,7 +597,8 @@ const App = () => {
         key != "passwordExpirationInfo" &&
         key != "accessToken" &&
         key != "loginResult" &&
-        key != "refreshToken"
+        key != "refreshToken" &&
+        key != "PopUpNotices"
       ) {
         localStorage.removeItem(key);
       }
@@ -737,7 +738,8 @@ const App = () => {
         key != "passwordExpirationInfo" &&
         key != "accessToken" &&
         key != "loginResult" &&
-        key != "refreshToken"
+        key != "refreshToken" &&
+        key != "PopUpNotices"
       ) {
         localStorage.removeItem(key);
       }
@@ -2185,7 +2187,8 @@ const App = () => {
           key != "passwordExpirationInfo" &&
           key != "accessToken" &&
           key != "loginResult" &&
-          key != "refreshToken"
+          key != "refreshToken" &&
+          key != "PopUpNotices"
         ) {
           localStorage.removeItem(key);
         }
@@ -3308,7 +3311,8 @@ const App = () => {
               key != "passwordExpirationInfo" &&
               key != "accessToken" &&
               key != "loginResult" &&
-              key != "refreshToken"
+              key != "refreshToken" &&
+              key != "PopUpNotices"
             ) {
               localStorage.removeItem(key);
             }
@@ -3543,7 +3547,8 @@ const App = () => {
             key != "passwordExpirationInfo" &&
             key != "accessToken" &&
             key != "loginResult" &&
-            key != "refreshToken"
+            key != "refreshToken" &&
+            key != "PopUpNotices"
           ) {
             localStorage.removeItem(key);
           }
