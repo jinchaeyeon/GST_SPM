@@ -880,9 +880,7 @@ const App = () => {
   };
 
   const getAttachmentsDataA = (
-    data: any,
-    fileList?: FileList | any[],
-    savenmList?: string[]
+    data: any
   ) => {
     setDetailData((prev) => ({
       ...prev,

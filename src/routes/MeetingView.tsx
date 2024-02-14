@@ -403,13 +403,17 @@ const App = () => {
   useEffect(() => {
     setTitle("회의록 열람");
   }, []);
-  const getAttachmentsData = (data: IAttachmentData) => {
+
+  const getAttachmentsData = (data: any) => {
     setDetailData((prev) => ({
       ...prev,
-      attdatnum: data.attdatnum,
+      attdatnum: data.length > 0 ? data[0].attdatnum : prev.attdatnum,
       files:
-        data.original_name +
-        (data.rowCount > 1 ? " 등 " + String(data.rowCount) + "건" : ""),
+        data.length > 1
+          ? data[0].realnm + " 등 " + String(data.length) + "건"
+          : data.length == 0
+          ? ""
+          : data[0].realnm,
     }));
   };
 

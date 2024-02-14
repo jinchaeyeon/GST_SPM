@@ -272,7 +272,7 @@ const KendoWindow = ({
 
     setLoading(true);
 
-    let response: any;
+    let response: any; 
 
     parameters.forEach(async (parameter: any) => {
       try {

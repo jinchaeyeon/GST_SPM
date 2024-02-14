@@ -54,7 +54,6 @@ import RichEditor from "../components/RichEditor";
 import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
 import SignWindow from "../components/Windows/CommonWindows/SignWindow";
 import { useApi } from "../hooks/api";
-import { IAttachmentData } from "../hooks/interfaces";
 import {
   deletedAttadatnumsState,
   isLoading,
@@ -301,23 +300,15 @@ const App = () => {
     setLoading(true);
 
     const para = {
-      para: `list?fromDate=${
-        convertDateToStr(filters.fromDate)
-      }&toDate=${
-        convertDateToStr(filters.toDate)
-      }&contents=${
+      para: `list?fromDate=${convertDateToStr(
+        filters.fromDate
+      )}&toDate=${convertDateToStr(filters.toDate)}&contents=${
         filters.contents
       }&type=${
         filters.type?.sub_code ?? ""
-      }&customerName=${
-        ""
-      }&find_row_value=${
-        filters.findRowValue
-      }&page=${
+      }&customerName=${""}&find_row_value=${filters.findRowValue}&page=${
         filters.pgNum
-      }&pageSize=${
-        filters.pgSize
-      }`,
+      }&pageSize=${filters.pgSize}`,
     };
 
     try {
@@ -465,22 +456,16 @@ const App = () => {
     );
   };
 
-  const getAttachmentsData = (data: IAttachmentData) => {
-    if (
-      !detailData.attdatnum &&
-      !unsavedAttadatnums.attdatnums.includes(detailData.attdatnum)
-    ) {
-      setUnsavedAttadatnums((prev) => ({
-        type: [...prev.type, "sharedDocument"],
-        attdatnums: [...prev.attdatnums, ...[data.attdatnum]],
-      }));
-    }
+  const getAttachmentsData = (data: any) => {
     setDetailData((prev) => ({
       ...prev,
-      attdatnum: data.attdatnum,
+      attdatnum: data.length > 0 ? data[0].attdatnum : prev.attdatnum,
       files:
-        data.original_name +
-        (data.rowCount > 1 ? " 등 " + String(data.rowCount) + "건" : ""),
+        data.length > 1
+          ? data[0].realnm + " 등 " + String(data.length) + "건"
+          : data.length == 0
+          ? ""
+          : data[0].realnm,
     }));
   };
 

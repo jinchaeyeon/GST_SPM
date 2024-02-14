@@ -1,21 +1,19 @@
-import { useRecoilState } from "recoil";
-import { loginResultState } from "../store/atoms";
 import axios from "axios";
+import { useRecoilState } from "recoil";
 import { resetLocalStorage } from "../components/CommonFunction";
+import { loginResultState } from "../store/atoms";
 
 let BASE_URL = process.env.REACT_APP_API_URL;
-const cachios = require("cachios");
 const domain: any = {
   //알림
-  "alert": { action: "post", url: "api/spm/:para" },
-  
+  alert: { action: "post", url: "api/spm/:para" },
+
   //QnA
   "qna-list": { action: "get", url: "api/spm/qna/:para" },
   "qna-detail": { action: "get", url: "api/spm/qna/:id" },
   "qna-save": { action: "post", url: "api/spm/:para" },
   "qna-delete": { action: "delete", url: "api/spm/qna/:id" },
- 
-  
+
   //회의록
   "meeting-list": { action: "get", url: "api/spm/meeting/:para" },
   "meeting-detail": { action: "get", url: "api/spm/meeting/:para" },
@@ -23,14 +21,14 @@ const domain: any = {
   "meeting-delete": { action: "delete", url: "api/spm/meeting/:id" },
 
   // 처리일지
-  "document": { action: "get", url: "api/spm/:para" },
+  document: { action: "get", url: "api/spm/:para" },
 
   //업무지시
   "taskorder-save": { action: "post", url: "api/spm/task-order" },
-  "answer": { action: "post", url: "api/spm/answer" },
+  answer: { action: "post", url: "api/spm/answer" },
 
   //접수 및 답변
-  "receptions-save" : { action: "post", url: "api/spm/reception"},
+  "receptions-save": { action: "post", url: "api/spm/reception" },
 
   // 공지사항
   "notice-list": { action: "get", url: "api/spm/notice/:para" },
@@ -39,10 +37,19 @@ const domain: any = {
   "notice-delete": { action: "delete", url: "api/spm/notice/:id" },
 
   // 공유문서
-  "shared_document-list": { action: "get", url: "api/spm/shared-document/:para" },
-  "shared_document-detail": { action: "get", url: "api/spm/shared-document/:id" },
+  "shared_document-list": {
+    action: "get",
+    url: "api/spm/shared-document/:para",
+  },
+  "shared_document-detail": {
+    action: "get",
+    url: "api/spm/shared-document/:id",
+  },
   "shared_document-save": { action: "post", url: "api/spm/shared-document" },
-  "shared_document-delete": { action: "delete", url: "api/spm/shared-document/:id" },
+  "shared_document-delete": {
+    action: "delete",
+    url: "api/spm/shared-document/:id",
+  },
 
   // 홈화면
   "home-general": { action: "get", url: "api/spm/home/general" },
@@ -146,17 +153,9 @@ const addRefreshSubscriber = (callback: any) => {
   refreshSubscribers.push(callback);
 };
 
-const initCache = () => {
-  cachedHttp = cachios.create(axiosInstance, { stdTTL: 30, checkperiod: 120 });
-};
-
 const axiosInstance: any = axios.create({
   baseURL: "/",
   headers: { "Cache-Control": "no-cache" },
-});
-let cachedHttp = cachios.create(axiosInstance, {
-  checkperiod: 120,
-  stdTTL: 30,
 });
 
 const generateUrl = (url: string, params: any) => {
@@ -223,9 +222,6 @@ export const useApi = () => {
         headers = { ...headers, Authorization: `Bearer ${token}` };
       }
 
-      if (info.action != "get") {
-        initCache();
-      }
       const getHeader: any = {
         params: params,
         headers: headers,
@@ -234,10 +230,10 @@ export const useApi = () => {
       if (name === "file-download" || name === "doc-download") {
         getHeader.responseType = "blob";
       }
-      
+
       switch (info.action) {
         case "get":
-          p = cachedHttp.get(url, getHeader);
+          p = axiosInstance.get(url, getHeader);
           break;
         case "post":
           p = axiosInstance.post(url, params, { headers: headers });
