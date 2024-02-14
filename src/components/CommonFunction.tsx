@@ -994,7 +994,9 @@ export const useSysCaption = (key: TSysCaptionKey) => {
 // 로컬 스토리지 아이템 삭제
 export const resetLocalStorage = () => {
   for (let key of Object.keys(localStorage)) {
-    localStorage.removeItem(key);
+    if(key != "PopUpNotices") {
+      localStorage.removeItem(key);
+    }
   }
 };
 
