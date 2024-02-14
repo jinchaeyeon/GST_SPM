@@ -1,9 +1,10 @@
-import axios from "axios";
 import { useRecoilState } from "recoil";
-import { resetLocalStorage } from "../components/CommonFunction";
 import { loginResultState } from "../store/atoms";
+import axios from "axios";
+import { resetLocalStorage } from "../components/CommonFunction";
 
 let BASE_URL = process.env.REACT_APP_API_URL;
+const cachios = require("cachios");
 const domain: any = {
   //알림
   alert: { action: "post", url: "api/spm/:para" },
@@ -153,9 +154,17 @@ const addRefreshSubscriber = (callback: any) => {
   refreshSubscribers.push(callback);
 };
 
+const initCache = () => {
+  cachedHttp = cachios.create(axiosInstance, { stdTTL: 30, checkperiod: 120 });
+};
+
 const axiosInstance: any = axios.create({
   baseURL: "/",
   headers: { "Cache-Control": "no-cache" },
+});
+let cachedHttp = cachios.create(axiosInstance, {
+  checkperiod: 120,
+  stdTTL: 30,
 });
 
 const generateUrl = (url: string, params: any) => {
@@ -222,6 +231,9 @@ export const useApi = () => {
         headers = { ...headers, Authorization: `Bearer ${token}` };
       }
 
+      if (info.action != "get") {
+        initCache();
+      }
       const getHeader: any = {
         params: params,
         headers: headers,
@@ -229,11 +241,14 @@ export const useApi = () => {
 
       if (name === "file-download" || name === "doc-download") {
         getHeader.responseType = "blob";
+        // 캐싱 방지용 타임스탬프
+        url +=
+          (url.includes("?") ? "&" : "?") + "timestamp=" + new Date().getTime();
       }
 
       switch (info.action) {
         case "get":
-          p = axiosInstance.get(url, getHeader);
+          p = cachedHttp.get(url, getHeader);
           break;
         case "post":
           p = axiosInstance.post(url, params, { headers: headers });
