@@ -20,9 +20,10 @@ type IWindow = {
   current: any;
   data: any;
   setPara(): void;
+  modal? : boolean;
 };
 
-const NoticeWindow = ({ setVisible, current, data, setPara }: IWindow) => {
+const NoticeWindow = ({ setVisible, current, data, setPara, modal = false }: IWindow) => {
   const processApi = useApi();
   const [loginResult] = useRecoilState(loginResultState);
   const isAdmin = loginResult && loginResult.role === "ADMIN";
@@ -112,6 +113,7 @@ const NoticeWindow = ({ setVisible, current, data, setPara }: IWindow) => {
       onMove={handleMove}
       onResize={handleResize}
       onClose={onClose}
+      modal={modal}
     >
       <GridContainer height={`calc(100% - 70px)`}>
         <RichEditor

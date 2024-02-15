@@ -708,6 +708,7 @@ const Main: React.FC = () => {
           current={currentPopup}
           data={noticeDataResult}
           setPara={() => setCurrentPopup(currentPopup + 1)}
+          modal={true}
         />
       )}
     </>
