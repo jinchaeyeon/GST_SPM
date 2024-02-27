@@ -6,11 +6,10 @@ import {
   Grid,
   GridColumn,
   GridDataStateChangeEvent,
-  GridEvent,
   GridFooterCellProps,
   GridPageChangeEvent,
   GridRowDoubleClickEvent,
-  GridSelectionChangeEvent,
+  GridSelectionChangeEvent
 } from "@progress/kendo-react-grid";
 import { Input } from "@progress/kendo-react-inputs";
 import { bytesToBase64 } from "byte-base64";
@@ -33,27 +32,18 @@ import {
 } from "../CommonStyled";
 import CenterCell from "../components/Cells/CenterCell";
 import {
-  chkScrollHandler,
   convertDateToStr,
   dateformat2,
   handleKeyPressSearch,
   isWithinOneMonth,
   toDate,
-  UseParaPc,
+  UseParaPc
 } from "../components/CommonFunction";
-import {
-  GAP,
-  PAGE_SIZE,
-  SELECTED_FIELD
-} from "../components/CommonString";
+import { GAP, PAGE_SIZE, SELECTED_FIELD } from "../components/CommonString";
 import RichEditor from "../components/RichEditor";
 import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
 import { useApi } from "../hooks/api";
-import {
-  isLoading,
-  loginResultState,
-  titles
-} from "../store/atoms";
+import { isLoading, loginResultState, titles } from "../store/atoms";
 import { TEditorHandle } from "../store/types";
 
 const DraggableGridRowRender = (properties: any) => {
@@ -227,11 +217,13 @@ const App = () => {
   };
 
   useEffect(() => {
-    fetchAllCust();
+    if (localStorage.getItem("accessToken")) {
+      fetchAllCust();
+    }
   }, [refCustData]);
 
   useEffect(() => {
-    if (filters.isFetch) {
+    if (filters.isFetch && localStorage.getItem("accessToken")) {
       const _ = require("lodash");
       const deepCopiedFilters = _.cloneDeep(filters);
 
@@ -249,8 +241,10 @@ const App = () => {
   }, [filters]);
 
   useEffect(() => {
-    const mainDataId = Object.getOwnPropertyNames(selectedState)[0];
-    if (mainDataId) fetchDetail();
+    if (localStorage.getItem("accessToken")) {
+      const mainDataId = Object.getOwnPropertyNames(selectedState)[0];
+      if (mainDataId) fetchDetail();
+    }
   }, [selectedState]);
 
   const onMainDataStateChange = (event: GridDataStateChangeEvent) => {
@@ -287,16 +281,18 @@ const App = () => {
 
   /* 푸시 알림 클릭시 이동 테스트 코드 */
   useEffect(() => {
-    const queryParams = new URLSearchParams(location.search);
-    if (queryParams.has("go")) {
-      history.replace({}, "");
-      setFilters((prev) => ({
-        ...prev,
-        isFetch: true,
-        findRowValue: queryParams.get("go") as string,
-      }));
+    if (localStorage.getItem("accessToken")) {
+      const queryParams = new URLSearchParams(location.search);
+      if (queryParams.has("go")) {
+        history.replace({}, "");
+        setFilters((prev) => ({
+          ...prev,
+          isFetch: true,
+          findRowValue: queryParams.get("go") as string,
+        }));
+      }
+      setTitle("공지사항");
     }
-    setTitle("공지사항");
   }, []);
 
   //그리드 데이터 조회
@@ -888,8 +884,8 @@ const App = () => {
   };
 
   const onAlertClick = async () => {
-    if(mainDataResult.data.length > 0) {
-      if(detailData.work_type == "N"){
+    if (mainDataResult.data.length > 0) {
+      if (detailData.work_type == "N") {
         alert("신규 데이터는 공지 알림 전송이 불가능합니다.");
       } else {
         if (!window.confirm("알림을 전송하시겠습니까?")) {
@@ -906,9 +902,9 @@ const App = () => {
         }
       }
     } else {
-      alert("선택된 행이 없습니다.")
+      alert("선택된 행이 없습니다.");
     }
-  }
+  };
   return (
     <>
       <TitleContainer>
@@ -1092,17 +1088,17 @@ const App = () => {
                     />
                   </td>
                   {isAdmin && (
-              <td>
-                              <Button
-                    icon={"notification"}
-                    onClick={onAlertClick}
-                    themeColor={"primary"}
-                    fillMode={"outline"}
-                  >
-                    공지 알림 전송
-                  </Button>
-              </td>
-            )}
+                    <td>
+                      <Button
+                        icon={"notification"}
+                        onClick={onAlertClick}
+                        themeColor={"primary"}
+                        fillMode={"outline"}
+                      >
+                        공지 알림 전송
+                      </Button>
+                    </td>
+                  )}
                 </tr>
               </tbody>
             </FormBox>

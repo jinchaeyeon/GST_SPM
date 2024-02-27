@@ -1,7 +1,6 @@
 import { Button } from "@progress/kendo-react-buttons";
 import { Window, WindowMoveEvent } from "@progress/kendo-react-dialogs";
 import { Checkbox } from "@progress/kendo-react-inputs";
-import Cookies from "js-cookie";
 import { useEffect, useRef, useState } from "react";
 import { useRecoilState } from "recoil";
 import {
@@ -20,10 +19,16 @@ type IWindow = {
   current: any;
   data: any;
   setPara(): void;
-  modal? : boolean;
+  modal?: boolean;
 };
 
-const NoticeWindow = ({ setVisible, current, data, setPara, modal = false }: IWindow) => {
+const NoticeWindow = ({
+  setVisible,
+  current,
+  data,
+  setPara,
+  modal = false,
+}: IWindow) => {
   const processApi = useApi();
   const [loginResult] = useRecoilState(loginResultState);
   const isAdmin = loginResult && loginResult.role === "ADMIN";

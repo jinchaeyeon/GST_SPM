@@ -190,9 +190,11 @@ const App = () => {
   };
 
   useEffect(() => {
-    // ComboBox에 사용할 코드 리스트 조회
-    fetchTypes();
-    setTitle("공유문서 열람");
+    if (localStorage.getItem("accessToken")) {
+      // ComboBox에 사용할 코드 리스트 조회
+      fetchTypes();
+      setTitle("공유문서 열람");
+    }
   }, []);
 
   const search = () => {
@@ -210,7 +212,7 @@ const App = () => {
   };
 
   useEffect(() => {
-    if (filters.isFetch) {
+    if (filters.isFetch && localStorage.getItem("accessToken")) {
       const _ = require("lodash");
       const deepCopiedFilters = _.cloneDeep(filters);
 
@@ -228,8 +230,10 @@ const App = () => {
   }, [filters]);
 
   useEffect(() => {
-    const mainDataId = Object.getOwnPropertyNames(selectedState)[0];
-    if (mainDataId) fetchDetail();
+    if (localStorage.getItem("accessToken")) {
+      const mainDataId = Object.getOwnPropertyNames(selectedState)[0];
+      if (mainDataId) fetchDetail();
+    }
   }, [selectedState]);
 
   const [typesData, setTypesData] = useState<any[]>([]);

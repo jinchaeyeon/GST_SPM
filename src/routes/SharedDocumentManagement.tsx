@@ -26,7 +26,7 @@ import { Input } from "@progress/kendo-react-inputs";
 import { bytesToBase64 } from "byte-base64";
 import Cookies from "js-cookie";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useHistory, useLocation } from "react-router-dom";
 import { useRecoilState, useSetRecoilState } from "recoil";
 import {
   ButtonContainer,
@@ -124,6 +124,20 @@ const App = () => {
   const location = useLocation();
   const pathname = location.pathname.replace("/", "");
   const processApi = useApi();
+  const history = useHistory();
+
+  useEffect(() => {
+    // 접근 권한 검증
+    if (loginResult) {
+      const role = loginResult ? loginResult.role : "";
+      const isAdmin = role === "ADMIN";
+
+      if (!isAdmin && localStorage.getItem("accessToken")) {
+        alert("접근 권한이 없습니다.");
+        history.goBack();
+      }
+    }
+  }, [loginResult]);
 
   const [attachmentsWindowVisible, setAttachmentsWindowVisible] =
     useState<boolean>(false);
@@ -225,10 +239,12 @@ const App = () => {
   };
 
   useEffect(() => {
-    // ComboBox에 사용할 코드 리스트 조회
-    fetchCustomers();
-    fetchTypes();
-    setTitle("공유문서 관리");
+    if (localStorage.getItem("accessToken")) {
+      // ComboBox에 사용할 코드 리스트 조회
+      fetchCustomers();
+      fetchTypes();
+      setTitle("공유문서 관리");
+    }
   }, []);
 
   const search = () => {
@@ -244,7 +260,7 @@ const App = () => {
   };
 
   useEffect(() => {
-    if (filters.isFetch) {
+    if (filters.isFetch && localStorage.getItem("accessToken")) {
       const _ = require("lodash");
       const deepCopiedFilters = _.cloneDeep(filters);
 
@@ -262,8 +278,10 @@ const App = () => {
   }, [filters]);
 
   useEffect(() => {
-    const mainDataId = Object.getOwnPropertyNames(selectedState)[0];
-    if (mainDataId) fetchDetail();
+    if (localStorage.getItem("accessToken")) {
+      const mainDataId = Object.getOwnPropertyNames(selectedState)[0];
+      if (mainDataId) fetchDetail();
+    }
   }, [selectedState]);
 
   const [customersData, setCustomersData] = useState<null | []>(null);

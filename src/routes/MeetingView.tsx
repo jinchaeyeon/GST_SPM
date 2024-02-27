@@ -14,7 +14,8 @@ import {
   GridSelectionChangeEvent,
 } from "@progress/kendo-react-grid";
 import { Input, InputChangeEvent } from "@progress/kendo-react-inputs";
-import { SetStateAction, useEffect, useRef, useState } from "react";
+import { Splitter, SplitterOnChangeEvent } from "@progress/kendo-react-layout";
+import { useEffect, useRef, useState } from "react";
 import { useRecoilState, useSetRecoilState } from "recoil";
 import {
   ButtonContainer,
@@ -43,10 +44,8 @@ import RichEditor from "../components/RichEditor";
 import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
 import SignWindow from "../components/Windows/CommonWindows/SignWindow";
 import { useApi } from "../hooks/api";
-import { IAttachmentData } from "../hooks/interfaces";
 import { filterValueState, isLoading, titles } from "../store/atoms";
 import { TEditorHandle } from "../store/types";
-import { Splitter, SplitterOnChangeEvent } from "@progress/kendo-react-layout";
 
 const DATA_ITEM_KEY = "meetingnum";
 
@@ -357,7 +356,7 @@ const App = () => {
   };
 
   useEffect(() => {
-    if (filters.isFetch) {
+    if (filters.isFetch && localStorage.getItem("accessToken")) {
       const _ = require("lodash");
       const deepCopiedFilters = _.cloneDeep(filters);
 
@@ -376,7 +375,7 @@ const App = () => {
 
   useEffect(() => {
     // 메인 그리드에서 클릭하여 오픈시 조회조건 재설정하여 조회
-    if (filterValue.type === "meeting") {
+    if (filterValue.type === "meeting" && localStorage.getItem("accessToken")) {
       const isExceedFromDate =
         convertDateToStr(fromDate) > filterValue.dataItem.recdt;
 
@@ -395,7 +394,7 @@ const App = () => {
   }, [filterValue]);
 
   useEffect(() => {
-    if (meetingnum !== "") {
+    if (meetingnum !== "" && localStorage.getItem("accessToken")) {
       fetchDetail();
     }
   }, [meetingnum]);

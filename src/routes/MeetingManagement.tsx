@@ -33,6 +33,7 @@ import {
   Input,
   InputChangeEvent,
 } from "@progress/kendo-react-inputs";
+import { Splitter, SplitterOnChangeEvent } from "@progress/kendo-react-layout";
 import { bytesToBase64 } from "byte-base64";
 import React, {
   createContext,
@@ -89,7 +90,6 @@ import { useApi } from "../hooks/api";
 import { ICustData, IPrjData } from "../hooks/interfaces";
 import { isLoading, loginResultState, titles } from "../store/atoms";
 import { TEditorHandle } from "../store/types";
-import { Splitter, SplitterOnChangeEvent } from "@progress/kendo-react-layout";
 
 const DATA_ITEM_KEY = "meetingnum";
 const DETAIL_ITEM_KEY = "meetingseq";
@@ -190,7 +190,7 @@ const App = () => {
       const role = loginResult ? loginResult.role : "";
       const isAdmin = role === "ADMIN";
 
-      if (!isAdmin) {
+      if (!isAdmin && localStorage.getItem("accessToken")) {
         alert("접근 권한이 없습니다.");
         history.goBack();
       }
@@ -997,13 +997,15 @@ const App = () => {
 
   useEffect(() => {
     // ComboBox에 사용할 코드 리스트 조회
-    fetchValueCodes();
-    fetchCustomers();
-    setTitle("회의록 관리");
+    if (localStorage.getItem("accessToken")) {
+      fetchValueCodes();
+      fetchCustomers();
+      setTitle("회의록 관리");
+    }
   }, []);
 
   useEffect(() => {
-    if (filters.isFetch) {
+    if (filters.isFetch && localStorage.getItem("accessToken")) {
       const _ = require("lodash");
       const deepCopiedFilters = _.cloneDeep(filters);
 
@@ -1021,8 +1023,10 @@ const App = () => {
   }, [filters]);
 
   useEffect(() => {
-    const mainDataId = Object.getOwnPropertyNames(selectedState)[0];
-    if (mainDataId) fetchDetail();
+    if (localStorage.getItem("accessToken")) {
+      const mainDataId = Object.getOwnPropertyNames(selectedState)[0];
+      if (mainDataId) fetchDetail();
+    }
   }, [selectedState]);
 
   const getAttachmentsDataPr = (
@@ -2183,7 +2187,11 @@ const App = () => {
               <GridTitleContainer>
                 <GridTitle>참고자료</GridTitle>
               </GridTitleContainer>
-              <RichEditor id="refEditor" key={Object.getOwnPropertyNames(selectedState)[0]} ref={refEditorRef} />
+              <RichEditor
+                id="refEditor"
+                key={Object.getOwnPropertyNames(selectedState)[0]}
+                ref={refEditorRef}
+              />
             </GridContainer>
           </GridContainerWrap>
         ) : (
@@ -2656,7 +2664,12 @@ const App = () => {
                   <GridTitleContainer>
                     <GridTitle>참고자료</GridTitle>
                   </GridTitleContainer>
-                  <RichEditor id="refEditor" ref={refEditorRef} key={Object.getOwnPropertyNames(selectedState)[0]} change={onChanges}/>
+                  <RichEditor
+                    id="refEditor"
+                    ref={refEditorRef}
+                    key={Object.getOwnPropertyNames(selectedState)[0]}
+                    change={onChanges}
+                  />
                 </GridContainer>
               </div>
             </Splitter>

@@ -5,11 +5,7 @@ import {
   Switch,
   useHistory,
 } from "react-router-dom";
-import {
-  RecoilRoot,
-  useRecoilState,
-  useSetRecoilState
-} from "recoil";
+import { RecoilRoot, useRecoilState, useSetRecoilState } from "recoil";
 // import "./index.scss";
 
 import { createGlobalStyle } from "styled-components";
@@ -39,7 +35,7 @@ import {
   isMenuOpendState,
   isMobileMenuOpendState,
   loginResultState,
-  titles
+  titles,
 } from "./store/atoms";
 
 import currencyData from "cldr-core/supplemental/currencyData.json";
@@ -71,11 +67,7 @@ import { ListView, ListViewItemProps } from "@progress/kendo-react-listview";
 import { Popup } from "@progress/kendo-react-popup";
 import { getAnalytics } from "firebase/analytics";
 import { initializeApp } from "firebase/app";
-import {
-  getMessaging,
-  getToken,
-  onMessage
-} from "firebase/messaging";
+import { getMessaging, getToken, onMessage } from "firebase/messaging";
 import { useThemeSwitcher } from "react-css-theme-switcher";
 import { AppName, Header, Logo } from "./CommonStyled";
 import { resetLocalStorage } from "./components/CommonFunction";
@@ -440,7 +432,10 @@ const AppInner: React.FC = () => {
               ) : (
                 <Route path="/" component={Login} exact />
               )}
-              <div style={{backgroundColor: "white"}} onClick={() => setShow(false)}>
+              <div
+                style={{ backgroundColor: "white" }}
+                onClick={() => setShow(false)}
+              >
                 <Header>
                   <AppName theme={currentTheme}>
                     <Button
@@ -553,7 +548,7 @@ const AppInner: React.FC = () => {
                     component={SharedDocumentView}
                     exact
                   />
-                  <AuthRoute path="/Error" component={NotFound} exact/>
+                  <AuthRoute path="/Error" component={NotFound} exact />
                 </PanelBarNavContainer>
               </div>
             </Switch>

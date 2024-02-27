@@ -28,7 +28,7 @@ import { Input, TextArea } from "@progress/kendo-react-inputs";
 import { TabStrip, TabStripTab } from "@progress/kendo-react-layout";
 import { bytesToBase64 } from "byte-base64";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useHistory, useLocation } from "react-router-dom";
 import { useRecoilState, useSetRecoilState } from "recoil";
 import {
   ButtonContainer,
@@ -439,6 +439,20 @@ const App = () => {
     });
   };
 
+  const history = useHistory();
+
+  useEffect(() => {
+    // 접근 권한 검증
+    if (loginResult) {
+      const role = loginResult ? loginResult.role : "";
+      const isAdmin = role === "ADMIN";
+
+      if (!isAdmin && localStorage.getItem("accessToken")) {
+        alert("접근 권한이 없습니다.");
+        history.goBack();
+      }
+    }
+  }, [loginResult]);
   const location = useLocation();
   const pathname = location.pathname.replace("/", "");
   let gridRef: any = useRef(null);
@@ -502,13 +516,15 @@ const App = () => {
   };
 
   useEffect(() => {
-    // ComboBox에 사용할 코드 리스트 조회
-    fetchstatus();
-    fetchWorkType();
-    fetchUsers();
-    fetchValueCode();
-    fetchTypeCode();
-    setTitle("처리일지 작성");
+    if (localStorage.getItem("accessToken")) {
+      // ComboBox에 사용할 코드 리스트 조회
+      fetchstatus();
+      fetchWorkType();
+      fetchUsers();
+      fetchValueCode();
+      fetchTypeCode();
+      setTitle("처리일지 작성");
+    }
   }, []);
 
   const fetchWorkType = async () => {
@@ -1087,7 +1103,7 @@ const App = () => {
   };
 
   useEffect(() => {
-    if (filters.isSearch) {
+    if (filters.isSearch && localStorage.getItem("accessToken")) {
       const _ = require("lodash");
       const deepCopiedFilters = _.cloneDeep(filters);
       setFilters((prev) => ({ ...prev, findRowValue: "", isSearch: false })); // 한번만 조회되도록
@@ -1096,7 +1112,7 @@ const App = () => {
   }, [filters]);
 
   useEffect(() => {
-    if (subFilters.isSearch) {
+    if (subFilters.isSearch && localStorage.getItem("accessToken")) {
       const _ = require("lodash");
       const deepCopiedFilters = _.cloneDeep(subFilters);
       setSubFilters((prev) => ({

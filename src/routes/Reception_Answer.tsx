@@ -320,6 +320,19 @@ const App = () => {
   const history = useHistory();
   const location = useLocation();
   const pathname = location.pathname.replace("/", "");
+  useEffect(() => {
+    // 접근 권한 검증
+    if (loginResult) {
+      const role = loginResult ? loginResult.role : "";
+      const isAdmin = role === "ADMIN";
+
+      if (!isAdmin && localStorage.getItem("accessToken")) {
+        alert("접근 권한이 없습니다.");
+        history.goBack();
+      }
+    }
+  }, [loginResult]);
+
   const pageChange = (event: GridPageChangeEvent) => {
     const { page } = event;
 
@@ -737,7 +750,7 @@ const App = () => {
   };
 
   useEffect(() => {
-    if (filters.isSearch) {
+    if (filters.isSearch && localStorage.getItem("accessToken")) {
       const _ = require("lodash");
       const deepCopiedFilters = _.cloneDeep(filters);
       setFilters((prev) => ({ ...prev, isSearch: false })); // 한번만 조회되도록
@@ -746,27 +759,29 @@ const App = () => {
   }, [filters]);
 
   useEffect(() => {
-    // ComboBox에 사용할 코드 리스트 조회
-    fetchValueCode();
-    fetchUsers();
-    fetchReceptionType();
-    const queryParams = new URLSearchParams(location.search);
-    if (queryParams.has("go")) {
-      history.replace({}, "");
-      setFilters((prev) => ({
-        ...prev,
-        isSearch: true,
-        status: [
-          { sub_code: "Wait", code_name: "대기", code: "N" },
-          { sub_code: "Progress", code_name: "진행중", code: "R" },
-          { sub_code: "Hold", code_name: "보류", code: "H" },
-          { sub_code: "Finish", code_name: "완료", code: "Y"}
-        ],
-        receptionist: { user_id: "", user_name: "" },
-        findRowValue: queryParams.get("go") as string,
-      }));
+    if (localStorage.getItem("accessToken")) {
+      // ComboBox에 사용할 코드 리스트 조회
+      fetchValueCode();
+      fetchUsers();
+      fetchReceptionType();
+      const queryParams = new URLSearchParams(location.search);
+      if (queryParams.has("go")) {
+        history.replace({}, "");
+        setFilters((prev) => ({
+          ...prev,
+          isSearch: true,
+          status: [
+            { sub_code: "Wait", code_name: "대기", code: "N" },
+            { sub_code: "Progress", code_name: "진행중", code: "R" },
+            { sub_code: "Hold", code_name: "보류", code: "H" },
+            { sub_code: "Finish", code_name: "완료", code: "Y" },
+          ],
+          receptionist: { user_id: "", user_name: "" },
+          findRowValue: queryParams.get("go") as string,
+        }));
+      }
+      setTitle("접수 및 답변");
     }
-    setTitle("접수 및 답변");
   }, []);
 
   //그리드 푸터
@@ -1549,9 +1564,16 @@ const App = () => {
   };
 
   const onAlertClick = async () => {
-    if(mainDataResult.data.length > 0) {
-      const datas = mainDataResult.data.filter((item) => item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0])[0];
-      if(datas.answer_document_id == "" || datas.answer_document_id == null || datas.answer_document_id == undefined){
+    if (mainDataResult.data.length > 0) {
+      const datas = mainDataResult.data.filter(
+        (item) =>
+          item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
+      )[0];
+      if (
+        datas.answer_document_id == "" ||
+        datas.answer_document_id == null ||
+        datas.answer_document_id == undefined
+      ) {
         alert("답변이 존재하지 않습니다.");
       } else {
         if (!window.confirm("알림을 전송하시겠습니까?")) {
@@ -1568,9 +1590,9 @@ const App = () => {
         }
       }
     } else {
-      alert("선택된 행이 없습니다.")
+      alert("선택된 행이 없습니다.");
     }
-  }
+  };
   return (
     <>
       <TitleContainer>

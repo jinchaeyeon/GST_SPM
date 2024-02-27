@@ -12,10 +12,9 @@ import {
   Grid,
   GridColumn,
   GridDataStateChangeEvent,
-  GridEvent,
   GridFooterCellProps,
   GridPageChangeEvent,
-  GridSelectionChangeEvent,
+  GridSelectionChangeEvent
 } from "@progress/kendo-react-grid";
 import { Input, RadioGroup } from "@progress/kendo-react-inputs";
 import { bytesToBase64 } from "byte-base64";
@@ -41,16 +40,12 @@ import CenterCell from "../components/Cells/CenterCell";
 import CheckCell from "../components/Cells/CheckCell";
 import QnAStateCell from "../components/Cells/QnAStateCell";
 import {
-  chkScrollHandler,
   convertDateToStr,
   dateformat2,
   handleKeyPressSearch,
-  toDate,
+  toDate
 } from "../components/CommonFunction";
-import {
-  PAGE_SIZE,
-  SELECTED_FIELD
-} from "../components/CommonString";
+import { PAGE_SIZE, SELECTED_FIELD } from "../components/CommonString";
 import RichEditor from "../components/RichEditor";
 import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
 import { useApi } from "../hooks/api";
@@ -58,7 +53,7 @@ import {
   filterValueState,
   isLoading,
   loginResultState,
-  titles
+  titles,
 } from "../store/atoms";
 import { TEditorHandle } from "../store/types";
 
@@ -618,7 +613,8 @@ const App = () => {
         "@p_document_id": detailData.document_id,
         "@p_password": "",
         "@p_salt": "",
-        "@p_customer_code": customercode == "" ? loginResult.userId : customercode,
+        "@p_customer_code":
+          customercode == "" ? loginResult.userId : customercode,
         "@p_user_id": loginResult.userId,
         "@p_user_name": detailData.user_name,
         "@p_user_tel": detailData.user_tel,
@@ -641,7 +637,7 @@ const App = () => {
     }
 
     if (data && data.isSuccess === true) {
-      if(detailData.work_type == "N") {
+      if (detailData.work_type == "N") {
         let alerts: any;
         const alertPara = {
           para: `fcm-send?type=Question&id=${data.returnString}`,
@@ -652,7 +648,7 @@ const App = () => {
           alerts = null;
         }
       }
-      
+
       setFileList([]);
       setSavenmList([]);
       // 조회
@@ -749,7 +745,7 @@ const App = () => {
   };
 
   useEffect(() => {
-    if (filters.isFetch) {
+    if (filters.isFetch && localStorage.getItem("accessToken")) {
       const _ = require("lodash");
       const deepCopiedFilters = _.cloneDeep(filters);
 
@@ -768,7 +764,7 @@ const App = () => {
 
   useEffect(() => {
     // 메인 그리드에서 클릭하여 오픈시 조회조건 재설정하여 조회
-    if (filterValue.type === "qna") {
+    if (filterValue.type === "qna" && localStorage.getItem("accessToken")) {
       const isExceedFromDate =
         convertDateToStr(fromDate) > filterValue.dataItem.request_date;
 
@@ -788,44 +784,57 @@ const App = () => {
   }, [filterValue]);
 
   useEffect(() => {
-    const mainDataId = Object.getOwnPropertyNames(selectedState)[0];
+    if (localStorage.getItem("accessToken")) {
+      const mainDataId = Object.getOwnPropertyNames(selectedState)[0];
 
-    if (mainDataId) {
-      fetchDetail();
+      if (mainDataId) {
+        fetchDetail();
+      }
     }
   }, [selectedState]);
 
   useEffect(() => {
     // 미잠금시, 공개여부 공개로 설정
-    if (!detailData.is_lock && detailData.is_public !== "Y") {
+    if (
+      !detailData.is_lock &&
+      detailData.is_public !== "Y" &&
+      localStorage.getItem("accessToken")
+    ) {
       setDetailData((prev) => ({ ...prev, is_public: "Y" }));
     }
   }, [detailData]);
 
   useEffect(() => {
-    if (isDataLocked && detailData.work_type !== "N" && pwInputRef.current) {
+    if (
+      isDataLocked &&
+      detailData.work_type !== "N" &&
+      pwInputRef.current &&
+      localStorage.getItem("accessToken")
+    ) {
       pwInputRef.current.focus();
     }
   }, [isDataLocked, detailData]);
 
   /* 푸시 알림 클릭시 이동 테스트 코드 */
   useEffect(() => {
-    const queryParams = new URLSearchParams(location.search);
-    if (queryParams.has("go")) {
-      history.replace({}, "");
-      setFilters((prev) => ({
-        ...prev,
-        status: [
-          { sub_code: "1", code_name: "대기" },
-          { sub_code: "2", code_name: "진행중" },
-          { sub_code: "4", code_name: "보류" },
-          { sub_code: "8", code_name: "완료" },
-        ],
-        isFetch: true,
-        findRowValue: queryParams.get("go") as string,
-      }));
+    if (localStorage.getItem("accessToken")) {
+      const queryParams = new URLSearchParams(location.search);
+      if (queryParams.has("go")) {
+        history.replace({}, "");
+        setFilters((prev) => ({
+          ...prev,
+          status: [
+            { sub_code: "1", code_name: "대기" },
+            { sub_code: "2", code_name: "진행중" },
+            { sub_code: "4", code_name: "보류" },
+            { sub_code: "8", code_name: "완료" },
+          ],
+          isFetch: true,
+          findRowValue: queryParams.get("go") as string,
+        }));
+      }
+      setTitle("QnA");
     }
-    setTitle("QnA");
   }, []);
 
   const addData = () => {
@@ -879,9 +888,7 @@ const App = () => {
     }));
   };
 
-  const getAttachmentsDataA = (
-    data: any
-  ) => {
+  const getAttachmentsDataA = (data: any) => {
     setDetailData((prev) => ({
       ...prev,
       answer_attdatnum:

@@ -308,14 +308,16 @@ const App = () => {
   };
 
   useEffect(() => {
-    fetchProjectList();
-    fetchProjectItems();
-    setTitle("프로젝트 일정계획");
+    if (localStorage.getItem("accessToken")) {
+      fetchProjectList();
+      fetchProjectItems();
+      setTitle("프로젝트 일정계획");
+    }
   }, []);
 
   useEffect(() => {
     // 메인 그리드에서 클릭하여 오픈시 조회조건 재설정하여 조회
-    if (filterValue.type === "project") {
+    if (filterValue.type === "project" && localStorage.getItem("accessToken")) {
       const { project, devmngnum } = filterValue.dataItem;
       setProjectValue({ project, devmngnum });
       setFilterValue({ type: null, dataItem: {} });
@@ -323,9 +325,13 @@ const App = () => {
   }, [filterValue]);
 
   useEffect(() => {
-    if (projectValue && projectValue.devmngnum) {
+    if (
+      projectValue &&
+      projectValue.devmngnum &&
+      localStorage.getItem("accessToken")
+    ) {
       fetchProjectDetail(projectValue.devmngnum);
-    } else {
+    } else if (localStorage.getItem("accessToken")) {
       // 초기화
       setGridData(process([], gridDataState));
       setTask([]);

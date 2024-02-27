@@ -1,11 +1,23 @@
-import { Route, Redirect, RouteProps } from "react-router-dom";
-// import { useRecoilState } from "recoil";
-// import { tokenState } from "../store/atoms";
+import { Redirect, Route, RouteProps } from "react-router-dom";
+import { useSetRecoilState } from "recoil";
+import { queryState } from "../store/atoms";
 
 function AuthRoute({ component, ...rest }: RouteProps) {
   // const [token] = useRecoilState(tokenState);
   const token = localStorage.getItem("accessToken");
   const isLoggedIn = !!token;
+  const setQueryResult = useSetRecoilState(queryState);
+  const para = window.location.href.split("/")[3];
+
+  function setting() {
+    if (para != "") {
+      setQueryResult(para);
+      return true;
+    } else {
+      return true;
+    }
+  }
+
   function error() {
     const datas = window.location.href.split("?")[0];
     const link = datas.split("/")[3];
@@ -32,7 +44,7 @@ function AuthRoute({ component, ...rest }: RouteProps) {
   return (
     <>
       <Route {...rest} component={component} />
-      {!isLoggedIn && <Redirect to="/" />}
+      {!isLoggedIn && setting() && <Redirect to="/" />}
       {isLoggedIn && error() && <Redirect to="/Error" />}
     </>
   );

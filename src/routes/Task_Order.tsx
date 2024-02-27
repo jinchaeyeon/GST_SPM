@@ -546,6 +546,18 @@ const App = () => {
   const history = useHistory();
   const location = useLocation();
   const pathname = location.pathname.replace("/", "");
+  useEffect(() => {
+    // 접근 권한 검증
+    if (loginResult) {
+      const role = loginResult ? loginResult.role : "";
+      const isAdmin = role === "ADMIN";
+
+      if (!isAdmin && localStorage.getItem("accessToken")) {
+        alert("접근 권한이 없습니다.");
+        history.goBack();
+      }
+    }
+  }, [loginResult]);
 
   const pageChange = (event: GridPageChangeEvent) => {
     const { page } = event;
@@ -1177,55 +1189,57 @@ const App = () => {
   };
 
   useEffect(() => {
-    // ComboBox에 사용할 코드 리스트 조회
-    fetchWorkType();
-    fetchValueCode();
-    fetchUsers();
-    fetchReceptionType();
-    fetchCust();
-    const queryParams = new URLSearchParams(location.search);
-    if (queryParams.has("go")) {
-      const paras = queryParams.get("go") as string;
-      if (paras.includes("-")) {
-        if (paras.split("-")[1].charAt(0) == "D") {
-          setTabSelected(1);
-          setFilters((prev) => ({
-            ...prev,
-            workType: "project",
-            findRowValue: paras,
-            isSearch: true,
-          }));
+    if (localStorage.getItem("accessToken")) {
+      // ComboBox에 사용할 코드 리스트 조회
+      fetchWorkType();
+      fetchValueCode();
+      fetchUsers();
+      fetchReceptionType();
+      fetchCust();
+      const queryParams = new URLSearchParams(location.search);
+      if (queryParams.has("go")) {
+        const paras = queryParams.get("go") as string;
+        if (paras.includes("-")) {
+          if (paras.split("-")[1].charAt(0) == "D") {
+            setTabSelected(1);
+            setFilters((prev) => ({
+              ...prev,
+              workType: "project",
+              findRowValue: paras,
+              isSearch: true,
+            }));
+          } else {
+            setTabSelected(2);
+            setFilters((prev) => ({
+              ...prev,
+              workType: "meeting",
+              findRowValue: paras,
+              isSearch: true,
+            }));
+          }
         } else {
-          setTabSelected(2);
-          setFilters((prev) => ({
-            ...prev,
-            workType: "meeting",
-            findRowValue: paras,
-            isSearch: true,
-          }));
+          if (paras.charAt(0) == "Q") {
+            setTabSelected(0);
+            setFilters((prev) => ({
+              ...prev,
+              workType: "received",
+              findRowValue: paras,
+              isSearch: true,
+            }));
+          } else {
+            setTabSelected(3);
+            setFilters((prev) => ({
+              ...prev,
+              workType: "task_order_all",
+              findRowValue: paras,
+              isSearch: true,
+            }));
+          }
         }
-      } else {
-        if (paras.charAt(0) == "Q") {
-          setTabSelected(0);
-          setFilters((prev) => ({
-            ...prev,
-            workType: "received",
-            findRowValue: paras,
-            isSearch: true,
-          }));
-        } else {
-          setTabSelected(3);
-          setFilters((prev) => ({
-            ...prev,
-            workType: "task_order_all",
-            findRowValue: paras,
-            isSearch: true,
-          }));
-        }
+        history.replace({}, "");
       }
-      history.replace({}, "");
+      setTitle("업무 지시");
     }
-    setTitle("업무 지시");
   }, []);
 
   const fetchCheck = async (str: string) => {
@@ -2001,7 +2015,7 @@ const App = () => {
   };
 
   useEffect(() => {
-    if (filters.isSearch) {
+    if (filters.isSearch && localStorage.getItem("accessToken")) {
       const _ = require("lodash");
       const deepCopiedFilters = _.cloneDeep(filters);
       setFilters((prev) => ({ ...prev, findRowValue: "", isSearch: false })); // 한번만 조회되도록

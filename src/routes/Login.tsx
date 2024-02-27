@@ -1,16 +1,19 @@
 import { Button } from "@progress/kendo-react-buttons";
-import { Form, Field, FormElement } from "@progress/kendo-react-form";
-import { KeyboardEvent, useCallback, useEffect, useState } from "react";
+import { Field, Form, FormElement } from "@progress/kendo-react-form";
+import { useCallback, useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
-import { passwordExpirationInfoState, loginResultState } from "../store/atoms";
-import { useApi } from "../hooks/api";
 import { useRecoilState, useSetRecoilState } from "recoil";
-import { FormInput, FormComboBox, LoginFormInput } from "../components/Editors";
-import { LoginAppName, LoginBox, LoginImg, Logo } from "../CommonStyled";
-import { UseGetIp } from "../components/CommonFunction";
-import { isLoading } from "../store/atoms";
-import Loading from "../components/Loading";
+import { LoginAppName, LoginBox, LoginImg } from "../CommonStyled";
+import { LoginFormInput } from "../components/Editors";
 import Loader from "../components/Loader";
+import Loading from "../components/Loading";
+import { useApi } from "../hooks/api";
+import {
+  isLoading,
+  loginResultState,
+  passwordExpirationInfoState,
+  queryState,
+} from "../store/atoms";
 // import cookie from "react-cookies";
 
 interface IFormData {
@@ -28,6 +31,8 @@ const Login: React.FC = () => {
   const setLoading = useSetRecoilState(isLoading);
   const [isLoaded, setIsLoaded] = useState(false);
   const accessToken = localStorage.getItem("accessToken");
+  const queryResult = useRecoilState(queryState);
+  const setQueryResult = useSetRecoilState(queryState);
 
   useEffect(() => {
     // token 저장되어있으면 홈화면으로 리다이렉션
@@ -68,7 +73,7 @@ const Login: React.FC = () => {
             companyCode: "SPM",
             userId: formData.userId,
             password: formData.password,
-          },
+          }
         );
 
         if (typeof para.companyCode !== "string") {
@@ -116,7 +121,13 @@ const Login: React.FC = () => {
 
         setPwExpInfo(passwordExpirationInfo);
 
-        history.replace("/Home");
+        if (queryResult[0] != "") {
+          history.replace(`/${queryResult[0]}`);
+          setQueryResult("");
+        } else {
+          history.replace("/Home");
+        }
+
         setLoading(false);
       } catch (e: any) {
         console.log("login error", e);
@@ -124,7 +135,7 @@ const Login: React.FC = () => {
         alert(e.message);
       }
     },
-    [],
+    []
   );
 
   if (!isLoaded) {

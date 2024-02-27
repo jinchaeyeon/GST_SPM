@@ -88,6 +88,11 @@ export const fcmTokenState = atom({
   default: "",
 });
 
+export const queryState = atom({
+  key: "queryState",
+  default: "",
+});
+
 // 삭제된 데이터의 첨부파일 번호를 저장하는 용도
 // 값이 set되면  PanelBarNavContainer에서 useEffect로 서버에서 파일을 삭제 처리하도록 함
 export const deletedAttadatnumsState = atom<{

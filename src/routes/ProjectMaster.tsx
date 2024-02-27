@@ -1107,7 +1107,7 @@ const App = () => {
   };
 
   useEffect(() => {
-    if (filters.isSearch) {
+    if (filters.isSearch && localStorage.getItem("accessToken")) {
       const _ = require("lodash");
       const deepCopiedFilters = _.cloneDeep(filters);
       setFilters((prev) => ({ ...prev, find_row_value: "", isSearch: false })); // 한번만 조회되도록
@@ -1116,7 +1116,7 @@ const App = () => {
   }, [filters]);
 
   useEffect(() => {
-    if (subFilters.isSearch) {
+    if (subFilters.isSearch && localStorage.getItem("accessToken")) {
       const _ = require("lodash");
       const deepCopiedFilters = _.cloneDeep(subFilters);
       setSubFilters((prev) => ({
@@ -1129,7 +1129,7 @@ const App = () => {
   }, [subFilters]);
 
   useEffect(() => {
-    if (subFilters2.isSearch) {
+    if (subFilters2.isSearch && localStorage.getItem("accessToken")) {
       const _ = require("lodash");
       const deepCopiedFilters = _.cloneDeep(subFilters2);
       setSubFilters2((prev) => ({
@@ -1353,15 +1353,17 @@ const App = () => {
   };
 
   useEffect(() => {
-    // ComboBox에 사용할 코드 리스트 조회
-    fetchDateType();
-    fetchProgressstatus();
-    fetchstatus();
-    fetchCust();
-    fetchUsers();
-    fetchDevdiv();
-    fetchValueCode();
-    setTitle("프로젝트 마스터");
+    if (localStorage.getItem("accessToken")) {
+      // ComboBox에 사용할 코드 리스트 조회
+      fetchDateType();
+      fetchProgressstatus();
+      fetchstatus();
+      fetchCust();
+      fetchUsers();
+      fetchDevdiv();
+      fetchValueCode();
+      setTitle("프로젝트 마스터");
+    }
   }, []);
 
   const onMainSortChange = (e: any) => {
@@ -2223,7 +2225,8 @@ const App = () => {
           pjtperson:
             information.pjtperson == "" ? "" : information.pjtperson.user_id,
           remark: information.remark,
-          attdatnum: results[0] == undefined ? information.attdatnum : results[0],
+          attdatnum:
+            results[0] == undefined ? information.attdatnum : results[0],
           midchkdt:
             information.midchkdt == null
               ? ""
@@ -2687,25 +2690,27 @@ const App = () => {
   };
 
   useEffect(() => {
-    const pjtmanager: any = usersData.find(
-      (item: any) => item.user_id == information.pjtmanager.user_id
-    );
+    if (localStorage.getItem("accessToken")) {
+      const pjtmanager: any = usersData.find(
+        (item: any) => item.user_id == information.pjtmanager.user_id
+      );
 
-    const pjtperson: any = usersData.find(
-      (item: any) => item.user_id == information.pjtperson.user_id
-    );
+      const pjtperson: any = usersData.find(
+        (item: any) => item.user_id == information.pjtperson.user_id
+      );
 
-    setInformation((prev) => ({
-      ...prev,
-      pjtmanager: {
-        user_id: information.pjtmanager.user_id,
-        user_name: pjtmanager == undefined ? "" : pjtmanager.user_name,
-      },
-      pjtperson: {
-        user_id: information.pjtperson.user_id,
-        user_name: pjtperson == undefined ? "" : pjtperson.user_name,
-      },
-    }));
+      setInformation((prev) => ({
+        ...prev,
+        pjtmanager: {
+          user_id: information.pjtmanager.user_id,
+          user_name: pjtmanager == undefined ? "" : pjtmanager.user_name,
+        },
+        pjtperson: {
+          user_id: information.pjtperson.user_id,
+          user_name: pjtperson == undefined ? "" : pjtperson.user_name,
+        },
+      }));
+    }
   }, [usersData]);
 
   const onItemChange = (event: GridItemChangeEvent) => {
@@ -3457,7 +3462,7 @@ const App = () => {
   return (
     <>
       <TitleContainer>
-        {!isMobile ? ("") : (<Title>프로젝트 마스터</Title>)}
+        {!isMobile ? "" : <Title>프로젝트 마스터</Title>}
         <ButtonContainer>
           <Button onClick={Add} icon="file-add" themeColor={"primary"}>
             신규
