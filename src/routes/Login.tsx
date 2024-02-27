@@ -120,7 +120,7 @@ const Login: React.FC = () => {
         });
 
         setPwExpInfo(passwordExpirationInfo);
-
+    
         if (queryResult[0] != "") {
           history.replace(`/${queryResult[0]}`);
           setQueryResult("");

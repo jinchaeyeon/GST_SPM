@@ -1,4 +1,5 @@
 import { atom, AtomEffect, DefaultValue } from "recoil";
+import { recoilPersist } from "recoil-persist";
 import { DEFAULT_SESSION_ITEM } from "../components/CommonString";
 import {
   TAttachmentType,
@@ -7,6 +8,8 @@ import {
   TPasswordExpirationInfo,
   TSessionItem,
 } from "./types";
+
+const { persistAtom } = recoilPersist();
 
 const localStorageEffect: <T>(key: string) => AtomEffect<T> =
   (key: string) =>
@@ -91,6 +94,7 @@ export const fcmTokenState = atom({
 export const queryState = atom({
   key: "queryState",
   default: "",
+  effects_UNSTABLE: [persistAtom],
 });
 
 // 삭제된 데이터의 첨부파일 번호를 저장하는 용도

@@ -427,7 +427,8 @@ const KendoWindow = ({
         key != "accessToken" &&
         key != "loginResult" &&
         key != "refreshToken" &&
-        key != "PopUpNotices"
+        key != "PopUpNotices" &&
+        key != "recoil-persist"
       ) {
         localStorage.removeItem(key);
       }
@@ -1557,7 +1558,8 @@ const KendoWindow = ({
               key != "accessToken" &&
               key != "loginResult" &&
               key != "refreshToken" &&
-              key != "PopUpNotices"
+              key != "PopUpNotices" &&
+              key != "recoil-persist"
             ) {
               localStorage.removeItem(key);
             }
@@ -1758,7 +1760,8 @@ const KendoWindow = ({
             key != "accessToken" &&
             key != "loginResult" &&
             key != "refreshToken" &&
-            key != "PopUpNotices"
+            key != "PopUpNotices" &&
+            key != "recoil-persist"
           ) {
             localStorage.removeItem(key);
           }

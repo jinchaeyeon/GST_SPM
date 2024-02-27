@@ -345,7 +345,7 @@ axiosInstance.interceptors.response.use(
           resetLocalStorage();
 
           //링크 따라가기 기능을 위한 주석처리
-          //history.push("/");
+          // window.location.href = "/";
 
           return false;
         });

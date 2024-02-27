@@ -1,7 +1,4 @@
-import {
-  GroupResult,
-  getter
-} from "@progress/kendo-data-query";
+import { GroupResult, getter } from "@progress/kendo-data-query";
 import { GridEvent, GridItemChangeEvent } from "@progress/kendo-react-grid";
 import { bytesToBase64 } from "byte-base64";
 import calculateSize from "calculate-size";
@@ -994,7 +991,7 @@ export const useSysCaption = (key: TSysCaptionKey) => {
 // 로컬 스토리지 아이템 삭제
 export const resetLocalStorage = () => {
   for (let key of Object.keys(localStorage)) {
-    if(key != "PopUpNotices") {
+    if (key != "PopUpNotices" && key != "recoil-persist") {
       localStorage.removeItem(key);
     }
   }

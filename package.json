@@ -87,6 +87,7 @@
     "react-spinners": "^0.13.7",
     "react-to-print": "^2.14.8",
     "recoil": "^0.7.3-alpha.2",
+    "recoil-persist": "^5.1.0",
     "sha.js": "^2.4.11",
     "sha256": "^0.2.0",
     "source-map-loader": "^4.0.1",

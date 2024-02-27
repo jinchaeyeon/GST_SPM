@@ -314,7 +314,8 @@ const PanelBarNavContainer = (props: any) => {
         key != "accessToken" &&
         key != "loginResult" &&
         key != "refreshToken" &&
-        key != "PopUpNotices"
+        key != "PopUpNotices" &&
+        key != "recoil-persist"
       ) {
         localStorage.removeItem(key);
       }
