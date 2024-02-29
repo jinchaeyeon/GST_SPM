@@ -25,7 +25,12 @@ import {
   getSelectedState,
 } from "@progress/kendo-react-grid";
 import { Input, RadioGroup } from "@progress/kendo-react-inputs";
-import { TabStrip, TabStripTab } from "@progress/kendo-react-layout";
+import {
+  Splitter,
+  SplitterOnChangeEvent,
+  TabStrip,
+  TabStripTab,
+} from "@progress/kendo-react-layout";
 import { bytesToBase64 } from "byte-base64";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { useHistory, useLocation } from "react-router-dom";
@@ -558,6 +563,15 @@ const App = () => {
       }
     }
   }, [loginResult]);
+
+  const [panes, setPanes] = useState<Array<any>>([
+    { size: "50%", min: "0px", collapsible: true },
+    {},
+  ]);
+
+  const onChange = (event: SplitterOnChangeEvent) => {
+    setPanes(event.newState);
+  };
 
   const pageChange = (event: GridPageChangeEvent) => {
     const { page } = event;
@@ -5099,8 +5113,15 @@ const App = () => {
                   </FilterBox>
                 </FilterBoxWrap>
               </GridContainer>
-              {isVisibleDetail3 && (
-                <GridContainer width={`calc(40% - ${GAP}px)`}>
+              <Splitter
+                panes={panes}
+                onChange={onChange}
+                style={{
+                  width: `calc(85% - ${GAP}px)`,
+                  borderColor: "#00000000",
+                }}
+              >
+                <GridContainer>
                   <GridTitleContainer>
                     <GridTitle>
                       업무지시(접수:
@@ -5348,43 +5369,51 @@ const App = () => {
                     </FilesContext2.Provider>
                   </TypeContext.Provider>
                 </GridContainer>
-              )}
-              <GridContainer
-                width={
-                  isVisibleDetail3
-                    ? `calc(45% - ${GAP}px)`
-                    : `calc(85% - ${GAP}px)`
-                }
-                height={"76.8vh"}
-              >
-                <GridTitleContainer>
-                  <GridTitle>
-                    <Button
-                      themeColor={"primary"}
-                      fillMode={"flat"}
-                      icon={isVisibleDetail3 ? "chevron-left" : "chevron-right"}
-                      onClick={() => setIsVisableDetail3((prev) => !prev)}
-                    ></Button>
-                  </GridTitle>
-                  <ButtonContainer>
-                    <Button
-                      icon={"file-word"}
-                      name="meeting"
-                      onClick={downloadDoc}
-                      themeColor={"primary"}
-                      fillMode={"outline"}
-                    >
-                      다운로드
-                    </Button>
-                  </ButtonContainer>
-                </GridTitleContainer>
-                <RichEditor
-                  id="refEditor"
-                  ref={refEditorRef}
-                  change={onChanges}
-                  key={Object.getOwnPropertyNames(selectedState4)[0]}
-                />
-              </GridContainer>
+                <GridContainer height={"76.8vh"}>
+                  <GridTitleContainer>
+                    <GridTitle>
+                      <Button
+                        themeColor={"primary"}
+                        fillMode={"flat"}
+                        icon={
+                          isVisibleDetail3 ? "chevron-left" : "chevron-right"
+                        }
+                        onClick={() => {
+                          if (isVisibleDetail3 == true) {
+                            setPanes([
+                              { size: "0%", min: "0px", collapsible: true },
+                              {},
+                            ]);
+                          } else {
+                            setPanes([
+                              { size: "50%", min: "0px", collapsible: true },
+                              {},
+                            ]);
+                          }
+                          setIsVisableDetail3((prev) => !prev);
+                        }}
+                      ></Button>
+                    </GridTitle>
+                    <ButtonContainer>
+                      <Button
+                        icon={"file-word"}
+                        name="meeting"
+                        onClick={downloadDoc}
+                        themeColor={"primary"}
+                        fillMode={"outline"}
+                      >
+                        다운로드
+                      </Button>
+                    </ButtonContainer>
+                  </GridTitleContainer>
+                  <RichEditor
+                    id="refEditor"
+                    ref={refEditorRef}
+                    change={onChanges}
+                    key={Object.getOwnPropertyNames(selectedState4)[0]}
+                  />
+                </GridContainer>
+              </Splitter>
             </GridContainerWrap>
           </TabStripTab>
         </TabStrip>

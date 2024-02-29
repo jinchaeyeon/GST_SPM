@@ -25,6 +25,7 @@ import {
   getSelectedState,
 } from "@progress/kendo-react-grid";
 import { Checkbox, Input } from "@progress/kendo-react-inputs";
+import { Splitter, SplitterOnChangeEvent } from "@progress/kendo-react-layout";
 import { bytesToBase64 } from "byte-base64";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { useHistory, useLocation } from "react-router-dom";
@@ -372,6 +373,14 @@ const App = () => {
     if (event) {
       setFilter4(event.filter);
     }
+  };
+  const [panes, setPanes] = useState<Array<any>>([
+    { size: "60%", min: "0px", collapsible: true },
+    {},
+  ]);
+
+  const onChange = (event: SplitterOnChangeEvent) => {
+    setPanes(event.newState);
   };
 
   const search = () => {
@@ -1794,7 +1803,11 @@ const App = () => {
               </FilterBox>
             </FilterBoxWrap>
           </GridContainer>
-          {isVisibleDetail && (
+          <Splitter
+            panes={panes}
+            onChange={onChange}
+            style={{ width: `calc(85% - ${GAP}px)`, borderColor: "#00000000" }}
+          >
             <StatusContext.Provider
               value={{
                 statusListData: statusListData,
@@ -1819,7 +1832,7 @@ const App = () => {
                       // fetchGrid,
                     }}
                   >
-                    <GridContainer width={`calc(40% - ${GAP}px)`}>
+                    <GridContainer>
                       <GridTitleContainer>
                         <GridTitle>업무지시 정보</GridTitle>
                       </GridTitleContainer>
@@ -1983,160 +1996,172 @@ const App = () => {
                 </ValueCodeContext.Provider>
               </UserContext.Provider>
             </StatusContext.Provider>
-          )}
-          <GridContainer
-            width={
-              isVisibleDetail ? `calc(45% - ${GAP}px)` : `calc(85% - ${GAP}px)`
-            }
-            height={isMobile ? "300vh" : "85vh"}
-          >
-            <GridContainer height={isMobile ? "100vh" : "43vh"}>
-              <GridTitleContainer>
-                <GridTitle>
-                  <Button
-                    themeColor={"primary"}
-                    fillMode={"flat"}
-                    icon={isVisibleDetail ? "chevron-left" : "chevron-right"}
-                    onClick={() => setIsVisableDetail((prev) => !prev)}
-                  ></Button>
-                  문의 내용
-                </GridTitle>
-                <ButtonContainer>
-                  <Button
-                    icon={"pencil"}
-                    onClick={onQuestionWndClick}
-                    themeColor={"primary"}
-                    fillMode={"outline"}
-                    disabled={
-                      mainDataResult.data.filter(
-                        (item) =>
-                          item[DATA_ITEM_KEY] ==
-                          Object.getOwnPropertyNames(selectedState)[0]
-                      )[0] == undefined
-                        ? true
-                        : mainDataResult.data.filter(
-                            (item) =>
-                              item[DATA_ITEM_KEY] ==
-                              Object.getOwnPropertyNames(selectedState)[0]
-                          )[0].reception_type == "Q"
-                        ? true
-                        : false
-                    }
-                    style={{ marginTop: "5px" }}
-                  >
-                    수정
-                  </Button>
-                  <Button
-                    icon={"file-word"}
-                    name="meeting"
-                    onClick={downloadDoc}
-                    themeColor={"primary"}
-                    fillMode={"outline"}
-                    style={{ marginTop: "5px" }}
-                  >
-                    다운로드
-                  </Button>
-                </ButtonContainer>
-              </GridTitleContainer>
-              <RichEditor id="docEditor" ref={docEditorRef} hideTools />
-              <FormBoxWrap border={true}>
-                <FormBox>
-                  <tbody>
-                    <tr>
-                      <th style={{ width: "5%" }}>첨부파일</th>
-                      <td>
-                        <Input
-                          name="answer_files"
-                          type="text"
-                          value={
-                            mainDataResult.data.filter(
+            <GridContainer height={isMobile ? "300vh" : "85vh"}>
+              <GridContainer height={isMobile ? "100vh" : "43vh"}>
+                <GridTitleContainer>
+                  <GridTitle>
+                    <Button
+                      themeColor={"primary"}
+                      fillMode={"flat"}
+                      icon={isVisibleDetail ? "chevron-left" : "chevron-right"}
+                      onClick={() => {
+                        if (isVisibleDetail == true) {
+                          setPanes([
+                            { size: "0%", min: "0px", collapsible: true },
+                            {},
+                          ]);
+                        } else {
+                          setPanes([
+                            { size: "60%", min: "0px", collapsible: true },
+                            {},
+                          ]);
+                        }
+                        setIsVisableDetail((prev) => !prev);
+                      }}
+                    ></Button>
+                    문의 내용
+                  </GridTitle>
+                  <ButtonContainer>
+                    <Button
+                      icon={"pencil"}
+                      onClick={onQuestionWndClick}
+                      themeColor={"primary"}
+                      fillMode={"outline"}
+                      disabled={
+                        mainDataResult.data.filter(
+                          (item) =>
+                            item[DATA_ITEM_KEY] ==
+                            Object.getOwnPropertyNames(selectedState)[0]
+                        )[0] == undefined
+                          ? true
+                          : mainDataResult.data.filter(
                               (item) =>
                                 item[DATA_ITEM_KEY] ==
                                 Object.getOwnPropertyNames(selectedState)[0]
-                            )[0] == undefined
-                              ? ""
-                              : mainDataResult.data.filter(
-                                  (item) =>
-                                    item[DATA_ITEM_KEY] ==
-                                    Object.getOwnPropertyNames(selectedState)[0]
-                                )[0].files
-                          }
-                          className="readonly"
-                        />
-                        <ButtonInGridInput>
-                          <Button
-                            onClick={onAttWndClick}
-                            icon="more-horizontal"
-                            fillMode="flat"
+                            )[0].reception_type == "Q"
+                          ? true
+                          : false
+                      }
+                      style={{ marginTop: "5px" }}
+                    >
+                      수정
+                    </Button>
+                    <Button
+                      icon={"file-word"}
+                      name="meeting"
+                      onClick={downloadDoc}
+                      themeColor={"primary"}
+                      fillMode={"outline"}
+                      style={{ marginTop: "5px" }}
+                    >
+                      다운로드
+                    </Button>
+                  </ButtonContainer>
+                </GridTitleContainer>
+                <RichEditor id="docEditor" ref={docEditorRef} hideTools />
+                <FormBoxWrap border={true}>
+                  <FormBox>
+                    <tbody>
+                      <tr>
+                        <th style={{ width: "5%" }}>첨부파일</th>
+                        <td>
+                          <Input
+                            name="answer_files"
+                            type="text"
+                            value={
+                              mainDataResult.data.filter(
+                                (item) =>
+                                  item[DATA_ITEM_KEY] ==
+                                  Object.getOwnPropertyNames(selectedState)[0]
+                              )[0] == undefined
+                                ? ""
+                                : mainDataResult.data.filter(
+                                    (item) =>
+                                      item[DATA_ITEM_KEY] ==
+                                      Object.getOwnPropertyNames(
+                                        selectedState
+                                      )[0]
+                                  )[0].files
+                            }
+                            className="readonly"
                           />
-                        </ButtonInGridInput>
-                      </td>
-                    </tr>
-                  </tbody>
-                </FormBox>
-              </FormBoxWrap>
-            </GridContainer>
-            <GridContainer height={isMobile ? "100vh" : "42vh"}>
-              <GridTitleContainer>
-                <GridTitle>답변내용</GridTitle>
-                <ButtonContainer>
-                  <Button
-                    icon={"pencil"}
-                    onClick={onAnswerWndClick}
-                    themeColor={"primary"}
-                    fillMode={"outline"}
-                  >
-                    수정
-                  </Button>
-                  <Button
-                    icon={"notification"}
-                    onClick={onAlertClick}
-                    themeColor={"primary"}
-                    fillMode={"outline"}
-                  >
-                    답변 알림 전송
-                  </Button>
-                </ButtonContainer>
-              </GridTitleContainer>
-              <RichEditor id="docEditor2" ref={docEditorRef2} hideTools />
-              <FormBoxWrap border={true}>
-                <FormBox>
-                  <tbody>
-                    <tr>
-                      <th style={{ width: "5%" }}>첨부파일</th>
-                      <td>
-                        <Input
-                          name="answer_files"
-                          type="text"
-                          value={
-                            mainDataResult.data.filter(
-                              (item) =>
-                                item[DATA_ITEM_KEY] ==
-                                Object.getOwnPropertyNames(selectedState)[0]
-                            )[0] == undefined
-                              ? ""
-                              : mainDataResult.data.filter(
-                                  (item) =>
-                                    item[DATA_ITEM_KEY] ==
-                                    Object.getOwnPropertyNames(selectedState)[0]
-                                )[0].answer_files
-                          }
-                          className="readonly"
-                        />
-                        <ButtonInGridInput>
-                          <Button
-                            onClick={onAttWndClick3}
-                            icon="more-horizontal"
-                            fillMode="flat"
+                          <ButtonInGridInput>
+                            <Button
+                              onClick={onAttWndClick}
+                              icon="more-horizontal"
+                              fillMode="flat"
+                            />
+                          </ButtonInGridInput>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </FormBox>
+                </FormBoxWrap>
+              </GridContainer>
+              <GridContainer height={isMobile ? "100vh" : "42vh"}>
+                <GridTitleContainer>
+                  <GridTitle>답변내용</GridTitle>
+                  <ButtonContainer>
+                    <Button
+                      icon={"pencil"}
+                      onClick={onAnswerWndClick}
+                      themeColor={"primary"}
+                      fillMode={"outline"}
+                    >
+                      수정
+                    </Button>
+                    <Button
+                      icon={"notification"}
+                      onClick={onAlertClick}
+                      themeColor={"primary"}
+                      fillMode={"outline"}
+                    >
+                      답변 알림 전송
+                    </Button>
+                  </ButtonContainer>
+                </GridTitleContainer>
+                <RichEditor id="docEditor2" ref={docEditorRef2} hideTools />
+                <FormBoxWrap border={true}>
+                  <FormBox>
+                    <tbody>
+                      <tr>
+                        <th style={{ width: "5%" }}>첨부파일</th>
+                        <td>
+                          <Input
+                            name="answer_files"
+                            type="text"
+                            value={
+                              mainDataResult.data.filter(
+                                (item) =>
+                                  item[DATA_ITEM_KEY] ==
+                                  Object.getOwnPropertyNames(selectedState)[0]
+                              )[0] == undefined
+                                ? ""
+                                : mainDataResult.data.filter(
+                                    (item) =>
+                                      item[DATA_ITEM_KEY] ==
+                                      Object.getOwnPropertyNames(
+                                        selectedState
+                                      )[0]
+                                  )[0].answer_files
+                            }
+                            className="readonly"
                           />
-                        </ButtonInGridInput>
-                      </td>
-                    </tr>
-                  </tbody>
-                </FormBox>
-              </FormBoxWrap>
+                          <ButtonInGridInput>
+                            <Button
+                              onClick={onAttWndClick3}
+                              icon="more-horizontal"
+                              fillMode="flat"
+                            />
+                          </ButtonInGridInput>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </FormBox>
+                </FormBoxWrap>
+              </GridContainer>
             </GridContainer>
-          </GridContainer>
+          </Splitter>
         </GridContainerWrap>
       </TitleContainer>
       {attachmentsWindowVisible && (

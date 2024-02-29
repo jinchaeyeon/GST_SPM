@@ -124,8 +124,14 @@ const Login: React.FC = () => {
         setPwExpInfo(passwordExpirationInfo);
 
         if (queryResult[0] != "") {
-          history.replace(`/${queryResult[0]}`);
-          setQueryResult("");
+          if (queryResult[0] == "admin") {
+            //개발용
+            history.replace(`/Home`);
+            setQueryResult("");
+          } else {
+            history.replace(`/${queryResult[0]}`);
+            setQueryResult("");
+          }
         } else {
           history.replace("/Home");
         }

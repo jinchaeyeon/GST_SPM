@@ -2196,7 +2196,11 @@ const App = () => {
           </GridContainerWrap>
         ) : (
           <GridContainerWrap height={"88%"}>
-            <Splitter panes={panes} onChange={onChange}>
+            <Splitter
+              panes={panes}
+              onChange={onChange}
+              style={{ borderColor: "#00000000" }}
+            >
               <div className="pane-content">
                 <GridContainer>
                   <GridTitleContainer>
