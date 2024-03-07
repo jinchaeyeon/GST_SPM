@@ -789,8 +789,8 @@ const App = () => {
           { sub_code: "Hold", code_name: "보류", code: "H" },
         ],
         reception_person: { user_id: "", user_name: "" },
-        receptionist: { user_id: "", user_name: "" },
-        worker: { user_id: userId, user_name: userName },
+        receptionist: { user_id: userId, user_name: userName },
+        worker: { user_id: "", user_name: "" },
         reception_type: { sub_code: "", code_name: "" },
         user_name: { user_id: "", user_name: "" },
         ref_type: [
@@ -1404,8 +1404,8 @@ const App = () => {
       { sub_code: "Hold", code_name: "보류", code: "H" },
     ],
     reception_person: { user_id: "", user_name: "" },
-    receptionist: { user_id: "", user_name: "" },
-    worker: { user_id: userId, user_name: userName },
+    receptionist: { user_id: userId, user_name: userName },
+    worker: { user_id: "", user_name: "" },
     reception_type: { sub_code: "", code_name: "" },
     user_name: { user_id: "", user_name: "" },
     ref_type: [
