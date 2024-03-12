@@ -368,7 +368,7 @@ const Main: React.FC = () => {
       </TitleContainer>
       <GridContainerWrap height="calc(100% - 80px)">
         <GridContainer width="20%" type="mainLeft">
-          <GridContainer height="calc(100% - 420px)">
+          <GridContainer height="100%">
             <GridTitleContainer>
               <GridTitle theme={currentTheme}>업체별 현황</GridTitle>
             </GridTitleContainer>
