@@ -25,14 +25,18 @@ import {
   GridTitleContainer,
   ScrollableContainer,
   TextBox,
-  Title,
   TitleContainer,
 } from "../CommonStyled";
 import { dateformat2 } from "../components/CommonFunction";
 import CurrentTime from "../components/CurrentTime";
 import Loader from "../components/Loader";
 import { useApi } from "../hooks/api";
-import { filterValueState, isLoading, loginResultState, titles } from "../store/atoms";
+import {
+  filterValueState,
+  isLoading,
+  loginResultState,
+  titles,
+} from "../store/atoms";
 
 const QUESTION_ITEM_KEY = "document_id";
 const CUST_SUMMARY_ITEM_KEY = "customer_code";
@@ -44,7 +48,8 @@ const Main: React.FC = () => {
   const custSummaryIdGetter = getter(CUST_SUMMARY_ITEM_KEY);
   const projectIdGetter = getter(PROJECT_ITEM_KEY);
   const setLoading = useSetRecoilState(isLoading);
-
+  let deviceWidth = window.innerWidth;
+  let isMobile = deviceWidth <= 1200;
   const processApi = useApi();
   const [loginResult, setLoginResult] = useRecoilState(loginResultState);
   const [filterValue, setFilterValue] = useRecoilState(filterValueState);
@@ -74,13 +79,13 @@ const Main: React.FC = () => {
   });
 
   const [questionDataResult, setQuestionDataResult] = useState<DataResult>(
-    process([], questionDataState),
+    process([], questionDataState)
   );
 
   const [custSummaryDataResult, setCustSummaryDataResult] =
     useState<DataResult>(process([], custSummaryDataState));
   const [projectDataResult, setProjectDataResult] = useState<DataResult>(
-    process([], projectDataState),
+    process([], projectDataState)
   );
 
   const [taskStatusResult, setTaskStatusResult] = useState({
@@ -251,20 +256,108 @@ const Main: React.FC = () => {
   }
 
   return (
-    <GridContainer style={{ paddingBottom: "20px",height: "95%"}}>
+    <GridContainer style={{ paddingBottom: "20px", height: "95%" }}>
       <TitleContainer
         style={{
           minHeight: "80px",
           fontSize: "24px",
           paddingTop: "5px",
+          display: "flex",
+          flexDirection: isMobile ? "column" : "row",
         }}
       >
         <p className="small">
           <span style={{ fontWeight: 700 }}>{userName}</span> 님, 좋은 하루
           되세요
         </p>
-        <Title></Title>
-        <ButtonContainer>
+        <GridContainer
+          style={{
+            gap: "15px",
+            flexDirection: "row",
+            marginRight: isMobile ? "" : "50px",
+            display: isMobile ? "block" : "",
+            width: isMobile ? "100%" : "",
+            marginTop: isMobile ? "15px" : "",
+          }}
+        >
+          <TextBox
+            type={"Admin"}
+            style={{
+              cursor: "pointer",
+              display: "block",
+              textAlign: "center",
+              minHeight: "80px",
+              padding: "10px 20px",
+              marginTop: isMobile ? "15px" : "",
+            }}
+            onClick={() => moveMenu("QnA")}
+          >
+            <p className="small">접수 대기</p>
+            <p className="large gray" style={{ width: isMobile ? "100%" : "" }}>
+              {taskStatusResult.wait}
+              <span>건</span>
+            </p>
+          </TextBox>
+          <TextBox
+            type={"Admin"}
+            style={{
+              cursor: "pointer",
+              display: "block",
+              textAlign: "center",
+              minHeight: "80px",
+              padding: "10px 20px",
+              marginTop: isMobile ? "15px" : "",
+            }}
+            onClick={() => moveMenu("QnA")}
+          >
+            <p className="small">진행중</p>
+            <p
+              className="large green"
+              style={{ width: isMobile ? "100%" : "" }}
+            >
+              {taskStatusResult.progress}
+              <span>건</span>
+            </p>
+          </TextBox>
+          <TextBox
+            type={"Admin"}
+            style={{
+              cursor: "pointer",
+              display: "block",
+              textAlign: "center",
+              minHeight: "80px",
+              padding: "10px 20px",
+              marginTop: isMobile ? "15px" : "",
+            }}
+            onClick={() => moveMenu("QnA")}
+          >
+            <p className="small">예정일 초과</p>
+            <p className="large red" style={{ width: isMobile ? "100%" : "" }}>
+              {taskStatusResult.over}
+              <span>건</span>
+            </p>
+          </TextBox>
+        </GridContainer>
+        <ButtonContainer
+          style={{
+            marginTop: isMobile ? "15px" : "",
+            width: isMobile ? "100%" : "",
+          }}
+        >
+          <TextBox
+            type={"Admin"}
+            style={{
+              height: "100%",
+              maxHeight: "150px",
+              justifyContent: "center",
+              minHeight: "80px",
+              width: isMobile ? "100%" : "",
+            }}
+          >
+            <div className="medium" style={{ marginTop: "0" }}>
+              <CurrentTime />
+            </div>
+          </TextBox>
           <Button
             icon="refresh"
             themeColor={"primary"}
@@ -275,81 +368,6 @@ const Main: React.FC = () => {
       </TitleContainer>
       <GridContainerWrap height="calc(100% - 80px)">
         <GridContainer width="20%" type="mainLeft">
-          <TextBox
-            type={"Admin"}
-            style={{
-              minHeight: "120px",
-              height: "100%",
-              maxHeight: "150px",
-              padding: "20px",
-              justifyContent: "center",
-            }}
-          >
-            <div className="medium" style={{ marginTop: "0" }}>
-              <CurrentTime />
-            </div>
-          </TextBox>
-          {/* <TextBox
-              type={"Admin"}
-              style={{ cursor: "pointer" }}
-              onClick={() => moveMenu("QnA")}
-            >
-              <p className="small">전체 진행중</p>
-              <p className="large gray">
-                {taskStatusResult.total}
-                <span>건</span>
-              </p>
-            </TextBox> */}
-
-          <GridTitleContainer>
-            <GridTitle theme={currentTheme}>전체 진행중</GridTitle>
-            <GridTitle theme={currentTheme}>
-              {taskStatusResult.total}
-              <span>건</span>
-            </GridTitle>
-          </GridTitleContainer>
-          <GridContainer
-            style={{
-              gap: "15px",
-              border: "solid 1px #ebebeb",
-              borderRadius: "10px",
-              padding: "10px",
-            }}
-          >
-            <TextBox
-              type={"Admin"}
-              style={{ cursor: "pointer" }}
-              onClick={() => moveMenu("QnA")}
-            >
-              <p className="small">접수 대기</p>
-              <p className="large gray">
-                {taskStatusResult.wait}
-                <span>건</span>
-              </p>
-            </TextBox>
-            <TextBox
-              type={"Admin"}
-              style={{ cursor: "pointer" }}
-              onClick={() => moveMenu("QnA")}
-            >
-              <p className="small">진행중</p>
-              <p className="large green">
-                {taskStatusResult.progress}
-                <span>건</span>
-              </p>
-            </TextBox>
-            <TextBox
-              type={"Admin"}
-              style={{ cursor: "pointer" }}
-              onClick={() => moveMenu("QnA")}
-            >
-              <p className="small">예정일 초과</p>
-              <p className="large red">
-                {taskStatusResult.over}
-                <span>건</span>
-              </p>
-            </TextBox>
-          </GridContainer>
           <GridContainer height="calc(100% - 420px)">
             <GridTitleContainer>
               <GridTitle theme={currentTheme}>업체별 현황</GridTitle>
@@ -383,6 +401,7 @@ const Main: React.FC = () => {
                 <AdminQuestionBox
                   key={idx}
                   onClick={() => onQuestionRowClick(item)}
+                  style={{ borderBottom: "1px dashed #ccc" }}
                 >
                   <div
                     className={`status ${
@@ -404,7 +423,9 @@ const Main: React.FC = () => {
                   </div>
                   <div>
                     <p className="title">{item.title}</p>
-                    <p className="customer">{item.customer_name}</p>
+                    <p className="customer">
+                      {item.user_name} / {item.reception_person}
+                    </p>
                   </div>
                   <div>
                     <p>{dateformat2(item.request_date)}</p>
@@ -425,6 +446,7 @@ const Main: React.FC = () => {
                 <AdminProjectBox
                   key={idx}
                   onClick={() => onProjectRowClick(item)}
+                  style={{ borderBottom: "1px dashed #ccc" }}
                 >
                   <div>
                     <div className="sub">
