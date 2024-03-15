@@ -424,7 +424,8 @@ const Main: React.FC = () => {
                   <div>
                     <p className="title">{item.title}</p>
                     <p className="customer">
-                      {item.user_name} / {item.reception_person}
+                      {item.customer_name} - {item.user_name} /{" "}
+                      {item.reception_person}
                     </p>
                   </div>
                   <div>
