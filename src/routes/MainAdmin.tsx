@@ -238,9 +238,15 @@ const Main: React.FC = () => {
   };
 
   const onQuestionRowClick = (dataItem: any) => {
-    // setFilterValue({ type: "qna", dataItem });
-    // moveMenu("QnA");
+    setFilterValue({ type: "reception", dataItem });
+    moveMenu("Reception_Answer");
   };
+
+  const onCustRowClick = (dataItem: any) => {
+    setFilterValue({ type: "reception", dataItem });
+    moveMenu("Reception_Answer");
+  };
+
   const onProjectRowClick = (dataItem: any) => {
     setFilterValue({ type: "project", dataItem });
     moveMenu("ProjectSchedule");
@@ -378,7 +384,10 @@ const Main: React.FC = () => {
                   .sort((a, b) => b.progress_count - a.progress_count)
                   .sort((a, b) => b.over_count - a.over_count)
                   .map((item, idx) => (
-                    <AdminCustSummaryBox key={idx}>
+                    <AdminCustSummaryBox
+                      key={idx}
+                      onDoubleClick={() => onCustRowClick(item)}
+                    >
                       <div className="cust">{item.customer_name}</div>
                       <div className="cnt">
                         <div className="green">{item.progress_count}</div>
@@ -400,7 +409,7 @@ const Main: React.FC = () => {
               {questionDataResult.data.map((item, idx) => (
                 <AdminQuestionBox
                   key={idx}
-                  onClick={() => onQuestionRowClick(item)}
+                  onDoubleClick={() => onQuestionRowClick(item)}
                   style={{ borderBottom: "1px dashed #ccc" }}
                 >
                   <div

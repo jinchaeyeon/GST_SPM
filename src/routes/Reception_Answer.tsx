@@ -55,6 +55,7 @@ import {
   extractDownloadFilename,
   getGridItemChangedData,
   handleKeyPressSearch,
+  toDate,
 } from "../components/CommonFunction";
 import {
   EDIT_FIELD,
@@ -70,7 +71,7 @@ import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWi
 import QuestionWindow from "../components/Windows/CommonWindows/QuestionWindow";
 import TaskOrderListWindow from "../components/Windows/CommonWindows/TaskOrderListWindow";
 import { useApi } from "../hooks/api";
-import { isLoading, loginResultState, titles } from "../store/atoms";
+import { filterValueState, isLoading, loginResultState, titles } from "../store/atoms";
 import {
   dataTypeColumns,
   dataTypeColumns2,
@@ -321,6 +322,7 @@ const App = () => {
   const history = useHistory();
   const location = useLocation();
   const pathname = location.pathname.replace("/", "");
+  const [filterValue, setFilterValue] = useRecoilState(filterValueState);
   useEffect(() => {
     // 접근 권한 검증
     if (loginResult) {
@@ -759,7 +761,7 @@ const App = () => {
   };
 
   useEffect(() => {
-    if (filters.isSearch && localStorage.getItem("accessToken")) {
+    if (filterValue.type !== "reception" && filters.isSearch && localStorage.getItem("accessToken")) {
       const _ = require("lodash");
       const deepCopiedFilters = _.cloneDeep(filters);
       setFilters((prev) => ({ ...prev, isSearch: false })); // 한번만 조회되도록
@@ -768,7 +770,7 @@ const App = () => {
   }, [filters]);
 
   useEffect(() => {
-    if (localStorage.getItem("accessToken")) {
+    if (filterValue.type !== "reception" && localStorage.getItem("accessToken")) {
       // ComboBox에 사용할 코드 리스트 조회
       fetchValueCode();
       fetchUsers();
@@ -792,6 +794,37 @@ const App = () => {
       setTitle("접수 및 답변");
     }
   }, []);
+
+  useEffect(() => {
+    // 메인 그리드에서 클릭하여 오픈시 조회조건 재설정하여 조회
+    if (filterValue.type === "reception" && localStorage.getItem("accessToken")) {
+      fetchValueCode();
+      fetchUsers();
+      fetchReceptionType();
+      const isExceedFromDate =
+        convertDateToStr(fromDate) > filterValue.dataItem.request_date;
+
+      const newFromDate = toDate(filterValue.dataItem.request_date) ?? fromDate;
+
+      setFilters((prev) => ({
+        ...prev,
+        status: [
+          { sub_code: "Wait", code_name: "대기", code: "N" },
+          { sub_code: "Progress", code_name: "진행중", code: "R" },
+          { sub_code: "Hold", code_name: "보류", code: "H" },
+        ],
+        custnm: filterValue.dataItem.customer_name,
+        fromDate: isExceedFromDate ? newFromDate : fromDate,
+        receptionist: { user_id: "", user_name: "" },
+        isSearch: true,
+        findRowValue: filterValue.dataItem[DATA_ITEM_KEY],
+      }));
+
+      setFilterValue({ type: null, dataItem: {} });
+      setTitle("접수 및 답변");
+    }
+  }, [filterValue]);
+
 
   //그리드 푸터
   const mainTotalFooterCell = (props: GridFooterCellProps) => {

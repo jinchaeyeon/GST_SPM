@@ -14,7 +14,7 @@ import {
   GridDataStateChangeEvent,
   GridFooterCellProps,
   GridPageChangeEvent,
-  GridSelectionChangeEvent
+  GridSelectionChangeEvent,
 } from "@progress/kendo-react-grid";
 import { Input, RadioGroup } from "@progress/kendo-react-inputs";
 import { bytesToBase64 } from "byte-base64";
@@ -43,7 +43,7 @@ import {
   convertDateToStr,
   dateformat2,
   handleKeyPressSearch,
-  toDate
+  toDate,
 } from "../components/CommonFunction";
 import { PAGE_SIZE, SELECTED_FIELD } from "../components/CommonString";
 import RichEditor from "../components/RichEditor";
@@ -327,34 +327,25 @@ const App = () => {
           targetRowIndex = 0;
         }
       }
+
       if (totalRowCnt > 0) {
-        if (filters.isReset) {
-          // 일반 데이터 조회
-          const firstRowData = rows[0];
-          setSelectedState({ [firstRowData[DATA_ITEM_KEY]]: true });
-          setMainDataResult({
+        const selectedRow =
+          filters.findRowValue == ""
+            ? rows[0]
+            : rows.find(
+                (row: any) => row[DATA_ITEM_KEY] == filters.findRowValue
+              );
+
+        setMainDataResult((prev) => {
+          return {
             data: rows,
             total: totalRowCnt == -1 ? 0 : totalRowCnt,
-          });
+          };
+        });
+        if (selectedRow != undefined) {
+          setSelectedState({ [selectedRow[DATA_ITEM_KEY]]: true });
         } else {
-          const selectedRow =
-            filters.findRowValue == ""
-              ? rows[0]
-              : rows.find(
-                  (row: any) => row[DATA_ITEM_KEY] == filters.findRowValue
-                );
-
-          setMainDataResult((prev) => {
-            return {
-              data: rows,
-              total: totalRowCnt == -1 ? 0 : totalRowCnt,
-            };
-          });
-          if (selectedRow != undefined) {
-            setSelectedState({ [selectedRow[DATA_ITEM_KEY]]: true });
-          } else {
-            setSelectedState({ [rows[0][DATA_ITEM_KEY]]: true });
-          }
+          setSelectedState({ [rows[0][DATA_ITEM_KEY]]: true });
         }
       } else {
         // 결과 행이 0인 경우 데이터 리셋
@@ -745,7 +736,11 @@ const App = () => {
   };
 
   useEffect(() => {
-    if (filters.isFetch && localStorage.getItem("accessToken")) {
+    if (
+      filterValue.type !== "qna" &&
+      filters.isFetch &&
+      localStorage.getItem("accessToken")
+    ) {
       const _ = require("lodash");
       const deepCopiedFilters = _.cloneDeep(filters);
 
@@ -772,7 +767,12 @@ const App = () => {
 
       setFilters((prev) => ({
         ...prev,
-        status: [],
+        status: [
+          { sub_code: "1", code_name: "대기" },
+          { sub_code: "2", code_name: "진행중" },
+          { sub_code: "4", code_name: "보류" },
+        ],
+        custnm: filterValue.dataItem.customer_name,
         fromDate: isExceedFromDate ? newFromDate : fromDate,
         isFetch: true,
         isReset: true,
@@ -817,7 +817,7 @@ const App = () => {
 
   /* 푸시 알림 클릭시 이동 테스트 코드 */
   useEffect(() => {
-    if (localStorage.getItem("accessToken")) {
+    if (filterValue.type !== "qna" && localStorage.getItem("accessToken")) {
       const queryParams = new URLSearchParams(location.search);
       if (queryParams.has("go")) {
         history.replace({}, "");
