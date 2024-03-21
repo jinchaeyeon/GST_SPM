@@ -1024,6 +1024,25 @@ const App = () => {
 
   useEffect(() => {
     if (localStorage.getItem("accessToken")) {
+      // ComboBox에 사용할 코드 리스트 조회
+      fetchValueCodes();
+      fetchCustomers();
+      const queryParams = new URLSearchParams(location.search);
+      if (queryParams.has("go")) {
+        history.replace({}, "");
+        setFilters((prev) => ({
+          ...prev,
+          isFetch: true,
+          isReset: true,
+          findRowValue: queryParams.get("go") as string,
+        }));
+      }
+      setTitle("회의록 관리");
+    }
+  }, []);
+
+  useEffect(() => {
+    if (localStorage.getItem("accessToken")) {
       const mainDataId = Object.getOwnPropertyNames(selectedState)[0];
       if (mainDataId) fetchDetail();
     }
@@ -1833,12 +1852,66 @@ const App = () => {
             <GridContainer width={`calc(50% - ${GAP}px)`}>
               <GridTitleContainer>
                 <GridTitle>회의록</GridTitle>
-                <Button
-                  themeColor={"primary"}
-                  fillMode={"flat"}
-                  icon={isVisibleDetail ? "chevron-up" : "chevron-down"}
-                  onClick={() => setIsVisableDetail((prev) => !prev)}
-                ></Button>
+                <ButtonContainer>
+                  <Button
+                    themeColor={"primary"}
+                    fillMode={"outline"}
+                    icon={"link"}
+                    onClick={() => {
+                      const data = mainDataResult.data.filter(
+                        (item) =>
+                          item[DATA_ITEM_KEY] ==
+                          Object.getOwnPropertyNames(selectedState)[0]
+                      )[0];
+
+                      if (data == undefined) {
+                        alert("데이터가 없습니다.");
+                      } else {
+                        navigator.clipboard
+                          .writeText(
+                            `https://spm-admin.gsti.co.kr/MeetingManagement?go=${data.orgdiv}_${data.meetingnum}`
+                          )
+                          .then((res) => {
+                            alert("주소가 복사되었습니다!");
+                          });
+                      }
+                    }}
+                  >
+                    링크 복사
+                  </Button>
+                  <Button
+                    themeColor={"primary"}
+                    fillMode={"solid"}
+                    icon={"link"}
+                    onClick={() => {
+                      const data = mainDataResult.data.filter(
+                        (item) =>
+                          item[DATA_ITEM_KEY] ==
+                          Object.getOwnPropertyNames(selectedState)[0]
+                      )[0];
+
+                      if (data == undefined) {
+                        alert("데이터가 없습니다.");
+                      } else {
+                        navigator.clipboard
+                          .writeText(
+                            `https://spm.gsti.co.kr/MeetingView?go=${data.meetingnum}`
+                          )
+                          .then((res) => {
+                            alert("주소가 복사되었습니다!");
+                          });
+                      }
+                    }}
+                  >
+                    고객사 링크 복사
+                  </Button>
+                  <Button
+                    themeColor={"primary"}
+                    fillMode={"flat"}
+                    icon={isVisibleDetail ? "chevron-up" : "chevron-down"}
+                    onClick={() => setIsVisableDetail((prev) => !prev)}
+                  ></Button>
+                </ButtonContainer>
               </GridTitleContainer>
               {isVisibleDetail && (
                 <FormBoxWrap border>
@@ -2311,12 +2384,66 @@ const App = () => {
                 <GridContainer>
                   <GridTitleContainer>
                     <GridTitle>회의록</GridTitle>
-                    <Button
-                      themeColor={"primary"}
-                      fillMode={"flat"}
-                      icon={isVisibleDetail ? "chevron-up" : "chevron-down"}
-                      onClick={() => setIsVisableDetail((prev) => !prev)}
-                    ></Button>
+                    <ButtonContainer>
+                      <Button
+                        themeColor={"primary"}
+                        fillMode={"outline"}
+                        icon={"link"}
+                        onClick={() => {
+                          const data = mainDataResult.data.filter(
+                            (item) =>
+                              item[DATA_ITEM_KEY] ==
+                              Object.getOwnPropertyNames(selectedState)[0]
+                          )[0];
+
+                          if (data == undefined) {
+                            alert("데이터가 없습니다.");
+                          } else {
+                            navigator.clipboard
+                              .writeText(
+                                `https://spm-admin.gsti.co.kr/MeetingManagement?go=${data.orgdiv}_${data.meetingnum}`
+                              )
+                              .then((res) => {
+                                alert("주소가 복사되었습니다!");
+                              });
+                          }
+                        }}
+                      >
+                        링크 복사
+                      </Button>
+                      <Button
+                        themeColor={"primary"}
+                        fillMode={"solid"}
+                        icon={"link"}
+                        onClick={() => {
+                          const data = mainDataResult.data.filter(
+                            (item) =>
+                              item[DATA_ITEM_KEY] ==
+                              Object.getOwnPropertyNames(selectedState)[0]
+                          )[0];
+
+                          if (data == undefined) {
+                            alert("데이터가 없습니다.");
+                          } else {
+                            navigator.clipboard
+                              .writeText(
+                                `https://spm.gsti.co.kr/MeetingView?go=${data.meetingnum}`
+                              )
+                              .then((res) => {
+                                alert("주소가 복사되었습니다!");
+                              });
+                          }
+                        }}
+                      >
+                        고객사 링크 복사
+                      </Button>
+                      <Button
+                        themeColor={"primary"}
+                        fillMode={"flat"}
+                        icon={isVisibleDetail ? "chevron-up" : "chevron-down"}
+                        onClick={() => setIsVisableDetail((prev) => !prev)}
+                      ></Button>
+                    </ButtonContainer>
                   </GridTitleContainer>
                   {isVisibleDetail && (
                     <FormBoxWrap border>

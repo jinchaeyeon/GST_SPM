@@ -16,6 +16,7 @@ import {
 import { Input, InputChangeEvent } from "@progress/kendo-react-inputs";
 import { Splitter, SplitterOnChangeEvent } from "@progress/kendo-react-layout";
 import { useEffect, useRef, useState } from "react";
+import { useHistory, useLocation } from "react-router-dom";
 import { useRecoilState, useSetRecoilState } from "recoil";
 import {
   ButtonContainer,
@@ -54,7 +55,8 @@ const App = () => {
   const setLoading = useSetRecoilState(isLoading);
   const [meetingnum, setMeetingnum] = useState(""); //Detail 조회조건
   const [filterValue, setFilterValue] = useRecoilState(filterValueState);
-
+  const history = useHistory();
+  const location = useLocation();
   const [attachmentsWindowVisible, setAttachmentsWindowVisible] =
     useState<boolean>(false);
   const [signWindowVisible, setSignWindowVisible] = useState<boolean>(false);
@@ -372,6 +374,22 @@ const App = () => {
       fetchGrid(deepCopiedFilters);
     }
   }, [filters]);
+
+  useEffect(() => {
+    if (localStorage.getItem("accessToken")) {
+      const queryParams = new URLSearchParams(location.search);
+      if (queryParams.has("go")) {
+        history.replace({}, "");
+        setFilters((prev) => ({
+          ...prev,
+          isFetch: true,
+          isReset: true,
+          findRowValue: queryParams.get("go") as string,
+        }));
+      }
+      setTitle("회의록 열람");
+    }
+  }, []);
 
   useEffect(() => {
     // 메인 그리드에서 클릭하여 오픈시 조회조건 재설정하여 조회
