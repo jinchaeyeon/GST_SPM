@@ -1112,6 +1112,27 @@ const App = () => {
   }, [filters]);
 
   useEffect(() => {
+    if (localStorage.getItem("accessToken")) {
+      // ComboBox에 사용할 코드 리스트 조회
+      fetchstatus();
+      fetchWorkType();
+      fetchUsers();
+      fetchValueCode();
+      fetchTypeCode();
+      const queryParams = new URLSearchParams(location.search);
+      if (queryParams.has("go")) {
+        history.replace({}, "");
+        setFilters((prev) => ({
+          ...prev,
+          isSearch: true,
+          findRowValue: queryParams.get("go") as string,
+        }));
+      }
+      setTitle("처리일지 작성");
+    }
+  }, []);
+
+  useEffect(() => {
     if (subFilters.isSearch && localStorage.getItem("accessToken")) {
       const _ = require("lodash");
       const deepCopiedFilters = _.cloneDeep(subFilters);
