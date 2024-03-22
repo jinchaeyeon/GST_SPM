@@ -772,6 +772,7 @@ const App = () => {
         localStorage.removeItem(key);
       }
     }
+    deletedRows = [];
     setFileList([]);
     setSavenmList([]);
     if (e.selected == 0) {
@@ -2654,44 +2655,64 @@ const App = () => {
   }, [fileList, savenmList]);
 
   useEffect(() => {
-    const newData = mainDataResult4.data.map((item) =>
-      item[DATA_ITEM_KEY4] ==
-      parseInt(Object.getOwnPropertyNames(selectedState4)[0])
-        ? {
-            ...item,
-            rowstatus: item.rowstatus == "N" ? "N" : "U",
-            ref_type: ref_type,
-            ref_key: ref_key,
-            ref_seq: ref_seq,
-            custcd: ref_type == "미참조" ? item.custcd : custcd,
-          }
-        : {
-            ...item,
-          }
-    );
+    if (ref_key != "") {
+      const newData = mainDataResult4.data.map((item) =>
+        item[DATA_ITEM_KEY4] ==
+        parseInt(Object.getOwnPropertyNames(selectedState4)[0])
+          ? {
+              ...item,
+              rowstatus: item.rowstatus == "N" ? "N" : "U",
+              ref_type: ref_type,
+              ref_key: ref_key,
+              ref_seq: ref_seq,
+              custcd: ref_type == "미참조" ? item.custcd : custcd,
+            }
+          : {
+              ...item,
+            }
+      );
 
-    setMainDataResult4((prev) => {
-      return {
-        data: newData,
-        total: prev.total,
-      };
-    });
-    setTempResult((prev) => {
-      return {
-        data: newData,
-        total: prev.total,
-      };
-    });
+      setMainDataResult4((prev) => {
+        return {
+          data: newData,
+          total: prev.total,
+        };
+      });
+      setTempResult((prev) => {
+        return {
+          data: newData,
+          total: prev.total,
+        };
+      });
+    }
   }, [ref_type, custcd, ref_key, ref_seq]);
 
   const onAddClick = () => {
+    if (mainDataResult4.total > 0) {
+      const currentRow = mainDataResult4.data.filter(
+        (item) =>
+          item[DATA_ITEM_KEY4] == Object.getOwnPropertyNames(selectedState4)[0]
+      )[0];
+      let editorContent: any = "";
+      if (refEditorRef.current) {
+        editorContent = refEditorRef.current.getContent();
+      }
+
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(editorContent, "text/html");
+      const textContent = doc.body.textContent || ""; //문자열
+      localStorage.removeItem(currentRow[DATA_ITEM_KEY4]);
+      localStorage.removeItem(currentRow[DATA_ITEM_KEY4] + "key");
+      localStorage.setItem(currentRow[DATA_ITEM_KEY4], textContent);
+      localStorage.setItem(currentRow[DATA_ITEM_KEY4] + "key", editorContent);
+    }
+
     mainDataResult4.data.map((item) => {
       if (item[DATA_ITEM_KEY4] > temp) {
         temp = item[DATA_ITEM_KEY4];
       }
     });
     const guid = uuidv4();
-
     const newDataItem = {
       [DATA_ITEM_KEY4]: ++temp,
       attach_exists: "N",
@@ -2787,19 +2808,42 @@ const App = () => {
           let Object: any[] = [];
           let Object2: any[] = [];
           let data;
-          mainDataResult4.data.forEach((item: any, index: number) => {
+          mainDataResult4.data.forEach(async (item: any, index: number) => {
             if (!selectedState4[item[DATA_ITEM_KEY4]]) {
               newData.push(item);
               Object2.push(index);
             } else {
-              const newData2 = {
-                ...item,
-                rowstatus: "D",
-              };
+              if (!item.rowstatus || item.rowstatus != "N") {
+                const newData2 = {
+                  ...item,
+                  rowstatus: "D",
+                };
+                deletedRows.push(newData2);
+              } else {
+                if (item.attdatnum != "") {
+                  let data2: any;
+                  try {
+                    data2 = await processApi<any>("attachment-delete", {
+                      attached:
+                        "attachment?type=task&attachmentNumber=" +
+                        item.attdatnum +
+                        "&id=",
+                    });
+                  } catch (error) {
+                    data2 = null;
+                  }
+                }
+              }
               Object.push(index);
-              deletedRows.push(newData2);
-              localStorage.removeItem(newData2[DATA_ITEM_KEY4]);
-              localStorage.removeItem(newData2[DATA_ITEM_KEY4] + "key");
+              if (
+                !(
+                  localStorage.getItem(item[DATA_ITEM_KEY4]) == undefined ||
+                  localStorage.getItem(item[DATA_ITEM_KEY4]) == null
+                )
+              ) {
+                localStorage.removeItem(item[DATA_ITEM_KEY4]);
+                localStorage.removeItem(item[DATA_ITEM_KEY4] + "key");
+              }
             }
           });
 
@@ -2816,7 +2860,21 @@ const App = () => {
                 : newData[0] != undefined
                 ? newData[0]
                 : "";
-            fetchDocument("Task", row.orgdiv + "_" + row.docunum, row);
+
+            if (
+              !(
+                localStorage.getItem(row[DATA_ITEM_KEY4]) == undefined ||
+                localStorage.getItem(row[DATA_ITEM_KEY4]) == null
+              )
+            ) {
+              if (refEditorRef.current != null) {
+                refEditorRef.current.setHtml(
+                  localStorage.getItem(row[DATA_ITEM_KEY4]) + "key"
+                );
+              }
+            } else {
+              fetchDocument("Task", row.orgdiv + "_" + row.docunum, row);
+            }
           } else {
             fetchDocument("Task", "");
           }
@@ -3673,28 +3731,57 @@ const App = () => {
   };
 
   const onChanges = () => {
-    const newData = mainDataResult4.data.map((item) =>
-      item[DATA_ITEM_KEY4] == Object.getOwnPropertyNames(selectedState4)[0]
-        ? {
-            ...item,
-            rowstatus: item.rowstatus == "N" ? "N" : "U",
-          }
-        : {
-            ...item,
-          }
-    );
-    setTempResult((prev) => {
-      return {
-        data: newData,
-        total: prev.total,
-      };
-    });
-    setMainDataResult4((prev) => {
-      return {
-        data: newData,
-        total: prev.total,
-      };
-    });
+    if (mainDataResult4.total > 0) {
+      const currentRow = mainDataResult4.data.filter(
+        (item) =>
+          item[DATA_ITEM_KEY4] == Object.getOwnPropertyNames(selectedState4)[0]
+      )[0];
+      let editorContent: any = "";
+      if (refEditorRef.current) {
+        editorContent = refEditorRef.current.getContent();
+      }
+
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(editorContent, "text/html");
+      const textContent = doc.body.textContent || ""; //문자열
+      if (
+        !(
+          localStorage.getItem(currentRow[DATA_ITEM_KEY4]) == undefined ||
+          localStorage.getItem(currentRow[DATA_ITEM_KEY4]) == null
+        )
+      ) {
+        localStorage.removeItem(currentRow[DATA_ITEM_KEY4]);
+        localStorage.removeItem(currentRow[DATA_ITEM_KEY4] + "key");
+        localStorage.setItem(currentRow[DATA_ITEM_KEY4], textContent);
+        localStorage.setItem(currentRow[DATA_ITEM_KEY4] + "key", editorContent);
+      } else {
+        localStorage.setItem(currentRow[DATA_ITEM_KEY], textContent);
+        localStorage.setItem(currentRow[DATA_ITEM_KEY] + "key", editorContent);
+      }
+
+      const newData = mainDataResult4.data.map((item) =>
+        item[DATA_ITEM_KEY4] == Object.getOwnPropertyNames(selectedState4)[0]
+          ? {
+              ...item,
+              rowstatus: item.rowstatus == "N" ? "N" : "U",
+            }
+          : {
+              ...item,
+            }
+      );
+      setTempResult((prev) => {
+        return {
+          data: newData,
+          total: prev.total,
+        };
+      });
+      setMainDataResult4((prev) => {
+        return {
+          data: newData,
+          total: prev.total,
+        };
+      });
+    }
   };
 
   return (

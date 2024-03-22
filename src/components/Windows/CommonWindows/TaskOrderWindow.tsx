@@ -628,12 +628,15 @@ const KendoWindow = ({
     setLoading(false);
   };
 
-  const fetchDocument = async (type: string, ref_key: string, key: any) => {
+  const fetchDocument = async (type: string, ref_key: string, key?: any) => {
     let data: any;
     setLoading(true);
 
-    if (type == "") {
+    if (type == "" || ref_key == "") {
       setHtmlOnEditor({ document: "" });
+      if (refEditorRef.current) {
+        refEditorRef.current.setHtml("");
+      }
     } else {
       const para = {
         para: `document?type=${type}&id=${ref_key}`,
@@ -661,6 +664,9 @@ const KendoWindow = ({
             localStorage.setItem(key[DATA_ITEM_KEY] + "key", document);
           }
           refEditorRef.current.setHtml(document);
+        } else {
+          const document = data.document;
+          setHtmlOnEditor({ document });
         }
       } else {
         console.log("[에러발생]");
@@ -973,6 +979,25 @@ const KendoWindow = ({
   }, [fileList, savenmList]);
 
   const onAddClick = () => {
+    if (mainDataResult.total > 0) {
+      const currentRow = mainDataResult.data.filter(
+        (item) =>
+          item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
+      )[0];
+      let editorContent: any = "";
+      if (refEditorRef.current) {
+        editorContent = refEditorRef.current.getContent();
+      }
+
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(editorContent, "text/html");
+      const textContent = doc.body.textContent || ""; //문자열
+      localStorage.removeItem(currentRow[DATA_ITEM_KEY]);
+      localStorage.removeItem(currentRow[DATA_ITEM_KEY] + "key");
+      localStorage.setItem(currentRow[DATA_ITEM_KEY], textContent);
+      localStorage.setItem(currentRow[DATA_ITEM_KEY] + "key", editorContent);
+    }
+
     mainDataResult.data.map((item) => {
       if (item[DATA_ITEM_KEY] > temp) {
         temp = item[DATA_ITEM_KEY];
@@ -1032,9 +1057,6 @@ const KendoWindow = ({
       };
     });
     setSelectedState({ [newDataItem[DATA_ITEM_KEY]]: true });
-    if (refEditorRef.current) {
-      refEditorRef.current.setHtml("");
-    }
   };
 
   const onRemoveClick = async () => {
@@ -1086,19 +1108,43 @@ const KendoWindow = ({
           let Object3: any[] = [];
           let Object2: any[] = [];
           let data;
-          mainDataResult.data.forEach((item: any, index: number) => {
+          mainDataResult.data.forEach(async (item: any, index: number) => {
             if (!selectedState[item[DATA_ITEM_KEY]]) {
               newData.push(item);
               Object2.push(index);
             } else {
-              const newData2 = {
-                ...item,
-                rowstatus: "D",
-              };
+              if (!item.rowstatus || item.rowstatus != "N") {
+                const newData2 = {
+                  ...item,
+                  rowstatus: "D",
+                };
+                deletedRows.push(newData2);
+              } else {
+                if (item.attdatnum != "") {
+                  let data2: any;
+                  try {
+                    data2 = await processApi<any>("attachment-delete", {
+                      attached:
+                        "attachment?type=task&attachmentNumber=" +
+                        item.attdatnum +
+                        "&id=",
+                    });
+                  } catch (error) {
+                    data2 = null;
+                  }
+                }
+              }
               Object3.push(index);
-              deletedRows.push(newData2);
-              localStorage.removeItem(newData2[DATA_ITEM_KEY]);
-              localStorage.removeItem(newData2[DATA_ITEM_KEY] + "key");
+              if (
+                !(
+                  localStorage.getItem(item[DATA_ITEM_KEY]) == undefined ||
+                  localStorage.getItem(item[DATA_ITEM_KEY]) == null
+                )
+              ) {
+                console.log(item[DATA_ITEM_KEY]);
+                localStorage.removeItem(item[DATA_ITEM_KEY]);
+                localStorage.removeItem(item[DATA_ITEM_KEY] + "key");
+              }
             }
           });
 
@@ -1106,6 +1152,31 @@ const KendoWindow = ({
             data = mainDataResult.data[Math.min(...Object2)];
           } else {
             data = mainDataResult.data[Math.min(...Object3) - 1];
+          }
+
+          if (data != undefined) {
+            const row =
+              data != undefined
+                ? data
+                : newData[0] != undefined
+                ? newData[0]
+                : "";
+            if (
+              !(
+                localStorage.getItem(row[DATA_ITEM_KEY]) == undefined ||
+                localStorage.getItem(row[DATA_ITEM_KEY]) == null
+              )
+            ) {
+              if (refEditorRef.current != null) {
+                refEditorRef.current.setHtml(
+                  localStorage.getItem(row[DATA_ITEM_KEY]) + "key"
+                );
+              }
+            } else {
+              fetchDocument("Task", row.orgdiv + "_" + row.docunum, row);
+            }
+          } else {
+            fetchDocument("Task", "");
           }
 
           //newData 생성
@@ -1116,16 +1187,6 @@ const KendoWindow = ({
           setSelectedState({
             [data != undefined ? data[DATA_ITEM_KEY] : newData[0]]: true,
           });
-
-          if (data != undefined) {
-            const row =
-              data != undefined
-                ? data[DATA_ITEM_KEY]
-                : newData[0] != undefined
-                ? newData[0][DATA_ITEM_KEY]
-                : "";
-            fetchDocument("Task", row.orgdiv + "_" + row.docunum, row);
-          }
         }
       } else {
         alert("지시자 본인만 삭제가 가능합니다.");
@@ -1823,28 +1884,57 @@ const KendoWindow = ({
   };
 
   const onChanges = () => {
-    const newData = mainDataResult.data.map((item) =>
-      item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
-        ? {
-            ...item,
-            rowstatus: item.rowstatus == "N" ? "N" : "U",
-          }
-        : {
-            ...item,
-          }
-    );
-    setTempResult((prev) => {
-      return {
-        data: newData,
-        total: prev.total,
-      };
-    });
-    setMainDataResult((prev) => {
-      return {
-        data: newData,
-        total: prev.total,
-      };
-    });
+    if (mainDataResult.total > 0) {
+      const currentRow = mainDataResult.data.filter(
+        (item) =>
+          item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
+      )[0];
+      let editorContent: any = "";
+      if (refEditorRef.current) {
+        editorContent = refEditorRef.current.getContent();
+      }
+
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(editorContent, "text/html");
+      const textContent = doc.body.textContent || ""; //문자열
+      if (
+        !(
+          localStorage.getItem(currentRow[DATA_ITEM_KEY]) == undefined ||
+          localStorage.getItem(currentRow[DATA_ITEM_KEY]) == null
+        )
+      ) {
+        localStorage.removeItem(currentRow[DATA_ITEM_KEY]);
+        localStorage.removeItem(currentRow[DATA_ITEM_KEY] + "key");
+        localStorage.setItem(currentRow[DATA_ITEM_KEY], textContent);
+        localStorage.setItem(currentRow[DATA_ITEM_KEY] + "key", editorContent);
+      } else {
+        localStorage.setItem(currentRow[DATA_ITEM_KEY], textContent);
+        localStorage.setItem(currentRow[DATA_ITEM_KEY] + "key", editorContent);
+      }
+
+      const newData = mainDataResult.data.map((item) =>
+        item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
+          ? {
+              ...item,
+              rowstatus: item.rowstatus == "N" ? "N" : "U",
+            }
+          : {
+              ...item,
+            }
+      );
+      setTempResult((prev) => {
+        return {
+          data: newData,
+          total: prev.total,
+        };
+      });
+      setMainDataResult((prev) => {
+        return {
+          data: newData,
+          total: prev.total,
+        };
+      });
+    }
   };
 
   return (
