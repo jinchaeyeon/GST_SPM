@@ -776,7 +776,8 @@ const App = () => {
     setFileList([]);
     setSavenmList([]);
     if (e.selected == 0) {
-      setFilters({
+      setFilters(prevFilters  =>({
+        ...prevFilters ,
         workType: "received",
         date_type: { sub_code: "A", code_name: "요청일" },
         fromDate: fromDate,
@@ -808,13 +809,14 @@ const App = () => {
         pgSize: PAGE_SIZE,
         pgNum: 1,
         isSearch: true,
-      });
+      }));
       setPage({
         skip: 0,
         take: initialPageState.take,
       });
     } else if (e.selected == 1) {
-      setFilters({
+      setFilters(prevFilters  =>({
+        ...prevFilters ,
         workType: "project",
         date_type: { sub_code: "A", code_name: "사업시작일(계약일)" },
         fromDate: fromDate,
@@ -842,13 +844,14 @@ const App = () => {
         pgSize: PAGE_SIZE,
         pgNum: 1,
         isSearch: true,
-      });
+      }));
       setPage2({
         skip: 0,
         take: initialPageState.take,
       });
     } else if (e.selected == 2) {
-      setFilters({
+      setFilters(prevFilters  =>({
+        ...prevFilters ,
         workType: "meeting",
         date_type: { sub_code: "A", code_name: "회의일" },
         fromDate: fromDate,
@@ -876,13 +879,14 @@ const App = () => {
         pgSize: PAGE_SIZE,
         pgNum: 1,
         isSearch: true,
-      });
+      }));
       setPage3({
         skip: 0,
         take: initialPageState.take,
       });
     } else {
-      setFilters({
+      setFilters(prevFilters  =>({
+        ...prevFilters ,
         workType: "task_order_all",
         date_type: { sub_code: "A", code_name: "지시일" },
         fromDate: fromDate2,
@@ -890,12 +894,12 @@ const App = () => {
         custnm: "",
         value_code3: { sub_code: "", code_name: "" },
         contents: "",
-        status: [{ sub_code: "N", code_name: "미완료", code: "N" }],
+        status2: [{ sub_code: "N", code_name: "미완료", code: "N" }],
         reception_person: { user_id: "", user_name: "" },
         receptionist: { user_id: "", user_name: "" },
         worker: { user_id: "", user_name: "" },
         reception_type: { sub_code: "", code_name: "" },
-        user_name: { user_id: userId, user_name: userName },
+        user_name: { user_id: "", user_name: "" },
         ref_type: [
           { code: 1, name: "접수" },
           { code: 2, name: "프로젝트" },
@@ -910,7 +914,7 @@ const App = () => {
         pgSize: PAGE_SIZE,
         pgNum: 1,
         isSearch: true,
-      });
+      }));
       setPage4({
         skip: 0,
         take: initialPageState.take,
@@ -922,6 +926,8 @@ const App = () => {
   //조회조건 Input Change 함수 => 사용자가 Input에 입력한 값을 조회 파라미터로 세팅
   const filterInputChange = (e: any) => {
     const { value, name = "" } = e.target;
+    console.log("filterInputChange", value, name);
+    
 
     setFilters((prev) => ({
       ...prev,
@@ -1215,6 +1221,7 @@ const App = () => {
       fetchCust();
       const queryParams = new URLSearchParams(location.search);
       if (queryParams.has("go")) {
+        history.replace({}, "");
         const paras = queryParams.get("go") as string;
         if (paras.includes("-")) {
           if (paras.split("-")[1].charAt(0) == "D") {
@@ -1245,15 +1252,23 @@ const App = () => {
             }));
           } else {
             setTabSelected(3);
-            setFilters((prev) => ({
-              ...prev,
-              workType: "task_order_all",
-              findRowValue: paras,
-              isSearch: true,
-            }));
+            setTimeout(() => {
+              
+              setFilters((prev) => ({
+                ...prev,
+                isSearch: true,
+                receptionist: { user_id: "", user_name: "" },
+                workType: "task_order_all",
+                findRowValue: paras,
+                status2: [
+                  { sub_code: "Y", code_name: "완료", code: "Y" },
+                  { sub_code: "N", code_name: "미완료", code: "N" },
+                ],
+              }));
+            }, 100);
           }
         }
-        history.replace({}, "");
+        
       }
       setTitle("업무 지시");
     }
@@ -1378,6 +1393,7 @@ const App = () => {
     value_code3: any;
     contents: string;
     status: any;
+    status2: any;
     reception_person: any;
     receptionist: any;
     worker: any;
@@ -1403,6 +1419,11 @@ const App = () => {
       { sub_code: "Wait", code_name: "대기", code: "N" },
       { sub_code: "Progress", code_name: "진행중", code: "R" },
       { sub_code: "Hold", code_name: "보류", code: "H" },
+      { sub_code: "Y", code_name: "완료", code: "Y" },
+    ],
+    status2: [
+      { sub_code: "Y", code_name: "완료", code: "Y" },
+      { sub_code: "N", code_name: "미완료", code: "N" },
     ],
     reception_person: { user_id: "", user_name: "" },
     receptionist: { user_id: userId, user_name: userName },
@@ -1829,7 +1850,7 @@ const App = () => {
     setLoading(false);
   };
 
-  //그리드 데이터 조회
+  //업무지시 그리드 데이터 조회
   const fetchMainGrid4 = async (filters: any) => {
     let data: any;
     setLoading(true);
@@ -1888,6 +1909,8 @@ const App = () => {
     };
     try {
       data = await processApi<any>("procedure", parameters);
+      console.log("data",data);
+      
     } catch (error) {
       data = null;
     }
@@ -5128,7 +5151,7 @@ const App = () => {
                             name="status"
                             data={statusListData2}
                             onChange={filterMultiSelectChange}
-                            value={filters.status}
+                            value={filters.status2}
                             textField="code_name"
                             dataItemKey="sub_code"
                           />
