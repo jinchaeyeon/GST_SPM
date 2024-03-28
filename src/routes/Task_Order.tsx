@@ -858,6 +858,7 @@ const App = () => {
         toDate: new Date(),
         custnm: "",
         value_code3: { sub_code: "", code_name: "" },
+        pgmnm:"",
         contents: "",
         status: [{ sub_code: "N", code_name: "미완료", code: "N" }],
         reception_person: { user_id: "", user_name: "" },
@@ -925,9 +926,7 @@ const App = () => {
 
   //조회조건 Input Change 함수 => 사용자가 Input에 입력한 값을 조회 파라미터로 세팅
   const filterInputChange = (e: any) => {
-    const { value, name = "" } = e.target;
-    console.log("filterInputChange", value, name);
-    
+    const { value, name = "" } = e.target;   
 
     setFilters((prev) => ({
       ...prev,
@@ -1390,6 +1389,7 @@ const App = () => {
     fromDate: Date;
     toDate: Date;
     custnm: string;
+    pgmnm: string;
     value_code3: any;
     contents: string;
     status: any;
@@ -1414,6 +1414,7 @@ const App = () => {
     toDate: new Date(),
     custnm: "",
     value_code3: { sub_code: "", code_name: "" },
+    pgmnm:"",
     contents: "",
     status: [
       { sub_code: "Wait", code_name: "대기", code: "N" },
@@ -1503,6 +1504,7 @@ const App = () => {
           filters.reception_type != null ? filters.reception_type.sub_code : "",
         "@p_value_code3":
           filters.value_code3 != null ? filters.value_code3.sub_code : "",
+        "@p_pgmnm": filters.pgmnm,
         "@p_reception_person":
           filters.reception_person != null
             ? filters.reception_person.user_id
@@ -1634,6 +1636,7 @@ const App = () => {
           filters.reception_type != null ? filters.reception_type.sub_code : "",
         "@p_value_code3":
           filters.value_code3 != null ? filters.value_code3.sub_code : "",
+        "@p_pgmnm": filters.pgmnm,
         "@p_reception_person":
           filters.reception_person != null
             ? filters.reception_person.user_id
@@ -1761,6 +1764,7 @@ const App = () => {
           filters.reception_type != null ? filters.reception_type.sub_code : "",
         "@p_value_code3":
           filters.value_code3 != null ? filters.value_code3.sub_code : "",
+        "@p_pgmnm": filters.pgmnm,
         "@p_reception_person":
           filters.reception_person != null
             ? filters.reception_person.user_id
@@ -1892,6 +1896,7 @@ const App = () => {
           filters.reception_type != null ? filters.reception_type.sub_code : "",
         "@p_value_code3":
           filters.value_code3 != null ? filters.value_code3.sub_code : "",
+        "@p_pgmnm": filters.pgmnm,
         "@p_reception_person":
           filters.reception_person != null
             ? filters.reception_person.user_id
@@ -2744,6 +2749,7 @@ const App = () => {
       contents: "",
       custcd: "",
       custnm: "",
+      pgmnm: "",
       custperson: "",
       docunum: "",
       expect_time: "0:0",
@@ -4435,6 +4441,17 @@ const App = () => {
                           />
                         </td>
                       </tr>
+                      <tr>
+                        <th>메뉴명</th>
+                        <td>
+                          <Input
+                            name="pgmnm"
+                            type="text"
+                            value={filters.pgmnm}
+                            onChange={filterInputChange}
+                          />
+                        </td>
+                      </tr>
                     </tbody>
                   </FilterBox>
                 </FilterBoxWrap>
@@ -4525,7 +4542,7 @@ const App = () => {
                       <GridColumn field="number" title="차수" width={80} />
                       <GridColumn
                         field="pgmnm"
-                        title="Value 이름"
+                        title="메뉴명"
                         width={120}
                       />
                       <GridColumn
