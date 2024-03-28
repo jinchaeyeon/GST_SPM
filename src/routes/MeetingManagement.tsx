@@ -96,7 +96,7 @@ const DETAIL_ITEM_KEY = "meetingseq";
 
 const defaultDetailData = {
   work_type: "N",
-  unshared: false,
+  unshared: true,
   orgdiv: "",
   meetingnum: "",
   attdatnum: "",
