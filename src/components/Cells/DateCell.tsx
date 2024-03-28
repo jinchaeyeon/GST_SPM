@@ -33,7 +33,7 @@ const DateCell = (props: GridCellProps) => {
         syntheticEvent: e.syntheticEvent,
         value: convertDateToStr(e.target.value),
       });
-      
+
       onChange({
         dataIndex: 0,
         dataItem: dataItem,

@@ -74,7 +74,6 @@ import {
   convertDateToStr,
   dateformat,
   getGridItemChangedData,
-  getGroupGridItemChangedData,
   handleKeyPressSearch,
   isValidDate,
 } from "../components/CommonFunction";
@@ -325,11 +324,6 @@ const App = () => {
     sort: [],
   });
   const [subDataState, setSubDataState] = useState<State>({
-    group: [
-      {
-        field: "group_category_name",
-      },
-    ],
     sort: [],
   });
   const [subDataState2, setSubDataState2] = useState<State>({
@@ -342,7 +336,10 @@ const App = () => {
   const [mainDataResult, setMainDataResult] = useState<DataResult>(
     process([], mainDataState)
   );
-  const [subDataResult, setSubDataResult] = useState<GroupResult[]>(
+  const [subDataResult, setSubDataResult] = useState<DataResult>(
+    process([], subDataState)
+  );
+  const [resultState, setResultState] = React.useState<GroupResult[]>(
     processWithGroups([], initialGroup)
   );
   const [subDataTotal, setSubDataTotal] = useState<number>(0);
@@ -496,14 +493,12 @@ const App = () => {
   };
 
   const setValueBox = (data: any) => {
-    subDataResult.map((items) => {
-      items.items.map((item: any) => {
-        if (item[SUB_DATA_ITEM_KEY] > temp) {
-          temp = item[SUB_DATA_ITEM_KEY];
-        }
-      });
+    subDataResult.data.map((items) => {
+      if (items[SUB_DATA_ITEM_KEY] > temp) {
+        temp = items[SUB_DATA_ITEM_KEY];
+      }
     });
-    let newData: any[] = [];
+
     data.map((item: any) => {
       let newDataItem = {
         [SUB_DATA_ITEM_KEY]: ++temp,
@@ -542,27 +537,26 @@ const App = () => {
         groupId: "module",
         group_menu_name: "",
       };
-
-      newData.push(newDataItem);
-    });
-    subDataResult.map((items) => {
-      items.items.forEach((item: any, index: number) => {
-        newData.push(item);
+      const newResult = [newDataItem, ...subDataResult.data];
+      const newDataState = processWithGroups(newResult, group);
+      setSubDataTotal(subDataTotal + 1);
+      setResultState(newDataState);
+      setSelectedsubDataState({
+        [newDataItem[SUB_DATA_ITEM_KEY]]: true,
       });
-    });
 
-    setSubDataTotal(subDataTotal + data.length);
-    const newDataState = processWithGroups(newData, group);
-    setSubDataResult(newDataState);
-    setSelectedsubDataState({
-      [newData[newData.length - 1][SUB_DATA_ITEM_KEY]]: true,
+      setSubDataResult((prev) => {
+        return {
+          data: newResult,
+          total: prev.total + 1,
+        };
+      });
+      setPage((prev) => ({
+        ...prev,
+        skip: 0,
+        take: prev.take + 1,
+      }));
     });
-
-    setPage((prev) => ({
-      ...prev,
-      skip: 0,
-      take: prev.take + 1,
-    }));
   };
 
   const getAttachmentsData = (
@@ -816,6 +810,7 @@ const App = () => {
             remark: selectedRow.remark,
             revperson: selectedRow.revperson,
           });
+          setPage(initialPageState);
           setSubFilters((prev) => ({
             ...prev,
             devmngnum: selectedRow.devmngnum,
@@ -889,6 +884,7 @@ const App = () => {
             remark: rows[0].remark,
             revperson: rows[0].revperson,
           });
+          setPage(initialPageState);
           setSubFilters((prev) => ({
             ...prev,
             devmngnum: rows[0].devmngnum,
@@ -937,7 +933,14 @@ const App = () => {
           revperson: "",
         });
         const newDataState = processWithGroups([], group);
-        setSubDataResult(newDataState);
+        setResultState(newDataState);
+        setSubDataResult((prev) => {
+          return {
+            data: [],
+            total: 0,
+          };
+        });
+        setPage(initialPageState);
         setSubDataResult2((prev) => {
           return {
             data: [],
@@ -1009,7 +1012,7 @@ const App = () => {
         return {
           ...row,
           groupId: row.module + "module",
-          group_menu_name: row.module,
+          group_menu_name: "그룹" + " : " + row.module,
           idx: idx++,
         };
       });
@@ -1044,8 +1047,14 @@ const App = () => {
         });
       } else {
         const newDataState = processWithGroups(rows, group);
+        setSubDataResult((prev) => {
+          return {
+            data: rows,
+            total: totalRowCnt == -1 ? 0 : totalRowCnt,
+          };
+        });
         setSubDataTotal(totalRowCnt);
-        setSubDataResult(newDataState);
+        setResultState(newDataState);
       }
 
       if (totalRowCnt > 0) {
@@ -1378,9 +1387,6 @@ const App = () => {
   const onMainDataStateChange = (event: GridDataStateChangeEvent) => {
     setMainDataState(event.dataState);
   };
-  const onSubDataStateChange = (event: GridDataStateChangeEvent) => {
-    setSubDataState(event.dataState);
-  };
   const onSubDataStateChange2 = (event: GridDataStateChangeEvent) => {
     setSubDataState2(event.dataState);
   };
@@ -1644,7 +1650,11 @@ const App = () => {
     });
     setSubDataTotal(0);
     const newDataState = processWithGroups([], group);
-    setSubDataResult(newDataState);
+    setResultState(newDataState);
+    setSubDataResult({
+      data: [],
+      total: 0,
+    });
     setSubDataResult2({
       data: [],
       total: 0,
@@ -1654,7 +1664,7 @@ const App = () => {
   };
 
   const newData = setExpandedState({
-    data: subDataResult,
+    data: resultState,
     collapsedIds: collapsedState,
   });
 
@@ -1834,17 +1844,14 @@ const App = () => {
     ) {
       alert("필수항목을 채워주세요.");
     } else {
-      let dataItem: any[] = [];
-      subDataResult.map((items) => {
-        items.items.forEach((item: any, index: number) => {
-          if (
+      const dataItem: { [name: string]: any } = subDataResult.data.filter(
+        (item: any) => {
+          return (
             (item.rowstatus === "N" || item.rowstatus === "U") &&
             item.rowstatus !== undefined
-          ) {
-            dataItem.push(item);
-          }
-        });
-      });
+          );
+        }
+      );
 
       dataItem.forEach((item: any) => {
         const {
@@ -2714,7 +2721,7 @@ const App = () => {
   }, [usersData]);
 
   const onItemChange = (event: GridItemChangeEvent) => {
-    getGroupGridItemChangedData(
+    getGridItemChangedData(
       event,
       subDataResult,
       setSubDataResult,
@@ -2723,7 +2730,6 @@ const App = () => {
   };
 
   const onItemChange2 = (event: GridItemChangeEvent) => {
-    setSubDataState2((prev) => ({ ...prev, sort: [] }));
     getGridItemChangedData(
       event,
       subDataResult2,
@@ -2770,63 +2776,72 @@ const App = () => {
 
   const enterEdit = (dataItem: any, field: string) => {
     if (field != "rowstatus" && field != "stdscore") {
-      const newData = subDataResult.map((items) =>
-        items.value == dataItem.group_menu_name
+      const newData = subDataResult.data.map((item) =>
+        item[SUB_DATA_ITEM_KEY] === dataItem[SUB_DATA_ITEM_KEY]
           ? {
-              ...items,
-              items: items.items.map((item: any) =>
-                item[SUB_DATA_ITEM_KEY] === dataItem[SUB_DATA_ITEM_KEY]
-                  ? {
-                      ...item,
-                      [EDIT_FIELD]: field,
-                    }
-                  : {
-                      ...item,
-                      [EDIT_FIELD]: undefined,
-                    }
-              ),
+              ...item,
+              [EDIT_FIELD]: field,
             }
-          : items
+          : {
+              ...item,
+              [EDIT_FIELD]: undefined,
+            }
       );
-      setSubDataResult(newData);
-      setTempResult(newData);
+
+      const newDataState = processWithGroups(newData, group);
+      setSubDataResult((prev) => {
+        return {
+          data: newData,
+          total: prev.total,
+        };
+      });
+      setResultState(newDataState);
+      setTempResult(newDataState);
     } else {
-      setTempResult(subDataResult);
+      const newDataState = processWithGroups(subDataResult.data, group);
+      setTempResult(newDataState);
     }
   };
 
   const exitEdit = () => {
-    if (tempResult != subDataResult) {
-      const newData = subDataResult.map((items) => ({
-        ...items,
-        items: items.items.map((item: any) =>
-          item[SUB_DATA_ITEM_KEY] ==
-          Object.getOwnPropertyNames(selectedsubDataState)[0]
-            ? {
-                ...item,
-                rowstatus: item.rowstatus == "N" ? "N" : "U",
-                [EDIT_FIELD]: undefined,
-              }
-            : {
-                ...item,
-                [EDIT_FIELD]: undefined,
-              }
-        ),
-      }));
-
-      setSubDataResult(newData);
-      setTempResult(newData);
+    if (tempResult != resultState) {
+      const newData = subDataResult.data.map((item) =>
+        item[SUB_DATA_ITEM_KEY] ==
+        Object.getOwnPropertyNames(selectedsubDataState)[0]
+          ? {
+              ...item,
+              rowstatus: item.rowstatus == "N" ? "N" : "U",
+              [EDIT_FIELD]: undefined,
+            }
+          : {
+              ...item,
+              [EDIT_FIELD]: undefined,
+            }
+      );
+      const newDataState = processWithGroups(newData, group);
+      setSubDataResult((prev) => {
+        return {
+          data: newData,
+          total: prev.total,
+        };
+      });
+      setResultState(newDataState);
+      setTempResult(newDataState);
     } else {
-      const newData = subDataResult.map((items) => ({
-        ...items,
-        items: items.items.map((item: any) => ({
-          ...item,
-          [EDIT_FIELD]: undefined,
-        })),
+      const newData = subDataResult.data.map((item) => ({
+        ...item,
+        [EDIT_FIELD]: undefined,
       }));
 
-      setSubDataResult(newData);
-      setTempResult(newData);
+      const newDataState = processWithGroups(newData, group);
+      setSubDataResult((prev) => {
+        return {
+          data: newData,
+          total: prev.total,
+        };
+      });
+      setResultState(newDataState);
+      setTempResult(newDataState);
     }
   };
 
@@ -2913,12 +2928,10 @@ const App = () => {
   };
 
   const onAddClick = () => {
-    subDataResult.map((items) => {
-      items.items.map((item: any) => {
-        if (item[SUB_DATA_ITEM_KEY] > temp) {
-          temp = item[SUB_DATA_ITEM_KEY];
-        }
-      });
+    subDataResult.data.map((item) => {
+      if (item[SUB_DATA_ITEM_KEY] > temp) {
+        temp = item[SUB_DATA_ITEM_KEY];
+      }
     });
 
     const newDataItem = {
@@ -2958,22 +2971,26 @@ const App = () => {
       groupId: "module",
       group_menu_name: "",
     };
-    let newData: any[] = [];
-    newData.push(newDataItem);
-    subDataResult.map((items) => {
-      items.items.forEach((item: any, index: number) => {
-        newData.push(item);
-      });
+    const newResult = [newDataItem, ...subDataResult.data];
+    const newDataState = processWithGroups(newResult, group);
+    setSubDataTotal(subDataTotal + 1);
+    setResultState(newDataState);
+    setSelectedsubDataState({
+      [newDataItem[SUB_DATA_ITEM_KEY]]: true,
+    });
+
+    setSubDataResult((prev) => {
+      return {
+        data: newResult,
+        total: prev.total + 1,
+      };
     });
     setPage((prev) => ({
       ...prev,
       skip: 0,
       take: prev.take + 1,
     }));
-    setSubDataTotal(subDataTotal + 1);
-    const newDataState = processWithGroups(newData, group);
-    setSubDataResult(newDataState);
-    setSelectedsubDataState({ [newDataItem[SUB_DATA_ITEM_KEY]]: true });
+
     setFileList([]);
     setSavenmList([]);
   };
@@ -2983,52 +3000,36 @@ const App = () => {
     let newData: any[] = [];
     let Object: any[] = [];
     let Object2: any[] = [];
-    let indexs: any[] = [];
     let data: any;
     if (subDataTotal > 0) {
-      subDataResult.map((items, index2) => {
-        items.items.forEach((item: any, index: number) => {
-          if (!selectedsubDataState[item[SUB_DATA_ITEM_KEY]]) {
-            newData.push(item);
-            Object2.push(index);
-          } else {
+      subDataResult.data.map((item, index) => {
+        if (!selectedsubDataState[item[SUB_DATA_ITEM_KEY]]) {
+          newData.push(item);
+          Object2.push(index);
+        } else {
+          if (!item.rowstatus || item.rowstatus != "N") {
             const newData2 = {
               ...item,
               rowstatus: "D",
             };
-            Object.push(index);
-            if (Math.min(...indexs) == index2) {
-              indexs.push(100000000000); //최소값안걸리게 셋팅
-            } else {
-              indexs.push(index2);
-            }
             deletedRows.push(newData2);
           }
-        });
-      });
-      const minIndex = indexs.findIndex((item) => item == Math.min(...indexs));
-      if (
-        Object[minIndex] == 0 &&
-        Math.min(...indexs) == 0 &&
-        subDataTotal != 1
-      ) {
-        if (subDataResult[minIndex].items[minIndex + 1] == undefined) {
-          data = subDataResult[minIndex + 1].items[minIndex]; //그룹사라져서 다음그룹
-        } else {
-          data = subDataResult[minIndex].items[minIndex + 1]; //그룹내첫번쨰
+          Object.push(index);
         }
-      } else if (Object[minIndex] == 0 && subDataTotal != 1) {
-        data =
-          subDataResult[Math.min(...indexs) - 1].items[
-            subDataResult[Math.min(...indexs) - 1].items.length - 1
-          ]; //전그룹 마지막
+      });
+      if (Math.min(...Object) < Math.min(...Object2)) {
+        data = subDataResult.data[Math.min(...Object2)];
       } else {
-        data = subDataResult[indexs[minIndex]].items[Object[minIndex] - 1];
+        data = subDataResult.data[Math.min(...Object) - 1];
       }
-      setSubDataTotal(subDataTotal - Object.length);
-
+      //newData 생성
+      setSubDataResult((prev) => ({
+        data: newData,
+        total: prev.total - Object.length,
+      }));
       const newDataState = processWithGroups(newData, group);
-      setSubDataResult(newDataState);
+      setResultState(newDataState);
+      setSubDataTotal(subDataTotal - Object.length);
       setSelectedsubDataState({
         [data != undefined ? data[SUB_DATA_ITEM_KEY] : newData[0]]: true,
       });
@@ -3418,34 +3419,33 @@ const App = () => {
 
     const handleChange = () => {
       if (field != undefined) {
-        const newData = subDataResult.map((items) =>
-          items.value == dataItem.group_menu_name
+        const newData = subDataResult.data.map((item) =>
+          item[SUB_DATA_ITEM_KEY] === dataItem[SUB_DATA_ITEM_KEY]
             ? {
-                ...items,
-                items: items.items.map((item: any) =>
-                  item[SUB_DATA_ITEM_KEY] === dataItem[SUB_DATA_ITEM_KEY]
-                    ? {
-                        ...item,
-                        rowstatus: item.rowstatus == "N" ? "N" : "U",
-                        [field]:
-                          typeof item[field] == "boolean"
-                            ? !item[field]
-                            : item[field] == "Y"
-                            ? false
-                            : true,
-                        [EDIT_FIELD]: field,
-                      }
-                    : {
-                        ...item,
-                        [EDIT_FIELD]: undefined,
-                      }
-                ),
+                ...item,
+                rowstatus: item.rowstatus == "N" ? "N" : "U",
+                [field]:
+                  typeof item[field] == "boolean"
+                    ? !item[field]
+                    : item[field] == "Y"
+                    ? false
+                    : true,
+                [EDIT_FIELD]: field,
               }
-            : items
+            : {
+                ...item,
+                [EDIT_FIELD]: undefined,
+              }
         );
-
-        setSubDataResult(newData);
-        setTempResult(newData);
+        setSubDataResult((prev) => {
+          return {
+            data: newData,
+            total: prev.total,
+          };
+        });
+        const newDataState = processWithGroups(newData, group);
+        setResultState(newDataState);
+        setTempResult(newDataState);
       }
     };
 
@@ -4130,7 +4130,6 @@ const App = () => {
                           })),
                         }))}
                         {...subDataState}
-                        onDataStateChange={onSubDataStateChange}
                         //선택 기능
                         dataItemKey={SUB_DATA_ITEM_KEY}
                         selectedField={SELECTED_FIELD}
