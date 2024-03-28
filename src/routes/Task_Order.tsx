@@ -895,7 +895,7 @@ const App = () => {
         custnm: "",
         value_code3: { sub_code: "", code_name: "" },
         contents: "",
-        status2: [{ sub_code: "N", code_name: "미완료", code: "N" }],
+        status: [{ sub_code: "N", code_name: "미완료", code: "N" }],
         reception_person: { user_id: "", user_name: "" },
         receptionist: { user_id: "", user_name: "" },
         worker: { user_id: "", user_name: "" },
@@ -1259,7 +1259,7 @@ const App = () => {
                 receptionist: { user_id: "", user_name: "" },
                 workType: "task_order_all",
                 findRowValue: paras,
-                status2: [
+                status: [
                   { sub_code: "Y", code_name: "완료", code: "Y" },
                   { sub_code: "N", code_name: "미완료", code: "N" },
                 ],
@@ -1393,7 +1393,6 @@ const App = () => {
     value_code3: any;
     contents: string;
     status: any;
-    status2: any;
     reception_person: any;
     receptionist: any;
     worker: any;
@@ -1421,8 +1420,6 @@ const App = () => {
       { sub_code: "Progress", code_name: "진행중", code: "R" },
       { sub_code: "Hold", code_name: "보류", code: "H" },
       { sub_code: "Y", code_name: "완료", code: "Y" },
-    ],
-    status2: [
       { sub_code: "Y", code_name: "완료", code: "Y" },
       { sub_code: "N", code_name: "미완료", code: "N" },
     ],
@@ -5168,7 +5165,7 @@ const App = () => {
                             name="status"
                             data={statusListData2}
                             onChange={filterMultiSelectChange}
-                            value={filters.status2}
+                            value={filters.status}
                             textField="code_name"
                             dataItemKey="sub_code"
                           />
