@@ -1874,6 +1874,8 @@ const App = () => {
             if (datas != null) {
               rowsArr.attdatnum_s.push(item.attdatnum);
             }
+          }else {
+            rowsArr.attdatnum_s.push(item.attdatnum);
           }
         }
 
@@ -1891,6 +1893,8 @@ const App = () => {
           }
 
           if (data2 != null) {
+            rowsArr.attdatnum_s.push(item.attdatnum);
+          }else {
             rowsArr.attdatnum_s.push(item.attdatnum);
           }
         }
@@ -1968,11 +1972,11 @@ const App = () => {
       "@p_ref_key": paraData.ref_key_s,
       "@p_devmngnum": paraData.devmngnum_s,
       "@p_devmngseq": paraData.devmngseq_s,
-
       "@p_id": userId,
       "@p_pc": pc,
     },
   };
+
 
   useEffect(() => {
     if (paraData.work_type != "") fetchToSave();
@@ -1982,7 +1986,7 @@ const App = () => {
     let data: any;
 
     try {
-      data = await processApi<any>("procedure", para);
+      data = await processApi<any>("document-save", para);
     } catch (error) {
       data = null;
     }

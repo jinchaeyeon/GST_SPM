@@ -23,6 +23,8 @@ const domain: any = {
 
   // 처리일지
   document: { action: "get", url: "api/spm/:para" },
+  "document-save": { action: "post", url: "api/spm/record" },
+
 
   //업무지시
   "taskorder-save": { action: "post", url: "api/spm/task-order" },
