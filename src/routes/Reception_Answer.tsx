@@ -1914,41 +1914,41 @@ const App = () => {
                         rowRender={customRowRender}
                         editField={EDIT_FIELD}
                       >
-                        <GridColumn field="rowstatus" title=" " width="45px" />
+                        <GridColumn field="rowstatus" title=" " width="40px" />
                         <GridColumn
                           field="reception_type"
                           title="접수구분"
-                          width={100}
+                          width={75}
                           footerCell={mainTotalFooterCell}
                         />
                         <GridColumn
                           field="status"
                           title="상태"
-                          width={120}
+                          width={90}
                           cell={StatusCell}
                         />
                         <GridColumn
                           field="exists_task"
                           title="지시여부"
-                          width={120}
+                          width={90}
                           cell={Exists_taskCell}
                         />
                         <GridColumn
                           field="is_finish"
                           title="완료여부"
-                          width={80}
+                          width={75}
                           cell={CheckBoxReadOnlyCell}
                         />
                         <GridColumn
                           field="request_date"
                           title="요청일"
-                          width={120}
+                          width={100}
                           cell={DateCell}
                         />
                         <GridColumn
                           field="user_name"
                           title="작성자"
-                          width={120}
+                          width={80}
                         />
                         <GridColumn
                           field="user_tel"
@@ -1958,7 +1958,7 @@ const App = () => {
                         <GridColumn
                           field="customer_code"
                           title="업체코드"
-                          width={120}
+                          width={80}
                         />
                         <GridColumn
                           field="customer_name"
@@ -1968,7 +1968,7 @@ const App = () => {
                         <GridColumn
                           field="reception_person"
                           title="접수자"
-                          width={120}
+                          width={80}
                           cell={UserCell}
                         />
                         <GridColumn
@@ -1980,26 +1980,26 @@ const App = () => {
                         <GridColumn
                           field="reception_date"
                           title="접수일"
-                          width={120}
+                          width={100}
                           cell={DateCell}
                         />
                         <GridColumn field="title" title="제목" width={300} />
                         <GridColumn
                           field="value_code3"
                           title="Value구분"
-                          width={120}
+                          width={110}
                           cell={ValueCodeCell}
                         />
                         <GridColumn
                           field="be_finished_date"
                           title="완료예정일"
-                          width={120}
+                          width={100}
                           cell={DateCell}
                         />
                         <GridColumn
                           field="completion_date"
                           title="처리완료일"
-                          width={120}
+                          width={100}
                           cell={DateCell}
                         />
                         <GridColumn
@@ -2011,17 +2011,17 @@ const App = () => {
                         <GridColumn
                           field="document_id"
                           title="문서번호"
-                          width={200}
+                          width={150}
                         />
                         <GridColumn
                           field="answer_document_id"
                           title="답변문서번호"
-                          width={200}
+                          width={150}
                         />
                         <GridColumn
                           field="ref_number"
                           title="접수일지번호"
-                          width={200}
+                          width={150}
                         />
                       </Grid>
                     </GridContainer>
