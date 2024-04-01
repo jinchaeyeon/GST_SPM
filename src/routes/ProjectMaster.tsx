@@ -329,6 +329,9 @@ const App = () => {
   const [subDataState2, setSubDataState2] = useState<State>({
     sort: [],
   });
+  const [tempState, setTempState] = useState<State>({
+    sort: [],
+  });
   const [tempState2, setTempState2] = useState<State>({
     sort: [],
   });
@@ -346,8 +349,8 @@ const App = () => {
   const [subDataResult2, setSubDataResult2] = useState<DataResult>(
     process([], subDataState2)
   );
-  const [tempResult, setTempResult] = useState<GroupResult[]>(
-    processWithGroups([], initialGroup)
+  const [tempResult, setTempResult] = useState<DataResult>(
+    process([], tempState)
   );
   const [tempResult2, setTempResult2] = useState<DataResult>(
     process([], tempState2)
@@ -2795,16 +2798,25 @@ const App = () => {
           total: prev.total,
         };
       });
+      setTempResult((prev) => {
+        return {
+          data: newData,
+          total: prev.total,
+        };
+      });
       setResultState(newDataState);
-      setTempResult(newDataState);
     } else {
-      const newDataState = processWithGroups(subDataResult.data, group);
-      setTempResult(newDataState);
+      setTempResult((prev) => {
+        return {
+          data: subDataResult.data,
+          total: prev.total,
+        };
+      });
     }
   };
 
   const exitEdit = () => {
-    if (tempResult != resultState) {
+    if (tempResult.data != subDataResult.data) {
       const newData = subDataResult.data.map((item) =>
         item[SUB_DATA_ITEM_KEY] ==
         Object.getOwnPropertyNames(selectedsubDataState)[0]
@@ -2819,6 +2831,12 @@ const App = () => {
             }
       );
       const newDataState = processWithGroups(newData, group);
+      setTempResult((prev: { total: any }) => {
+        return {
+          data: newData,
+          total: prev.total,
+        };
+      });
       setSubDataResult((prev) => {
         return {
           data: newData,
@@ -2826,13 +2844,17 @@ const App = () => {
         };
       });
       setResultState(newDataState);
-      setTempResult(newDataState);
     } else {
       const newData = subDataResult.data.map((item) => ({
         ...item,
         [EDIT_FIELD]: undefined,
       }));
-
+      setTempResult((prev: { total: any }) => {
+        return {
+          data: newData,
+          total: prev.total,
+        };
+      });
       const newDataState = processWithGroups(newData, group);
       setSubDataResult((prev) => {
         return {
@@ -2841,7 +2863,6 @@ const App = () => {
         };
       });
       setResultState(newDataState);
-      setTempResult(newDataState);
     }
   };
 
@@ -3443,9 +3464,14 @@ const App = () => {
             total: prev.total,
           };
         });
+        setTempResult((prev: { total: any }) => {
+          return {
+            data: newData,
+            total: prev.total,
+          };
+        });
         const newDataState = processWithGroups(newData, group);
         setResultState(newDataState);
-        setTempResult(newDataState);
       }
     };
 
