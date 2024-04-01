@@ -4538,15 +4538,15 @@ const App = () => {
                       <GridColumn field="custnm" title="업체" width={200} />
                       <GridColumn field="number" title="차수" width={80} />
                       <GridColumn
-                        field="pgmnm"
-                        title="메뉴명"
-                        width={120}
-                      />
-                      <GridColumn
                         field="pgmid"
                         title="폼ID"
                         width={120}
                         footerCell={mainTotalFooterCell2}
+                      />
+                      <GridColumn
+                        field="pgmnm"
+                        title="메뉴명"
+                        width={120}
                       />
                       <GridColumn
                         field="value_code3"

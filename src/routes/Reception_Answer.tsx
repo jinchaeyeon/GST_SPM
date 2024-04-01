@@ -1916,16 +1916,62 @@ const App = () => {
                       >
                         <GridColumn field="rowstatus" title=" " width="40px" />
                         <GridColumn
-                          field="reception_type"
-                          title="접수구분"
-                          width={75}
-                          footerCell={mainTotalFooterCell}
-                        />
-                        <GridColumn
                           field="status"
                           title="상태"
                           width={90}
                           cell={StatusCell}
+                        />
+                        <GridColumn
+                          field="request_date"
+                          title="요청일"
+                          width={100}
+                          cell={DateCell}
+                        />
+                        <GridColumn
+                          field="customer_name"
+                          title="업체명"
+                          width={150}
+                        />
+                        <GridColumn
+                          field="user_name"
+                          title="작성자"
+                          width={80}
+                        />
+                        <GridColumn
+                          field="user_tel"
+                          title="연락처"
+                          width={120}
+                        />
+                        <GridColumn field="title" title="제목" width={300} />
+                        <GridColumn
+                          field="reception_person"
+                          title="접수자"
+                          width={80}
+                          cell={UserCell}
+                        />
+                        <GridColumn
+                          field="reception_date"
+                          title="접수일"
+                          width={100}
+                          cell={DateCell}
+                        />
+                        <GridColumn
+                          field="be_finished_date"
+                          title="완료예정일"
+                          width={100}
+                          cell={DateCell}
+                        />
+                        <GridColumn
+                          field="reception_time"
+                          title="접수소요시간"
+                          width={100}
+                          cell={NumberCell}
+                        />
+                        <GridColumn
+                          field="reception_type"
+                          title="접수구분"
+                          width={75}
+                          footerCell={mainTotalFooterCell}
                         />
                         <GridColumn
                           field="exists_task"
@@ -1940,61 +1986,15 @@ const App = () => {
                           cell={CheckBoxReadOnlyCell}
                         />
                         <GridColumn
-                          field="request_date"
-                          title="요청일"
-                          width={100}
-                          cell={DateCell}
-                        />
-                        <GridColumn
-                          field="user_name"
-                          title="작성자"
-                          width={80}
-                        />
-                        <GridColumn
-                          field="user_tel"
-                          title="연락처"
-                          width={120}
-                        />
-                        <GridColumn
                           field="customer_code"
                           title="업체코드"
                           width={80}
                         />
                         <GridColumn
-                          field="customer_name"
-                          title="업체명"
-                          width={150}
-                        />
-                        <GridColumn
-                          field="reception_person"
-                          title="접수자"
-                          width={80}
-                          cell={UserCell}
-                        />
-                        <GridColumn
-                          field="reception_time"
-                          title="접수소요시간"
-                          width={100}
-                          cell={NumberCell}
-                        />
-                        <GridColumn
-                          field="reception_date"
-                          title="접수일"
-                          width={100}
-                          cell={DateCell}
-                        />
-                        <GridColumn field="title" title="제목" width={300} />
-                        <GridColumn
                           field="value_code3"
                           title="Value구분"
                           width={110}
                           cell={ValueCodeCell}
-                        />
-                        <GridColumn
-                          field="be_finished_date"
-                          title="완료예정일"
-                          width={100}
-                          cell={DateCell}
                         />
                         <GridColumn
                           field="completion_date"
