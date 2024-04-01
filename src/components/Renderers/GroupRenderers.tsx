@@ -1,5 +1,5 @@
-import * as React from "react";
 import { GridCellProps, GridRowProps } from "@progress/kendo-react-grid";
+import * as React from "react";
 
 interface CellRenderProps {
   originalProps: GridCellProps;
