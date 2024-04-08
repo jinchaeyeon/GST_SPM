@@ -898,9 +898,9 @@ const App = () => {
         status: [{ sub_code: "N", code_name: "미완료", code: "N" }],
         reception_person: { user_id: "", user_name: "" },
         receptionist: { user_id: "", user_name: "" },
-        worker: { user_id: userId, user_name: userName },
+        worker: { user_id: "", user_name: "" },
         reception_type: { sub_code: "", code_name: "" },
-        user_name: { user_id: "", user_name: "" },
+        user_name: { user_id: userId, user_name: userName },
         ref_type: [
           { code: 1, name: "접수" },
           { code: 2, name: "프로젝트" },
