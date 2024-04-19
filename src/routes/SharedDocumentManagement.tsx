@@ -23,6 +23,8 @@ import {
   GridSelectionChangeEvent,
 } from "@progress/kendo-react-grid";
 import { Input } from "@progress/kendo-react-inputs";
+import { Splitter, SplitterOnChangeEvent } from "@progress/kendo-react-layout";
+
 import { bytesToBase64 } from "byte-base64";
 import Cookies from "js-cookie";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -290,6 +292,15 @@ const App = () => {
   const onMainDataStateChange = (event: GridDataStateChangeEvent) => {
     setMainDataState(event.dataState);
   };
+  const onChange = (event: SplitterOnChangeEvent) => {
+    setPanes(event.newState);
+  };
+
+  const [panes, setPanes] = useState<Array<any>>([
+    { size: "35%", min: "0px", collapsible: true },
+    {},
+  ]);
+  const [isVisibleDetail, setIsVisableDetail] = useState(true);
 
   //메인 그리드 선택 이벤트 => 디테일 그리드 조회
   const onSelectionChange = (event: GridSelectionChangeEvent) => {
@@ -967,224 +978,255 @@ const App = () => {
         </FilterBox>
       </FilterBoxWrap>
       <GridContainerWrap height={"78%"}>
-        <GridContainer width={`30%`}>
-          <GridTitleContainer>
-            <GridTitle>요약정보</GridTitle>
-          </GridTitleContainer>
-          <Grid
-            style={{ height: `calc(100% - 35px)` }}
-            data={process(
-              mainDataResult.data.map((row) => ({
-                ...row,
-                [SELECTED_FIELD]: selectedState[idGetter(row)],
-                write_date: dateformat2(row.write_date),
-              })),
-              mainDataState
-            )}
-            {...mainDataState}
-            onDataStateChange={onMainDataStateChange}
-            //선택 기능
-            dataItemKey={DATA_ITEM_KEY}
-            selectedField={SELECTED_FIELD}
-            selectable={{
-              enabled: true,
-              mode: "single",
-            }}
-            onSelectionChange={onSelectionChange}
-            //스크롤 조회 기능
-            fixedScroll={true}
-            total={mainDataResult.total}
-            onScroll={onMainScrollHandler}
-            //정렬기능
-            sortable={true}
-            onSortChange={onMainSortChange}
-            //컬럼순서조정
-            reorderable={true}
-            //컬럼너비조정
-            resizable={true}
-          >
-            <GridColumn
-              field="write_date"
-              title="작성일자"
-              width={110}
-              cell={CenterCell}
-              footerCell={mainTotalFooterCell}
-            />
-            <GridColumn
-              field="typenm"
-              title="구분"
-              width={100}
-              cell={CenterCell}
-            />
-            <GridColumn
-              field="customer_name"
-              title="업체명"
-              width={120}
-              //cell={CenterCell}
-            />
-            <GridColumn field="title" title="제목" />
-          </Grid>
-        </GridContainer>
-        <GridContainer width={`calc(70% - ${GAP}px)`}>
-          <GridTitleContainer>
-            <GridTitle>상세정보</GridTitle>
-          </GridTitleContainer>
-          <FormBoxWrap border>
-            <FormBox>
-              <tbody>
-                <tr>
-                  <th>구분</th>
-                  <td>
-                    <MultiColumnComboBox
-                      name="type"
-                      data={
-                        typeFilter ? filterBy(typesData, typeFilter) : typesData
-                      }
-                      value={detailData.type}
-                      columns={dataTypeColumns}
-                      textField={"code_name"}
-                      onChange={DetailComboBoxChange}
-                      className="required"
-                      filterable={true}
-                      onFilterChange={handleFilterChange}
-                      clearButton={false}
-                    />
-                  </td>
-                  <th>업체코드</th>
-                  <td>
-                    <div className="filter-item-wrap">
-                      <Input
-                        name="customer_code"
-                        value={
-                          detailData.customer ? detailData.customer.custcd : ""
-                        }
-                        className="readonly"
-                      />
-                      <Button
-                        icon="more-horizontal"
-                        fillMode={"flat"}
-                        onClick={() => setCustWindowVisible(true)}
-                      />
-                    </div>
-                  </td>
-                  <th>업체명</th>
-                  <td>
-                    {customersData && (
+      <Splitter
+        panes={panes}
+        onChange={onChange}
+        style={{ width: "100%", borderColor: "#00000000" }}
+      >
+          <GridContainer>
+            <GridTitleContainer>
+              <GridTitle>요약정보</GridTitle>
+            </GridTitleContainer>
+            <Grid
+              style={{ height: `calc(100% - 35px)` }}
+              data={process(
+                mainDataResult.data.map((row) => ({
+                  ...row,
+                  [SELECTED_FIELD]: selectedState[idGetter(row)],
+                  write_date: dateformat2(row.write_date),
+                })),
+                mainDataState
+              )}
+              {...mainDataState}
+              onDataStateChange={onMainDataStateChange}
+              //선택 기능
+              dataItemKey={DATA_ITEM_KEY}
+              selectedField={SELECTED_FIELD}
+              selectable={{
+                enabled: true,
+                mode: "single",
+              }}
+              onSelectionChange={onSelectionChange}
+              //스크롤 조회 기능
+              fixedScroll={true}
+              total={mainDataResult.total}
+              onScroll={onMainScrollHandler}
+              //정렬기능
+              sortable={true}
+              onSortChange={onMainSortChange}
+              //컬럼순서조정
+              reorderable={true}
+              //컬럼너비조정
+              resizable={true}
+            >
+              <GridColumn
+                field="write_date"
+                title="작성일자"
+                width={110}
+                cell={CenterCell}
+                footerCell={mainTotalFooterCell}
+              />
+              <GridColumn
+                field="typenm"
+                title="구분"
+                width={100}
+                cell={CenterCell}
+              />
+              <GridColumn
+                field="customer_name"
+                title="업체명"
+                width={120}
+                //cell={CenterCell}
+              />
+              <GridColumn field="title" title="제목" />
+            </Grid>
+          </GridContainer>
+          <GridContainer >
+            <GridTitleContainer>
+              <GridTitle>
+                <Button
+                  themeColor={"primary"}
+                  fillMode={"flat"}
+                  icon={isVisibleDetail ? "chevron-left" : "chevron-right"}
+                  onClick={() => {
+                    if (isVisibleDetail == true) {
+                      setPanes([
+                        { size: "0%", min: "0px", collapsible: true },
+                        {},
+                      ]);
+                    } else {
+                      setPanes([
+                        { size: "100%", min: "0px", collapsible: true },
+                        {},
+                      ]);
+                    }
+                    setIsVisableDetail((prev) => !prev);
+                  }}
+                ></Button>
+                상세정보
+              </GridTitle>
+            </GridTitleContainer>
+            <FormBoxWrap border>
+              <FormBox>
+                <tbody>
+                  <tr>
+                    <th>구분</th>
+                    <td>
                       <MultiColumnComboBox
-                        name="customer"
+                        name="type"
                         data={
-                          custFilter
-                            ? filterBy(customersData, custFilter)
-                            : customersData
+                          typeFilter
+                            ? filterBy(typesData, typeFilter)
+                            : typesData
                         }
-                        value={detailData.customer}
-                        columns={custTypeColumns}
-                        textField={"custnm"}
+                        value={detailData.type}
+                        columns={dataTypeColumns}
+                        textField={"code_name"}
                         onChange={DetailComboBoxChange}
-                        className=""
+                        className="required"
                         filterable={true}
                         onFilterChange={handleFilterChange}
+                        clearButton={false}
                       />
-                    )}
-                  </td>
-                </tr>
-                <tr>
-                  <th>작성일자</th>
-                  <td>
-                    {isAdmin ? (
-                      <DatePicker
-                        name="write_date"
-                        value={detailData.write_date}
-                        format="yyyy-MM-dd"
-                        onChange={detailDataInputChange}
-                        className={"required"}
-                        placeholder=""
-                      />
-                    ) : (
+                    </td>
+                    <th>업체코드</th>
+                    <td>
+                      <div className="filter-item-wrap">
+                        <Input
+                          name="customer_code"
+                          value={
+                            detailData.customer
+                              ? detailData.customer.custcd
+                              : ""
+                          }
+                          className="readonly"
+                        />
+                        <Button
+                          icon="more-horizontal"
+                          fillMode={"flat"}
+                          onClick={() => setCustWindowVisible(true)}
+                        />
+                      </div>
+                    </td>
+                    <th>업체명</th>
+                    <td>
+                      {customersData && (
+                        <MultiColumnComboBox
+                          name="customer"
+                          data={
+                            custFilter
+                              ? filterBy(customersData, custFilter)
+                              : customersData
+                          }
+                          value={detailData.customer}
+                          columns={custTypeColumns}
+                          textField={"custnm"}
+                          onChange={DetailComboBoxChange}
+                          className=""
+                          filterable={true}
+                          onFilterChange={handleFilterChange}
+                        />
+                      )}
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>작성일자</th>
+                    <td>
+                      {isAdmin ? (
+                        <DatePicker
+                          name="write_date"
+                          value={detailData.write_date}
+                          format="yyyy-MM-dd"
+                          onChange={detailDataInputChange}
+                          className={"required"}
+                          placeholder=""
+                        />
+                      ) : (
+                        <Input
+                          name="write_date"
+                          type="text"
+                          value={dateformat2(
+                            convertDateToStr(detailData.write_date)
+                          )}
+                          onChange={detailDataInputChange}
+                          className={!isAdmin ? "readonly" : "required"}
+                          readOnly={!isAdmin}
+                        />
+                      )}
+                    </td>
+                    <th>제목</th>
+                    <td colSpan={2}>
                       <Input
-                        name="write_date"
+                        name="title"
                         type="text"
-                        value={dateformat2(
-                          convertDateToStr(detailData.write_date)
-                        )}
+                        value={detailData.title}
                         onChange={detailDataInputChange}
                         className={!isAdmin ? "readonly" : "required"}
                         readOnly={!isAdmin}
                       />
-                    )}
-                  </td>
-                  <th>제목</th>
-                  <td colSpan={2}>
-                    <Input
-                      name="title"
-                      type="text"
-                      value={detailData.title}
-                      onChange={detailDataInputChange}
-                      className={!isAdmin ? "readonly" : "required"}
-                      readOnly={!isAdmin}
-                    />
-                  </td>
-                  <td>
-                    <Button
-                      themeColor={"primary"}
-                      style={{ width: "100%" }}
-                      onClick={() => {
-                        if (detailData.work_type == "N") {
-                          alert("저장 후 등록할 수 있습니다.");
-                        } else if (
-                          Object.getOwnPropertyNames(selectedState)[0] !=
-                          undefined
-                        ) {
-                          setSignWindowVisible(true);
-                        } else {
-                          alert("선택된 데이터가 없습니다.");
-                        }
-                      }}
-                    >
-                      참석자 등록
-                    </Button>
-                  </td>
-                </tr>
-              </tbody>
-            </FormBox>
-          </FormBoxWrap>
-          <RichEditor
-            id="editor"
-            ref={editorRef}
-            hideTools={!isAdmin}
-            className={"notice-editor"}
-          />
-          <FormBoxWrap
-            border
-            style={{
-              margin: 0,
-              borderTop: 0,
-            }}
-          >
-            <FormBox>
-              <tbody>
-                <tr>
-                  <th style={{ width: 0 }}>첨부파일</th>
-                  <td style={{ width: "auto" }}>
-                    <div className="filter-item-wrap">
-                      <Input
-                        name="attachment_q"
-                        value={detailData.files}
-                        className="readonly"
-                      />
+                    </td>
+                    <td>
                       <Button
-                        icon="more-horizontal"
-                        fillMode={"flat"}
-                        onClick={() => setAttachmentsWindowVisible(true)}
-                      />
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </FormBox>
-          </FormBoxWrap>
-        </GridContainer>
-      </GridContainerWrap>
+                        themeColor={"primary"}
+                        style={{ width: "100%" }}
+                        onClick={() => {
+                          if (detailData.work_type == "N") {
+                            alert("저장 후 등록할 수 있습니다.");
+                          } else if (
+                            Object.getOwnPropertyNames(selectedState)[0] !=
+                            undefined
+                          ) {
+                            setSignWindowVisible(true);
+                          } else {
+                            alert("선택된 데이터가 없습니다.");
+                          }
+                        }}
+                      >
+                        참석자 등록
+                      </Button>
+                    </td>
+                  </tr>
+                </tbody>
+              </FormBox>
+            </FormBoxWrap>
+            <RichEditor
+              id="editor"
+              ref={editorRef}
+              hideTools={!isAdmin}
+              className={"notice-editor"}
+            />
+            <FormBoxWrap
+              border
+              style={{
+                margin: 0,
+                borderTop: 0,
+              }}
+            >
+              <FormBox>
+                <tbody>
+                  <tr>
+                    <th style={{ width: 0 }}>첨부파일</th>
+                    <td style={{ width: "auto" }}>
+                      <div className="filter-item-wrap">
+                        <Input
+                          name="attachment_q"
+                          value={detailData.files}
+                          className="readonly"
+                        />
+                        <Button
+                          icon="more-horizontal"
+                          fillMode={"flat"}
+                          onClick={() => setAttachmentsWindowVisible(true)}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </FormBox>
+            </FormBoxWrap>
+          </GridContainer>
+      </Splitter>
+        </GridContainerWrap>
       {attachmentsWindowVisible && (
         <AttachmentsWindow
           type="sharedDocument"
