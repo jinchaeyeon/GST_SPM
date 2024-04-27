@@ -678,7 +678,6 @@ const App = () => {
             id="editor"
             ref={editorRef}
             hideTools={true}
-            className={"notice-editor"}
           />
           <FormBoxWrap
             border

@@ -134,10 +134,6 @@ const RichEditor = React.forwardRef(
               EditorUtils.getHtml(view.state)
             );
 
-            if (className.includes("notice-editor")) {
-              html.replace(noticeStyle, "");
-            }
-
             return html;
           }
         }
@@ -190,8 +186,7 @@ const RichEditor = React.forwardRef(
 
       // HTML 문자열에서 style 태그 내용 추출
       const extractedStyles =
-        extractStyleTagContents(html) +
-        (className.includes("notice-editor") ? noticeStyle : "");
+        extractStyleTagContents(html);
       setStyles(extractedStyles);
 
       if (extractedStyles) {

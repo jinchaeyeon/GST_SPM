@@ -639,7 +639,7 @@ const App = () => {
           alerts = null;
         }
       }
-
+      alert("등록되었습니다.");
       setFileList([]);
       setSavenmList([]);
       // 조회
@@ -714,6 +714,8 @@ const App = () => {
       } catch (error) {
         data2 = null;
       }
+
+      alert("삭제되었습니다.");
       setFilters((prev) => ({
         ...prev,
         isFetch: true,

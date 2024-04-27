@@ -277,18 +277,6 @@ div.k-animation-container {
   max-width: calc(30% - 10px) !important;
 }
 
-.notice-editor {
-  background: #fafafa;
-  display: flex;
-  justify-content: center;
-  border: solid 1px #ebebeb;
-  padding-top: 15px;
-}
-
-.notice-editor>.k-editor {
-  width: 21cm;
-}
-
 .k-grid .k-grid-header .k-header .k-cell-inner>.k-link {
   justify-content: center;
   /*공통설정 : 그리드 헤더 텍스트 중앙정렬*/

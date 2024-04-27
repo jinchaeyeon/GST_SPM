@@ -1107,7 +1107,6 @@ const App = () => {
             id="editor"
             ref={editorRef}
             hideTools={!isAdmin}
-            className={"notice-editor"}
           />
           <FormBoxWrap
             border

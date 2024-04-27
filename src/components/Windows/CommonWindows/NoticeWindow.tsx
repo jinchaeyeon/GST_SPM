@@ -125,7 +125,6 @@ const NoticeWindow = ({
           id="editor"
           ref={editorRef}
           hideTools={!isAdmin}
-          className={"notice-editor"}
         />
       </GridContainer>
       <BottomContainer style={{ display: "flex" }}>
