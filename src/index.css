@@ -14,6 +14,17 @@ code {
     monospace;
 }
 
+.datepicker_button {
+  margin-top: 5px !important;
+  height: 30px !important;
+  width: 180px !important;
+
+  button {
+    width: 50px !important;
+    height: 30px !important;
+  }
+}
+
 .clearfix:before,
 .clearfix:after {
   display: table;

@@ -1,4 +1,5 @@
 import { Button } from "@progress/kendo-react-buttons";
+import { DatePicker } from "@progress/kendo-react-dateinputs";
 import { Window, WindowMoveEvent } from "@progress/kendo-react-dialogs";
 import { Checkbox, Input } from "@progress/kendo-react-inputs";
 import { bytesToBase64 } from "byte-base64";
@@ -21,8 +22,10 @@ import { isLoading, loginResultState } from "../../../store/atoms";
 import { Iparameters, TEditorHandle } from "../../../store/types";
 import {
   UseParaPc,
+  convertDateToStr,
   dateformat2,
   extractDownloadFilename,
+  toDate,
 } from "../../CommonFunction";
 import { PAGE_SIZE } from "../../CommonString";
 import RichEditor from "../../RichEditor";
@@ -125,7 +128,8 @@ const SignWindow = ({ setVisible, para, reload }: IWindow) => {
           attdatnum: rows[0].attdatnum,
           be_finished_date: rows[0].be_finished_date,
           check_date: rows[0].check_date,
-          completion_date: rows[0].completion_date,
+          completion_date:
+            rows[0].completion_date == "" ? null : toDate(rows[0].completion_date),
           contents: rows[0].contents,
           customer_code: rows[0].customer_code,
           customer_name: rows[0].customer_name,
@@ -217,7 +221,6 @@ const SignWindow = ({ setVisible, para, reload }: IWindow) => {
     setAttachmentsWindowVisible(true);
   };
 
-
   const getAttachmentsData = (
     data: any,
     fileList?: FileList | any[],
@@ -255,7 +258,7 @@ const SignWindow = ({ setVisible, para, reload }: IWindow) => {
     attdatnum: "",
     be_finished_date: "",
     check_date: "",
-    completion_date: "",
+    completion_date: null,
     contents: "",
     customer_code: "",
     customer_name: "",
@@ -409,6 +412,10 @@ const SignWindow = ({ setVisible, para, reload }: IWindow) => {
             : Information.is_finish == false
             ? "N"
             : Information.is_finish,
+        "@p_completion_date":
+          Information.completion_date == null
+            ? ""
+            : convertDateToStr(Information.completion_date),
         "@p_id": userId,
         "@p_pc": pc,
       },
@@ -485,41 +492,41 @@ const SignWindow = ({ setVisible, para, reload }: IWindow) => {
   const downloadDoc = async () => {
     let response: any;
     setLoading(true);
-    if(Information.answer_document_id == "") {
-      alert("데이터를 저장 후 다운로드해주세요.")
+    if (Information.answer_document_id == "") {
+      alert("데이터를 저장 후 다운로드해주세요.");
     } else {
       const para = {
         para: "doc?type=answer&id=" + Information.answer_document_id,
       };
-  
+
       try {
         response = await processApi<any>("doc-download", para);
       } catch (error) {
         response = null;
       }
-  
+
       if (response !== null) {
         const blob = new Blob([response.data]);
         // 특정 타입을 정의해야 경우에는 옵션을 사용해 MIME 유형을 정의 할 수 있습니다.
         // const blob = new Blob([this.content], {type: 'text/plain'})
-  
+
         // blob을 사용해 객체 URL을 생성합니다.
         const fileObjectUrl = window.URL.createObjectURL(blob);
-  
+
         // blob 객체 URL을 설정할 링크를 만듭니다.
         const link = document.createElement("a");
         link.href = fileObjectUrl;
         link.style.display = "none";
-  
+
         // 다운로드 파일 이름을 지정 할 수 있습니다.
         // 일반적으로 서버에서 전달해준 파일 이름은 응답 Header의 Content-Disposition에 설정됩니다.
         link.download = extractDownloadFilename(response);
-  
+
         // 링크를 body에 추가하고 강제로 click 이벤트를 발생시켜 파일 다운로드를 실행시킵니다.
         document.body.appendChild(link);
         link.click();
         link.remove();
-  
+
         // 다운로드가 끝난 리소스(객체 URL)를 해제합니다
       }
     }
@@ -537,6 +544,21 @@ const SignWindow = ({ setVisible, para, reload }: IWindow) => {
           : prev.is_finish == "N"
           ? true
           : !prev.is_finish,
+      completion_date:
+        prev.is_finish == false
+          ? new Date()
+          : prev.is_finish == true
+          ? null
+          : prev.completion_date,
+    }));
+  };
+
+  const InputChange = (e: any) => {
+    const { value, name = "" } = e.target;
+
+    setInformation((prev) => ({
+      ...prev,
+      [name]: value,
     }));
   };
 
@@ -666,11 +688,23 @@ const SignWindow = ({ setVisible, para, reload }: IWindow) => {
                 marginTop: isMobile ? "10px" : "0px",
               }}
             >
-              <div style={{ marginTop: "10px" }}>
+              <div style={{ marginTop: "10px", marginRight: "10px" }}>
                 <Checkbox
                   value={Information.is_finish}
                   onClick={changeCheck}
                   label="처리 완료"
+                />
+              </div>
+              <div className="datepicker_button">
+                <DatePicker
+                  name="completion_date"
+                  value={Information.completion_date}
+                  onChange={InputChange}
+                  format="yyyy-MM-dd"
+                  className="required"
+                  placeholder=""
+                  disabled={Information.is_finish == true ? false : true}
+                  size={"small"}
                 />
               </div>
               <Button
