@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Route,
   BrowserRouter as Router,
@@ -31,6 +31,7 @@ import {
   loadMessages,
 } from "@progress/kendo-react-intl";
 import {
+  OSState,
   isLoading,
   isMenuOpendState,
   isMobileMenuOpendState,
@@ -280,6 +281,18 @@ const AppInner: React.FC = () => {
   const history = useHistory();
   let deviceWidth = window.innerWidth;
   let isMobile = deviceWidth <= 1200;
+
+  const [osstate, setOSState] = useRecoilState(OSState);
+  useEffect(() => {
+    if (
+      /SmartTV/i.test(navigator.userAgent) ||
+      /SmartTV/i.test(navigator.platform)
+    ) {
+      setOSState(true);
+    } else {
+      setOSState(false);
+    }
+  }, [osstate]);
 
   const logout = () => {
     // switcher({ theme: "light" });
