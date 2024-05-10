@@ -28,6 +28,7 @@ import {
   TitleContainer,
 } from "../CommonStyled";
 import { dateformat2 } from "../components/CommonFunction";
+import { GAP } from "../components/CommonString";
 import CurrentTime from "../components/CurrentTime";
 import Loader from "../components/Loader";
 import { useApi } from "../hooks/api";
@@ -400,7 +401,7 @@ const Main: React.FC = () => {
           </GridContainer>
         </GridContainer>
 
-        <GridContainer width="40%">
+        <GridContainer width={`calc(40% - ${GAP}px)`}>
           <GridTitleContainer>
             <GridTitle theme={currentTheme}>문의 내용</GridTitle>
           </GridTitleContainer>
@@ -445,7 +446,7 @@ const Main: React.FC = () => {
             </div>
           </ScrollableContainer>
         </GridContainer>
-        <GridContainer width="40%">
+        <GridContainer width={`calc(40% - ${GAP}px)`}>
           <GridTitleContainer>
             <GridTitle theme={currentTheme}>프로젝트 진행 현황</GridTitle>
           </GridTitleContainer>
