@@ -281,7 +281,6 @@ const App = () => {
   const location = useLocation();
   const pathname = location.pathname.replace("/", "");
   const history = useHistory();
-  const filterRef = useRef<HTMLDivElement>(null);
   const [filter, setFilter] = React.useState<FilterDescriptor>();
   const [filter2, setFilter2] = React.useState<FilterDescriptor>();
   const [filter3, setFilter3] = React.useState<FilterDescriptor>();
@@ -3531,7 +3530,7 @@ const App = () => {
               <GridTitleContainer>
                 <GridTitle>조회조건</GridTitle>
               </GridTitleContainer>
-              <FilterBoxWrap ref={filterRef}>
+              <FilterBoxWrap>
                 <FilterBox onKeyPress={(e) => handleKeyPressSearch(e, search)}>
                   <tbody>
                     <tr>

@@ -182,7 +182,6 @@ const App = () => {
   let isMobile = deviceWidth <= 1200;
   const pathname = location.pathname.replace("/", "");
   const history = useHistory();
-  const filterRef = useRef<HTMLDivElement>(null);
   const [workType, setWorktype] = useState("U");
   useEffect(() => {
     // 접근 권한 검증
@@ -1751,7 +1750,7 @@ const App = () => {
               <GridTitleContainer>
                 <GridTitle>조회조건</GridTitle>
               </GridTitleContainer>
-              <FilterBoxWrap ref={filterRef}>
+              <FilterBoxWrap>
                 <FilterBox onKeyPress={(e) => handleKeyPressSearch(e, search)}>
                   <tbody>
                     <tr>
@@ -2279,7 +2278,7 @@ const App = () => {
                   <GridTitleContainer>
                     <GridTitle>조회조건</GridTitle>
                   </GridTitleContainer>
-                  <FilterBoxWrap ref={filterRef}>
+                  <FilterBoxWrap>
                     <FilterBox
                       onKeyPress={(e) => handleKeyPressSearch(e, search)}
                     >

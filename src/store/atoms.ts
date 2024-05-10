@@ -128,3 +128,9 @@ export const filterValueState = atom<{
     dataItem: {},
   },
 });
+
+export const OSState = atom<boolean>({
+  key: "OSState",
+  default: false,
+  effects_UNSTABLE: [persistAtom],
+});

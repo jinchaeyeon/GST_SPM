@@ -105,7 +105,7 @@ const statusListData: TItem[] = [
 const detailDataStatusListData: TItem[] = [
   { sub_code: "N", code_name: "대기" },
   { sub_code: "R", code_name: "진행중" },
-  { sub_code: "4", code_name: "보류" },
+  { sub_code: "H", code_name: "보류" },
   { sub_code: "Y", code_name: "완료" },
 ];
 
@@ -639,7 +639,7 @@ const App = () => {
           alerts = null;
         }
       }
-
+      alert("등록되었습니다.");
       setFileList([]);
       setSavenmList([]);
       // 조회
@@ -714,6 +714,8 @@ const App = () => {
       } catch (error) {
         data2 = null;
       }
+
+      alert("삭제되었습니다.");
       setFilters((prev) => ({
         ...prev,
         isFetch: true,

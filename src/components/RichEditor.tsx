@@ -3,12 +3,14 @@ import {
   EditorMountEvent,
   EditorTools,
   EditorUtils,
-  ProseMirror
+  ProseMirror,
 } from "@progress/kendo-react-editor";
 import React, { useEffect, useState } from "react";
+import { useRecoilState } from "recoil";
 import { insertImagePlugin } from "../components/UploadImgFunction/insertImagePlugin";
 import { InsertImage } from "../components/UploadImgFunction/insertImageTool";
 import { insertImageFiles } from "../components/UploadImgFunction/utils";
+import { OSState } from "../store/atoms";
 import { TInsertImageFiles } from "../store/types";
 
 const {
@@ -67,7 +69,7 @@ const RichEditor = React.forwardRef(
   ({ id, hideTools, className = "", key = "", change }: TRichEditor, ref) => {
     const editor = React.createRef<Editor>();
     const [state, setState] = useState<string>("");
-    
+    const [osstate, setOSState] = useRecoilState(OSState);
     // let styles: null | string = null;
     const [styles, setStyles] = React.useState<null | string>(null);
     const editableRef = React.useRef<boolean>(true);
@@ -134,10 +136,6 @@ const RichEditor = React.forwardRef(
               EditorUtils.getHtml(view.state)
             );
 
-            if (className.includes("notice-editor")) {
-              html.replace(noticeStyle, "");
-            }
-
             return html;
           }
         }
@@ -148,12 +146,12 @@ const RichEditor = React.forwardRef(
     // 받아온 HTML 문자열에서 style태그 안의 내용을 반환
     const extractStyleTagContents = (htmlString: string): string | null => {
       const styleTagRegex = /<style[^>]*>([\s\S]*?)<\/style>/i;
-      if(htmlString != null && htmlString != "") {
+      if (htmlString != null && htmlString != "") {
         const match = htmlString.match(styleTagRegex);
 
         return match ? match[1] : null;
       } else {
-        return null
+        return null;
       }
     };
 
@@ -179,7 +177,7 @@ const RichEditor = React.forwardRef(
       if (editor.current) {
         const view = editor.current.view;
         if (view) {
-          if(html == "" || html == null) {
+          if (html == "" || html == null) {
             EditorUtils.setHtml(view, "");
           } else {
             const htmlContent = extractBodyContent(html);
@@ -189,9 +187,7 @@ const RichEditor = React.forwardRef(
       }
 
       // HTML 문자열에서 style 태그 내용 추출
-      const extractedStyles =
-        extractStyleTagContents(html) +
-        (className.includes("notice-editor") ? noticeStyle : "");
+      const extractedStyles = extractStyleTagContents(html);
       setStyles(extractedStyles);
 
       if (extractedStyles) {
@@ -313,10 +309,10 @@ const RichEditor = React.forwardRef(
 
       return `#${hex.toString(16).padStart(6, "0")}`;
     };
-  
-    const textChangeHandler = (e : any) => {
-      if(state != "") {
-        if(state != e.html && change != undefined) {
+
+    const textChangeHandler = (e: any) => {
+      if (state != "") {
+        if (state != e.html && change != undefined) {
           change();
         }
       } else {
@@ -326,7 +322,7 @@ const RichEditor = React.forwardRef(
 
     useEffect(() => {
       setState("");
-    },[key])
+    }, [key]);
 
     return (
       <div
@@ -338,7 +334,7 @@ const RichEditor = React.forwardRef(
           style={{ height: "100%" }}
           contentStyle={{ height: "100%" }}
           tools={
-            hideTools
+            hideTools || osstate
               ? []
               : [
                   [Bold, Italic, Underline, Strikethrough],
