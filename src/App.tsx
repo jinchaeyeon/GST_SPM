@@ -456,10 +456,7 @@ const AppInner: React.FC = () => {
                     />
                     <Logo
                       size="33px"
-                      onClick={() => {
-                        setLoading(false);
-                        window.location.href = "/";
-                      }}
+                      onClick={() => (window.location.href = "/")}
                     />
                   </AppName>
                   {isMobile ? (
