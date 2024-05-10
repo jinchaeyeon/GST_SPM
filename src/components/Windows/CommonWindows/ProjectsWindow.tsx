@@ -105,7 +105,6 @@ const KendoWindow = ({ setVisible, setData, para }: IKendoWindow) => {
   const filterRadioChange = (e: any) => {
     const { name, value } = e;
 
-    console.log(e);
     setFilters((prev) => ({
       ...prev,
       [name]: value,
