@@ -492,6 +492,11 @@ const AppInner: React.FC = () => {
                         setShow(true);
                       }
                     }}
+                    onClick={(e) => {
+                      if (osstate == true) {
+                        setShow(!show);
+                      }
+                    }}
                   >
                     <span
                       className="k-icon k-i-user k-icon-lg"
