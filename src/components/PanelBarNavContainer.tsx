@@ -711,7 +711,13 @@ const PanelBarNavContainer = (props: any) => {
               onClick={onMenuBtnClick}
             />
             <AppName theme={currentTheme}>
-              <Logo size="20px" onClick={() => (window.location.href = "/")} />
+              <Logo
+                size="20px"
+                onClick={() => {
+                  setLoading(false);
+                  window.location.href = "/";
+                }}
+              />
             </AppName>
             <button
               className={

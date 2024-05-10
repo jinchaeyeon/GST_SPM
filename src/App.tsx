@@ -456,7 +456,10 @@ const AppInner: React.FC = () => {
                     />
                     <Logo
                       size="33px"
-                      onClick={() => (window.location.href = "/")}
+                      onClick={() => {
+                        setLoading(false);
+                        window.location.href = "/";
+                      }}
                     />
                   </AppName>
                   {isMobile ? (
@@ -489,11 +492,6 @@ const AppInner: React.FC = () => {
                         if (show != true) {
                           setShow(true);
                         }
-                      }
-                    }}
-                    onClick={(e) => {
-                      if (osstate == true) {
-                        setShow(!show);
                       }
                     }}
                   >
