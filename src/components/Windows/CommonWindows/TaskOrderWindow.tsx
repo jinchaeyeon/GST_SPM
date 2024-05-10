@@ -1141,7 +1141,6 @@ const KendoWindow = ({
                   localStorage.getItem(item[DATA_ITEM_KEY]) == null
                 )
               ) {
-                console.log(item[DATA_ITEM_KEY]);
                 localStorage.removeItem(item[DATA_ITEM_KEY]);
                 localStorage.removeItem(item[DATA_ITEM_KEY] + "key");
               }

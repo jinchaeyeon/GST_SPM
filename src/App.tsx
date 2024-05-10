@@ -291,7 +291,6 @@ const AppInner: React.FC = () => {
     // window.location.href = "/";
   };
   async function requestPermission() {
-    console.log("권한 요청 중...");
     if (!Notification) {
       return;
     }
@@ -300,7 +299,6 @@ const AppInner: React.FC = () => {
       alert(`알림 권한이 허용되지 않았습니다. (permission: ${permission})`);
       return;
     }
-    console.log("알림 권한이 허용됨");
     console.log("Registering service worker...");
     const register = await navigator.serviceWorker.register(
       "firebase-messaging-sw.js",
@@ -323,7 +321,6 @@ const AppInner: React.FC = () => {
   const callApi = async (path: string) => {
     const token = await requestPermission();
     setLoading(true);
-    console.log(">> ", JSON.stringify({ token: token }));
     if (!token) {
       console.log("토큰이 유효하지 않습니다.");
       return;
