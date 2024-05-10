@@ -485,8 +485,10 @@ const AppInner: React.FC = () => {
                       color: "#7a76ce",
                     }}
                     onMouseEnter={(e) => {
-                      if (show != true) {
-                        setShow(true);
+                      if (osstate == false) {
+                        if (show != true) {
+                          setShow(true);
+                        }
                       }
                     }}
                     onClick={(e) => {
