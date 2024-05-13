@@ -149,7 +149,7 @@ module.exports = {
   },
   output: {
     path: path.resolve(__dirname, "build"),
-    filename: "[name].[contenthash:8].js",
+    filename: '[name].[contenthash:8].js',
     clean: true,
   },
 };

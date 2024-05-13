@@ -14,6 +14,10 @@ code {
     monospace;
 }
 
+.k-grid .k-table.k-grid-table {
+  touch-action: auto !important;
+}
+
 .datepicker_button {
   margin-top: 5px !important;
   height: 30px !important;

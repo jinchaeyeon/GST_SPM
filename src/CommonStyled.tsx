@@ -1137,7 +1137,7 @@ export const AdminQuestionBox = styled.div`
   }
 `;
 export const AdminProjectBox = styled.div`
-  min-width: 600px;
+  min-width: 300px;
   padding: 15px;
   display: flex;
   justify-content: space-between;

@@ -430,6 +430,13 @@ const AppInner: React.FC = () => {
     );
   };
 
+  const onClick = (e: { stopPropagation: () => void }) => {
+    e.stopPropagation(); // 이벤트 캡쳐링 방지
+    if (osstate == true) {
+      setShow(!show);
+    }
+  };
+
   return (
     <>
       <GlobalStyle isMobileMenuOpend={isMobileMenuOpend} />
@@ -485,10 +492,13 @@ const AppInner: React.FC = () => {
                       color: "#7a76ce",
                     }}
                     onMouseEnter={(e) => {
-                      if (show != true) {
-                        setShow(true);
+                      if (osstate == false) {
+                        if (show != true) {
+                          setShow(true);
+                        }
                       }
                     }}
+                    onClick={onClick}
                   >
                     <span
                       className="k-icon k-i-user k-icon-lg"
