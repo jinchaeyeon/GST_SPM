@@ -3018,7 +3018,7 @@ const App = () => {
   const onRemoveClick = () => {
     //삭제 안 할 데이터 newData에 push, 삭제 데이터 deletedRows에 push
     let newData: any[] = [];
-    let Object: any[] = [];
+    let Object1: any[] = [];
     let Object2: any[] = [];
     let data: any;
     if (subDataTotal > 0) {
@@ -3028,28 +3028,26 @@ const App = () => {
           Object2.push(index);
         } else {
           if (!item.rowstatus || item.rowstatus != "N") {
-            const newData2 = {
-              ...item,
-              rowstatus: "D",
-            };
+            const newData2 = item;
+            newData2.rowstatus = "D";
             deletedRows.push(newData2);
           }
-          Object.push(index);
+          Object1.push(index);
         }
       });
-      if (Math.min(...Object) < Math.min(...Object2)) {
+      if (Math.min(...Object1) < Math.min(...Object2)) {
         data = subDataResult.data[Math.min(...Object2)];
       } else {
-        data = subDataResult.data[Math.min(...Object) - 1];
+        data = subDataResult.data[Math.min(...Object1) - 1];
       }
       //newData 생성
       setSubDataResult((prev) => ({
         data: newData,
-        total: prev.total - Object.length,
+        total: prev.total - Object1.length,
       }));
       const newDataState = processWithGroups(newData, group);
       setResultState(newDataState);
-      setSubDataTotal(subDataTotal - Object.length);
+      setSubDataTotal(subDataTotal - Object1.length);
       setSelectedsubDataState({
         [data != undefined ? data[SUB_DATA_ITEM_KEY] : newData[0]]: true,
       });
@@ -3202,7 +3200,7 @@ const App = () => {
   const onRemoveClick2 = () => {
     //삭제 안 할 데이터 newData에 push, 삭제 데이터 deletedRows에 push
     let newData: any[] = [];
-    let Object: any[] = [];
+    let Object1: any[] = [];
     let Object2: any[] = [];
     let data;
     subDataResult2.data.forEach((item: any, index: number) => {
@@ -3210,18 +3208,16 @@ const App = () => {
         newData.push(item);
         Object2.push(index);
       } else {
-        const newData2 = {
-          ...item,
-          rowstatus: "D",
-        };
-        Object.push(index);
+        const newData2 = item;
+        newData2.rowstatus = "D";
+        Object1.push(index);
       }
     });
 
-    if (Math.min(...Object) < Math.min(...Object2)) {
+    if (Math.min(...Object1) < Math.min(...Object2)) {
       data = subDataResult2.data[Math.min(...Object2)];
     } else {
-      data = subDataResult2.data[Math.min(...Object) - 1];
+      data = subDataResult2.data[Math.min(...Object1) - 1];
     }
 
     //newData 생성

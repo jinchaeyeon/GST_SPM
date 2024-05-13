@@ -2831,7 +2831,7 @@ const App = () => {
         } else {
           //삭제 안 할 데이터 newData에 push, 삭제 데이터 deletedRows에 push
           let newData: any[] = [];
-          let Object: any[] = [];
+          let Object1: any[] = [];
           let Object2: any[] = [];
           let data;
           mainDataResult4.data.forEach(async (item: any, index: number) => {
@@ -2840,10 +2840,8 @@ const App = () => {
               Object2.push(index);
             } else {
               if (!item.rowstatus || item.rowstatus != "N") {
-                const newData2 = {
-                  ...item,
-                  rowstatus: "D",
-                };
+                const newData2 = item;
+                newData2.rowstatus = "D";
                 deletedRows.push(newData2);
               } else {
                 if (item.attdatnum != "") {
@@ -2860,7 +2858,7 @@ const App = () => {
                   }
                 }
               }
-              Object.push(index);
+              Object1.push(index);
               if (
                 !(
                   localStorage.getItem(item[DATA_ITEM_KEY4]) == undefined ||
@@ -2873,10 +2871,10 @@ const App = () => {
             }
           });
 
-          if (Math.min(...Object) < Math.min(...Object2)) {
+          if (Math.min(...Object1) < Math.min(...Object2)) {
             data = mainDataResult4.data[Math.min(...Object2)];
           } else {
-            data = mainDataResult4.data[Math.min(...Object) - 1];
+            data = mainDataResult4.data[Math.min(...Object1) - 1];
           }
 
           if (data != undefined) {
@@ -2908,7 +2906,7 @@ const App = () => {
           //newData 생성
           setMainDataResult4((prev) => ({
             data: newData,
-            total: prev.total - Object.length,
+            total: prev.total - Object1.length,
           }));
 
           setSelectedState4({

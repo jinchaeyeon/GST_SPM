@@ -434,7 +434,7 @@ const SignWindow = ({ setVisible, reference_key }: IWindow) => {
         alert("해당 행은 수정 잠금이 설정되어있습니다. ");
       } else {
         let newData: any[] = [];
-        let Object: any[] = [];
+        let Object1: any[] = [];
         let Object2: any[] = [];
         let data;
 
@@ -443,19 +443,18 @@ const SignWindow = ({ setVisible, reference_key }: IWindow) => {
             newData.push(item);
             Object2.push(index);
           } else {
-            const newData2 = {
-              ...item,
-              rowstatus: "D",
-            };
-            Object.push(index);
+            const newData2 = item;
+            newData2.rowstatus = "D";
+            deletedMainRows.push(newData2);
+            Object1.push(index);
             deletedMainRows.push(newData2);
           }
         });
 
-        if (Math.min(...Object) < Math.min(...Object2)) {
+        if (Math.min(...Object1) < Math.min(...Object2)) {
           data = mainDataResult.data[Math.min(...Object2)];
         } else {
-          data = mainDataResult.data[Math.min(...Object) - 1];
+          data = mainDataResult.data[Math.min(...Object1) - 1];
         }
 
         setMainDataResult((prev) => ({
