@@ -1242,7 +1242,7 @@ const App = () => {
       }
     }
     setErrorState(true);
-    setDetailData({ ...defaultDetailData });
+    setDetailData({ ...defaultDetailData, recdt: new Date() });
     setDetailRows(process([], detailRowsState));
 
     // Edior에 HTML & CSS 세팅

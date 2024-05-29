@@ -195,7 +195,27 @@ const generateUrl = (url: string, params: any) => {
 export const useApi = () => {
   const token = localStorage.getItem("accessToken");
   const [loginResult, setLoginResult] = useRecoilState(loginResultState);
-
+  const role = loginResult ? loginResult.role : "";
+  const isAdmin = role === "ADMIN";
+  // 토큰 만료 시 로그아웃 처리
+  if (isAdmin) {
+    if (window.location.pathname !== "/admin") {
+      if (!token) {
+        resetLocalStorage(); // 토큰 없을시 로그아웃
+        window.location.href = "/admin"; // 리다이렉션 처리
+      }
+    }
+  } else {
+  if (
+    window.location.pathname !== "/" &&
+    window.location.pathname !== "/admin"
+  ) {
+    if (!token) {
+      resetLocalStorage(); // 토큰 없을시 로그아웃
+      window.location.href = "/"; // 리다이렉션 처리
+    }
+  }
+}
   const processApi = <T>(name: string, params: any = null): Promise<T> => {
     return new Promise((resolve, reject) => {
       let info: any = domain[name];

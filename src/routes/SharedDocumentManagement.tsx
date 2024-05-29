@@ -571,7 +571,7 @@ const App = () => {
   };
 
   const createSharedDocument = () => {
-    setDetailData({ ...defaultDetailData, work_type: "N" });
+    setDetailData({ ...defaultDetailData, work_type: "N", write_date: new Date() });
 
     // Edior에 HTML & CSS 세팅
     setHtmlOnEditor("");

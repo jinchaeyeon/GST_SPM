@@ -721,7 +721,6 @@ const App = () => {
     if (data != null) {
       const totalRowCnt = data.tables[0].TotalRowCount;
       const rows = data.tables[0].Rows;
-
       if (filters.find_row_value != "") {
         // find_row_value 행으로 스크롤 이동
         const findRowIndex = rows.findIndex(
@@ -3653,6 +3652,7 @@ const App = () => {
                       (items: any) => items.user_id == row.pjtperson
                     )?.user_name,
                     [SELECTED_FIELD]: selectedState[idGetter(row)],
+                    is_finished: row.is_finished === 'Y' ? '완료' : '미완료'
                   })),
                   mainDataState
                 )}
@@ -3684,6 +3684,11 @@ const App = () => {
                   title="업체"
                   width={170}
                   footerCell={mainTotalFooterCell}
+                />
+                <GridColumn
+                  field="is_finished"
+                  title="완료여부"
+                  width={75}
                 />
                 <GridColumn
                   field="number"
@@ -3887,7 +3892,7 @@ const App = () => {
                         className="required"
                       />
                     </td>
-                    <th>의원</th>
+                    <th>위원</th>
                     <td colSpan={3}>
                       <Input
                         name="revperson"
