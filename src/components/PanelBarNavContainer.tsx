@@ -140,21 +140,19 @@ const PanelBarNavContainer = (props: any) => {
   const { switcher, themes, currentTheme = "" } = useThemeSwitcher();
 
   // 토큰 만료 시 로그아웃 처리
-  if (isAdmin) {
-    if (window.location.pathname !== "/admin") {
-      if (!accessToken) {
-        resetLocalStorage(); // 토큰 없을시 로그아웃
-        window.location.href = "/admin"; // 리다이렉션 처리
-      }
-    }
-  } else {
+  if (loginResult) {
     if (
       window.location.pathname !== "/" &&
       window.location.pathname !== "/admin"
     ) {
-      if (!accessToken) {
-        resetLocalStorage(); // 토큰 없을시 로그아웃
-        window.location.href = "/"; // 리다이렉션 처리
+      if (!token) {
+        if (isAdmin) {
+          resetLocalStorage(); // 토큰 없을시 로그아웃
+          window.location.href = "/admin"; // 관리자일 경우 /admin으로 리다이렉션 처리
+        } else {
+          resetLocalStorage(); // 토큰 없을시 로그아웃
+          window.location.href = "/"; // 일반 사용자일 경우 /로 리다이렉션 처리
+        }
       }
     }
   }

@@ -1,7 +1,8 @@
 import axios from "axios";
 import { useRecoilState } from "recoil";
 import { resetLocalStorage } from "../components/CommonFunction";
-import { loginResultState } from "../store/atoms";
+import { loginResultState} from "../store/atoms";
+import { url } from "inspector";
 
 let BASE_URL = process.env.REACT_APP_API_URL;
 const cachios = require("cachios");
@@ -195,27 +196,25 @@ const generateUrl = (url: string, params: any) => {
 export const useApi = () => {
   const token = localStorage.getItem("accessToken");
   const [loginResult, setLoginResult] = useRecoilState(loginResultState);
-  const role = loginResult ? loginResult.role : "";
-  const isAdmin = role === "ADMIN";
+  
   // 토큰 만료 시 로그아웃 처리
-  if (isAdmin) {
-    if (window.location.pathname !== "/admin") {
+  if (loginResult) {   
+    if (
+      window.location.pathname !== "/" &&
+      window.location.pathname !== "/admin"
+    ) {
       if (!token) {
-        resetLocalStorage(); // 토큰 없을시 로그아웃
-        window.location.href = "/admin"; // 리다이렉션 처리
+        if (loginResult.role === "ADMIN") {
+          resetLocalStorage(); // 토큰 없을시 로그아웃
+          window.location.href = "/admin"; // 관리자일 경우 /admin으로 리다이렉션 처리
+        } else {
+          resetLocalStorage(); // 토큰 없을시 로그아웃
+          window.location.href = "/"; // 일반 사용자일 경우 /로 리다이렉션 처리
+        }
       }
     }
-  } else {
-  if (
-    window.location.pathname !== "/" &&
-    window.location.pathname !== "/admin"
-  ) {
-    if (!token) {
-      resetLocalStorage(); // 토큰 없을시 로그아웃
-      window.location.href = "/"; // 리다이렉션 처리
-    }
   }
-}
+
   const processApi = <T>(name: string, params: any = null): Promise<T> => {
     return new Promise((resolve, reject) => {
       let info: any = domain[name];
@@ -224,6 +223,12 @@ export const useApi = () => {
       url = generateUrl(info.url, params);
       url = `${BASE_URL}${url}`;
 
+      if (name === "logout") {
+        if (loginResult.role === "ADMIN") {
+          window.location.pathname = "/admin";
+        }
+      }
+      
       let headers: any = {};
 
       if (
