@@ -205,9 +205,11 @@ export const useApi = () => {
     ) {
       if (!token) {
         if (loginResult.role === "ADMIN") {
+          alert("토큰이 만료되었습니다.")
           resetLocalStorage(); // 토큰 없을시 로그아웃
           window.location.href = "/admin"; // 관리자일 경우 /admin으로 리다이렉션 처리
         } else {
+          alert("토큰이 만료되었습니다.")
           resetLocalStorage(); // 토큰 없을시 로그아웃
           window.location.href = "/"; // 일반 사용자일 경우 /로 리다이렉션 처리
         }

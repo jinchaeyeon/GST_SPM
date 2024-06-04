@@ -102,6 +102,10 @@ const paths = [
     path: "/ProjectMaster",
     index: ".11",
   },
+  {
+    path: "/FAQ",
+    index: ".12",
+  },
 ];
 
 const PanelBarNavContainer = (props: any) => {
@@ -695,6 +699,10 @@ const PanelBarNavContainer = (props: any) => {
                   title={"프로젝트 마스터"}
                   route="/ProjectMaster"
                 />
+                <PanelBarItem
+                  title={"FAQ"}
+                  route="/FAQ"
+                />
               </PanelBar>
             ) : (
               <PanelBar
@@ -713,6 +721,10 @@ const PanelBarNavContainer = (props: any) => {
                 <PanelBarItem
                   title={"프로젝트 일정계획"}
                   route="/ProjectSchedule"
+                />
+                <PanelBarItem
+                  title={"FAQ"}
+                  route="/FAQ"
                 />
               </PanelBar>
             )}

@@ -39,7 +39,8 @@ function AuthRoute({ component, ...rest }: RouteProps) {
       link == "Record" ||
       link == "ProjectMaster" ||
       link == "SharedDocumentManagement" ||
-      link == "SharedDocumentView"
+      link == "SharedDocumentView" ||
+      link == "FAQ"
     ) {
       return false;
     } else {
