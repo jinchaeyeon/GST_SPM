@@ -19,7 +19,7 @@ import {
   GridDataStateChangeEvent,
   GridFooterCellProps,
   GridPageChangeEvent,
-  GridSelectionChangeEvent
+  GridSelectionChangeEvent,
 } from "@progress/kendo-react-grid";
 import { Input } from "@progress/kendo-react-inputs";
 import { bytesToBase64 } from "byte-base64";
@@ -48,7 +48,7 @@ import {
   handleKeyPressSearch,
   isWithinOneMonth,
   toDate,
-  UseParaPc
+  UseParaPc,
 } from "../components/CommonFunction";
 import { GAP, PAGE_SIZE, SELECTED_FIELD } from "../components/CommonString";
 import RichEditor from "../components/RichEditor";
@@ -576,7 +576,10 @@ const App = () => {
       alert("제목은(는) 필수 입력 항목입니다.");
       setLoading(false);
       return false;
-    } else if (!detailData.type && detailData.type == null) {
+    } else if (
+      !detailData.type &&
+      (detailData.type == null || detailData.type == "")
+    ) {
       alert("구분은(는) 필수 입력 항목입니다.");
       setLoading(false);
       return false;
