@@ -700,7 +700,7 @@ const PanelBarNavContainer = (props: any) => {
                   route="/ProjectMaster"
                 />
                 <PanelBarItem
-                  title={"FAQ"}
+                  title={"FAQ 자주묻는질문"}
                   route="/FAQ"
                 />
               </PanelBar>
@@ -723,7 +723,7 @@ const PanelBarNavContainer = (props: any) => {
                   route="/ProjectSchedule"
                 />
                 <PanelBarItem
-                  title={"FAQ"}
+                  title={"FAQ 자주묻는질문"}
                   route="/FAQ"
                 />
               </PanelBar>

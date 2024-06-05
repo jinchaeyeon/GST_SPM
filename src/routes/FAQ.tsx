@@ -289,7 +289,7 @@ const App = () => {
     if (localStorage.getItem("accessToken")) {
       fetchTypes();
       fetchUsers();
-      setTitle("FAQ");
+      setTitle("FAQ 자주묻는질문");
     }
   }, []);
 
@@ -529,6 +529,18 @@ const App = () => {
     });
     // Edior에 HTML & CSS 세팅
     setHtmlOnEditor("");
+  };
+
+  const copyFAQ = () => {
+    const userName: any = usersData.find(
+      (item: any) => item.user_id == userId
+    ).user_name;
+    setDetailData({
+      ...detailData,
+      work_type: "N",
+      user_id: userName,
+      write_date: new Date(),
+    });
   };
 
   const uploadFile = async (
@@ -814,6 +826,14 @@ const App = () => {
                 onClick={createFAQ}
               >
                 신규
+              </Button>
+              <Button
+                themeColor={"primary"}
+                fillMode={"outline"}
+                icon="copy"
+                onClick={copyFAQ}
+              >
+                복사
               </Button>
               <Button
                 themeColor={"primary"}
