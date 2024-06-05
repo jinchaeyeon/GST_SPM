@@ -147,6 +147,8 @@ const App = () => {
   const [detailData, setDetailData] = useState(defaultDetailData);
 
   const [typesData, setTypesData] = useState<any[]>([]);
+  const [usersData, setUsersData] = useState<any[]>([]);
+
   const [selectedState, setSelectedState] = useState<{
     [id: string]: boolean | number[];
   }>({});
@@ -286,6 +288,7 @@ const App = () => {
   useEffect(() => {
     if (localStorage.getItem("accessToken")) {
       fetchTypes();
+      fetchUsers();
       setTitle("FAQ");
     }
   }, []);
@@ -319,27 +322,50 @@ const App = () => {
     }
   };
 
+  const fetchUsers = async () => {
+    let data: any;
+
+    const bytes = require("utf8-bytes");
+    const convertedQueryStr = bytesToBase64(
+      bytes(
+        "SELECT user_id, user_name + (CASE WHEN rtrchk = 'Y' THEN '-퇴' ELSE '' END) as user_name FROM sysUserMaster ORDER BY (CASE WHEN rtrchk = 'Y' THEN 2 ELSE 1 END), user_id"
+      )
+    );
+
+    let query = {
+      query: convertedQueryStr,
+    };
+
+    try {
+      data = await processApi<any>("bizgst-query", query);
+    } catch (error) {
+      data = null;
+    }
+
+    if (data !== null && data.isSuccess === true) {
+      const rows = data.tables[0].Rows;
+      setUsersData(rows);
+    } else {
+      console.log("[에러발생]");
+      console.log(data);
+    }
+  };
+
   //그리드 데이터 조회
   const fetchGrid = useCallback(async (filters: TFilters) => {
     let data: any;
     setLoading(true);
 
-    //조회조건 파라미터
-    const parameters: Iparameters = {
-      procedureName: "pw6_sel_faq",
-      pageNumber: filters.pgNum,
-      pageSize: filters.pgSize,
-      parameters: {
-        "@p_work_type": "list",
-        "@p_contents": filters.contents,
-        "@p_type": filters.type.sub_code,
-        "@p_document_id": filters.document_id,
-        // "@p_find_row_value": filters.findRowValue,
-      },
+    const para = {
+      para: `list?contents=${filters.contents}&type=${
+        filters.type?.sub_code ?? ""
+      }&find_row_value=${filters.findRowValue}&page=${filters.pgNum}&pageSize=${
+        filters.pgSize
+      }`,
     };
 
     try {
-      data = await processApi<any>("procedure", parameters);
+      data = await processApi<any>("faq-list", para);
     } catch (error) {
       data = null;
     }
@@ -413,60 +439,38 @@ const App = () => {
     let data: any;
     setLoading(true);
 
+    //faqapi
     const mainDataId = Object.getOwnPropertyNames(selectedState)[0];
-    //조회조건 파라미터
-    const parameters: Iparameters = {
-      procedureName: "pw6_sel_faq",
-      pageNumber: filters.pgNum,
-      pageSize: filters.pgSize,
-      parameters: {
-        "@p_work_type": "detail",
-        "@p_contents": filters.contents,
-        "@p_type": filters.type.code_name,
-        "@p_document_id": mainDataId,
-        "@p_find_row_value": filters.findRowValue,
-      },
+
+    const para = {
+      id: mainDataId,
     };
 
     try {
-      data = await processApi<any>("procedure", parameters);
-    } catch (error) {
+      data = await processApi<any>("faq-detail", para);
+    } catch (error: any) {
       data = null;
     }
 
-    if (data && data.isSuccess === true) {
-      const rowCount = data.tables[0].TotalRowCount;
+    if (data && data.result.isSuccess === true) {
+      const document = data.document;
+      const rowCount = data.result.tables[0].RowCount;
       if (rowCount) {
         // 상세정보 데이터 세팅
-        const row = data.tables[0].Rows[0];
+        const row = data.result.tables[0].Rows[0];
+        const userName: any = usersData.find(
+          (item: any) => item.user_id == row.user_id
+        ).user_name;
         setDetailData((prev) => ({
           ...row,
           work_type: "U",
           write_date: toDate(row.write_date),
           type: { sub_code: row.type, code_name: row.typenm },
+          user_id: userName,
         }));
         // Edior에 HTML & CSS 세팅
-        setHtmlOnEditor(row.contents);
-      } else {
-        resetDetailData();
-      }
-
-      const selectedRow = mainDataResult.data.find(
-        (item) => item[DATA_ITEM_KEY] === mainDataId
-      );
-
-      // 한달 이내 작성된 데이터인 경우
-      if (selectedRow && isWithinOneMonth(selectedRow.write_date)) {
-        // 조회한 공지사항 쿠키에 저장
-        const savedFAQRaw = Cookies.get("readFAQ");
-        const savedFAQ = savedFAQRaw ? JSON.parse(savedFAQRaw) : [];
-        const updatedFAQ = [...savedFAQ, mainDataId];
-        const uniqueFAQ = Array.from(new Set(updatedFAQ));
-
-        Cookies.set("readFAQ", JSON.stringify(uniqueFAQ), {
-          expires: 30,
-        });
-      }
+        setHtmlOnEditor(document);
+      } 
     } else {
       console.log("[에러발생]");
       console.log(data);
@@ -515,10 +519,13 @@ const App = () => {
   };
 
   const createFAQ = () => {
+    const userName: any = usersData.find(
+      (item: any) => item.user_id == userId
+    ).user_name;
     setDetailData({
       ...defaultDetailData,
       work_type: "N",
-      user_id: userId,
+      user_id: userName,
     });
     // Edior에 HTML & CSS 세팅
     setHtmlOnEditor("");
@@ -577,8 +584,10 @@ const App = () => {
       setLoading(false);
       return false;
     } else if (
-      !detailData.type &&
-      (detailData.type == null || detailData.type == "")
+      !detailData.type.sub_code ||
+      !detailData.type.code_name ||
+      detailData.type.sub_code === "" ||
+      detailData.type.code_name === ""
     ) {
       alert("구분은(는) 필수 입력 항목입니다.");
       setLoading(false);
@@ -656,7 +665,7 @@ const App = () => {
         "@p_document_id": detailData.document_id,
         "@p_write_date": convertDateToStr(detailData.write_date),
         "@p_title": detailData.title,
-        "@p_contents": editorContent,
+        "@p_contents": extractTextFromHtmlContent(editorContent),
         "@p_remark": detailData.remark,
         "@p_attdatnum":
           results[0] == undefined ? detailData.attdatnum : results[0],
@@ -667,8 +676,8 @@ const App = () => {
     };
 
     try {
-      data = await processApi<any>("procedure", para);
-    } catch (error) {
+      data = await processApi<any>("faq-save", para);
+    } catch (error: any) {
       data = null;
     }
 
@@ -705,25 +714,10 @@ const App = () => {
     let data: any;
     setLoading(true);
 
-    const para = {
-      procedureName: "pw6_sav_faq",
-      parameters: {
-        "@p_work_type": "D",
-        "@p_document_id": detailData.document_id,
-        "@p_write_date": convertDateToStr(detailData.write_date),
-        "@p_title": detailData.title,
-        "@p_contents": detailData.contents,
-        "@p_remark": detailData.remark,
-        "@p_attdatnum": detailData.attdatnum,
-        "@p_type": detailData.type.sub_code,
-        "@p_id": userId,
-        "@p_pc": pc,
-      },
-    };
-
+    const para = { id: selectedRow.document_id };
     try {
-      data = await processApi<any>("procedure", para);
-    } catch (error) {
+      data = await processApi<any>("faq-delete", para);
+    } catch (error: any) {
       data = null;
     }
 

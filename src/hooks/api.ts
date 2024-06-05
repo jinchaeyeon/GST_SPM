@@ -55,6 +55,21 @@ const domain: any = {
     url: "api/spm/shared-document/:id",
   },
 
+  // FAQ
+  "faq-list": {
+    action: "get",
+    url: "api/spm/faq/:para",
+  },
+  "faq-detail": {
+    action: "get",
+    url: "api/spm/faq/:id",
+  },
+  "faq-save": { action: "post", url: "api/spm/faq" },
+  "faq-delete": {
+    action: "delete",
+    url: "api/spm/faq/:id",
+  },
+
   // 홈화면
   "home-general": { action: "get", url: "api/spm/home/general" },
   "home-general-notice": { action: "get", url: "api/spm/home/general/:id" },
