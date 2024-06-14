@@ -57,6 +57,7 @@ import { useApi } from "../hooks/api";
 import { isLoading, loginResultState, titles } from "../store/atoms";
 import { dataTypeColumns } from "../store/columns/common-columns";
 import { Iparameters, TEditorHandle } from "../store/types";
+import NumberCell from "../components/Cells/NumberCell";
 
 type TFilters = {
   type: { sub_code: ""; code_name: "" };
@@ -373,7 +374,6 @@ const App = () => {
     if (data && data.isSuccess === true) {
       const totalRowCnt = data.tables[0].TotalRowCount;
       const rows = data.tables[0].Rows;
-
       if (filters.findRowValue !== "") {
         // find_row_value 행으로 스크롤 이동
         if (gridRef.current) {
@@ -470,7 +470,7 @@ const App = () => {
         }));
         // Edior에 HTML & CSS 세팅
         setHtmlOnEditor(document);
-      } 
+      }
     } else {
       console.log("[에러발생]");
       console.log(data);
@@ -810,6 +810,19 @@ const App = () => {
     return extractString;
   };
 
+  const extractNumberFromText = (text: string) => {
+    const regex = /등\s*(\d+)\s*건/g;
+    const matches = regex.exec(text);
+  
+    if (matches && matches[1]) {
+      const numberStr = matches[1];
+      const number = parseInt(numberStr, 10);
+      return isNaN(number) ? 0 : number;
+    } else {
+      return text.trim() !== "" ? 1 : 0;
+    }
+  };
+
   return (
     <>
       <TitleContainer>
@@ -904,7 +917,7 @@ const App = () => {
         </FilterBox>
       </FilterBoxWrap>
       <GridContainerWrap height={"78%"}>
-        <GridContainer width={"35%"}>
+        <GridContainer width={"36%"}>
           <GridTitleContainer>
             <GridTitle>요약정보</GridTitle>
           </GridTitleContainer>
@@ -915,6 +928,7 @@ const App = () => {
                 ...row,
                 [SELECTED_FIELD]: selectedState[idGetter(row)],
                 type: row.typenm,
+                fileCount: extractNumberFromText(row.files),
               })),
               mainDataState
             )}
@@ -953,9 +967,15 @@ const App = () => {
               footerCell={mainTotalFooterCell}
             />
             <GridColumn field="title" title="제목" />
+            <GridColumn
+              field="fileCount"
+              title="첨부"
+              width={70}
+              cell={CenterCell}
+            />
           </Grid>
         </GridContainer>
-        <GridContainer width={`calc(65% - ${GAP}px)`}>
+        <GridContainer width={`calc(64% - ${GAP}px)`}>
           <GridTitleContainer>
             <GridTitle>상세정보</GridTitle>
           </GridTitleContainer>
