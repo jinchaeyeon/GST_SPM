@@ -106,7 +106,26 @@ const paths = [
     path: "/FAQ",
     index: ".12",
   },
+  {
+    path: "/ProjectMonitoring",
+    index: ".13",
+  },
 ];
+
+// 탭 닫기 핸들러 함수
+const handleTabClose = (event: BeforeUnloadEvent) => {
+  event.preventDefault();
+  return (event.returnValue = "true");
+};
+
+// beforeunload 리스너 추가 함수
+export const addBeforeUnloadListener = () => {
+  window.addEventListener('beforeunload', handleTabClose);
+};
+
+export const removeBeforeUnloadListener = () => {
+  window.removeEventListener('beforeunload', handleTabClose);
+};
 
 const PanelBarNavContainer = (props: any) => {
   const processApi = useApi();
@@ -142,24 +161,6 @@ const PanelBarNavContainer = (props: any) => {
   }, []);
 
   const { switcher, themes, currentTheme = "" } = useThemeSwitcher();
-
-  // 토큰 만료 시 로그아웃 처리
-  if (loginResult) {
-    if (
-      window.location.pathname !== "/" &&
-      window.location.pathname !== "/admin"
-    ) {
-      if (!token) {
-        if (isAdmin) {
-          resetLocalStorage(); // 토큰 없을시 로그아웃
-          window.location.href = "/admin"; // 관리자일 경우 /admin으로 리다이렉션 처리
-        } else {
-          resetLocalStorage(); // 토큰 없을시 로그아웃
-          window.location.href = "/"; // 일반 사용자일 경우 /로 리다이렉션 처리
-        }
-      }
-    }
-  }
 
   // 삭제할 첨부파일 리스트를 담는 함수
   const [deletedAttadatnums, setDeletedAttadatnums] = useRecoilState(
@@ -457,11 +458,6 @@ const PanelBarNavContainer = (props: any) => {
 
   // 새로고침하거나 Path 변경 시
   useEffect(() => {
-    const handleTabClose = (event: BeforeUnloadEvent) => {
-      event.preventDefault();
-      return (event.returnValue = "true");
-    };
-
     const handleUnload = () => {
       // unsavedAttadatnums가 있으면 삭제처리
       if (unsavedAttadatnums.attdatnums.length > 0) {
@@ -472,10 +468,24 @@ const PanelBarNavContainer = (props: any) => {
     const unlisten = history.listen(() => {
       handleUnload();
     });
-
-    window.addEventListener("beforeunload", handleTabClose);
-    window.addEventListener("unload", handleUnload);
-
+    
+  // 토큰 만료 시 로그아웃 처리
+    if (!accessToken && loginResult) {
+      unlisten();
+      window.removeEventListener("beforeunload", handleTabClose);
+      window.removeEventListener("unload", handleUnload);
+      if (
+        window.location.pathname !== "/" &&
+        window.location.pathname !== "/admin"
+      ) {
+        alert("토큰이 만료되었습니다.");
+        resetLocalStorage();
+        logout();
+      }
+    } else {
+      window.addEventListener("beforeunload", handleTabClose);
+      window.addEventListener("unload", handleUnload);
+    }
     return () => {
       unlisten();
       window.removeEventListener("beforeunload", handleTabClose);
@@ -486,6 +496,7 @@ const PanelBarNavContainer = (props: any) => {
     setUnsavedAttadatnums,
     history,
     setDeletedAttadatnums,
+    accessToken,
   ]);
 
   const fetchToDeletedAttachment = useCallback(
@@ -699,9 +710,10 @@ const PanelBarNavContainer = (props: any) => {
                   title={"프로젝트 마스터"}
                   route="/ProjectMaster"
                 />
+                <PanelBarItem title={"FAQ 자주묻는질문"} route="/FAQ" />
                 <PanelBarItem
-                  title={"FAQ 자주묻는질문"}
-                  route="/FAQ"
+                  title={"프로젝트 모니터링"}
+                  route="/ProjectMonitoring"
                 />
               </PanelBar>
             ) : (
@@ -722,10 +734,7 @@ const PanelBarNavContainer = (props: any) => {
                   title={"프로젝트 일정계획"}
                   route="/ProjectSchedule"
                 />
-                <PanelBarItem
-                  title={"FAQ 자주묻는질문"}
-                  route="/FAQ"
-                />
+                <PanelBarItem title={"FAQ 자주묻는질문"} route="/FAQ" />
               </PanelBar>
             )}
           </Gnv>

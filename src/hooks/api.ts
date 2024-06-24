@@ -3,6 +3,7 @@ import { useRecoilState } from "recoil";
 import { resetLocalStorage } from "../components/CommonFunction";
 import { loginResultState} from "../store/atoms";
 import { url } from "inspector";
+import { removeBeforeUnloadListener } from "../components/PanelBarNavContainer";
 
 let BASE_URL = process.env.REACT_APP_API_URL;
 const cachios = require("cachios");
@@ -209,29 +210,24 @@ const generateUrl = (url: string, params: any) => {
 };
 
 export const useApi = () => {
-  const token = localStorage.getItem("accessToken");
+  const accessToken = localStorage.getItem("accessToken");
   const [loginResult, setLoginResult] = useRecoilState(loginResultState);
-  
+
   // 토큰 만료 시 로그아웃 처리
-  if (loginResult) {   
+  if (!accessToken && loginResult) {
     if (
       window.location.pathname !== "/" &&
       window.location.pathname !== "/admin"
-    ) {
-      if (!token) {
-        if (loginResult.role === "ADMIN") {
-          alert("토큰이 만료되었습니다.")
-          resetLocalStorage(); // 토큰 없을시 로그아웃
-          window.location.href = "/admin"; // 관리자일 경우 /admin으로 리다이렉션 처리
-        } else {
-          alert("토큰이 만료되었습니다.")
-          resetLocalStorage(); // 토큰 없을시 로그아웃
-          window.location.href = "/"; // 일반 사용자일 경우 /로 리다이렉션 처리
-        }
-      }
+    ) {    
+        removeBeforeUnloadListener();
+        const adminStatus = loginResult.role == "ADMIN";
+        resetLocalStorage();
+        if (adminStatus){
+          window.location.href = "/admin";
+        } else window.location.href = "/";
     }
   }
-
+  
   const processApi = <T>(name: string, params: any = null): Promise<T> => {
     return new Promise((resolve, reject) => {
       let info: any = domain[name];
@@ -272,8 +268,8 @@ export const useApi = () => {
         headers = { ...headers, CultureName: loginResult.langCode };
       }
 
-      if (token && !headers.hasOwnProperty("Authorization")) {
-        headers = { ...headers, Authorization: `Bearer ${token}` };
+      if (accessToken && !headers.hasOwnProperty("Authorization")) {
+        headers = { ...headers, Authorization: `Bearer ${accessToken}` };
       }
 
       if (info.action != "get") {

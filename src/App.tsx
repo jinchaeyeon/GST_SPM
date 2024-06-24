@@ -21,6 +21,7 @@ import Notice from "./routes/Notice";
 import ProjectSchedule from "./routes/ProjectSchedule";
 import QnA from "./routes/QnA";
 import FAQ from "./routes/FAQ";
+import ProjectMonitoring from "./routes/ProjectMonitoring";
 
 import SharedDocumentManagement from "./routes/SharedDocumentManagement";
 import SharedDocumentView from "./routes/SharedDocumentView";
@@ -334,7 +335,7 @@ const AppInner: React.FC = () => {
 
   const callApi = async (path: string) => {
     const token = await requestPermission();
-    setLoading(true);
+
     if (!token) {
       console.log("토큰이 유효하지 않습니다.");
       return;
@@ -541,6 +542,7 @@ const AppInner: React.FC = () => {
                   />
                   <AuthRoute path="/QnA" component={QnA} exact />
                   <AuthRoute path="/FAQ" component={FAQ} exact />
+                  <AuthRoute path="/ProjectMonitoring" component={ProjectMonitoring} exact />
                   <AuthRoute path="/Notice" component={Notice} exact />
                   <AuthRoute
                     path="/ProjectSchedule"
