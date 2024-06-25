@@ -669,7 +669,7 @@ const ProjectMonitoring: React.FC = () => {
             <span
               style={{ fontSize: 15, color: "#a0a0a0", paddingLeft: "3px" }}
             >
-              {getUserNameById(item.pjtmanager)} /
+              {getUserNameById(item.pjtmanager)} {" / "}
               {getUserNameById(item.pjtperson)}
             </span>
           </div>
@@ -1002,6 +1002,7 @@ const ProjectMonitoring: React.FC = () => {
                 fixedScroll={true}
                 //정렬기능
                 sortable={true}
+                onSortChange={onMainSortChange}
                 //컬럼순서조정
                 reorderable={true}
                 //컬럼너비조정

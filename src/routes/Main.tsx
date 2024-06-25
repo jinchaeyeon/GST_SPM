@@ -387,7 +387,7 @@ const Main: React.FC = () => {
 
         setNoticeSum(filteredArray.length);
       } else {
-        setNoticeSum(totalRowCount);
+        setNoticeSum(totalRowCount == -1 ? 0 : totalRowCount);
       }
     }
   };
