@@ -226,8 +226,6 @@ const App = () => {
         findRowValue: "",
       }));
 
-      // 그리드 조회
-      fetchUsers();
       fetchGrid(deepCopiedFilters);
     }
   }, [filters]);
@@ -457,6 +455,8 @@ const App = () => {
       const document = data.document;
       const rowCount = data.result.tables[0].RowCount;
       if (rowCount) {
+        // 그리드 조회
+        fetchUsers();
         // 상세정보 데이터 세팅
         const row = data.result.tables[0].Rows[0];
         const userName: any = usersData.find(
@@ -541,6 +541,9 @@ const App = () => {
       work_type: "N",
       user_id: userName,
       write_date: new Date(),
+      attdatnum: "",
+      files: "",
+      document_id: "",
     });
   };
 
@@ -814,7 +817,7 @@ const App = () => {
   const extractNumberFromText = (text: string) => {
     const regex = /등\s*(\d+)\s*건/g;
     const matches = regex.exec(text);
-  
+
     if (matches && matches[1]) {
       const numberStr = matches[1];
       const number = parseInt(numberStr, 10);
