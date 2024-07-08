@@ -134,3 +134,18 @@ export const OSState = atom<boolean>({
   default: false,
   effects_UNSTABLE: [persistAtom],
 });
+
+export const isFilterheightstate = atom<number>({
+  key: "isFilterheightstate",
+  default: 0,
+});
+
+export const isFilterHideState = atom<boolean>({
+  key: "isFilterHideState",
+  default: document.documentElement.clientWidth <= 1200,
+});
+
+export const isFilterHideState2 = atom<boolean>({
+  key: "isFilterHideState2",
+  default: document.documentElement.clientWidth <= 1200,
+});

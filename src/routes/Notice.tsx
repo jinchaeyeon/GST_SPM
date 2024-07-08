@@ -9,18 +9,26 @@ import {
   GridFooterCellProps,
   GridPageChangeEvent,
   GridRowDoubleClickEvent,
-  GridSelectionChangeEvent
+  GridSelectionChangeEvent,
 } from "@progress/kendo-react-grid";
 import { Input } from "@progress/kendo-react-inputs";
 import { bytesToBase64 } from "byte-base64";
 import Cookies from "js-cookie";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { useHistory, useLocation } from "react-router-dom";
 import { useRecoilState, useSetRecoilState } from "recoil";
+import SwiperCore from "swiper";
+import "swiper/css";
+import { Swiper, SwiperSlide } from "swiper/react";
 import {
   ButtonContainer,
   FilterBox,
-  FilterBoxWrap,
   FormBox,
   FormBoxWrap,
   GridContainer,
@@ -28,18 +36,21 @@ import {
   GridTitle,
   GridTitleContainer,
   Title,
-  TitleContainer,
+  TitleContainer
 } from "../CommonStyled";
 import CenterCell from "../components/Cells/CenterCell";
 import {
   convertDateToStr,
   dateformat2,
+  getDeviceHeight,
+  getHeight,
   handleKeyPressSearch,
   isWithinOneMonth,
   toDate,
-  UseParaPc
+  UseParaPc,
 } from "../components/CommonFunction";
 import { GAP, PAGE_SIZE, SELECTED_FIELD } from "../components/CommonString";
+import FilterContainer from "../components/FilterContainer";
 import RichEditor from "../components/RichEditor";
 import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
 import { useApi } from "../hooks/api";
@@ -105,6 +116,18 @@ type TCustomer = {
   customer_name: string;
 };
 let targetRowIndex: null | number = null;
+
+var index = 0;
+
+var height = 0;
+var height2 = 0;
+var height3 = 0;
+var height4 = 0;
+var height5 = 0;
+var height6 = 0;
+var height7 = 0;
+var height8 = 0;
+
 const App = () => {
   const [loginResult] = useRecoilState(loginResultState);
   const setLoading = useSetRecoilState(isLoading);
@@ -116,6 +139,66 @@ const App = () => {
   const [pc, setPc] = useState("");
   UseParaPc(setPc);
   const initialPageState = { skip: 0, take: PAGE_SIZE };
+  const [swiper, setSwiper] = useState<SwiperCore>();
+
+  let deviceWidth = window.innerWidth;
+  const [isMobile, setIsMobile] = useState(deviceWidth <= 1200);
+  const [mobileheight, setMobileHeight] = useState(0);
+  const [mobileheight2, setMobileHeight2] = useState(0);
+  const [mobileheight3, setMobileHeight3] = useState(0);
+  const [mobileheight4, setMobileHeight4] = useState(0);
+  const [webheight, setWebHeight] = useState(0);
+  const [webheight2, setWebHeight2] = useState(0);
+  const [webheight3, setWebHeight3] = useState(0);
+  const [webheight4, setWebHeight4] = useState(0);
+
+  useLayoutEffect(() => {
+    height = getHeight(".ButtonContainer");
+    height2 = getHeight(".ButtonContainer2");
+    height3 = getHeight(".ButtonContainer3");
+    height4 = getHeight(".ButtonContainer4");
+    height5 = getHeight(".ButtonContainer5");
+    height6 = getHeight(".FormBoxWrap");
+    height7 = getHeight(".FormBoxWrap2");
+    height8 = getHeight(".TitleContainer");
+
+    const handleWindowResize = () => {
+      let deviceWidth = document.documentElement.clientWidth;
+      setIsMobile(deviceWidth <= 1200);
+      setMobileHeight(getDeviceHeight(true) - height2 - height8);
+      setMobileHeight2(
+        getDeviceHeight(true) - height3 - height6 - height7 - height8 + 15
+      );
+      setMobileHeight3(
+        (getDeviceHeight(true) - height - height8) / 2 - height4 - 5
+      );
+      setMobileHeight4(
+        (getDeviceHeight(true) - height - height8) / 2 - height5 - 5
+      );
+      setWebHeight(getDeviceHeight(true) - height - height2 - height8);
+      setWebHeight2(
+        getDeviceHeight(true) -
+          height -
+          height3 -
+          height6 -
+          height7 -
+          height8 +
+          15
+      );
+      setWebHeight3(
+        (getDeviceHeight(true) - height - height8) / 2 - height4 - 5
+      );
+      setWebHeight4(
+        (getDeviceHeight(true) - height - height8) / 2 - height5 - 5
+      );
+    };
+    handleWindowResize();
+    window.addEventListener("resize", handleWindowResize);
+    return () => {
+      window.removeEventListener("resize", handleWindowResize);
+    };
+  }, [webheight, webheight2, webheight3, webheight4]);
+
   const [page, setPage] = useState(initialPageState);
   const pageChange = (event: GridPageChangeEvent) => {
     const { page } = event;
@@ -139,8 +222,7 @@ const App = () => {
   const [attachmentsWindowVisible, setAttachmentsWindowVisible] =
     useState<boolean>(false);
   const [title, setTitle] = useRecoilState(titles);
-  let deviceWidth = window.innerWidth;
-  let isMobile = deviceWidth <= 1200;
+
   const idGetter = getter(DATA_ITEM_KEY);
 
   const [mainDataState, setMainDataState] = useState<State>({
@@ -214,6 +296,9 @@ const App = () => {
       isFetch: true,
       isReset: true,
     }));
+    if (swiper && isMobile) {
+      swiper.slideTo(0);
+    }
   };
 
   useEffect(() => {
@@ -267,6 +352,9 @@ const App = () => {
     setSelectedState(newSelectedState);
     setFileList([]);
     setSavenmList([]);
+    if (swiper && isMobile) {
+      swiper.slideTo(1);
+    }
   };
 
   const onMainSortChange = (e: any) => {
@@ -907,344 +995,739 @@ const App = () => {
   };
   return (
     <>
-      <TitleContainer>
-        {!isMobile ? "" : <Title>공지사항</Title>}
-        <ButtonContainer>
-          <Button onClick={search} icon="search" themeColor={"primary"}>
-            조회
-          </Button>
-          {isAdmin && (
-            <>
-              <Button
-                themeColor={"primary"}
-                icon="file-add"
-                onClick={createNotice}
-              >
-                신규
+      {isMobile ? (
+        <>
+          <TitleContainer className="TitleContainer">
+            <Title>공지사항</Title>
+            <ButtonContainer style={{ rowGap: "5px" }}>
+              <Button onClick={search} icon="search" themeColor={"primary"}>
+                조회
               </Button>
+              {isAdmin && (
+                <>
+                  <Button
+                    themeColor={"primary"}
+                    icon="file-add"
+                    onClick={createNotice}
+                  >
+                    신규
+                  </Button>
+                  <Button
+                    themeColor={"primary"}
+                    fillMode={"outline"}
+                    icon="save"
+                    onClick={saveNotice}
+                  >
+                    저장
+                  </Button>
+                  <Button
+                    themeColor={"primary"}
+                    fillMode={"outline"}
+                    icon="delete"
+                    onClick={deleteNotice}
+                  >
+                    삭제
+                  </Button>
+                </>
+              )}
               <Button
+                onClick={print}
+                fillMode="outline"
                 themeColor={"primary"}
-                fillMode={"outline"}
-                icon="save"
-                onClick={saveNotice}
+                icon="print"
               >
-                저장
+                출력
               </Button>
-              <Button
-                themeColor={"primary"}
-                fillMode={"outline"}
-                icon="delete"
-                onClick={deleteNotice}
-              >
-                삭제
-              </Button>
-            </>
-          )}
-          <Button
-            onClick={print}
-            fillMode="outline"
-            themeColor={"primary"}
-            icon="print"
-          >
-            출력
-          </Button>
-        </ButtonContainer>
-      </TitleContainer>
-      <GridTitleContainer>
-        <GridTitle>조회조건</GridTitle>
-      </GridTitleContainer>
-      <FilterBoxWrap>
-        <FilterBox onKeyPress={(e) => handleKeyPressSearch(e, search)}>
-          <tbody>
-            <tr>
-              <th>공지일자</th>
-              <td>
-                <div className="filter-item-wrap">
-                  <DatePicker
-                    name="fromDate"
-                    value={filters.fromDate}
-                    format="yyyy-MM-dd"
-                    onChange={filterInputChange}
-                    placeholder=""
-                  />
-                  ~
-                  <DatePicker
-                    name="toDate"
-                    value={filters.toDate}
-                    format="yyyy-MM-dd"
-                    onChange={filterInputChange}
-                    placeholder=""
-                  />
-                </div>
-              </td>
-              <th>제목 및 내용</th>
-              <td colSpan={3}>
-                <Input
-                  name="contents"
-                  type="text"
-                  value={filters.contents}
-                  onChange={filterInputChange}
-                />
-              </td>
-            </tr>
-          </tbody>
-        </FilterBox>
-      </FilterBoxWrap>
-      <GridContainerWrap height={"78%"}>
-        <GridContainer width={isAdmin ? "25%" : `30%`}>
-          <GridTitleContainer>
-            <GridTitle>요약정보</GridTitle>
-          </GridTitleContainer>
-          <Grid
-            style={{ height: `calc(100% - 35px)` }}
-            data={process(
-              mainDataResult.data.map((row) => ({
-                ...row,
-                [SELECTED_FIELD]: selectedState[idGetter(row)],
-                notice_date: dateformat2(row.notice_date),
-              })),
-              mainDataState
-            )}
-            {...mainDataState}
-            onDataStateChange={onMainDataStateChange}
-            //선택 기능
-            dataItemKey={DATA_ITEM_KEY}
-            selectedField={SELECTED_FIELD}
-            selectable={{
-              enabled: true,
-              mode: "single",
-            }}
-            onSelectionChange={onSelectionChange}
-            fixedScroll={true}
-            total={mainDataResult.total}
-            skip={page.skip}
-            take={page.take}
-            pageable={true}
-            onPageChange={pageChange}
-            //원하는 행 위치로 스크롤 기능
-            ref={gridRef}
-            rowHeight={30}
-            //정렬기능
-            sortable={true}
-            onSortChange={onMainSortChange}
-            //컬럼순서조정
-            reorderable={true}
-            //컬럼너비조정
-            resizable={true}
-          >
-            <GridColumn
-              field="notice_date"
-              title="공지일자"
-              width={110}
-              cell={CenterCell}
-              footerCell={mainTotalFooterCell}
-            />
-            <GridColumn field="title" title="제목" />
-          </Grid>
-        </GridContainer>
-        <GridContainer
-          width={isAdmin ? `calc(45% - ${GAP}px)` : `calc(70% - ${GAP}px)`}
-        >
-          <GridTitleContainer>
-            <GridTitle>상세정보</GridTitle>
-          </GridTitleContainer>
-          <FormBoxWrap border>
-            <FormBox>
+            </ButtonContainer>
+          </TitleContainer>
+          <FilterContainer>
+            <FilterBox onKeyPress={(e) => handleKeyPressSearch(e, search)}>
               <tbody>
                 <tr>
                   <th>공지일자</th>
                   <td>
-                    {isAdmin ? (
+                    <div className="filter-item-wrap">
                       <DatePicker
-                        name="notice_date"
-                        value={detailData.notice_date}
+                        name="fromDate"
+                        value={filters.fromDate}
                         format="yyyy-MM-dd"
-                        onChange={detailDataInputChange}
-                        className={"required"}
+                        onChange={filterInputChange}
                         placeholder=""
                       />
-                    ) : (
-                      <Input
-                        name="notice_date"
-                        type="text"
-                        value={dateformat2(
-                          convertDateToStr(detailData.notice_date)
-                        )}
-                        onChange={detailDataInputChange}
-                        className={!isAdmin ? "readonly" : "required"}
-                        readOnly={!isAdmin}
-                      />
-                    )}
-                  </td>
-                  <th>제목</th>
-                  <td>
-                    <Input
-                      name="title"
-                      type="text"
-                      value={detailData.title}
-                      onChange={detailDataInputChange}
-                      className={!isAdmin ? "readonly" : "required"}
-                      readOnly={!isAdmin}
-                    />
-                  </td>
-                  {isAdmin && (
-                    <td>
-                      <Button
-                        icon={"notification"}
-                        onClick={onAlertClick}
-                        themeColor={"primary"}
-                        fillMode={"outline"}
-                      >
-                        공지 알림 전송
-                      </Button>
-                    </td>
-                  )}
-                </tr>
-              </tbody>
-            </FormBox>
-          </FormBoxWrap>
-          <RichEditor
-            id="editor"
-            ref={editorRef}
-            hideTools={!isAdmin}
-          />
-          <FormBoxWrap
-            border
-            style={{
-              margin: 0,
-              borderTop: 0,
-            }}
-          >
-            <FormBox>
-              <tbody>
-                <tr>
-                  <th style={{ width: 0 }}>첨부파일</th>
-                  <td style={{ width: "auto" }}>
-                    <div className="filter-item-wrap">
-                      <Input
-                        name="attachment_q"
-                        value={detailData.files}
-                        className="readonly"
-                      />
-                      <Button
-                        icon="more-horizontal"
-                        fillMode={"flat"}
-                        onClick={() => setAttachmentsWindowVisible(true)}
+                      ~
+                      <DatePicker
+                        name="toDate"
+                        value={filters.toDate}
+                        format="yyyy-MM-dd"
+                        onChange={filterInputChange}
+                        placeholder=""
                       />
                     </div>
                   </td>
+                  <th>제목 및 내용</th>
+                  <td colSpan={3}>
+                    <Input
+                      name="contents"
+                      type="text"
+                      value={filters.contents}
+                      onChange={filterInputChange}
+                    />
+                  </td>
                 </tr>
               </tbody>
-            </FormBox>
-          </FormBoxWrap>
-        </GridContainer>
-        {isAdmin && (
-          <GridContainer width="30%">
-            <GridContainer height="50%">
-              <GridTitleContainer>
-                <GridTitle>참조 업체</GridTitle>
-                {isAdmin && (
-                  <ButtonContainer>
+            </FilterBox>
+          </FilterContainer>
+          <Swiper
+            onSwiper={(swiper) => {
+              setSwiper(swiper);
+            }}
+            onActiveIndexChange={(swiper) => {
+              index = swiper.activeIndex;
+            }}
+          >
+            <SwiperSlide key={0}>
+              <GridContainer style={{ width: "100%" }}>
+                <GridTitleContainer className="ButtonContainer2">
+                  <GridTitle>
+                    요약정보
                     <Button
                       themeColor={"primary"}
-                      icon="refresh"
                       fillMode={"flat"}
-                      onClick={() =>
-                        setRefCustData(process([], refCustDataState))
-                      }
+                      icon={"chevron-right"}
+                      onClick={() => {
+                        if (swiper) {
+                          swiper.slideTo(1);
+                        }
+                      }}
                     ></Button>
-                  </ButtonContainer>
-                )}
-              </GridTitleContainer>
-              <Grid
-                style={{ height: `calc(100% - 40px)`, margin: "5px 0" }}
-                data={process(
-                  // 적어도 한개의 행은 나오도록 처리 (그리드 행이 있어야 드롭 가능)
-                  refCustData.data.length === 0
-                    ? [{}]
-                    : refCustData.data.map((row) => ({
-                        ...row,
-                      })),
-                  refCustDataState
-                )}
-                {...refCustDataState}
-                onDataStateChange={onRefCustDataStateChange}
-                dataItemKey={CUST_DATA_ITEM_KEY}
-                //정렬기능
-                sortable={true}
-                onSortChange={onRefCustSortChange}
-                //컬럼순서조정
-                reorderable={true}
-                //컬럼너비조정
-                resizable={true}
-                rowRender={refCustRowRender}
-                //행 클릭 이벤트
-                onRowDoubleClick={refCustRowDoubleClick}
-              >
-                <GridColumn field="work_type" title=" " width={50} />
-                <GridColumn
-                  field="customer_name"
-                  title="업체명"
-                  footerCell={refCustTotalFooterCell}
-                />
-              </Grid>
-            </GridContainer>
-            <GridContainer height="50%">
-              <GridTitleContainer>
-                <GridTitle>전체 업체</GridTitle>
+                  </GridTitle>
+                </GridTitleContainer>
+                <Grid
+                  style={{ height: mobileheight }}
+                  data={process(
+                    mainDataResult.data.map((row) => ({
+                      ...row,
+                      [SELECTED_FIELD]: selectedState[idGetter(row)],
+                      notice_date: dateformat2(row.notice_date),
+                    })),
+                    mainDataState
+                  )}
+                  {...mainDataState}
+                  onDataStateChange={onMainDataStateChange}
+                  //선택 기능
+                  dataItemKey={DATA_ITEM_KEY}
+                  selectedField={SELECTED_FIELD}
+                  selectable={{
+                    enabled: true,
+                    mode: "single",
+                  }}
+                  onSelectionChange={onSelectionChange}
+                  fixedScroll={true}
+                  total={mainDataResult.total}
+                  skip={page.skip}
+                  take={page.take}
+                  pageable={true}
+                  onPageChange={pageChange}
+                  //원하는 행 위치로 스크롤 기능
+                  ref={gridRef}
+                  rowHeight={30}
+                  //정렬기능
+                  sortable={true}
+                  onSortChange={onMainSortChange}
+                  //컬럼순서조정
+                  reorderable={true}
+                  //컬럼너비조정
+                  resizable={true}
+                >
+                  <GridColumn
+                    field="notice_date"
+                    title="공지일자"
+                    width={110}
+                    cell={CenterCell}
+                    footerCell={mainTotalFooterCell}
+                  />
+                  <GridColumn field="title" title="제목" />
+                </Grid>
+              </GridContainer>
+            </SwiperSlide>
+            <SwiperSlide key={1}>
+              <GridContainer style={{ width: "100%" }}>
+                <GridTitleContainer className="ButtonContainer3">
+                  <GridTitle>
+                    <Button
+                      themeColor={"primary"}
+                      fillMode={"flat"}
+                      icon={"chevron-left"}
+                      onClick={() => {
+                        if (swiper) {
+                          swiper.slideTo(0);
+                        }
+                      }}
+                    ></Button>
+                    상세정보
+                    {isAdmin && (
+                      <Button
+                        themeColor={"primary"}
+                        fillMode={"flat"}
+                        icon={"chevron-right"}
+                        onClick={() => {
+                          if (swiper) {
+                            swiper.slideTo(2);
+                          }
+                        }}
+                      ></Button>
+                    )}
+                  </GridTitle>
+                </GridTitleContainer>
+                <FormBoxWrap border className="FormBoxWrap">
+                  <FormBox>
+                    <tbody>
+                      <tr>
+                        <th>공지일자</th>
+                        <td>
+                          {isAdmin ? (
+                            <DatePicker
+                              name="notice_date"
+                              value={detailData.notice_date}
+                              format="yyyy-MM-dd"
+                              onChange={detailDataInputChange}
+                              className={"required"}
+                              placeholder=""
+                            />
+                          ) : (
+                            <Input
+                              name="notice_date"
+                              type="text"
+                              value={dateformat2(
+                                convertDateToStr(detailData.notice_date)
+                              )}
+                              onChange={detailDataInputChange}
+                              className={!isAdmin ? "readonly" : "required"}
+                              readOnly={!isAdmin}
+                            />
+                          )}
+                        </td>
+                        <th>제목</th>
+                        <td>
+                          <Input
+                            name="title"
+                            type="text"
+                            value={detailData.title}
+                            onChange={detailDataInputChange}
+                            className={!isAdmin ? "readonly" : "required"}
+                            readOnly={!isAdmin}
+                          />
+                        </td>
+                        {isAdmin && (
+                          <td>
+                            <Button
+                              icon={"notification"}
+                              onClick={onAlertClick}
+                              themeColor={"primary"}
+                              fillMode={"outline"}
+                            >
+                              공지 알림 전송
+                            </Button>
+                          </td>
+                        )}
+                      </tr>
+                    </tbody>
+                  </FormBox>
+                </FormBoxWrap>
+                <RichEditor id="editor" ref={editorRef} hideTools={!isAdmin} />
+                <FormBoxWrap
+                  border
+                  className="FormBoxWrap2"
+                  style={{
+                    margin: "0 0 20px 0",
+                    borderTop: 0,
+                  }}
+                >
+                  <FormBox>
+                    <tbody>
+                      <tr>
+                        <th style={{ width: 0 }}>첨부파일</th>
+                        <td style={{ width: "auto" }}>
+                          <div className="filter-item-wrap">
+                            <Input
+                              name="attachment_q"
+                              value={detailData.files}
+                              className="readonly"
+                            />
+                            <Button
+                              icon="more-horizontal"
+                              fillMode={"flat"}
+                              onClick={() => setAttachmentsWindowVisible(true)}
+                            />
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </FormBox>
+                </FormBoxWrap>
+              </GridContainer>
+            </SwiperSlide>
+            {isAdmin && (
+              <SwiperSlide key={2}>
+                <GridContainer>
+                  <GridTitleContainer className="ButtonContainer4">
+                    <GridTitle>
+                      <Button
+                        themeColor={"primary"}
+                        fillMode={"flat"}
+                        icon={"chevron-left"}
+                        onClick={() => {
+                          if (swiper) {
+                            swiper.slideTo(1);
+                          }
+                        }}
+                      ></Button>
+                      참조 업체
+                    </GridTitle>
+                    {isAdmin && (
+                      <ButtonContainer>
+                        <Button
+                          themeColor={"primary"}
+                          icon="refresh"
+                          fillMode={"flat"}
+                          onClick={() =>
+                            setRefCustData(process([], refCustDataState))
+                          }
+                        ></Button>
+                      </ButtonContainer>
+                    )}
+                  </GridTitleContainer>
+                  <Grid
+                    style={{ height: mobileheight3, margin: "5px 0" }}
+                    data={process(
+                      // 적어도 한개의 행은 나오도록 처리 (그리드 행이 있어야 드롭 가능)
+                      refCustData.data.length === 0
+                        ? [{}]
+                        : refCustData.data.map((row) => ({
+                            ...row,
+                          })),
+                      refCustDataState
+                    )}
+                    {...refCustDataState}
+                    onDataStateChange={onRefCustDataStateChange}
+                    dataItemKey={CUST_DATA_ITEM_KEY}
+                    //정렬기능
+                    sortable={true}
+                    onSortChange={onRefCustSortChange}
+                    //컬럼순서조정
+                    reorderable={true}
+                    //컬럼너비조정
+                    resizable={true}
+                    rowRender={refCustRowRender}
+                    //행 클릭 이벤트
+                    onRowDoubleClick={refCustRowDoubleClick}
+                  >
+                    <GridColumn field="work_type" title=" " width={50} />
+                    <GridColumn
+                      field="customer_name"
+                      title="업체명"
+                      footerCell={refCustTotalFooterCell}
+                    />
+                  </Grid>
+                </GridContainer>
+                <GridContainer>
+                  <GridTitleContainer className="ButtonContainer5">
+                    <GridTitle>전체 업체</GridTitle>
 
-                <ButtonContainer>
+                    <ButtonContainer>
+                      <Button
+                        themeColor={"primary"}
+                        fillMode={"outline"}
+                        icon="filter-add-expression"
+                        onClick={addAllCustToRefCust}
+                      >
+                        전체 추가
+                      </Button>
+                      <Button
+                        onClick={fetchAllCust}
+                        themeColor={"primary"}
+                        icon="refresh"
+                        fillMode={"flat"}
+                      ></Button>
+                    </ButtonContainer>
+                  </GridTitleContainer>
+                  <Grid
+                    style={{ height: mobileheight4 }}
+                    data={process(
+                      allCustData.data.map((row) => ({
+                        ...row,
+                        // [SELECTED_FIELD]: selectedState[idGetter(row)],
+                      })),
+                      allCustDataState
+                    )}
+                    {...allCustDataState}
+                    onDataStateChange={onAllCustDataStateChange}
+                    dataItemKey={CUST_DATA_ITEM_KEY}
+                    //정렬기능
+                    sortable={true}
+                    onSortChange={onAllCustSortChange}
+                    //컬럼순서조정
+                    reorderable={true}
+                    //컬럼너비조정
+                    resizable={true}
+                    rowRender={allCustRowRender}
+                    //필터기능
+                    filterable={true}
+                    //행 클릭 이벤트
+                    onRowDoubleClick={allCustRowDoubleClick}
+                  >
+                    <GridColumn
+                      field="customer_name"
+                      title="업체명"
+                      footerCell={allCustTotalFooterCell}
+                    />
+                  </Grid>
+                </GridContainer>
+              </SwiperSlide>
+            )}
+          </Swiper>
+        </>
+      ) : (
+        <>
+          <TitleContainer className="TitleContainer">
+            {!isMobile ? "" : <Title>공지사항</Title>}
+            <ButtonContainer>
+              <Button onClick={search} icon="search" themeColor={"primary"}>
+                조회
+              </Button>
+              {isAdmin && (
+                <>
+                  <Button
+                    themeColor={"primary"}
+                    icon="file-add"
+                    onClick={createNotice}
+                  >
+                    신규
+                  </Button>
                   <Button
                     themeColor={"primary"}
                     fillMode={"outline"}
-                    icon="filter-add-expression"
-                    onClick={addAllCustToRefCust}
+                    icon="save"
+                    onClick={saveNotice}
                   >
-                    전체 추가
+                    저장
                   </Button>
                   <Button
-                    onClick={fetchAllCust}
                     themeColor={"primary"}
-                    icon="refresh"
-                    fillMode={"flat"}
-                  ></Button>
-                </ButtonContainer>
+                    fillMode={"outline"}
+                    icon="delete"
+                    onClick={deleteNotice}
+                  >
+                    삭제
+                  </Button>
+                </>
+              )}
+              <Button
+                onClick={print}
+                fillMode="outline"
+                themeColor={"primary"}
+                icon="print"
+              >
+                출력
+              </Button>
+            </ButtonContainer>
+          </TitleContainer>
+          <GridTitleContainer className="ButtonContainer">
+            <GridTitle>조회조건</GridTitle>
+          </GridTitleContainer>
+          <FilterContainer>
+            <FilterBox onKeyPress={(e) => handleKeyPressSearch(e, search)}>
+              <tbody>
+                <tr>
+                  <th>공지일자</th>
+                  <td>
+                    <div className="filter-item-wrap">
+                      <DatePicker
+                        name="fromDate"
+                        value={filters.fromDate}
+                        format="yyyy-MM-dd"
+                        onChange={filterInputChange}
+                        placeholder=""
+                      />
+                      ~
+                      <DatePicker
+                        name="toDate"
+                        value={filters.toDate}
+                        format="yyyy-MM-dd"
+                        onChange={filterInputChange}
+                        placeholder=""
+                      />
+                    </div>
+                  </td>
+                  <th>제목 및 내용</th>
+                  <td colSpan={3}>
+                    <Input
+                      name="contents"
+                      type="text"
+                      value={filters.contents}
+                      onChange={filterInputChange}
+                    />
+                  </td>
+                </tr>
+              </tbody>
+            </FilterBox>
+          </FilterContainer>
+          <GridContainerWrap>
+            <GridContainer width={isAdmin ? "25%" : `30%`}>
+              <GridTitleContainer className="ButtonContainer2">
+                <GridTitle>요약정보</GridTitle>
               </GridTitleContainer>
               <Grid
-                style={{ height: `calc(100% - 35px)` }}
+                style={{ height: webheight }}
                 data={process(
-                  allCustData.data.map((row) => ({
+                  mainDataResult.data.map((row) => ({
                     ...row,
-                    // [SELECTED_FIELD]: selectedState[idGetter(row)],
+                    [SELECTED_FIELD]: selectedState[idGetter(row)],
+                    notice_date: dateformat2(row.notice_date),
                   })),
-                  allCustDataState
+                  mainDataState
                 )}
-                {...allCustDataState}
-                onDataStateChange={onAllCustDataStateChange}
-                dataItemKey={CUST_DATA_ITEM_KEY}
+                {...mainDataState}
+                onDataStateChange={onMainDataStateChange}
+                //선택 기능
+                dataItemKey={DATA_ITEM_KEY}
+                selectedField={SELECTED_FIELD}
+                selectable={{
+                  enabled: true,
+                  mode: "single",
+                }}
+                onSelectionChange={onSelectionChange}
+                fixedScroll={true}
+                total={mainDataResult.total}
+                skip={page.skip}
+                take={page.take}
+                pageable={true}
+                onPageChange={pageChange}
+                //원하는 행 위치로 스크롤 기능
+                ref={gridRef}
+                rowHeight={30}
                 //정렬기능
                 sortable={true}
-                onSortChange={onAllCustSortChange}
+                onSortChange={onMainSortChange}
                 //컬럼순서조정
                 reorderable={true}
                 //컬럼너비조정
                 resizable={true}
-                rowRender={allCustRowRender}
-                //필터기능
-                filterable={true}
-                //행 클릭 이벤트
-                onRowDoubleClick={allCustRowDoubleClick}
               >
                 <GridColumn
-                  field="customer_name"
-                  title="업체명"
-                  footerCell={allCustTotalFooterCell}
+                  field="notice_date"
+                  title="공지일자"
+                  width={110}
+                  cell={CenterCell}
+                  footerCell={mainTotalFooterCell}
                 />
+                <GridColumn field="title" title="제목" />
               </Grid>
             </GridContainer>
-          </GridContainer>
-        )}
-      </GridContainerWrap>
+            <GridContainer
+              width={isAdmin ? `calc(45% - ${GAP}px)` : `calc(70% - ${GAP}px)`}
+            >
+              <GridTitleContainer className="ButtonContainer3">
+                <GridTitle>상세정보</GridTitle>
+              </GridTitleContainer>
+              <FormBoxWrap border className="FormBoxWrap">
+                <FormBox>
+                  <tbody>
+                    <tr>
+                      <th>공지일자</th>
+                      <td>
+                        {isAdmin ? (
+                          <DatePicker
+                            name="notice_date"
+                            value={detailData.notice_date}
+                            format="yyyy-MM-dd"
+                            onChange={detailDataInputChange}
+                            className={"required"}
+                            placeholder=""
+                          />
+                        ) : (
+                          <Input
+                            name="notice_date"
+                            type="text"
+                            value={dateformat2(
+                              convertDateToStr(detailData.notice_date)
+                            )}
+                            onChange={detailDataInputChange}
+                            className={!isAdmin ? "readonly" : "required"}
+                            readOnly={!isAdmin}
+                          />
+                        )}
+                      </td>
+                      <th>제목</th>
+                      <td>
+                        <Input
+                          name="title"
+                          type="text"
+                          value={detailData.title}
+                          onChange={detailDataInputChange}
+                          className={!isAdmin ? "readonly" : "required"}
+                          readOnly={!isAdmin}
+                        />
+                      </td>
+                      {isAdmin && (
+                        <td>
+                          <Button
+                            icon={"notification"}
+                            onClick={onAlertClick}
+                            themeColor={"primary"}
+                            fillMode={"outline"}
+                          >
+                            공지 알림 전송
+                          </Button>
+                        </td>
+                      )}
+                    </tr>
+                  </tbody>
+                </FormBox>
+              </FormBoxWrap>
+              <div style={{ height: webheight2 }}>
+                <RichEditor id="editor" ref={editorRef} hideTools={!isAdmin} />
+              </div>
+              <FormBoxWrap
+                border
+                className="FormBoxWrap2"
+                style={{
+                  margin: 0,
+                  borderTop: 0,
+                }}
+              >
+                <FormBox>
+                  <tbody>
+                    <tr>
+                      <th style={{ width: 0 }}>첨부파일</th>
+                      <td style={{ width: "auto" }}>
+                        <div className="filter-item-wrap">
+                          <Input
+                            name="attachment_q"
+                            value={detailData.files}
+                            className="readonly"
+                          />
+                          <Button
+                            icon="more-horizontal"
+                            fillMode={"flat"}
+                            onClick={() => setAttachmentsWindowVisible(true)}
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </FormBox>
+              </FormBoxWrap>
+            </GridContainer>
+            {isAdmin && (
+              <GridContainer width="30%">
+                <GridContainer>
+                  <GridTitleContainer className="ButtonContainer4">
+                    <GridTitle>참조 업체</GridTitle>
+                    {isAdmin && (
+                      <ButtonContainer>
+                        <Button
+                          themeColor={"primary"}
+                          icon="refresh"
+                          fillMode={"flat"}
+                          onClick={() =>
+                            setRefCustData(process([], refCustDataState))
+                          }
+                        ></Button>
+                      </ButtonContainer>
+                    )}
+                  </GridTitleContainer>
+                  <Grid
+                    style={{ height: webheight3, margin: "5px 0" }}
+                    data={process(
+                      // 적어도 한개의 행은 나오도록 처리 (그리드 행이 있어야 드롭 가능)
+                      refCustData.data.length === 0
+                        ? [{}]
+                        : refCustData.data.map((row) => ({
+                            ...row,
+                          })),
+                      refCustDataState
+                    )}
+                    {...refCustDataState}
+                    onDataStateChange={onRefCustDataStateChange}
+                    dataItemKey={CUST_DATA_ITEM_KEY}
+                    //정렬기능
+                    sortable={true}
+                    onSortChange={onRefCustSortChange}
+                    //컬럼순서조정
+                    reorderable={true}
+                    //컬럼너비조정
+                    resizable={true}
+                    rowRender={refCustRowRender}
+                    //행 클릭 이벤트
+                    onRowDoubleClick={refCustRowDoubleClick}
+                  >
+                    <GridColumn field="work_type" title=" " width={50} />
+                    <GridColumn
+                      field="customer_name"
+                      title="업체명"
+                      footerCell={refCustTotalFooterCell}
+                    />
+                  </Grid>
+                </GridContainer>
+                <GridContainer>
+                  <GridTitleContainer className="ButtonContainer5">
+                    <GridTitle>전체 업체</GridTitle>
+
+                    <ButtonContainer>
+                      <Button
+                        themeColor={"primary"}
+                        fillMode={"outline"}
+                        icon="filter-add-expression"
+                        onClick={addAllCustToRefCust}
+                      >
+                        전체 추가
+                      </Button>
+                      <Button
+                        onClick={fetchAllCust}
+                        themeColor={"primary"}
+                        icon="refresh"
+                        fillMode={"flat"}
+                      ></Button>
+                    </ButtonContainer>
+                  </GridTitleContainer>
+                  <Grid
+                    style={{ height: webheight4 }}
+                    data={process(
+                      allCustData.data.map((row) => ({
+                        ...row,
+                        // [SELECTED_FIELD]: selectedState[idGetter(row)],
+                      })),
+                      allCustDataState
+                    )}
+                    {...allCustDataState}
+                    onDataStateChange={onAllCustDataStateChange}
+                    dataItemKey={CUST_DATA_ITEM_KEY}
+                    //정렬기능
+                    sortable={true}
+                    onSortChange={onAllCustSortChange}
+                    //컬럼순서조정
+                    reorderable={true}
+                    //컬럼너비조정
+                    resizable={true}
+                    rowRender={allCustRowRender}
+                    //필터기능
+                    filterable={true}
+                    //행 클릭 이벤트
+                    onRowDoubleClick={allCustRowDoubleClick}
+                  >
+                    <GridColumn
+                      field="customer_name"
+                      title="업체명"
+                      footerCell={allCustTotalFooterCell}
+                    />
+                  </Grid>
+                </GridContainer>
+              </GridContainer>
+            )}
+          </GridContainerWrap>
+        </>
+      )}
       {attachmentsWindowVisible && (
         <AttachmentsWindow
           type="notice"

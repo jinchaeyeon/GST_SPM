@@ -39,15 +39,18 @@ import React, {
   createContext,
   useContext,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
 } from "react";
 import { useHistory, useLocation } from "react-router-dom";
 import { useRecoilState, useSetRecoilState } from "recoil";
+import SwiperCore from "swiper";
+import "swiper/css";
+import { Swiper, SwiperSlide } from "swiper/react";
 import {
   ButtonContainer,
   FilterBox,
-  FilterBoxWrap,
   FormBox,
   FormBoxWrap,
   GridContainer,
@@ -55,7 +58,7 @@ import {
   GridTitle,
   GridTitleContainer,
   Title,
-  TitleContainer,
+  TitleContainer
 } from "../CommonStyled";
 import CenterCell from "../components/Cells/CenterCell";
 import CheckBoxCell from "../components/Cells/CheckBoxCell";
@@ -69,17 +72,19 @@ import {
   dateformat2,
   extractDownloadFilename,
   getCodeFromValue,
+  getDeviceHeight,
   getGridItemChangedData,
+  getHeight,
   getYn,
   handleKeyPressSearch,
   toDate,
 } from "../components/CommonFunction";
 import {
   EDIT_FIELD,
-  GAP,
   PAGE_SIZE,
-  SELECTED_FIELD,
+  SELECTED_FIELD
 } from "../components/CommonString";
+import FilterContainer from "../components/FilterContainer";
 import { CellRender, RowRender } from "../components/Renderers/Renderers";
 import RichEditor from "../components/RichEditor";
 import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
@@ -165,6 +170,16 @@ const CodesContext = createContext<{
   customers: [],
 });
 
+var index = 0;
+
+var height = 0;
+var height2 = 0;
+var height3 = 0;
+var height4 = 0;
+var height5 = 0;
+var height6 = 0;
+var height7 = 0;
+
 const App = () => {
   const processApi = useApi();
   const setLoading = useSetRecoilState(isLoading);
@@ -178,8 +193,48 @@ const App = () => {
   const [savenmList2, setSavenmList2] = useState<string[]>([]);
   const location = useLocation();
   const [title, setTitle] = useRecoilState(titles);
+  const [swiper, setSwiper] = useState<SwiperCore>();
+
   let deviceWidth = window.innerWidth;
-  let isMobile = deviceWidth <= 1200;
+  const [isMobile, setIsMobile] = useState(deviceWidth <= 1200);
+  const [mobileheight, setMobileHeight] = useState(0);
+  const [mobileheight2, setMobileHeight2] = useState(0);
+  const [mobileheight3, setMobileHeight3] = useState(0);
+  const [mobileheight4, setMobileHeight4] = useState(0);
+  const [webheight, setWebHeight] = useState(0);
+  const [webheight2, setWebHeight2] = useState(0);
+  const [webheight3, setWebHeight3] = useState(0);
+  const [webheight4, setWebHeight4] = useState(0);
+
+  useLayoutEffect(() => {
+    height = getHeight(".ButtonContainer");
+    height2 = getHeight(".ButtonContainer2");
+    height3 = getHeight(".ButtonContainer3");
+    height4 = getHeight(".ButtonContainer4");
+    height5 = getHeight(".ButtonContainer5");
+    height6 = getHeight(".FormBoxWrap");
+    height7 = getHeight(".TitleContainer");
+
+    const handleWindowResize = () => {
+      let deviceWidth = document.documentElement.clientWidth;
+      setIsMobile(deviceWidth <= 1200);
+      setMobileHeight(getDeviceHeight(true) - height2 - height7);
+      setMobileHeight2(getDeviceHeight(true) - height3 - height7);
+      setMobileHeight3(getDeviceHeight(true) - height4 - height7);
+      setMobileHeight4(getDeviceHeight(true) - height5 - height7);
+
+      setWebHeight(getDeviceHeight(true) - height - height2 - height7);
+      setWebHeight2(getDeviceHeight(false) - height3 - height6 - height7 - 3);
+      setWebHeight3(getDeviceHeight(false) - height3 - height7 - 2);
+      setWebHeight4(getDeviceHeight(false) - height4 - height7);
+    };
+    handleWindowResize();
+    window.addEventListener("resize", handleWindowResize);
+    return () => {
+      window.removeEventListener("resize", handleWindowResize);
+    };
+  }, [webheight, webheight2, webheight3]);
+
   const pathname = location.pathname.replace("/", "");
   const history = useHistory();
   const [workType, setWorktype] = useState("U");
@@ -260,6 +315,9 @@ const App = () => {
       isFetch: true,
       isReset: true,
     }));
+    if (swiper && isMobile) {
+      swiper.slideTo(0);
+    }
   };
 
   const idGetter = getter(DATA_ITEM_KEY);
@@ -367,6 +425,9 @@ const App = () => {
       devproject,
       remark2,
     });
+    if (swiper && isMobile) {
+      swiper.slideTo(1);
+    }
   };
   const onDetailSelectionChange = (event: GridSelectionChangeEvent) => {
     const newSelectedState = getSelectedState({
@@ -1704,9 +1765,9 @@ const App = () => {
       <CodesContext.Provider
         value={{ valueCodes: valueCodesState, customers: customersState }}
       >
-        <TitleContainer>
+        <TitleContainer className="TitleContainer">
           {!isMobile ? "" : <Title>회의록 관리</Title>}
-          <ButtonContainer>
+          <ButtonContainer style={{ rowGap: "5px" }}>
             <Button onClick={search} icon="search" themeColor={"primary"}>
               조회
             </Button>
@@ -1745,529 +1806,604 @@ const App = () => {
           </ButtonContainer>
         </TitleContainer>
         {isMobile ? (
-          <GridContainerWrap height={"88%"}>
-            <GridContainer width="25%">
-              <GridTitleContainer>
-                <GridTitle>조회조건</GridTitle>
-              </GridTitleContainer>
-              <FilterBoxWrap>
-                <FilterBox onKeyPress={(e) => handleKeyPressSearch(e, search)}>
-                  <tbody>
-                    <tr>
-                      <th>회의일</th>
-                      <td>
-                        <div className="filter-item-wrap">
-                          <DatePicker
-                            name="fromDate"
-                            value={filters.fromDate}
-                            format="yyyy-MM-dd"
-                            onChange={filterInputChange}
-                            placeholder=""
-                          />
-                          ~
-                          <DatePicker
-                            name="toDate"
-                            value={filters.toDate}
-                            format="yyyy-MM-dd"
-                            onChange={filterInputChange}
-                            placeholder=""
-                          />
-                        </div>
-                      </td>
-                    </tr>
-                    <tr>
-                      <th>업체</th>
-                      <td colSpan={3}>
-                        <Input
-                          name="custnm"
-                          type="text"
-                          value={filters.custnm}
+          <>
+            <FilterContainer>
+              <FilterBox onKeyPress={(e) => handleKeyPressSearch(e, search)}>
+                <tbody>
+                  <tr>
+                    <th>회의일</th>
+                    <td>
+                      <div className="filter-item-wrap">
+                        <DatePicker
+                          name="fromDate"
+                          value={filters.fromDate}
+                          format="yyyy-MM-dd"
                           onChange={filterInputChange}
+                          placeholder=""
                         />
-                      </td>
-                    </tr>
-                    <tr>
-                      <th>제목 및 내용</th>
-                      <td colSpan={3}>
-                        <Input
-                          name="contents"
-                          type="text"
-                          value={filters.contents}
+                        ~
+                        <DatePicker
+                          name="toDate"
+                          value={filters.toDate}
+                          format="yyyy-MM-dd"
                           onChange={filterInputChange}
+                          placeholder=""
                         />
-                      </td>
-                    </tr>
-                  </tbody>
-                </FilterBox>
-              </FilterBoxWrap>
-              <GridContainer style={{ height: "78%" }}>
-                <GridTitleContainer>
-                  <GridTitle>요약정보</GridTitle>
-                </GridTitleContainer>
-                <Grid
-                  style={{ height: `calc(100% - 35px)` }}
-                  data={process(
-                    mainDataResult.data.map((row) => ({
-                      ...row,
-                      recdt: dateformat2(row.recdt),
-                      [SELECTED_FIELD]: selectedState[idGetter(row)],
-                    })),
-                    mainDataState
-                  )}
-                  {...mainDataState}
-                  onDataStateChange={onMainDataStateChange}
-                  //선택 기능
-                  dataItemKey={DATA_ITEM_KEY}
-                  selectedField={SELECTED_FIELD}
-                  selectable={{
-                    enabled: true,
-                    mode: "single",
-                  }}
-                  onSelectionChange={onSelectionChange}
-                  //스크롤 조회 기능
-                  fixedScroll={true}
-                  total={mainDataResult.total}
-                  onScroll={onMainScrollHandler}
-                  //정렬기능
-                  sortable={true}
-                  onSortChange={onMainSortChange}
-                  //컬럼순서조정
-                  reorderable={true}
-                  //컬럼너비조정
-                  resizable={true}
-                >
-                  <GridColumn
-                    field="recdt"
-                    title="회의일"
-                    width={95}
-                    cell={CenterCell}
-                    footerCell={mainTotalFooterCell}
-                  />
-                  <GridColumn field="custnm" title="업체" width={150} />
-                  <GridColumn field="title" title="제목" width={500} />
-                </Grid>
-              </GridContainer>
-            </GridContainer>
-            <GridContainer width={`calc(50% - ${GAP}px)`}>
-              <GridTitleContainer>
-                <GridTitle>회의록</GridTitle>
-                <ButtonContainer>
-                  <Button
-                    themeColor={"primary"}
-                    fillMode={"outline"}
-                    icon={"link"}
-                    onClick={() => {
-                      const data = mainDataResult.data.filter(
-                        (item) =>
-                          item[DATA_ITEM_KEY] ==
-                          Object.getOwnPropertyNames(selectedState)[0]
-                      )[0];
-
-                      if (data == undefined) {
-                        alert("데이터가 없습니다.");
-                      } else {
-                        navigator.clipboard
-                          .writeText(
-                            `https://spm-admin.gsti.co.kr/MeetingManagement?go=${data.orgdiv}_${data.meetingnum}`
-                          )
-                          .then((res) => {
-                            alert("주소가 복사되었습니다!");
-                          });
-                      }
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>업체</th>
+                    <td colSpan={3}>
+                      <Input
+                        name="custnm"
+                        type="text"
+                        value={filters.custnm}
+                        onChange={filterInputChange}
+                      />
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>제목 및 내용</th>
+                    <td colSpan={3}>
+                      <Input
+                        name="contents"
+                        type="text"
+                        value={filters.contents}
+                        onChange={filterInputChange}
+                      />
+                    </td>
+                  </tr>
+                </tbody>
+              </FilterBox>
+            </FilterContainer>
+            <Swiper
+              onSwiper={(swiper) => {
+                setSwiper(swiper);
+              }}
+              onActiveIndexChange={(swiper) => {
+                index = swiper.activeIndex;
+              }}
+            >
+              <SwiperSlide key={0}>
+                <GridContainer>
+                  <GridTitleContainer className="ButtonContainer2">
+                    <GridTitle>
+                      요약정보{" "}
+                      <Button
+                        themeColor={"primary"}
+                        fillMode={"flat"}
+                        icon={"chevron-right"}
+                        onClick={() => {
+                          if (swiper) {
+                            swiper.slideTo(1);
+                          }
+                        }}
+                      ></Button>
+                    </GridTitle>
+                  </GridTitleContainer>
+                  <Grid
+                    style={{ height: mobileheight }}
+                    data={process(
+                      mainDataResult.data.map((row) => ({
+                        ...row,
+                        recdt: dateformat2(row.recdt),
+                        [SELECTED_FIELD]: selectedState[idGetter(row)],
+                      })),
+                      mainDataState
+                    )}
+                    {...mainDataState}
+                    onDataStateChange={onMainDataStateChange}
+                    //선택 기능
+                    dataItemKey={DATA_ITEM_KEY}
+                    selectedField={SELECTED_FIELD}
+                    selectable={{
+                      enabled: true,
+                      mode: "single",
                     }}
+                    onSelectionChange={onSelectionChange}
+                    //스크롤 조회 기능
+                    fixedScroll={true}
+                    total={mainDataResult.total}
+                    onScroll={onMainScrollHandler}
+                    //정렬기능
+                    sortable={true}
+                    onSortChange={onMainSortChange}
+                    //컬럼순서조정
+                    reorderable={true}
+                    //컬럼너비조정
+                    resizable={true}
                   >
-                    링크 복사
-                  </Button>
-                  <Button
-                    themeColor={"primary"}
-                    fillMode={"solid"}
-                    icon={"link"}
-                    onClick={() => {
-                      const data = mainDataResult.data.filter(
-                        (item) =>
-                          item[DATA_ITEM_KEY] ==
-                          Object.getOwnPropertyNames(selectedState)[0]
-                      )[0];
+                    <GridColumn
+                      field="recdt"
+                      title="회의일"
+                      width={95}
+                      cell={CenterCell}
+                      footerCell={mainTotalFooterCell}
+                    />
+                    <GridColumn field="custnm" title="업체" width={150} />
+                    <GridColumn field="title" title="제목" width={500} />
+                  </Grid>
+                </GridContainer>
+              </SwiperSlide>
+              <SwiperSlide key={1}>
+                <GridContainer>
+                  <GridTitleContainer className="ButtonContainer3">
+                    <GridTitle>
+                      <Button
+                        themeColor={"primary"}
+                        fillMode={"flat"}
+                        icon={"chevron-left"}
+                        onClick={() => {
+                          if (swiper) {
+                            swiper.slideTo(0);
+                          }
+                        }}
+                      ></Button>
+                      기본정보
+                      <Button
+                        themeColor={"primary"}
+                        fillMode={"flat"}
+                        icon={"chevron-right"}
+                        onClick={() => {
+                          if (swiper) {
+                            swiper.slideTo(2);
+                          }
+                        }}
+                      ></Button>
+                    </GridTitle>
+                    <ButtonContainer>
+                      <Button
+                        themeColor={"primary"}
+                        fillMode={"outline"}
+                        icon={"link"}
+                        onClick={() => {
+                          const data = mainDataResult.data.filter(
+                            (item) =>
+                              item[DATA_ITEM_KEY] ==
+                              Object.getOwnPropertyNames(selectedState)[0]
+                          )[0];
 
-                      if (data == undefined) {
-                        alert("데이터가 없습니다.");
-                      } else {
-                        navigator.clipboard
-                          .writeText(
-                            `https://spm.gsti.co.kr/MeetingView?go=${data.meetingnum}`
-                          )
-                          .then((res) => {
-                            alert("주소가 복사되었습니다!");
-                          });
-                      }
-                    }}
+                          if (data == undefined) {
+                            alert("데이터가 없습니다.");
+                          } else {
+                            navigator.clipboard
+                              .writeText(
+                                `https://spm-admin.gsti.co.kr/MeetingManagement?go=${data.orgdiv}_${data.meetingnum}`
+                              )
+                              .then((res) => {
+                                alert("주소가 복사되었습니다!");
+                              });
+                          }
+                        }}
+                      >
+                        링크 복사
+                      </Button>
+                      <Button
+                        themeColor={"primary"}
+                        fillMode={"solid"}
+                        icon={"link"}
+                        onClick={() => {
+                          const data = mainDataResult.data.filter(
+                            (item) =>
+                              item[DATA_ITEM_KEY] ==
+                              Object.getOwnPropertyNames(selectedState)[0]
+                          )[0];
+
+                          if (data == undefined) {
+                            alert("데이터가 없습니다.");
+                          } else {
+                            navigator.clipboard
+                              .writeText(
+                                `https://spm.gsti.co.kr/MeetingView?go=${data.meetingnum}`
+                              )
+                              .then((res) => {
+                                alert("주소가 복사되었습니다!");
+                              });
+                          }
+                        }}
+                      >
+                        고객사 링크 복사
+                      </Button>
+                    </ButtonContainer>
+                  </GridTitleContainer>
+
+                  <FormBoxWrap
+                    border
+                    className="FormBoxWrap"
+                    style={{ height: mobileheight2, overflow: "auto" }}
                   >
-                    고객사 링크 복사
-                  </Button>
-                  <Button
-                    themeColor={"primary"}
-                    fillMode={"flat"}
-                    icon={isVisibleDetail ? "chevron-up" : "chevron-down"}
-                    onClick={() => setIsVisableDetail((prev) => !prev)}
-                  ></Button>
-                </ButtonContainer>
-              </GridTitleContainer>
-              {isVisibleDetail && (
-                <FormBoxWrap border>
-                  <FormBox>
-                    <tbody>
-                      <tr>
-                        <th>회의록 번호</th>
-                        <td>
-                          <Input
-                            name="meetingnum"
-                            value={detailData.meetingnum}
-                            className="readonly"
-                          />
-                        </td>
-                        <th>
-                          <Checkbox
-                            name="unshared"
-                            value={detailData.unshared}
-                            onChange={() =>
-                              setDetailData((prev) => ({
-                                ...prev,
-                                unshared: !prev.unshared,
-                              }))
-                            }
-                            label="업체 비공유"
-                          />
-                        </th>
-                        <td>
-                          <Button
-                            themeColor={"primary"}
-                            style={{ width: "100%" }}
-                            onClick={() => {
-                              if (detailData.work_type == "N") {
-                                alert("회의록 저장 후 등록할 수 있습니다.");
-                              } else if (
-                                Object.getOwnPropertyNames(selectedState)[0] !=
-                                undefined
-                              ) {
-                                setSignWindowVisible(true);
-                              } else {
-                                alert("선택된 데이터가 없습니다.");
-                              }
-                            }}
-                          >
-                            참석자 등록
-                          </Button>
-                        </td>
-                      </tr>
-                      <tr>
-                        <th>업체코드</th>
-                        <td>
-                          <div className="filter-item-wrap">
+                    <FormBox>
+                      <tbody>
+                        <tr>
+                          <th>회의록 번호</th>
+                          <td>
                             <Input
-                              name="custcd"
-                              value={
-                                detailData.cust_data
-                                  ? detailData.cust_data.custcd
-                                  : ""
-                              }
+                              name="meetingnum"
+                              value={detailData.meetingnum}
                               className="readonly"
                             />
-                            <Button
-                              icon="more-horizontal"
-                              fillMode={"flat"}
-                              onClick={() => setCustWindowVisible(true)}
-                            />
-                          </div>
-                        </td>
-                        <th>업체명</th>
-                        <td>
-                          {customersState && (
-                            <MultiColumnComboBox
-                              name="cust_data"
-                              data={
-                                custFilter
-                                  ? filterBy(customersState, custFilter)
-                                  : customersState
+                          </td>
+                          <th>
+                            <Checkbox
+                              name="unshared"
+                              value={detailData.unshared}
+                              onChange={() =>
+                                setDetailData((prev) => ({
+                                  ...prev,
+                                  unshared: !prev.unshared,
+                                }))
                               }
-                              value={detailData.cust_data}
-                              columns={customersColumns}
-                              textField={"custnm"}
-                              onChange={detailComboBoxChange}
-                              className="required"
-                              filterable={true}
-                              onFilterChange={handleFilterChange}
+                              label="업체 비공유"
                             />
-                          )}
-                        </td>
-                      </tr>
-                      <tr>
-                        <th>회의일</th>
-                        <td>
-                          <DatePicker
-                            name="recdt"
-                            value={detailData.recdt}
-                            format="yyyy-MM-dd"
-                            onChange={detailInputChange}
-                            placeholder=""
-                            className="required"
-                          />
-                        </td>
-                        <th>회의 장소</th>
-                        <td>
-                          <Input
-                            name="place"
-                            value={detailData.place}
-                            onChange={detailInputChange}
-                          />
-                        </td>
-                      </tr>
-                      <tr>
-                        <th>회의록ID</th>
-                        <td>
-                          <Input
-                            name="meetingid"
-                            value={detailData.meetingid}
-                            onChange={detailInputChange}
-                          />
-                        </td>
-                        <th>회의록명</th>
-                        <td>
-                          <Input
-                            name="meetingnm"
-                            value={detailData.meetingnm}
-                            onChange={detailInputChange}
-                          />
-                        </td>
-                      </tr>
-                      <tr>
-                        <th>회의 제목</th>
-                        <td>
-                          <Input
-                            name="title"
-                            value={detailData.title}
-                            onChange={detailInputChange}
-                            className="required"
-                          />
-                        </td>
-                        <th>프로젝트</th>
-                        <td>
-                          <div className="filter-item-wrap">
-                            <Input
-                              name="devproject"
-                              value={detailData.devproject}
-                              className="readonly"
-                            />
+                          </th>
+                          <td>
                             <Button
-                              icon="more-horizontal"
-                              fillMode={"flat"}
-                              onClick={() => setProjectWindowVisible(true)}
-                              style={{
-                                right: "28.56px",
+                              themeColor={"primary"}
+                              style={{ width: "100%" }}
+                              onClick={() => {
+                                if (detailData.work_type == "N") {
+                                  alert("회의록 저장 후 등록할 수 있습니다.");
+                                } else if (
+                                  Object.getOwnPropertyNames(
+                                    selectedState
+                                  )[0] != undefined
+                                ) {
+                                  setSignWindowVisible(true);
+                                } else {
+                                  alert("선택된 데이터가 없습니다.");
+                                }
                               }}
+                            >
+                              참석자 등록
+                            </Button>
+                          </td>
+                        </tr>
+                        <tr>
+                          <th>업체코드</th>
+                          <td>
+                            <div className="filter-item-wrap">
+                              <Input
+                                name="custcd"
+                                value={
+                                  detailData.cust_data
+                                    ? detailData.cust_data.custcd
+                                    : ""
+                                }
+                                className="readonly"
+                              />
+                              <Button
+                                icon="more-horizontal"
+                                fillMode={"flat"}
+                                onClick={() => setCustWindowVisible(true)}
+                              />
+                            </div>
+                          </td>
+                          <th>업체명</th>
+                          <td>
+                            {customersState && (
+                              <MultiColumnComboBox
+                                name="cust_data"
+                                data={
+                                  custFilter
+                                    ? filterBy(customersState, custFilter)
+                                    : customersState
+                                }
+                                value={detailData.cust_data}
+                                columns={customersColumns}
+                                textField={"custnm"}
+                                onChange={detailComboBoxChange}
+                                className="required"
+                                filterable={true}
+                                onFilterChange={handleFilterChange}
+                              />
+                            )}
+                          </td>
+                        </tr>
+                        <tr>
+                          <th>회의일</th>
+                          <td>
+                            <DatePicker
+                              name="recdt"
+                              value={detailData.recdt}
+                              format="yyyy-MM-dd"
+                              onChange={detailInputChange}
+                              placeholder=""
+                              className="required"
                             />
-                            <Button
-                              icon="x"
-                              fillMode={"flat"}
-                              onClick={() =>
-                                setProjectData({
-                                  devmngnum: "",
-                                  project: "",
-                                })
-                              }
-                            />
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <th>첨부파일</th>
-                        <td>
-                          <div className="filter-item-wrap">
+                          </td>
+                          <th>회의 장소</th>
+                          <td>
                             <Input
-                              name="files"
-                              value={detailData.files}
-                              className="readonly"
+                              name="place"
+                              value={detailData.place}
+                              onChange={detailInputChange}
                             />
-                            <Button
-                              icon="more-horizontal"
-                              fillMode={"flat"}
-                              onClick={() =>
-                                setAttachmentsWindowVisiblePb(true)
-                              }
-                            />
-                          </div>
-                        </td>
-                        <th>
-                          첨부파일
-                          <br />
-                          (비공개)
-                        </th>
-                        <td>
-                          <div className="filter-item-wrap">
+                          </td>
+                        </tr>
+                        <tr>
+                          <th>회의록ID</th>
+                          <td>
                             <Input
-                              name="files_private"
-                              value={detailData.files_private}
-                              className="readonly"
+                              name="meetingid"
+                              value={detailData.meetingid}
+                              onChange={detailInputChange}
                             />
-                            <Button
-                              icon="more-horizontal"
-                              fillMode={"flat"}
-                              onClick={() =>
-                                setAttachmentsWindowVisiblePr(true)
-                              }
+                          </td>
+                          <th>회의록명</th>
+                          <td>
+                            <Input
+                              name="meetingnm"
+                              value={detailData.meetingnm}
+                              onChange={detailInputChange}
                             />
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <th>비고</th>
-                        <td colSpan={3}>
-                          <Input
-                            name="remark2"
-                            value={detailData.remark2}
-                            onChange={detailInputChange}
-                          />
-                        </td>
-                      </tr>
-                    </tbody>
-                  </FormBox>
-                </FormBoxWrap>
-              )}
-
-              <div
-                onPaste={handlePaste}
-                style={{
-                  height: isVisibleDetail
-                    ? `calc(100% - 291.94px - 40px - 10px)`
-                    : `calc(100% - 35px )`,
-                }}
-              >
-                <Grid
-                  style={{ height: "100%" }}
-                  data={process(
-                    detailRows.data.map((row) => ({
-                      ...row,
-                      [SELECTED_FIELD]:
-                        detailSelectedState[detailIdGetter(row)],
-                    })),
-                    detailRowsState
-                  )}
-                  {...detailRowsState}
-                  onDataStateChange={onDetailRowsStateChange}
-                  //선택 기능
-                  dataItemKey={DETAIL_ITEM_KEY}
-                  selectedField={SELECTED_FIELD}
-                  selectable={{
-                    enabled: true,
-                    mode: "single",
-                  }}
-                  onSelectionChange={onDetailSelectionChange}
-                  //컬럼순서조정
-                  reorderable={true}
-                  //컬럼너비조정
-                  resizable={true}
-                  //incell 수정 기능
-                  onItemChange={onDetailItemChange}
-                  cellRender={customCellRender}
-                  rowRender={customRowRender}
-                  editField={EDIT_FIELD}
-                >
-                  <GridToolbar>
-                    <Button
-                      themeColor={"primary"}
-                      fillMode={"outline"}
-                      icon="plus"
-                      onClick={addDetailRow}
+                          </td>
+                        </tr>
+                        <tr>
+                          <th>회의 제목</th>
+                          <td>
+                            <Input
+                              name="title"
+                              value={detailData.title}
+                              onChange={detailInputChange}
+                              className="required"
+                            />
+                          </td>
+                          <th>프로젝트</th>
+                          <td>
+                            <div className="filter-item-wrap">
+                              <Input
+                                name="devproject"
+                                value={detailData.devproject}
+                                className="readonly"
+                              />
+                              <Button
+                                icon="more-horizontal"
+                                fillMode={"flat"}
+                                onClick={() => setProjectWindowVisible(true)}
+                                style={{
+                                  right: "28.56px",
+                                }}
+                              />
+                              <Button
+                                icon="x"
+                                fillMode={"flat"}
+                                onClick={() =>
+                                  setProjectData({
+                                    devmngnum: "",
+                                    project: "",
+                                  })
+                                }
+                              />
+                            </div>
+                          </td>
+                        </tr>
+                        <tr>
+                          <th>첨부파일</th>
+                          <td>
+                            <div className="filter-item-wrap">
+                              <Input
+                                name="files"
+                                value={detailData.files}
+                                className="readonly"
+                              />
+                              <Button
+                                icon="more-horizontal"
+                                fillMode={"flat"}
+                                onClick={() =>
+                                  setAttachmentsWindowVisiblePb(true)
+                                }
+                              />
+                            </div>
+                          </td>
+                          <th>
+                            첨부파일
+                            <br />
+                            (비공개)
+                          </th>
+                          <td>
+                            <div className="filter-item-wrap">
+                              <Input
+                                name="files_private"
+                                value={detailData.files_private}
+                                className="readonly"
+                              />
+                              <Button
+                                icon="more-horizontal"
+                                fillMode={"flat"}
+                                onClick={() =>
+                                  setAttachmentsWindowVisiblePr(true)
+                                }
+                              />
+                            </div>
+                          </td>
+                        </tr>
+                        <tr>
+                          <th>비고</th>
+                          <td colSpan={3}>
+                            <Input
+                              name="remark2"
+                              value={detailData.remark2}
+                              onChange={detailInputChange}
+                            />
+                          </td>
+                        </tr>
+                      </tbody>
+                    </FormBox>
+                  </FormBoxWrap>
+                </GridContainer>
+              </SwiperSlide>
+              <SwiperSlide key={2}>
+                <GridContainer>
+                  <GridTitleContainer className="ButtonContainer4">
+                    <GridTitle>
+                      <Button
+                        themeColor={"primary"}
+                        fillMode={"flat"}
+                        icon={"chevron-left"}
+                        onClick={() => {
+                          if (swiper) {
+                            swiper.slideTo(1);
+                          }
+                        }}
+                      ></Button>
+                      회의내용
+                      <Button
+                        themeColor={"primary"}
+                        fillMode={"flat"}
+                        icon={"chevron-right"}
+                        onClick={() => {
+                          if (swiper) {
+                            swiper.slideTo(3);
+                          }
+                        }}
+                      ></Button>
+                    </GridTitle>
+                  </GridTitleContainer>
+                  <Grid
+                    style={{ height: mobileheight3 }}
+                    data={process(
+                      detailRows.data.map((row) => ({
+                        ...row,
+                        [SELECTED_FIELD]:
+                          detailSelectedState[detailIdGetter(row)],
+                      })),
+                      detailRowsState
+                    )}
+                    {...detailRowsState}
+                    onDataStateChange={onDetailRowsStateChange}
+                    //선택 기능
+                    dataItemKey={DETAIL_ITEM_KEY}
+                    selectedField={SELECTED_FIELD}
+                    selectable={{
+                      enabled: true,
+                      mode: "single",
+                    }}
+                    onSelectionChange={onDetailSelectionChange}
+                    //컬럼순서조정
+                    reorderable={true}
+                    //컬럼너비조정
+                    resizable={true}
+                    //incell 수정 기능
+                    onItemChange={onDetailItemChange}
+                    cellRender={customCellRender}
+                    rowRender={customRowRender}
+                    editField={EDIT_FIELD}
+                  >
+                    <GridToolbar>
+                      <Button
+                        themeColor={"primary"}
+                        fillMode={"outline"}
+                        icon="plus"
+                        onClick={addDetailRow}
+                      />
+                      <Button
+                        themeColor={"primary"}
+                        fillMode={"outline"}
+                        icon="minus"
+                        onClick={removeDetailRow}
+                      />
+                      <Button
+                        themeColor={"primary"}
+                        fillMode={"outline"}
+                        icon="chevron-up"
+                        onClick={upDetailRow}
+                      />
+                      <Button
+                        themeColor={"primary"}
+                        fillMode={"outline"}
+                        icon="chevron-down"
+                        onClick={downDetailRow}
+                      />
+                    </GridToolbar>
+                    <GridColumn
+                      field="rowstatus"
+                      title=" "
+                      width={40}
+                      editable={false}
                     />
-                    <Button
-                      themeColor={"primary"}
-                      fillMode={"outline"}
-                      icon="minus"
-                      onClick={removeDetailRow}
+                    <GridColumn
+                      field="contents"
+                      title="내용"
+                      width={500}
+                      footerCell={detailTotalFooterCell}
+                      cell={NameCell}
                     />
-                    <Button
-                      themeColor={"primary"}
-                      fillMode={"outline"}
-                      icon="chevron-up"
-                      onClick={upDetailRow}
+                    <GridColumn
+                      field="finexpdt"
+                      title="완료예정일"
+                      width={170}
+                      cell={DateCell}
                     />
-                    <Button
-                      themeColor={"primary"}
-                      fillMode={"outline"}
-                      icon="chevron-down"
-                      onClick={downDetailRow}
+                    <GridColumn
+                      field="reqdt"
+                      title="요청일"
+                      width={170}
+                      cell={DateCell}
                     />
-                  </GridToolbar>
-                  <GridColumn
-                    field="rowstatus"
-                    title=" "
-                    width={40}
-                    editable={false}
-                  />
-                  <GridColumn
-                    field="contents"
-                    title="내용"
-                    width={500}
-                    footerCell={detailTotalFooterCell}
-                    cell={NameCell}
-                  />
-                  <GridColumn
-                    field="finexpdt"
-                    title="완료예정일"
-                    width={170}
-                    cell={DateCell}
-                  />
-                  <GridColumn
-                    field="reqdt"
-                    title="요청일"
-                    width={170}
-                    cell={DateCell}
-                  />
-                  <GridColumn
-                    field="is_request"
-                    title="요구사항"
-                    width={120}
-                    cell={CheckBoxCell}
-                  />
-                  <GridColumn
-                    field="cust_browserable"
-                    title="고객열람"
-                    width={100}
-                    cell={CheckBoxCell}
-                  />
-                  <GridColumn
-                    field="value_code3"
-                    title="Value 구분"
-                    width={160}
-                    cell={ValueCodesComboBoxCell}
-                  />
-                  <GridColumn
-                    field="client_name"
-                    title="고객담당자"
-                    width={100}
-                    cell={NameCell}
-                  />
-                  <GridColumn
-                    field="client_finexpdt"
-                    title="고객완료예정일"
-                    width={170}
-                    cell={DateCell}
-                  />
-                </Grid>
-              </div>
-            </GridContainer>
-            <GridContainer width={`calc(25% - ${GAP}px)`}>
-              <GridTitleContainer>
-                <GridTitle>참고자료</GridTitle>
-              </GridTitleContainer>
-              <RichEditor
-                id="refEditor"
-                key={Object.getOwnPropertyNames(selectedState)[0]}
-                ref={refEditorRef}
-              />
-            </GridContainer>
-          </GridContainerWrap>
+                    <GridColumn
+                      field="is_request"
+                      title="요구사항"
+                      width={120}
+                      cell={CheckBoxCell}
+                    />
+                    <GridColumn
+                      field="cust_browserable"
+                      title="고객열람"
+                      width={100}
+                      cell={CheckBoxCell}
+                    />
+                    <GridColumn
+                      field="value_code3"
+                      title="Value 구분"
+                      width={160}
+                      cell={ValueCodesComboBoxCell}
+                    />
+                    <GridColumn
+                      field="client_name"
+                      title="고객담당자"
+                      width={100}
+                      cell={NameCell}
+                    />
+                    <GridColumn
+                      field="client_finexpdt"
+                      title="고객완료예정일"
+                      width={170}
+                      cell={DateCell}
+                    />
+                  </Grid>
+                </GridContainer>
+              </SwiperSlide>
+              <SwiperSlide key={3}>
+                <GridContainer>
+                  <GridTitleContainer className="ButtonContainer5">
+                    <GridTitle>
+                      <Button
+                        themeColor={"primary"}
+                        fillMode={"flat"}
+                        icon={"chevron-left"}
+                        onClick={() => {
+                          if (swiper) {
+                            swiper.slideTo(2);
+                          }
+                        }}
+                      ></Button>
+                      참고자료
+                    </GridTitle>
+                  </GridTitleContainer>
+                  <div style={{ height: mobileheight4 }}>
+                    <RichEditor
+                      id="refEditor"
+                      key={Object.getOwnPropertyNames(selectedState)[0]}
+                      ref={refEditorRef}
+                    />
+                  </div>
+                </GridContainer>
+              </SwiperSlide>
+            </Swiper>
+          </>
         ) : (
-          <GridContainerWrap height={"88%"}>
+          <GridContainerWrap>
             <Splitter
               panes={panes}
               onChange={onChange}
@@ -2275,10 +2411,10 @@ const App = () => {
             >
               <div className="pane-content">
                 <GridContainer>
-                  <GridTitleContainer>
+                  <GridTitleContainer className="ButtonContainer">
                     <GridTitle>조회조건</GridTitle>
                   </GridTitleContainer>
-                  <FilterBoxWrap>
+                  <FilterContainer>
                     <FilterBox
                       onKeyPress={(e) => handleKeyPressSearch(e, search)}
                     >
@@ -2329,13 +2465,13 @@ const App = () => {
                         </tr>
                       </tbody>
                     </FilterBox>
-                  </FilterBoxWrap>
-                  <GridContainer style={{ height: "78%" }}>
-                    <GridTitleContainer>
+                  </FilterContainer>
+                  <GridContainer>
+                    <GridTitleContainer className="ButtonContainer2">
                       <GridTitle>요약정보</GridTitle>
                     </GridTitleContainer>
                     <Grid
-                      style={{ height: `calc(100% - 35px)` }}
+                      style={{ height: webheight }}
                       data={process(
                         mainDataResult.data.map((row) => ({
                           ...row,
@@ -2381,7 +2517,7 @@ const App = () => {
               </div>
               <div className="pane-content">
                 <GridContainer>
-                  <GridTitleContainer>
+                  <GridTitleContainer className="ButtonContainer3">
                     <GridTitle>회의록</GridTitle>
                     <ButtonContainer>
                       <Button
@@ -2445,7 +2581,7 @@ const App = () => {
                     </ButtonContainer>
                   </GridTitleContainer>
                   {isVisibleDetail && (
-                    <FormBoxWrap border>
+                    <FormBoxWrap border className="FormBoxWrap">
                       <FormBox>
                         <tbody>
                           <tr>
@@ -2669,9 +2805,7 @@ const App = () => {
                   <div
                     onPaste={handlePaste}
                     style={{
-                      height: isVisibleDetail
-                        ? `calc(100% - 291.94px - 40px - 10px)`
-                        : `calc(100% - 35px )`,
+                      height: isVisibleDetail ? webheight2 : webheight3,
                     }}
                   >
                     <Grid

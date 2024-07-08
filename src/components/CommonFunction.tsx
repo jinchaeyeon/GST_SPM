@@ -1095,3 +1095,41 @@ export const isWithinOneMonth = (dateString: string) => {
   // 입력된 날짜가 한 달 이내인지 확인합니다.
   return inputDate >= oneMonthAgo && inputDate <= currentDate;
 };
+
+export const getHeight = (className: string) => {
+  var container = document.querySelector(className);
+  if (container?.clientHeight != undefined) {
+    return container == undefined
+      ? 0
+      : className == ".k-tabstrip-items-wrapper" ||
+        className == ".k-window-titlebar"
+      ? container?.clientHeight + 35
+      : className.includes("FormBoxWrap")
+      ? container.clientHeight + 15
+      : container.clientHeight;
+  } else {
+    return 0;
+  }
+};
+
+export const getDeviceHeight = (bool: boolean) => {
+  //라우터
+  let height = getHeight(".visible-mobile-only"); //필터 모바일
+  let height2 = getHeight(".filterBox"); //필터 웹
+  let deviceWidth = document.documentElement.clientWidth;
+  let isMobile = deviceWidth <= 1200;
+  if (bool == false) {
+    //필터없는경우
+    if (isMobile) {
+      return document.documentElement.clientHeight - 70;
+    } else {
+      return document.documentElement.clientHeight - 110;
+    }
+  } else {
+    if (isMobile) {
+      return document.documentElement.clientHeight - 70 - height;
+    } else {
+      return document.documentElement.clientHeight - 110 - height2;
+    }
+  }
+};

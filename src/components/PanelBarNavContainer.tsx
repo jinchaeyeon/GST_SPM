@@ -28,6 +28,8 @@ import {
 import { useApi } from "../hooks/api";
 import {
   deletedAttadatnumsState,
+  isFilterHideState,
+  isFilterheightstate,
   isMenuOpendState,
   isMobileMenuOpendState,
   loginResultState,
@@ -120,11 +122,11 @@ const handleTabClose = (event: BeforeUnloadEvent) => {
 
 // beforeunload 리스너 추가 함수
 export const addBeforeUnloadListener = () => {
-  window.addEventListener('beforeunload', handleTabClose);
+  window.addEventListener("beforeunload", handleTabClose);
 };
 
 export const removeBeforeUnloadListener = () => {
-  window.removeEventListener('beforeunload', handleTabClose);
+  window.removeEventListener("beforeunload", handleTabClose);
 };
 
 const PanelBarNavContainer = (props: any) => {
@@ -149,6 +151,32 @@ const PanelBarNavContainer = (props: any) => {
   const isAdmin = role === "ADMIN";
   const userName = loginResult ? loginResult.userName : "";
   const [isLoaded, setIsLoaded] = useState(false);
+
+  const [isFilterHideStates, setIsFilterHideStates] =
+    useRecoilState(isFilterHideState);
+  const [isFilterheightstates, setIsFilterheightstates] =
+    useRecoilState(isFilterheightstate);
+
+  // 반응형 처리
+  let deviceWidth = document.documentElement.clientWidth;
+  let isMobile = deviceWidth <= 1200;
+  useEffect(() => {
+    const handleWindowResize = () => {
+      let deviceWidth = document.documentElement.clientWidth;
+      let isMobile = deviceWidth <= 1200;
+      if (isMobile) {
+        setIsFilterHideStates(true); // 모바일 닫힌 상태로 설정
+        setIsFilterheightstates(30);
+      } else {
+        setIsFilterHideStates(false); // 데스크톱 열린 상태로 설정
+        setIsFilterheightstates(0);
+      }
+    };
+    window.addEventListener("resize", handleWindowResize);
+    return () => {
+      window.removeEventListener("resize", handleWindowResize);
+    };
+  });
 
   const anchor = useRef<HTMLButtonElement | null>(null);
   const [show, setShow] = useState(false);
@@ -468,12 +496,19 @@ const PanelBarNavContainer = (props: any) => {
     const unlisten = history.listen(() => {
       handleUnload();
     });
-    
-  // 토큰 만료 시 로그아웃 처리
+
+    // 토큰 만료 시 로그아웃 처리
     if (!accessToken && loginResult) {
       unlisten();
       window.removeEventListener("beforeunload", handleTabClose);
       window.removeEventListener("unload", handleUnload);
+      if (isMobile) {
+        setIsFilterheightstates(30);
+        setIsFilterHideStates(true);
+      } else {
+        setIsFilterheightstates(0);
+        setIsFilterHideStates(false);
+      }
       if (
         window.location.pathname !== "/" &&
         window.location.pathname !== "/admin"

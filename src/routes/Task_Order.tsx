@@ -42,6 +42,9 @@ import {
 } from "react";
 import { useHistory, useLocation } from "react-router-dom";
 import { useRecoilState, useSetRecoilState } from "recoil";
+import SwiperCore from "swiper";
+import "swiper/css";
+import { Swiper, SwiperSlide } from "swiper/react";
 import { v4 as uuidv4 } from "uuid";
 import {
   ButtonContainer,
@@ -67,7 +70,9 @@ import {
   UseParaPc,
   convertDateToStr,
   extractDownloadFilename,
+  getDeviceHeight,
   getGridItemChangedData,
+  getHeight,
   handleKeyPressSearch,
 } from "../components/CommonFunction";
 import {
@@ -77,6 +82,7 @@ import {
   SELECTED_FIELD,
 } from "../components/CommonString";
 import CommonDateRangePicker from "../components/DateRangePicker/CommonDateRangePicker";
+import FilterContainer from "../components/FilterContainer";
 import { CellRender, RowRender } from "../components/Renderers/Renderers";
 import RequiredHeader from "../components/RequiredHeader";
 import RichEditor from "../components/RichEditor";
@@ -85,7 +91,12 @@ import ErrorWindow from "../components/Windows/CommonWindows/ErrorWindow";
 import TaskOrderDataWindow from "../components/Windows/CommonWindows/TaskOrderDataWindow";
 import TaskOrderWindow from "../components/Windows/CommonWindows/TaskOrderWindow";
 import { useApi } from "../hooks/api";
-import { isLoading, loginResultState, titles } from "../store/atoms";
+import {
+  isFilterHideState,
+  isLoading,
+  loginResultState,
+  titles,
+} from "../store/atoms";
 import {
   custTypeColumns,
   dataTypeColumns,
@@ -93,9 +104,6 @@ import {
   userColumns,
 } from "../store/columns/common-columns";
 import { Iparameters, TEditorHandle } from "../store/types";
-import SwiperCore from "swiper";
-import "swiper/css";
-import { Swiper, SwiperSlide } from "swiper/react";
 
 const StatusContext = createContext<{
   statusListData: any[];
@@ -536,6 +544,15 @@ const ListRadioCell = (props: GridCellProps) => {
 
 var index = 0;
 
+var height = 0;
+var height2 = 0;
+var height3 = 0;
+var height4 = 0;
+var height4 = 0;
+var height5 = 0;
+var height6 = 0;
+var height7 = 0;
+
 const App = () => {
   const processApi = useApi();
   const [loginResult] = useRecoilState(loginResultState);
@@ -562,17 +579,111 @@ const App = () => {
   const location = useLocation();
 
   const [swiper, setSwiper] = useState<SwiperCore>();
-  let deviceWidth = document.documentElement.clientWidth;
-  let deviceHeight = document.documentElement.clientHeight;
+  let deviceWidth = window.innerWidth;
   const [isMobile, setIsMobile] = useState(deviceWidth <= 1200);
   const [mobileheight, setMobileHeight] = useState(0);
+  const [mobileheight2, setMobileHeight2] = useState(0);
+  const [mobileheight3, setMobileHeight3] = useState(0);
+  const [mobileheight4, setMobileHeight4] = useState(0);
+  const [mobileheight5, setMobileHeight5] = useState(0);
+  const [mobileheight6, setMobileHeight6] = useState(0);
+  const [mobileheight7, setMobileHeight7] = useState(0);
   const [webheight, setWebHeight] = useState(0);
+  const [webheight2, setWebHeight2] = useState(0);
+  const [webheight3, setWebHeight3] = useState(0);
+  const [webheight4, setWebHeight4] = useState(0);
+  const [webheight5, setWebHeight5] = useState(0);
+  const [webheight6, setWebHeight6] = useState(0);
+  const [webheight7, setWebHeight7] = useState(0);
+
   const [tabSelected, setTabSelected] = useState(0);
-  const [isFilterVisible, setIsFilterVisible] = useState(!isMobile);
+  const [isFilterHideStates, setIsFilterHideStates] =
+    useRecoilState(isFilterHideState);
+  const [isVisibleDetail, setIsVisableDetail] = useState(true);
+  const [isVisibleDetail2, setIsVisableDetail2] = useState(true);
+  const [isVisibleDetail3, setIsVisableDetail3] = useState(true);
+
+  useLayoutEffect(() => {
+    height = getHeight(".ButtonContainer");
+    height2 = getHeight(".ButtonContainer2");
+    height3 = getHeight(".ButtonContainer3");
+    height4 = getHeight(".FormBoxWrap");
+    height5 = getHeight(".FormBoxWrap2");
+    height6 = getHeight(".TitleContainer");
+    height7 = getHeight(".k-tabstrip-items-wrapper");
+
+    const handleWindowResize = () => {
+      let deviceWidth = document.documentElement.clientWidth;
+      setIsMobile(deviceWidth <= 1200);
+      setMobileHeight(getDeviceHeight(true) - height - height6 - height7);
+      setMobileHeight2(
+        getDeviceHeight(true) -
+          height2 -
+          height4 -
+          height5 -
+          height6 -
+          height7 +
+          10
+      );
+      setMobileHeight3(getDeviceHeight(true) - height - height6 - height7);
+      setMobileHeight4(getDeviceHeight(true) - height - height6 - height7);
+      setMobileHeight5(
+        getDeviceHeight(true) - height2 - height4 - height6 - height7 - 2
+      );
+      setMobileHeight6(
+        getDeviceHeight(true) - height - height2 - height6 - height7
+      );
+      setMobileHeight7(getDeviceHeight(true) - height3 - height6 - height7 - 2);
+
+      setWebHeight((getDeviceHeight(false) - height6 - height7) / 2 - height);
+      setWebHeight2(
+        isVisibleDetail
+          ? (getDeviceHeight(false) - height6 - height7) / 2 -
+              height2 -
+              height4 -
+              height5 -
+              15
+          : getDeviceHeight(false) -
+              height2 -
+              height4 -
+              height5 -
+              height6 -
+              height7
+      );
+      setWebHeight3(getDeviceHeight(false) - height - height6 - height7 - 2);
+      setWebHeight4(
+        (getDeviceHeight(false) - height6 - height7) / 2 - height + 2
+      );
+      setWebHeight5(
+        isVisibleDetail2
+          ? (getDeviceHeight(false) - height6 - height7) / 2 -
+              height2 -
+              height4 -
+              15
+          : getDeviceHeight(false) - height2 - height4 - height6 - height7 + 2
+      );
+      setWebHeight6(getDeviceHeight(false) - height - height6 - height7 - 4);
+      setWebHeight7(getDeviceHeight(false) - height2 - height6 - height7 - 4);
+    };
+    handleWindowResize();
+    window.addEventListener("resize", handleWindowResize);
+    return () => {
+      window.removeEventListener("resize", handleWindowResize);
+    };
+  }, [
+    webheight,
+    webheight2,
+    webheight3,
+    webheight4,
+    webheight5,
+    webheight6,
+    webheight7,
+    tabSelected,
+    isVisibleDetail,
+    isVisibleDetail2,
+  ]);
+
   const pathname = location.pathname.replace("/", "");
-  const toggleFilterBox = () => {
-    setIsFilterVisible((prev) => !prev);
-  };
 
   useEffect(() => {
     // 접근 권한 검증
@@ -945,7 +1056,7 @@ const App = () => {
       });
     }
     setIsVisableDetail(true);
-    setIsFilterVisible(false);
+    setIsFilterHideStates(true);
   };
 
   //조회조건 Input Change 함수 => 사용자가 Input에 입력한 값을 조회 파라미터로 세팅
@@ -2305,9 +2416,9 @@ const App = () => {
         isSearch: true,
       }));
     }
-    setIsFilterVisible(false);
+    setIsFilterHideStates(true);
     if (swiper && isMobile) {
-      if (tabSelected != 1){
+      if (tabSelected != 1) {
         swiper.slideTo(0);
       }
     }
@@ -2420,9 +2531,6 @@ const App = () => {
       </td>
     );
   };
-  const [isVisibleDetail, setIsVisableDetail] = useState(true);
-  const [isVisibleDetail2, setIsVisableDetail2] = useState(true);
-  const [isVisibleDetail3, setIsVisableDetail3] = useState(true);
 
   const [reception_attach_number, setReception_attach_number] =
     useState<string>("");
@@ -3851,7 +3959,7 @@ const App = () => {
     <>
       {!isMobile ? (
         <>
-          <TitleContainer>
+          <TitleContainer className="TitleContainer">
             <ButtonContainer>
               {tabSelected == 3 ? (
                 <Button
@@ -3870,9 +3978,9 @@ const App = () => {
               </Button>
             </ButtonContainer>
           </TitleContainer>
-          <GridContainerWrap height={"85vh"}>
+          <GridContainerWrap>
             <TabStrip
-              style={{ width: "100%", height: `85vh` }}
+              style={{ width: "100%" }}
               selected={tabSelected}
               onSelect={handleSelectTab}
               scrollable={isMobile}
@@ -3883,7 +3991,7 @@ const App = () => {
                     <GridTitleContainer>
                       <GridTitle>조회조건</GridTitle>
                     </GridTitleContainer>
-                    <FilterBoxWrap>
+                    <FilterContainer>
                       <FilterBox
                         onKeyPress={(e) => handleKeyPressSearch(e, search)}
                       >
@@ -4057,7 +4165,7 @@ const App = () => {
                           </tr>
                         </tbody>
                       </FilterBox>
-                    </FilterBoxWrap>
+                    </FilterContainer>
                   </GridContainer>
                   <GridContainer width={`calc(85% - ${GAP}px)`}>
                     {isVisibleDetail && (
@@ -4072,7 +4180,7 @@ const App = () => {
                           }}
                         >
                           <GridContainer>
-                            <GridTitleContainer>
+                            <GridTitleContainer className="ButtonContainer">
                               <GridTitle>문의접수 리스트</GridTitle>
                               <ButtonContainer>
                                 <Button
@@ -4086,7 +4194,7 @@ const App = () => {
                               </ButtonContainer>
                             </GridTitleContainer>
                             <Grid
-                              style={{ height: `30vh` }}
+                              style={{ height: webheight }}
                               data={process(
                                 mainDataResult.data.map((row) => ({
                                   ...row,
@@ -4222,16 +4330,9 @@ const App = () => {
                       </StatusContext.Provider>
                     )}
                     <GridContainer
-                      style={{
-                        marginTop: isVisibleDetail ? "10px" : "",
-                        height: isMobile
-                          ? "77vh"
-                          : isVisibleDetail
-                          ? "42vh"
-                          : "77vh",
-                      }}
+                      style={{ marginTop: isVisibleDetail ? "10px" : "" }}
                     >
-                      <GridTitleContainer>
+                      <GridTitleContainer className="ButtonContainer2">
                         <GridTitle>
                           <Button
                             themeColor={"primary"}
@@ -4258,7 +4359,7 @@ const App = () => {
                           </ButtonContainer>
                         )}
                       </GridTitleContainer>
-                      <FormBoxWrap border={true}>
+                      <FormBoxWrap border={true} className="FormBoxWrap">
                         <FormBox>
                           <tbody>
                             <tr>
@@ -4291,8 +4392,14 @@ const App = () => {
                           </tbody>
                         </FormBox>
                       </FormBoxWrap>
-                      <RichEditor id="docEditor" ref={docEditorRef} hideTools />
-                      <FormBoxWrap border={true}>
+                      <div style={{ height: webheight2 }}>
+                        <RichEditor
+                          id="docEditor"
+                          ref={docEditorRef}
+                          hideTools
+                        />
+                      </div>
+                      <FormBoxWrap border={true} className="FormBoxWrap2">
                         <FormBox>
                           <tbody>
                             <tr>
@@ -4516,7 +4623,7 @@ const App = () => {
                       value={{ listRadioItems: listRadioItems }}
                     >
                       <GridContainer>
-                        <GridTitleContainer>
+                        <GridTitleContainer className="ButtonContainer">
                           <GridTitle>프로젝트 상세 항목 리스트</GridTitle>
                           <ButtonContainer>
                             <Button
@@ -4530,7 +4637,7 @@ const App = () => {
                           </ButtonContainer>
                         </GridTitleContainer>
                         <Grid
-                          style={{ height: `70vh` }}
+                          style={{ height: webheight3 }}
                           data={process(
                             mainDataResult2.data.map((row) => ({
                               ...row,
@@ -4753,7 +4860,7 @@ const App = () => {
                     <GridTitleContainer>
                       <GridTitle>조회조건</GridTitle>
                     </GridTitleContainer>
-                    <FilterBoxWrap>
+                    <FilterContainer>
                       <FilterBox
                         onKeyPress={(e) => handleKeyPressSearch(e, search)}
                       >
@@ -4890,12 +4997,12 @@ const App = () => {
                           </tr>
                         </tbody>
                       </FilterBox>
-                    </FilterBoxWrap>
+                    </FilterContainer>
                   </GridContainer>
                   <GridContainer width={`calc(85% - ${GAP}px)`}>
                     {isVisibleDetail2 && (
                       <GridContainer>
-                        <GridTitleContainer>
+                        <GridTitleContainer className="ButtonContainer">
                           <GridTitle>회의록 요구사항 리스트</GridTitle>
                           <ButtonContainer>
                             <Button
@@ -4909,7 +5016,7 @@ const App = () => {
                           </ButtonContainer>
                         </GridTitleContainer>
                         <Grid
-                          style={{ height: `30vh` }}
+                          style={{ height: webheight4 }}
                           data={process(
                             mainDataResult3.data.map((row) => ({
                               ...row,
@@ -5028,14 +5135,9 @@ const App = () => {
                     <GridContainer
                       style={{
                         marginTop: isVisibleDetail2 ? "10px" : "",
-                        height: isMobile
-                          ? "76vh"
-                          : isVisibleDetail2
-                          ? "40vh"
-                          : "76vh",
                       }}
                     >
-                      <GridTitleContainer>
+                      <GridTitleContainer className="ButtonContainer2">
                         <GridTitle>
                           <Button
                             themeColor={"primary"}
@@ -5062,7 +5164,7 @@ const App = () => {
                           </ButtonContainer>
                         )}
                       </GridTitleContainer>
-                      <FormBoxWrap border={true}>
+                      <FormBoxWrap border={true} className="FormBoxWrap">
                         <FormBox>
                           <tbody>
                             <tr>
@@ -5127,7 +5229,13 @@ const App = () => {
                           </tbody>
                         </FormBox>
                       </FormBoxWrap>
-                      <RichEditor id="docEditor" ref={docEditorRef} hideTools />
+                      <div style={{ height: webheight5, paddingBottom: "5px" }}>
+                        <RichEditor
+                          id="docEditor"
+                          ref={docEditorRef}
+                          hideTools
+                        />
+                      </div>
                     </GridContainer>
                   </GridContainer>
                 </GridContainerWrap>
@@ -5138,7 +5246,7 @@ const App = () => {
                     <GridTitleContainer>
                       <GridTitle>조회조건</GridTitle>
                     </GridTitleContainer>
-                    <FilterBoxWrap>
+                    <FilterContainer>
                       <FilterBox
                         onKeyPress={(e) => handleKeyPressSearch(e, search)}
                       >
@@ -5301,7 +5409,7 @@ const App = () => {
                           </tr>
                         </tbody>
                       </FilterBox>
-                    </FilterBoxWrap>
+                    </FilterContainer>
                   </GridContainer>
                   <Splitter
                     panes={panes}
@@ -5312,7 +5420,7 @@ const App = () => {
                     }}
                   >
                     <GridContainer>
-                      <GridTitleContainer>
+                      <GridTitleContainer className="ButtonContainer">
                         <GridTitle>
                           업무지시(접수:
                           <span className="k-icon k-i-file k-icon-lg"></span>,
@@ -5385,7 +5493,7 @@ const App = () => {
                                   value={{ usersData: usersData }}
                                 >
                                   <Grid
-                                    style={{ height: `73vh` }}
+                                    style={{ height: webheight6 }}
                                     data={process(
                                       mainDataResult4.data.map((row) => ({
                                         ...row,
@@ -5560,8 +5668,8 @@ const App = () => {
                         </FilesContext2.Provider>
                       </TypeContext.Provider>
                     </GridContainer>
-                    <GridContainer height={"76.8vh"}>
-                      <GridTitleContainer>
+                    <GridContainer>
+                      <GridTitleContainer className="ButtonContainer2">
                         <GridTitle>
                           <Button
                             themeColor={"primary"}
@@ -5603,12 +5711,14 @@ const App = () => {
                           </Button>
                         </ButtonContainer>
                       </GridTitleContainer>
-                      <RichEditor
-                        id="refEditor"
-                        ref={refEditorRef}
-                        change={onChanges}
-                        key={Object.getOwnPropertyNames(selectedState4)[0]}
-                      />
+                      <div style={{ height: webheight7 }}>
+                        <RichEditor
+                          id="refEditor"
+                          ref={refEditorRef}
+                          change={onChanges}
+                          key={Object.getOwnPropertyNames(selectedState4)[0]}
+                        />
+                      </div>
                     </GridContainer>
                   </Splitter>
                 </GridContainerWrap>
@@ -5618,7 +5728,7 @@ const App = () => {
         </>
       ) : (
         <>
-          <TitleContainer>
+          <TitleContainer className="TitleContainer">
             <Title>업무 지시</Title>
             <ButtonContainer>
               {tabSelected == 3 ? (
@@ -5645,196 +5755,171 @@ const App = () => {
             scrollable={isMobile}
           >
             <TabStripTab title="문의접수 참조">
-              <GridContainer>
-                <GridTitleContainer style={{ justifyContent: "right" }}>
-                  <GridTitle>
-                    <Button
-                      onClick={toggleFilterBox}
-                      icon={isFilterVisible ? "chevron-up" : "chevron-down"}
-                      fillMode={"flat"}
-                    >
-                      조회조건
-                    </Button>
-                  </GridTitle>
-                </GridTitleContainer>
-                {isFilterVisible && (
-                  <FilterBoxWrap>
-                    <FilterBox
-                      onKeyPress={(e) => handleKeyPressSearch(e, search)}
-                    >
-                      <tbody>
-                        <tr>
-                          <th>기간</th>
-                          <td>
-                            <MultiColumnComboBox
-                              name="date_type"
-                              data={
-                                filter
-                                  ? filterBy(dateTypeData, filter)
-                                  : dateTypeData
-                              }
-                              value={filters.date_type}
-                              columns={dataTypeColumns}
-                              textField={"code_name"}
-                              onChange={filterComboBoxChange}
-                              className="required"
-                              filterable={true}
-                              onFilterChange={handleFilterChange}
-                            />
-                            <CommonDateRangePicker
-                              value={{
-                                start: filters.fromDate,
-                                end: filters.toDate,
-                              }}
-                              onChange={(e: {
-                                value: { start: any; end: any };
-                              }) =>
-                                setFilters((prev) => ({
-                                  ...prev,
-                                  fromDate: e.value.start,
-                                  toDate: e.value.end,
-                                }))
-                              }
-                              style={{ display: "inline-block" }}
-                              className="required"
-                            />
-                          </td>
-                        </tr>
-                        <tr>
-                          <th>업체명</th>
-                          <td>
-                            <Input
-                              name="custnm"
-                              type="text"
-                              value={filters.custnm}
-                              onChange={filterInputChange}
-                            />
-                          </td>
-                        </tr>
-                        <tr>
-                          <th>Value 구분</th>
-                          <td>
-                            <MultiColumnComboBox
-                              name="value_code3"
-                              data={
-                                filter2
-                                  ? filterBy(valuecodeItems, filter2)
-                                  : valuecodeItems
-                              }
-                              value={filters.value_code3}
-                              columns={dataTypeColumns2}
-                              textField={"code_name"}
-                              onChange={filterComboBoxChange}
-                              filterable={true}
-                              onFilterChange={handleFilterChange2}
-                            />
-                          </td>
-                        </tr>
-                        <tr>
-                          <th>제목 및 내용</th>
-                          <td>
-                            <Input
-                              name="contents"
-                              type="text"
-                              value={filters.contents}
-                              onChange={filterInputChange}
-                            />
-                          </td>
-                        </tr>
-                        <tr>
-                          <th>접수 구분</th>
-                          <td>
-                            <MultiColumnComboBox
-                              name="reception_type"
-                              data={
-                                filter3
-                                  ? filterBy(receptionTypeData, filter3)
-                                  : receptionTypeData
-                              }
-                              value={filters.reception_type}
-                              columns={dataTypeColumns}
-                              textField={"code_name"}
-                              onChange={filterComboBoxChange}
-                              filterable={true}
-                              onFilterChange={handleFilterChange3}
-                            />
-                          </td>
-                        </tr>
-                        <tr>
-                          <th>접수자</th>
-                          <td>
-                            <MultiColumnComboBox
-                              name="reception_person"
-                              data={
-                                filter4
-                                  ? filterBy(usersData, filter4)
-                                  : usersData
-                              }
-                              value={filters.reception_person}
-                              columns={userColumns}
-                              textField={"user_name"}
-                              onChange={filterComboBoxChange}
-                              filterable={true}
-                              onFilterChange={handleFilterChange4}
-                            />
-                          </td>
-                        </tr>
-                        <tr>
-                          <th>상태</th>
-                          <td>
-                            <MultiSelect
-                              name="status"
-                              data={statusListData}
-                              onChange={filterMultiSelectChange}
-                              value={filters.status}
-                              textField="code_name"
-                              dataItemKey="sub_code"
-                            />
-                          </td>
-                        </tr>
-                        <tr>
-                          <th>접수담당자</th>
-                          <td>
-                            <MultiColumnComboBox
-                              name="receptionist"
-                              data={
-                                filter5
-                                  ? filterBy(usersData, filter5)
-                                  : usersData
-                              }
-                              value={filters.receptionist}
-                              columns={userColumns}
-                              textField={"user_name"}
-                              onChange={filterComboBoxChange}
-                              filterable={true}
-                              onFilterChange={handleFilterChange5}
-                            />
-                          </td>
-                        </tr>
-                        <tr>
-                          <th>처리담당자</th>
-                          <td>
-                            <MultiColumnComboBox
-                              name="worker"
-                              data={
-                                filter6
-                                  ? filterBy(usersData, filter6)
-                                  : usersData
-                              }
-                              value={filters.worker}
-                              columns={userColumns}
-                              textField={"user_name"}
-                              onChange={filterComboBoxChange}
-                              filterable={true}
-                              onFilterChange={handleFilterChange6}
-                            />
-                          </td>
-                        </tr>
-                      </tbody>
-                    </FilterBox>
-                  </FilterBoxWrap>
-                )}
-              </GridContainer>
+              <FilterContainer>
+                <FilterBox onKeyPress={(e) => handleKeyPressSearch(e, search)}>
+                  <tbody>
+                    <tr>
+                      <th>기간</th>
+                      <td>
+                        <MultiColumnComboBox
+                          name="date_type"
+                          data={
+                            filter
+                              ? filterBy(dateTypeData, filter)
+                              : dateTypeData
+                          }
+                          value={filters.date_type}
+                          columns={dataTypeColumns}
+                          textField={"code_name"}
+                          onChange={filterComboBoxChange}
+                          className="required"
+                          filterable={true}
+                          onFilterChange={handleFilterChange}
+                        />
+                        <CommonDateRangePicker
+                          value={{
+                            start: filters.fromDate,
+                            end: filters.toDate,
+                          }}
+                          onChange={(e: { value: { start: any; end: any } }) =>
+                            setFilters((prev) => ({
+                              ...prev,
+                              fromDate: e.value.start,
+                              toDate: e.value.end,
+                            }))
+                          }
+                          style={{ display: "inline-block" }}
+                          className="required"
+                        />
+                      </td>
+                    </tr>
+                    <tr>
+                      <th>업체명</th>
+                      <td>
+                        <Input
+                          name="custnm"
+                          type="text"
+                          value={filters.custnm}
+                          onChange={filterInputChange}
+                        />
+                      </td>
+                    </tr>
+                    <tr>
+                      <th>Value 구분</th>
+                      <td>
+                        <MultiColumnComboBox
+                          name="value_code3"
+                          data={
+                            filter2
+                              ? filterBy(valuecodeItems, filter2)
+                              : valuecodeItems
+                          }
+                          value={filters.value_code3}
+                          columns={dataTypeColumns2}
+                          textField={"code_name"}
+                          onChange={filterComboBoxChange}
+                          filterable={true}
+                          onFilterChange={handleFilterChange2}
+                        />
+                      </td>
+                    </tr>
+                    <tr>
+                      <th>제목 및 내용</th>
+                      <td>
+                        <Input
+                          name="contents"
+                          type="text"
+                          value={filters.contents}
+                          onChange={filterInputChange}
+                        />
+                      </td>
+                    </tr>
+                    <tr>
+                      <th>접수 구분</th>
+                      <td>
+                        <MultiColumnComboBox
+                          name="reception_type"
+                          data={
+                            filter3
+                              ? filterBy(receptionTypeData, filter3)
+                              : receptionTypeData
+                          }
+                          value={filters.reception_type}
+                          columns={dataTypeColumns}
+                          textField={"code_name"}
+                          onChange={filterComboBoxChange}
+                          filterable={true}
+                          onFilterChange={handleFilterChange3}
+                        />
+                      </td>
+                    </tr>
+                    <tr>
+                      <th>접수자</th>
+                      <td>
+                        <MultiColumnComboBox
+                          name="reception_person"
+                          data={
+                            filter4 ? filterBy(usersData, filter4) : usersData
+                          }
+                          value={filters.reception_person}
+                          columns={userColumns}
+                          textField={"user_name"}
+                          onChange={filterComboBoxChange}
+                          filterable={true}
+                          onFilterChange={handleFilterChange4}
+                        />
+                      </td>
+                    </tr>
+                    <tr>
+                      <th>상태</th>
+                      <td>
+                        <MultiSelect
+                          name="status"
+                          data={statusListData}
+                          onChange={filterMultiSelectChange}
+                          value={filters.status}
+                          textField="code_name"
+                          dataItemKey="sub_code"
+                        />
+                      </td>
+                    </tr>
+                    <tr>
+                      <th>접수담당자</th>
+                      <td>
+                        <MultiColumnComboBox
+                          name="receptionist"
+                          data={
+                            filter5 ? filterBy(usersData, filter5) : usersData
+                          }
+                          value={filters.receptionist}
+                          columns={userColumns}
+                          textField={"user_name"}
+                          onChange={filterComboBoxChange}
+                          filterable={true}
+                          onFilterChange={handleFilterChange5}
+                        />
+                      </td>
+                    </tr>
+                    <tr>
+                      <th>처리담당자</th>
+                      <td>
+                        <MultiColumnComboBox
+                          name="worker"
+                          data={
+                            filter6 ? filterBy(usersData, filter6) : usersData
+                          }
+                          value={filters.worker}
+                          columns={userColumns}
+                          textField={"user_name"}
+                          onChange={filterComboBoxChange}
+                          filterable={true}
+                          onFilterChange={handleFilterChange6}
+                        />
+                      </td>
+                    </tr>
+                  </tbody>
+                </FilterBox>
+              </FilterContainer>
               <Swiper
                 onSwiper={(swiper) => {
                   setSwiper(swiper);
@@ -5857,7 +5942,7 @@ const App = () => {
                       <GridContainer
                         style={{ width: "100%", overflow: "auto" }}
                       >
-                        <GridTitleContainer>
+                        <GridTitleContainer className="ButtonContainer">
                           <GridTitle>
                             문의접수 리스트
                             <Button
@@ -5883,7 +5968,7 @@ const App = () => {
                           </ButtonContainer>
                         </GridTitleContainer>
                         <Grid
-                          style={{ height: deviceHeight - 290 }}
+                          style={{ height: mobileheight }}
                           data={process(
                             mainDataResult.data.map((row) => ({
                               ...row,
@@ -6015,7 +6100,7 @@ const App = () => {
                 </SwiperSlide>
                 <SwiperSlide key={1}>
                   <GridContainer>
-                    <GridTitleContainer>
+                    <GridTitleContainer className="ButtonContainer2">
                       <GridTitle>
                         <Button
                           themeColor={"primary"}
@@ -6040,7 +6125,7 @@ const App = () => {
                         </Button>
                       </ButtonContainer>
                     </GridTitleContainer>
-                    <FormBoxWrap border={true}>
+                    <FormBoxWrap border={true} className="FormBoxWrap">
                       <FormBox>
                         <tbody>
                           <tr>
@@ -6073,10 +6158,14 @@ const App = () => {
                         </tbody>
                       </FormBox>
                     </FormBoxWrap>
-                    <div style={{ height: deviceHeight - 510 }}>
+                    <div style={{ height: mobileheight2 }}>
                       <RichEditor id="docEditor" ref={docEditorRef} hideTools />
                     </div>
-                    <FormBoxWrap border={true}>
+                    <FormBoxWrap
+                      border={true}
+                      className="FormBoxWrap2"
+                      style={{ marginBottom: 0 }}
+                    >
                       <FormBox>
                         <tbody>
                           <tr>
@@ -6122,194 +6211,179 @@ const App = () => {
             </TabStripTab>
             <TabStripTab title="프로젝트 참조">
               <GridContainer style={{ width: "100%" }}>
-                <GridTitleContainer style={{ justifyContent: "right" }}>
-                  <GridTitle>
-                    <Button
-                      onClick={toggleFilterBox}
-                      icon={isFilterVisible ? "chevron-up" : "chevron-down"}
-                      fillMode={"flat"}
-                    >
-                      조회조건
-                    </Button>
-                  </GridTitle>
-                </GridTitleContainer>
-                {isFilterVisible && (
-                  <FilterBoxWrap>
-                    <FilterBox
-                      onKeyPress={(e) => handleKeyPressSearch(e, search)}
-                    >
-                      <tbody>
-                        <tr>
-                          <th>기간</th>
-                          <td>
-                            <MultiColumnComboBox
-                              name="date_type"
-                              data={
-                                filter7
-                                  ? filterBy(dateTypeData2, filter7)
-                                  : dateTypeData2
-                              }
-                              value={filters.date_type}
-                              columns={dataTypeColumns}
-                              textField={"code_name"}
-                              onChange={filterComboBoxChange}
-                              className="required"
-                              filterable={true}
-                              onFilterChange={handleFilterChange7}
-                              style={{ width: "100%" }}
-                            />
-                            <CommonDateRangePicker
-                              value={{
-                                start: filters.fromDate,
-                                end: filters.toDate,
-                              }}
-                              onChange={(e: {
-                                value: { start: any; end: any };
-                              }) =>
-                                setFilters((prev) => ({
-                                  ...prev,
-                                  fromDate: e.value.start,
-                                  toDate: e.value.end,
-                                }))
-                              }
-                              style={{ display: "inline-block" }}
-                              className="required"
-                            />
-                          </td>
-                        </tr>
-                        <tr>
-                          <th>Value 구분</th>
-                          <td>
-                            <MultiColumnComboBox
-                              name="value_code3"
-                              data={
-                                filter8
-                                  ? filterBy(valuecodeItems, filter8)
-                                  : valuecodeItems
-                              }
-                              value={filters.value_code3}
-                              columns={dataTypeColumns2}
-                              textField={"code_name"}
-                              onChange={filterComboBoxChange}
-                              filterable={true}
-                              onFilterChange={handleFilterChange8}
-                            />
-                          </td>
-                        </tr>
-                        <tr>
-                          <th>업체명</th>
-                          <td>
-                            <Input
-                              name="custnm"
-                              type="text"
-                              value={filters.custnm}
-                              onChange={filterInputChange}
-                            />
-                          </td>
-                        </tr>
-                        <tr>
-                          <th>사업진행담당</th>
-                          <td>
-                            <MultiColumnComboBox
-                              name="reception_person"
-                              data={
-                                filter9
-                                  ? filterBy(usersData, filter9)
-                                  : usersData
-                              }
-                              value={filters.reception_person}
-                              columns={userColumns}
-                              textField={"user_name"}
-                              onChange={filterComboBoxChange}
-                              filterable={true}
-                              onFilterChange={handleFilterChange9}
-                            />
-                          </td>
-                        </tr>
-                        <tr>
-                          <th>담당PM</th>
-                          <td>
-                            <MultiColumnComboBox
-                              name="user_name"
-                              data={
-                                filter10
-                                  ? filterBy(usersData, filter10)
-                                  : usersData
-                              }
-                              value={filters.user_name}
-                              columns={userColumns}
-                              textField={"user_name"}
-                              onChange={filterComboBoxChange}
-                              filterable={true}
-                              onFilterChange={handleFilterChange10}
-                            />
-                          </td>
-                        </tr>
-                        <tr>
-                          <th>프로젝트</th>
-                          <td>
-                            <Input
-                              name="contents"
-                              type="text"
-                              value={filters.contents}
-                              onChange={filterInputChange}
-                            />
-                          </td>
-                        </tr>
-                        <tr>
-                          <th>완료여부</th>
-                          <td>
-                            <MultiSelect
-                              name="status"
-                              data={statusListData2}
-                              onChange={filterMultiSelectChange}
-                              value={filters.status}
-                              textField="code_name"
-                              dataItemKey="sub_code"
-                            />
-                          </td>
-                        </tr>
-                        <tr>
-                          <th>처리담당자</th>
-                          <td>
-                            <MultiColumnComboBox
-                              name="worker"
-                              data={
-                                filter11
-                                  ? filterBy(usersData, filter11)
-                                  : usersData
-                              }
-                              value={filters.worker}
-                              columns={userColumns}
-                              textField={"user_name"}
-                              onChange={filterComboBoxChange}
-                              filterable={true}
-                              onFilterChange={handleFilterChange11}
-                            />
-                          </td>
-                        </tr>
-                        <tr>
-                          <th>메뉴명</th>
-                          <td>
-                            <Input
-                              name="pgmnm"
-                              type="text"
-                              value={filters.pgmnm}
-                              onChange={filterInputChange}
-                            />
-                          </td>
-                        </tr>
-                      </tbody>
-                    </FilterBox>
-                  </FilterBoxWrap>
-                )}
+                <FilterContainer>
+                  <FilterBox
+                    onKeyPress={(e) => handleKeyPressSearch(e, search)}
+                  >
+                    <tbody>
+                      <tr>
+                        <th>기간</th>
+                        <td>
+                          <MultiColumnComboBox
+                            name="date_type"
+                            data={
+                              filter7
+                                ? filterBy(dateTypeData2, filter7)
+                                : dateTypeData2
+                            }
+                            value={filters.date_type}
+                            columns={dataTypeColumns}
+                            textField={"code_name"}
+                            onChange={filterComboBoxChange}
+                            className="required"
+                            filterable={true}
+                            onFilterChange={handleFilterChange7}
+                            style={{ width: "100%" }}
+                          />
+                          <CommonDateRangePicker
+                            value={{
+                              start: filters.fromDate,
+                              end: filters.toDate,
+                            }}
+                            onChange={(e: {
+                              value: { start: any; end: any };
+                            }) =>
+                              setFilters((prev) => ({
+                                ...prev,
+                                fromDate: e.value.start,
+                                toDate: e.value.end,
+                              }))
+                            }
+                            style={{ display: "inline-block" }}
+                            className="required"
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>Value 구분</th>
+                        <td>
+                          <MultiColumnComboBox
+                            name="value_code3"
+                            data={
+                              filter8
+                                ? filterBy(valuecodeItems, filter8)
+                                : valuecodeItems
+                            }
+                            value={filters.value_code3}
+                            columns={dataTypeColumns2}
+                            textField={"code_name"}
+                            onChange={filterComboBoxChange}
+                            filterable={true}
+                            onFilterChange={handleFilterChange8}
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>업체명</th>
+                        <td>
+                          <Input
+                            name="custnm"
+                            type="text"
+                            value={filters.custnm}
+                            onChange={filterInputChange}
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>사업진행담당</th>
+                        <td>
+                          <MultiColumnComboBox
+                            name="reception_person"
+                            data={
+                              filter9 ? filterBy(usersData, filter9) : usersData
+                            }
+                            value={filters.reception_person}
+                            columns={userColumns}
+                            textField={"user_name"}
+                            onChange={filterComboBoxChange}
+                            filterable={true}
+                            onFilterChange={handleFilterChange9}
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>담당PM</th>
+                        <td>
+                          <MultiColumnComboBox
+                            name="user_name"
+                            data={
+                              filter10
+                                ? filterBy(usersData, filter10)
+                                : usersData
+                            }
+                            value={filters.user_name}
+                            columns={userColumns}
+                            textField={"user_name"}
+                            onChange={filterComboBoxChange}
+                            filterable={true}
+                            onFilterChange={handleFilterChange10}
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>프로젝트</th>
+                        <td>
+                          <Input
+                            name="contents"
+                            type="text"
+                            value={filters.contents}
+                            onChange={filterInputChange}
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>완료여부</th>
+                        <td>
+                          <MultiSelect
+                            name="status"
+                            data={statusListData2}
+                            onChange={filterMultiSelectChange}
+                            value={filters.status}
+                            textField="code_name"
+                            dataItemKey="sub_code"
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>처리담당자</th>
+                        <td>
+                          <MultiColumnComboBox
+                            name="worker"
+                            data={
+                              filter11
+                                ? filterBy(usersData, filter11)
+                                : usersData
+                            }
+                            value={filters.worker}
+                            columns={userColumns}
+                            textField={"user_name"}
+                            onChange={filterComboBoxChange}
+                            filterable={true}
+                            onFilterChange={handleFilterChange11}
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>메뉴명</th>
+                        <td>
+                          <Input
+                            name="pgmnm"
+                            type="text"
+                            value={filters.pgmnm}
+                            onChange={filterInputChange}
+                          />
+                        </td>
+                      </tr>
+                    </tbody>
+                  </FilterBox>
+                </FilterContainer>
               </GridContainer>
               <GridContainer style={{ width: "100%" }}>
                 <ListRadioContext.Provider
                   value={{ listRadioItems: listRadioItems }}
                 >
                   <GridContainer>
-                    <GridTitleContainer>
+                    <GridTitleContainer className="ButtonContainer">
                       <GridTitle>프로젝트 상세 항목 리스트</GridTitle>
                       <ButtonContainer>
                         <Button
@@ -6323,7 +6397,7 @@ const App = () => {
                       </ButtonContainer>
                     </GridTitleContainer>
                     <Grid
-                      style={{ height: deviceHeight - 290 }}
+                      style={{ height: mobileheight3 }}
                       data={process(
                         mainDataResult2.data.map((row) => ({
                           ...row,
@@ -6532,157 +6606,144 @@ const App = () => {
             </TabStripTab>
             <TabStripTab title="회의록 참조">
               <GridContainer style={{ width: "100%" }}>
-                <GridTitleContainer style={{ justifyContent: "right" }}>
-                  <GridTitle>
-                    <Button
-                      onClick={toggleFilterBox}
-                      icon={isFilterVisible ? "chevron-up" : "chevron-down"}
-                      fillMode={"flat"}
-                    >
-                      조회조건
-                    </Button>
-                  </GridTitle>
-                </GridTitleContainer>
-                {isFilterVisible && (
-                  <FilterBoxWrap>
-                    <FilterBox
-                      onKeyPress={(e) => handleKeyPressSearch(e, search)}
-                    >
-                      <tbody>
-                        <tr>
-                          <th>기간</th>
-                          <td colSpan={3}>
-                            <MultiColumnComboBox
-                              name="date_type"
-                              data={
-                                filter12
-                                  ? filterBy(dateTypeData3, filter12)
-                                  : dateTypeData3
-                              }
-                              value={filters.date_type}
-                              columns={dataTypeColumns}
-                              textField={"code_name"}
-                              onChange={filterComboBoxChange}
-                              className="required"
-                              filterable={true}
-                              onFilterChange={handleFilterChange12}
-                              style={{ width: "100%" }}
-                            />
-                            <CommonDateRangePicker
-                              value={{
-                                start: filters.fromDate,
-                                end: filters.toDate,
-                              }}
-                              onChange={(e: {
-                                value: { start: any; end: any };
-                              }) =>
-                                setFilters((prev) => ({
-                                  ...prev,
-                                  fromDate: e.value.start,
-                                  toDate: e.value.end,
-                                }))
-                              }
-                              style={{ display: "inline-block" }}
-                              className="required"
-                            />
-                          </td>
-                        </tr>
-                        <tr>
-                          <th>완료여부</th>
-                          <td>
-                            <MultiSelect
-                              name="status"
-                              data={statusListData2}
-                              onChange={filterMultiSelectChange}
-                              value={filters.status}
-                              textField="code_name"
-                              dataItemKey="sub_code"
-                            />
-                          </td>
-                        </tr>
-                        <tr>
-                          <th>제목 및 내용</th>
-                          <td>
-                            <Input
-                              name="contents"
-                              type="text"
-                              value={filters.contents}
-                              onChange={filterInputChange}
-                            />
-                          </td>
-                        </tr>
-                        <tr>
-                          <th>접수담당자</th>
-                          <td>
-                            <MultiColumnComboBox
-                              name="receptionist"
-                              data={
-                                filter13
-                                  ? filterBy(usersData, filter13)
-                                  : usersData
-                              }
-                              value={filters.receptionist}
-                              columns={userColumns}
-                              textField={"user_name"}
-                              onChange={filterComboBoxChange}
-                              filterable={true}
-                              onFilterChange={handleFilterChange13}
-                            />
-                          </td>
-                        </tr>
-                        <tr>
-                          <th>처리담당자</th>
-                          <td>
-                            <MultiColumnComboBox
-                              name="worker"
-                              data={
-                                filter14
-                                  ? filterBy(usersData, filter14)
-                                  : usersData
-                              }
-                              value={filters.worker}
-                              columns={userColumns}
-                              textField={"user_name"}
-                              onChange={filterComboBoxChange}
-                              filterable={true}
-                              onFilterChange={handleFilterChange14}
-                            />
-                          </td>
-                        </tr>
-                        <tr>
-                          <th>업체명</th>
-                          <td>
-                            <Input
-                              name="custnm"
-                              type="text"
-                              value={filters.custnm}
-                              onChange={filterInputChange}
-                            />
-                          </td>
-                        </tr>
-                        <tr>
-                          <th>Value 구분</th>
-                          <td>
-                            <MultiColumnComboBox
-                              name="value_code3"
-                              data={
-                                filter15
-                                  ? filterBy(valuecodeItems, filter15)
-                                  : valuecodeItems
-                              }
-                              value={filters.value_code3}
-                              columns={dataTypeColumns2}
-                              textField={"code_name"}
-                              onChange={filterComboBoxChange}
-                              filterable={true}
-                              onFilterChange={handleFilterChange15}
-                            />
-                          </td>
-                        </tr>
-                      </tbody>
-                    </FilterBox>
-                  </FilterBoxWrap>
-                )}
+                <FilterContainer>
+                  <FilterBox
+                    onKeyPress={(e) => handleKeyPressSearch(e, search)}
+                  >
+                    <tbody>
+                      <tr>
+                        <th>기간</th>
+                        <td colSpan={3}>
+                          <MultiColumnComboBox
+                            name="date_type"
+                            data={
+                              filter12
+                                ? filterBy(dateTypeData3, filter12)
+                                : dateTypeData3
+                            }
+                            value={filters.date_type}
+                            columns={dataTypeColumns}
+                            textField={"code_name"}
+                            onChange={filterComboBoxChange}
+                            className="required"
+                            filterable={true}
+                            onFilterChange={handleFilterChange12}
+                            style={{ width: "100%" }}
+                          />
+                          <CommonDateRangePicker
+                            value={{
+                              start: filters.fromDate,
+                              end: filters.toDate,
+                            }}
+                            onChange={(e: {
+                              value: { start: any; end: any };
+                            }) =>
+                              setFilters((prev) => ({
+                                ...prev,
+                                fromDate: e.value.start,
+                                toDate: e.value.end,
+                              }))
+                            }
+                            style={{ display: "inline-block" }}
+                            className="required"
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>완료여부</th>
+                        <td>
+                          <MultiSelect
+                            name="status"
+                            data={statusListData2}
+                            onChange={filterMultiSelectChange}
+                            value={filters.status}
+                            textField="code_name"
+                            dataItemKey="sub_code"
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>제목 및 내용</th>
+                        <td>
+                          <Input
+                            name="contents"
+                            type="text"
+                            value={filters.contents}
+                            onChange={filterInputChange}
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>접수담당자</th>
+                        <td>
+                          <MultiColumnComboBox
+                            name="receptionist"
+                            data={
+                              filter13
+                                ? filterBy(usersData, filter13)
+                                : usersData
+                            }
+                            value={filters.receptionist}
+                            columns={userColumns}
+                            textField={"user_name"}
+                            onChange={filterComboBoxChange}
+                            filterable={true}
+                            onFilterChange={handleFilterChange13}
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>처리담당자</th>
+                        <td>
+                          <MultiColumnComboBox
+                            name="worker"
+                            data={
+                              filter14
+                                ? filterBy(usersData, filter14)
+                                : usersData
+                            }
+                            value={filters.worker}
+                            columns={userColumns}
+                            textField={"user_name"}
+                            onChange={filterComboBoxChange}
+                            filterable={true}
+                            onFilterChange={handleFilterChange14}
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>업체명</th>
+                        <td>
+                          <Input
+                            name="custnm"
+                            type="text"
+                            value={filters.custnm}
+                            onChange={filterInputChange}
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>Value 구분</th>
+                        <td>
+                          <MultiColumnComboBox
+                            name="value_code3"
+                            data={
+                              filter15
+                                ? filterBy(valuecodeItems, filter15)
+                                : valuecodeItems
+                            }
+                            value={filters.value_code3}
+                            columns={dataTypeColumns2}
+                            textField={"code_name"}
+                            onChange={filterComboBoxChange}
+                            filterable={true}
+                            onFilterChange={handleFilterChange15}
+                          />
+                        </td>
+                      </tr>
+                    </tbody>
+                  </FilterBox>
+                </FilterContainer>
               </GridContainer>
               <Swiper
                 onSwiper={(swiper) => {
@@ -6694,7 +6755,7 @@ const App = () => {
               >
                 <SwiperSlide key={0}>
                   <GridContainer style={{ width: "100%" }}>
-                    <GridTitleContainer>
+                    <GridTitleContainer className="ButtonContainer">
                       <GridTitle>
                         회의록 요구사항 리스트
                         <Button
@@ -6720,7 +6781,7 @@ const App = () => {
                       </ButtonContainer>
                     </GridTitleContainer>
                     <Grid
-                      style={{ height: deviceHeight - 290 }}
+                      style={{ height: mobileheight4 }}
                       data={process(
                         mainDataResult3.data.map((row) => ({
                           ...row,
@@ -6837,7 +6898,7 @@ const App = () => {
                 </SwiperSlide>
                 <SwiperSlide key={1}>
                   <GridContainer>
-                    <GridTitleContainer>
+                    <GridTitleContainer className="ButtonContainer2">
                       <GridTitle>
                         <Button
                           themeColor={"primary"}
@@ -6862,7 +6923,7 @@ const App = () => {
                         </Button>
                       </ButtonContainer>
                     </GridTitleContainer>
-                    <FormBoxWrap border={true}>
+                    <FormBoxWrap border={true} className="FormBoxWrap">
                       <FormBox>
                         <tbody>
                           <tr>
@@ -6927,7 +6988,7 @@ const App = () => {
                         </tbody>
                       </FormBox>
                     </FormBoxWrap>
-                    <div style={{ height: deviceHeight - 480 }}>
+                    <div style={{ height: mobileheight5 }}>
                       <RichEditor id="docEditor" ref={docEditorRef} hideTools />
                     </div>
                   </GridContainer>
@@ -6936,183 +6997,170 @@ const App = () => {
             </TabStripTab>
             <TabStripTab title="업무지시(전체)">
               <GridContainer>
-                <GridTitleContainer style={{ justifyContent: "right" }}>
-                  <GridTitle>
-                    <Button
-                      onClick={toggleFilterBox}
-                      icon={isFilterVisible ? "chevron-up" : "chevron-down"}
-                      fillMode={"flat"}
-                    >
-                      조회조건
-                    </Button>
-                  </GridTitle>
-                </GridTitleContainer>
-                {isFilterVisible && (
-                  <FilterBoxWrap>
-                    <FilterBox
-                      onKeyPress={(e) => handleKeyPressSearch(e, search)}
-                    >
-                      <tbody>
-                        <tr>
-                          <th>기간</th>
-                          <td>
-                            <MultiColumnComboBox
-                              name="date_type"
-                              data={
-                                filter16
-                                  ? filterBy(dateTypeData4, filter16)
-                                  : dateTypeData4
-                              }
-                              value={filters.date_type}
-                              columns={dataTypeColumns}
-                              textField={"code_name"}
-                              onChange={filterComboBoxChange}
-                              className="required"
-                              filterable={true}
-                              onFilterChange={handleFilterChange16}
-                              style={{ width: "100%" }}
-                            />
-                            <CommonDateRangePicker
-                              value={{
-                                start: filters.fromDate,
-                                end: filters.toDate,
-                              }}
-                              onChange={(e: {
-                                value: { start: any; end: any };
-                              }) =>
-                                setFilters((prev) => ({
-                                  ...prev,
-                                  fromDate: e.value.start,
-                                  toDate: e.value.end,
-                                }))
-                              }
-                              style={{ display: "inline-block" }}
-                              className="required"
-                            />
-                          </td>
-                        </tr>
-                        <tr>
-                          <th>접수담당자</th>
-                          <td>
-                            <MultiColumnComboBox
-                              name="receptionist"
-                              data={
-                                filter17
-                                  ? filterBy(usersData, filter17)
-                                  : usersData
-                              }
-                              value={filters.receptionist}
-                              columns={userColumns}
-                              textField={"user_name"}
-                              onChange={filterComboBoxChange}
-                              filterable={true}
-                              onFilterChange={handleFilterChange17}
-                            />
-                          </td>
-                        </tr>
-                        <tr>
-                          <th>참조</th>
-                          <td>
-                            <MultiSelect
-                              name="ref_type"
-                              data={TypeData}
-                              onChange={filterMultiSelectChange}
-                              value={filters.ref_type}
-                              textField="name"
-                              dataItemKey="code"
-                            />
-                          </td>
-                        </tr>
-                        <tr>
-                          <th>비고 및 내용</th>
-                          <td>
-                            <Input
-                              name="contents"
-                              type="text"
-                              value={filters.contents}
-                              onChange={filterInputChange}
-                            />
-                          </td>
-                        </tr>
-                        <tr>
-                          <th>완료여부</th>
-                          <td>
-                            <MultiSelect
-                              name="status"
-                              data={statusListData2}
-                              onChange={filterMultiSelectChange}
-                              value={filters.status}
-                              textField="code_name"
-                              dataItemKey="sub_code"
-                            />
-                          </td>
-                        </tr>
-                        <tr>
-                          <th>확인여부</th>
-                          <td>
-                            <MultiSelect
-                              name="check"
-                              data={CheckListData}
-                              onChange={filterMultiSelectChange}
-                              value={filters.check}
-                              textField="code_name"
-                              dataItemKey="sub_code"
-                            />
-                          </td>
-                        </tr>
-                        <tr>
-                          <th>업체명</th>
-                          <td>
-                            <Input
-                              name="custnm"
-                              type="text"
-                              value={filters.custnm}
-                              onChange={filterInputChange}
-                            />
-                          </td>
-                        </tr>
-                        <tr>
-                          <th>지시자</th>
-                          <td>
-                            <MultiColumnComboBox
-                              name="user_name"
-                              data={
-                                filter18
-                                  ? filterBy(usersData, filter18)
-                                  : usersData
-                              }
-                              value={filters.user_name}
-                              columns={userColumns}
-                              textField={"user_name"}
-                              onChange={filterComboBoxChange}
-                              filterable={true}
-                              onFilterChange={handleFilterChange18}
-                            />
-                          </td>
-                        </tr>
-                        <tr>
-                          <th>처리담당자</th>
-                          <td>
-                            <MultiColumnComboBox
-                              name="worker"
-                              data={
-                                filter19
-                                  ? filterBy(usersData, filter19)
-                                  : usersData
-                              }
-                              value={filters.worker}
-                              columns={userColumns}
-                              textField={"user_name"}
-                              onChange={filterComboBoxChange}
-                              filterable={true}
-                              onFilterChange={handleFilterChange19}
-                            />
-                          </td>
-                        </tr>
-                      </tbody>
-                    </FilterBox>
-                  </FilterBoxWrap>
-                )}
+                <FilterContainer>
+                  <FilterBox
+                    onKeyPress={(e) => handleKeyPressSearch(e, search)}
+                  >
+                    <tbody>
+                      <tr>
+                        <th>기간</th>
+                        <td>
+                          <MultiColumnComboBox
+                            name="date_type"
+                            data={
+                              filter16
+                                ? filterBy(dateTypeData4, filter16)
+                                : dateTypeData4
+                            }
+                            value={filters.date_type}
+                            columns={dataTypeColumns}
+                            textField={"code_name"}
+                            onChange={filterComboBoxChange}
+                            className="required"
+                            filterable={true}
+                            onFilterChange={handleFilterChange16}
+                            style={{ width: "100%" }}
+                          />
+                          <CommonDateRangePicker
+                            value={{
+                              start: filters.fromDate,
+                              end: filters.toDate,
+                            }}
+                            onChange={(e: {
+                              value: { start: any; end: any };
+                            }) =>
+                              setFilters((prev) => ({
+                                ...prev,
+                                fromDate: e.value.start,
+                                toDate: e.value.end,
+                              }))
+                            }
+                            style={{ display: "inline-block" }}
+                            className="required"
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>접수담당자</th>
+                        <td>
+                          <MultiColumnComboBox
+                            name="receptionist"
+                            data={
+                              filter17
+                                ? filterBy(usersData, filter17)
+                                : usersData
+                            }
+                            value={filters.receptionist}
+                            columns={userColumns}
+                            textField={"user_name"}
+                            onChange={filterComboBoxChange}
+                            filterable={true}
+                            onFilterChange={handleFilterChange17}
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>참조</th>
+                        <td>
+                          <MultiSelect
+                            name="ref_type"
+                            data={TypeData}
+                            onChange={filterMultiSelectChange}
+                            value={filters.ref_type}
+                            textField="name"
+                            dataItemKey="code"
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>비고 및 내용</th>
+                        <td>
+                          <Input
+                            name="contents"
+                            type="text"
+                            value={filters.contents}
+                            onChange={filterInputChange}
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>완료여부</th>
+                        <td>
+                          <MultiSelect
+                            name="status"
+                            data={statusListData2}
+                            onChange={filterMultiSelectChange}
+                            value={filters.status}
+                            textField="code_name"
+                            dataItemKey="sub_code"
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>확인여부</th>
+                        <td>
+                          <MultiSelect
+                            name="check"
+                            data={CheckListData}
+                            onChange={filterMultiSelectChange}
+                            value={filters.check}
+                            textField="code_name"
+                            dataItemKey="sub_code"
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>업체명</th>
+                        <td>
+                          <Input
+                            name="custnm"
+                            type="text"
+                            value={filters.custnm}
+                            onChange={filterInputChange}
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>지시자</th>
+                        <td>
+                          <MultiColumnComboBox
+                            name="user_name"
+                            data={
+                              filter18
+                                ? filterBy(usersData, filter18)
+                                : usersData
+                            }
+                            value={filters.user_name}
+                            columns={userColumns}
+                            textField={"user_name"}
+                            onChange={filterComboBoxChange}
+                            filterable={true}
+                            onFilterChange={handleFilterChange18}
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>처리담당자</th>
+                        <td>
+                          <MultiColumnComboBox
+                            name="worker"
+                            data={
+                              filter19
+                                ? filterBy(usersData, filter19)
+                                : usersData
+                            }
+                            value={filters.worker}
+                            columns={userColumns}
+                            textField={"user_name"}
+                            onChange={filterComboBoxChange}
+                            filterable={true}
+                            onFilterChange={handleFilterChange19}
+                          />
+                        </td>
+                      </tr>
+                    </tbody>
+                  </FilterBox>
+                </FilterContainer>
               </GridContainer>
               <Swiper
                 onSwiper={(swiper) => {
@@ -7124,7 +7172,7 @@ const App = () => {
               >
                 <SwiperSlide key={0}>
                   <GridContainer style={{ width: "100%" }}>
-                    <GridTitleContainer>
+                    <GridTitleContainer className="ButtonContainer">
                       <GridTitle>
                         업무지시
                         <Button
@@ -7146,7 +7194,7 @@ const App = () => {
                         <span className="k-icon k-i-comment k-icon-lg"></span>) */}
                       </GridTitle>
                     </GridTitleContainer>
-                    <ButtonContainer>
+                    <ButtonContainer className="ButtonContainer2">
                       <Button
                         onClick={onErrorWndClick}
                         themeColor={"primary"}
@@ -7208,7 +7256,7 @@ const App = () => {
                                 value={{ usersData: usersData }}
                               >
                                 <Grid
-                                  style={{ height: deviceHeight - 315 }}
+                                  style={{ height: mobileheight6 }}
                                   data={process(
                                     mainDataResult4.data.map((row) => ({
                                       ...row,
@@ -7385,8 +7433,8 @@ const App = () => {
                   </GridContainer>
                 </SwiperSlide>
                 <SwiperSlide key={1}>
-                  <GridContainer style={{ width: "100%", height: deviceHeight - 250 }}>
-                    <GridTitleContainer>
+                  <GridContainer style={{ width: "100%" }}>
+                    <GridTitleContainer className="ButtonContainer3">
                       <GridTitle>
                         <Button
                           themeColor={"primary"}
@@ -7411,12 +7459,14 @@ const App = () => {
                         </Button>
                       </ButtonContainer>
                     </GridTitleContainer>
+                    <div style={{ height: mobileheight7 }}>
                       <RichEditor
                         id="refEditor"
                         ref={refEditorRef}
                         change={onChanges}
                         key={Object.getOwnPropertyNames(selectedState4)[0]}
                       />
+                    </div>
                   </GridContainer>
                 </SwiperSlide>
               </Swiper>

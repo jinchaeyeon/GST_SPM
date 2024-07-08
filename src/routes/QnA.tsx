@@ -19,7 +19,13 @@ import {
 import { Input, RadioGroup } from "@progress/kendo-react-inputs";
 import { bytesToBase64 } from "byte-base64";
 import jwtDecode from "jwt-decode";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { useHistory, useLocation } from "react-router-dom";
 import { useRecoilState, useSetRecoilState } from "recoil";
 import {
@@ -42,6 +48,8 @@ import QnAStateCell from "../components/Cells/QnAStateCell";
 import {
   convertDateToStr,
   dateformat2,
+  getDeviceHeight,
+  getHeight,
   handleKeyPressSearch,
   toDate,
 } from "../components/CommonFunction";
@@ -51,11 +59,16 @@ import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWi
 import { useApi } from "../hooks/api";
 import {
   filterValueState,
+  isFilterheightstate,
   isLoading,
   loginResultState,
   titles,
 } from "../store/atoms";
 import { TEditorHandle } from "../store/types";
+import SwiperCore from "swiper";
+import "swiper/css";
+import { Swiper, SwiperSlide } from "swiper/react";
+import FilterContainer from "../components/FilterContainer";
 
 type TItem = {
   sub_code: string;
@@ -129,6 +142,18 @@ const defaultDetailData = {
   answer_files: "",
 };
 let targetRowIndex: null | number = null;
+
+var index = 0;
+
+var height = 0;
+var height2 = 0;
+var height3 = 0;
+var height4 = 0;
+var height5 = 0;
+var height6 = 0;
+var height7 = 0;
+var height8 = 0;
+
 const App = () => {
   const [loginResult] = useRecoilState(loginResultState);
   const accessToken = localStorage.getItem("accessToken");
@@ -138,8 +163,65 @@ const App = () => {
   const [filterValue, setFilterValue] = useRecoilState(filterValueState);
   const setLoading = useSetRecoilState(isLoading);
   const [title, setTitle] = useRecoilState(titles);
+  const [swiper, setSwiper] = useState<SwiperCore>();
+
   let deviceWidth = window.innerWidth;
-  let isMobile = deviceWidth <= 1200;
+  const [isMobile, setIsMobile] = useState(deviceWidth <= 1200);
+  const [mobileheight, setMobileHeight] = useState(0);
+  const [mobileheight2, setMobileHeight2] = useState(0);
+  const [mobileheight3, setMobileHeight3] = useState(0);
+  const [mobileheight4, setMobileHeight4] = useState(0);
+  const [mobileheight5, setMobileHeight5] = useState(0);
+  const [webheight, setWebHeight] = useState(0);
+  const [webheight2, setWebHeight2] = useState(0);
+  const [webheight3, setWebHeight3] = useState(0);
+  const [webheight4, setWebHeight4] = useState(0);
+
+  useLayoutEffect(() => {
+    height = getHeight(".ButtonContainer");
+    height2 = getHeight(".ButtonContainer2");
+    height3 = getHeight(".ButtonContainer3");
+    height4 = getHeight(".ButtonContainer4");
+    height5 = getHeight(".FormBoxWrap3");
+    height6 = getHeight(".FormBoxWrap");
+    height7 = getHeight(".FormBoxWrap2");
+    height8 = getHeight(".TitleContainer");
+
+    const handleWindowResize = () => {
+      let deviceWidth = document.documentElement.clientWidth;
+      setIsMobile(deviceWidth <= 1200);
+      setMobileHeight(getDeviceHeight(true) - height - height8);
+      setMobileHeight2(getDeviceHeight(true) - height2 - height8);
+      setMobileHeight3(
+        getDeviceHeight(true) - height8 - height4 - height7 + 15
+      );
+      setMobileHeight4(
+        getDeviceHeight(true) - height8 - height3 - height5 + 15
+      );
+      setMobileHeight5(getDeviceHeight(true) - height8);
+      setWebHeight(getDeviceHeight(true) - height - height - height8);
+      setWebHeight2(
+        (getDeviceHeight(false) - height2 - height6 - height8) / 2 -
+          height7 +
+          15
+      );
+      setWebHeight3(
+        (getDeviceHeight(false) - height2 - height6 - height8) / 2 -
+          height3 -
+          height5 +
+          15
+      );
+      setWebHeight4(
+        (getDeviceHeight(true) - height - height8) / 2 - height5 - 5
+      );
+    };
+    handleWindowResize();
+    window.addEventListener("resize", handleWindowResize);
+    return () => {
+      window.removeEventListener("resize", handleWindowResize);
+    };
+  }, [webheight, webheight2, webheight3, webheight4]);
+
   const idGetter = getter(DATA_ITEM_KEY);
   const processApi = useApi();
   const qEditorRef = useRef<TEditorHandle>(null);
@@ -230,6 +312,9 @@ const App = () => {
       isFetch: true,
       isReset: true,
     }));
+    if (swiper && isMobile) {
+      swiper.slideTo(0);
+		}
   };
 
   const [mainDataState, setMainDataState] = useState<State>({
@@ -265,6 +350,9 @@ const App = () => {
 
     setFileList([]);
     setSavenmList([]);
+    if (swiper && isMobile) {
+      swiper.slideTo(1);
+		}
   };
 
   const onMainSortChange = (e: any) => {
@@ -977,7 +1065,7 @@ const App = () => {
 
   return (
     <>
-      <TitleContainer>
+      <TitleContainer className="TitleContainer">
         {!isMobile ? "" : <Title>QnA</Title>}
         <ButtonContainer>
           <Button onClick={search} icon="search" themeColor={"primary"}>
@@ -1009,471 +1097,1062 @@ const App = () => {
         </ButtonContainer>
       </TitleContainer>
 
-      <GridContainerWrap height={"88%"}>
-        <GridContainer width={`40%`}>
-          <GridTitleContainer>
-            <GridTitle>조회조건</GridTitle>
-          </GridTitleContainer>
-          <FilterBoxWrap ref={filterRef} style={{ padding: "0 0 10px" }}>
-            <FilterBox
-              onKeyPress={(e) => {
-                handleKeyPressSearch(e, search);
-              }}
-            >
-              <tbody>
-                <tr>
-                  <th style={{ paddingRight: "5px", paddingLeft: "5px" }}>
-                    <DropDownList
-                      name="dateType"
-                      data={dateType}
-                      textField="label"
-                      dataItemKey="value"
-                      value={filters.dateType}
-                      onChange={filterInputChange}
-                    />
-                  </th>
-                  <td>
-                    <div className="filter-item-wrap">
-                      <DatePicker
-                        name="fromDate"
-                        value={filters.fromDate}
-                        format="yyyy-MM-dd"
-                        onChange={filterInputChange}
-                        placeholder=""
-                        className="required"
-                      />
-                      ~
-                      <DatePicker
-                        name="toDate"
-                        value={filters.toDate}
-                        format="yyyy-MM-dd"
-                        onChange={filterInputChange}
-                        placeholder=""
-                        className="required"
-                      />
-                    </div>
-                  </td>
-                  <th>공개 여부</th>
-                  <td colSpan={3}>
-                    <RadioGroup
-                      name="isPublic"
-                      data={isPublicListData}
-                      value={filters.isPublic}
-                      onChange={(e) =>
-                        setFilters((prev) => ({ ...prev, isPublic: e.value }))
-                      }
-                      layout="horizontal"
-                    />
-                  </td>
-                </tr>
-                <tr>
-                  <th>상태</th>
-                  <td>
-                    <MultiSelect
-                      data={statusListData}
-                      onChange={filterMultiSelectChange}
-                      value={filters.status}
-                      textField="code_name"
-                      dataItemKey="sub_code"
-                    />
-                  </td>
-                  <th>작성자</th>
-                  <td>
-                    <Input
-                      name="userName"
-                      type="text"
-                      value={filters.userName}
-                      onChange={filterInputChange}
-                    />
-                  </td>
-                </tr>
-                <tr>
-                  <th>제목 및 내용</th>
-                  <td>
-                    <Input
-                      name="contents"
-                      type="text"
-                      value={filters.contents}
-                      onChange={filterInputChange}
-                    />
-                  </td>
-                  <th>업체명</th>
-                  <td>
-                    <Input
-                      name="custnm"
-                      type="text"
-                      value={filters.custnm}
-                      onChange={filterInputChange}
-                    />
-                  </td>
-                </tr>
-              </tbody>
-            </FilterBox>
-          </FilterBoxWrap>
-          <GridTitleContainer>
-            <GridTitle>요약정보</GridTitle>
-          </GridTitleContainer>
-          <Grid
-            style={{
-              height: `calc(100% - 65px - ${
-                filterRef.current ? filterRef.current.offsetHeight : 0
-              }px)`,
-            }}
-            data={process(
-              mainDataResult.data.map((row) => ({
-                ...row,
-                request_date: dateformat2(row.request_date),
-                reception_date: dateformat2(row.reception_date),
-                be_finished_date: dateformat2(row.be_finished_date),
-                completion_date: dateformat2(row.completion_date),
-                [SELECTED_FIELD]: selectedState[idGetter(row)],
-              })),
-              mainDataState
-            )}
-            {...mainDataState}
-            onDataStateChange={onMainDataStateChange}
-            //선택 기능
-            dataItemKey={DATA_ITEM_KEY}
-            selectedField={SELECTED_FIELD}
-            selectable={{
-              enabled: true,
-              mode: "single",
-            }}
-            onSelectionChange={onSelectionChange}
-            fixedScroll={true}
-            total={mainDataResult.total}
-            skip={page.skip}
-            take={page.take}
-            pageable={true}
-            onPageChange={pageChange}
-            //원하는 행 위치로 스크롤 기능
-            ref={gridRef}
-            rowHeight={30}
-            //정렬기능
-            sortable={true}
-            onSortChange={onMainSortChange}
-            //컬럼순서조정
-            reorderable={true}
-            //컬럼너비조정
-            resizable={true}
-          >
-            <GridColumn
-              field="status"
-              title="상태"
-              width={80}
-              cell={QnAStateCell}
-              footerCell={mainTotalFooterCell}
-            />
-            <GridColumn
-              field="request_date"
-              title="요청일"
-              width={100}
-              cell={CenterCell}
-            />
-            {isAdmin && (
-              <GridColumn field="customer_name" title="업체명" width={120} />
-            )}
-            <GridColumn field="user_name" title="작성자" width={100} />
-            <GridColumn field="title" title="제목" width={200} />
-            {!isAdmin && (
-              <GridColumn
-                field="is_checked"
-                title="답변 확인"
-                width={80}
-                cell={CheckCell}
-              />
-            )}
-            <GridColumn
-              field="reception_date"
-              title="접수일"
-              width={100}
-              cell={CenterCell}
-            />
-            <GridColumn
-              field="be_finished_date"
-              title="완료예정일"
-              width={100}
-              cell={CenterCell}
-            />
-            <GridColumn
-              field="completion_date"
-              title="처리완료일"
-              width={100}
-              cell={CenterCell}
-            />
-            <GridColumn field="contents" title="내용" width={150} />
-          </Grid>
-        </GridContainer>
-        <GridContainerWrap flexDirection="column">
-          <GridTitleContainer>
-            <GridTitle>상세정보</GridTitle>
-          </GridTitleContainer>
-
-          <GridContainer
-            style={
-              !isAdmin && isDataLocked
-                ? { display: "none", height: "100%" }
-                : { height: "100%" }
-            }
-          >
-            <FormBoxWrap
-              border
-              style={{
-                margin: "0 0 10px",
-              }}
-            >
-              <FormBox>
+      {isMobile ? (
+        <>
+          <FilterContainer>
+            <FilterBoxWrap ref={filterRef} style={{ padding: "0 0 10px" }}>
+              <FilterBox
+                onKeyPress={(e) => {
+                  handleKeyPressSearch(e, search);
+                }}
+              >
                 <tbody>
                   <tr>
-                    <th>제목</th>
-                    <td colSpan={3}>
-                      <Input
-                        name="title"
-                        type="text"
-                        value={detailData.title}
-                        onChange={detailDataInputChange}
-                        className={isAdmin ? "readonly" : "required"}
-                        readOnly={isAdmin}
+                    <th style={{ paddingRight: "5px", paddingLeft: "5px" }}>
+                      <DropDownList
+                        name="dateType"
+                        data={dateType}
+                        textField="label"
+                        dataItemKey="value"
+                        value={filters.dateType}
+                        onChange={filterInputChange}
                       />
-                    </td>
-                    <th>작성자</th>
-                    <td colSpan={3}>
-                      <Input
-                        name="user_name"
-                        type="text"
-                        value={detailData.user_name}
-                        onChange={detailDataInputChange}
-                        className={isAdmin ? "readonly" : "required"}
-                        readOnly={isAdmin}
-                      />
-                    </td>
-                  </tr>
-                  <tr>
-                    <th>연락처</th>
-                    <td>
-                      <Input
-                        name="user_tel"
-                        type="text"
-                        value={detailData.user_tel}
-                        onChange={detailDataInputChange}
-                        className={isAdmin ? "readonly" : ""}
-                        readOnly={isAdmin}
-                      />
-                    </td>
-                    <th>비밀번호</th>
+                    </th>
                     <td>
                       <div className="filter-item-wrap">
-                        <Input
-                          name="password"
-                          type="password"
-                          value={detailData.password}
-                          onChange={detailDataInputChange}
-                          className={
-                            isAdmin
-                              ? "readonly"
-                              : detailData.is_lock
-                              ? "required"
-                              : ""
-                          }
-                          readOnly={isAdmin}
-                          autoComplete={"false"}
+                        <DatePicker
+                          name="fromDate"
+                          value={filters.fromDate}
+                          format="yyyy-MM-dd"
+                          onChange={filterInputChange}
+                          placeholder=""
+                          className="required"
                         />
-                        <Button
-                          icon={detailData.is_lock ? "lock" : "unlock"}
-                          themeColor={"primary"}
-                          fillMode={"flat"}
-                          onClick={() =>
-                            setDetailData((prev) => ({
-                              ...prev,
-                              is_lock: !prev.is_lock,
-                            }))
-                          }
-                          disabled={isAdmin}
+                        ~
+                        <DatePicker
+                          name="toDate"
+                          value={filters.toDate}
+                          format="yyyy-MM-dd"
+                          onChange={filterInputChange}
+                          placeholder=""
+                          className="required"
                         />
                       </div>
                     </td>
                     <th>공개 여부</th>
                     <td colSpan={3}>
                       <RadioGroup
-                        name="is_public"
-                        data={isPublicListData.filter(
-                          (data) => data.value !== "All"
-                        )}
-                        value={detailData.is_public}
+                        name="isPublic"
+                        data={isPublicListData}
+                        value={filters.isPublic}
                         onChange={(e) =>
-                          setDetailData((prev) => ({
+                          setFilters((prev) => ({
                             ...prev,
-                            is_public: e.value,
+                            isPublic: e.value,
                           }))
                         }
                         layout="horizontal"
-                        className={isAdmin ? "readonly" : "required"}
-                        disabled={detailData.is_lock && !isAdmin ? false : true}
                       />
                     </td>
                   </tr>
                   <tr>
-                    <th>요청일</th>
-                    <td>
-                      {isAdmin ? (
-                        <Input
-                          name="request_date"
-                          type="text"
-                          value={dateformat2(
-                            convertDateToStr(detailData.request_date)
-                          )}
-                          className="readonly"
-                          readOnly
-                        />
-                      ) : (
-                        <DatePicker
-                          name="request_date"
-                          value={detailData.request_date}
-                          onChange={detailDataInputChange}
-                          format="yyyy-MM-dd"
-                          className={"required"}
-                          placeholder=""
-                        />
-                      )}
-                    </td>
-                    <th>완료예정일</th>
-                    <td>
-                      <Input
-                        name="be_finished_date"
-                        type="text"
-                        value={detailData.be_finished_date}
-                        onChange={detailDataInputChange}
-                        className="readonly"
-                        readOnly
-                      />
-                    </td>
-                    <th>접수일</th>
-                    <td>
-                      <Input
-                        name="reception_date"
-                        type="text"
-                        value={detailData.reception_date}
-                        onChange={detailDataInputChange}
-                        className="readonly"
-                        readOnly
-                      />
-                    </td>
                     <th>상태</th>
                     <td>
+                      <MultiSelect
+                        data={statusListData}
+                        onChange={filterMultiSelectChange}
+                        value={filters.status}
+                        textField="code_name"
+                        dataItemKey="sub_code"
+                      />
+                    </td>
+                    <th>작성자</th>
+                    <td>
                       <Input
-                        name="status"
+                        name="userName"
                         type="text"
-                        value={detailData.status.code_name}
-                        onChange={detailDataInputChange}
-                        className="readonly"
-                        readOnly
+                        value={filters.userName}
+                        onChange={filterInputChange}
+                      />
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>제목 및 내용</th>
+                    <td>
+                      <Input
+                        name="contents"
+                        type="text"
+                        value={filters.contents}
+                        onChange={filterInputChange}
+                      />
+                    </td>
+                    <th>업체명</th>
+                    <td>
+                      <Input
+                        name="custnm"
+                        type="text"
+                        value={filters.custnm}
+                        onChange={filterInputChange}
                       />
                     </td>
                   </tr>
                 </tbody>
-              </FormBox>
-            </FormBoxWrap>
-            <RichEditor id="qEditor" ref={qEditorRef} hideTools={isAdmin} />
-            <FormBoxWrap
-              border
-              style={{
-                margin: 0,
-                borderTop: 0,
-              }}
-            >
-              <FormBox>
-                <tbody>
-                  <tr>
-                    <th style={{ width: 0 }}>첨부파일</th>
-                    <td style={{ width: "auto" }}>
-                      <div className="filter-item-wrap">
-                        <Input
-                          name="attachment_q"
-                          value={detailData.files}
-                          className="readonly"
-                        />
-                        <Button
-                          icon="more-horizontal"
-                          fillMode={"flat"}
-                          onClick={() => setAttachmentsWindowVisibleQ(true)}
-                        />
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </FormBox>
-            </FormBoxWrap>
-            <GridTitleContainer>
-              <GridTitle>답변</GridTitle>
-              <ButtonContainer>
-                {!isAdmin && (
-                  <Button
-                    themeColor={"primary"}
-                    fillMode={"flat"}
-                    icon={isChecked ? "x" : "check"}
-                    onClick={checkAnswer}
-                  >
-                    {isChecked ? "답변 확인 취소" : "답변 확인"}
-                  </Button>
-                )}
-              </ButtonContainer>
-            </GridTitleContainer>
-            <GridContainer style={{ maxHeight: "170px" }}>
-              <RichEditor id="aEditor" ref={aEditorRef} hideTools />
-            </GridContainer>
-            <FormBoxWrap
-              border
-              style={{
-                margin: 0,
-                borderTop: 0,
-              }}
-            >
-              <FormBox>
-                <tbody>
-                  <tr>
-                    <th style={{ width: 0 }}>첨부파일</th>
-                    <td style={{ width: "auto" }}>
-                      <div className="filter-item-wrap">
-                        <Input
-                          name="attachment_a"
-                          value={detailData.answer_files}
-                          className="readonly"
-                        />
-                        <Button
-                          icon="more-horizontal"
-                          fillMode={"flat"}
-                          onClick={() => setAttachmentsWindowVisibleA(true)}
-                        />
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </FormBox>
-            </FormBoxWrap>
-          </GridContainer>
-          {!isAdmin && isDataLocked && (
-            <QnAPwBox onKeyPress={handleKeyPressSearchDetail}>
-              <div className="inner">
-                <Icon name="lock" themeColor="primary" size={"xlarge"} />
-                <p>비밀번호를 입력해주세요.</p>
-                <Input
-                  name="password"
-                  type="password"
-                  value={detailData.password}
-                  onChange={detailDataInputChange}
-                  ref={pwInputRef}
-                />
-                <Button
-                  themeColor={"primary"}
-                  onClick={() => fetchDetail(detailData.password)}
+              </FilterBox>
+            </FilterBoxWrap>
+          </FilterContainer>
+          <Swiper
+            onSwiper={(swiper) => {
+              setSwiper(swiper);
+            }}
+            onActiveIndexChange={(swiper) => {
+              index = swiper.activeIndex;
+            }}
+          >
+            <SwiperSlide key={0}>
+              <GridContainer style={{ width: "100%" }}>
+                <GridTitleContainer className="ButtonContainer">
+                  <GridTitle>
+                    요약정보
+                    <Button
+                      themeColor={"primary"}
+                      fillMode={"flat"}
+                      icon={"chevron-right"}
+                      onClick={() => {
+                        if (swiper) {
+                          swiper.slideTo(1);
+                        }
+                      }}
+                    ></Button>
+                  </GridTitle>
+                </GridTitleContainer>
+                <Grid
+                  style={{
+                    height: mobileheight,
+                  }}
+                  data={process(
+                    mainDataResult.data.map((row) => ({
+                      ...row,
+                      request_date: dateformat2(row.request_date),
+                      reception_date: dateformat2(row.reception_date),
+                      be_finished_date: dateformat2(row.be_finished_date),
+                      completion_date: dateformat2(row.completion_date),
+                      [SELECTED_FIELD]: selectedState[idGetter(row)],
+                    })),
+                    mainDataState
+                  )}
+                  {...mainDataState}
+                  onDataStateChange={onMainDataStateChange}
+                  //선택 기능
+                  dataItemKey={DATA_ITEM_KEY}
+                  selectedField={SELECTED_FIELD}
+                  selectable={{
+                    enabled: true,
+                    mode: "single",
+                  }}
+                  onSelectionChange={onSelectionChange}
+                  fixedScroll={true}
+                  total={mainDataResult.total}
+                  skip={page.skip}
+                  take={page.take}
+                  pageable={true}
+                  onPageChange={pageChange}
+                  //원하는 행 위치로 스크롤 기능
+                  ref={gridRef}
+                  rowHeight={30}
+                  //정렬기능
+                  sortable={true}
+                  onSortChange={onMainSortChange}
+                  //컬럼순서조정
+                  reorderable={true}
+                  //컬럼너비조정
+                  resizable={true}
                 >
-                  확인
-                </Button>
-              </div>
-            </QnAPwBox>
-          )}
-        </GridContainerWrap>
-      </GridContainerWrap>
+                  <GridColumn
+                    field="status"
+                    title="상태"
+                    width={80}
+                    cell={QnAStateCell}
+                    footerCell={mainTotalFooterCell}
+                  />
+                  <GridColumn
+                    field="request_date"
+                    title="요청일"
+                    width={100}
+                    cell={CenterCell}
+                  />
+                  {isAdmin && (
+                    <GridColumn
+                      field="customer_name"
+                      title="업체명"
+                      width={120}
+                    />
+                  )}
+                  <GridColumn field="user_name" title="작성자" width={100} />
+                  <GridColumn field="title" title="제목" width={200} />
+                  {!isAdmin && (
+                    <GridColumn
+                      field="is_checked"
+                      title="답변 확인"
+                      width={80}
+                      cell={CheckCell}
+                    />
+                  )}
+                  <GridColumn
+                    field="reception_date"
+                    title="접수일"
+                    width={100}
+                    cell={CenterCell}
+                  />
+                  <GridColumn
+                    field="be_finished_date"
+                    title="완료예정일"
+                    width={100}
+                    cell={CenterCell}
+                  />
+                  <GridColumn
+                    field="completion_date"
+                    title="처리완료일"
+                    width={100}
+                    cell={CenterCell}
+                  />
+                  <GridColumn field="contents" title="내용" width={150} />
+                </Grid>
+              </GridContainer>
+            </SwiperSlide>
+
+            {!isAdmin && isDataLocked ? (
+              <SwiperSlide key={1}>
+                <QnAPwBox
+                  onKeyPress={handleKeyPressSearchDetail}
+                  style={{ height: mobileheight5 }}
+                >
+                  <div className="inner">
+                    <Icon name="lock" themeColor="primary" size={"xlarge"} />
+                    <p>비밀번호를 입력해주세요.</p>
+                    <Input
+                      name="password"
+                      type="password"
+                      value={detailData.password}
+                      onChange={detailDataInputChange}
+                      ref={pwInputRef}
+                    />
+                    <Button
+                      themeColor={"primary"}
+                      onClick={() => fetchDetail(detailData.password)}
+                    >
+                      확인
+                    </Button>
+                  </div>
+                </QnAPwBox>
+              </SwiperSlide>
+            ) : (
+              <>
+                <SwiperSlide key={1}>
+                  <GridTitleContainer className="ButtonContainer2">
+                    <GridTitle>
+                      <Button
+                        themeColor={"primary"}
+                        fillMode={"flat"}
+                        icon={"chevron-left"}
+                        onClick={() => {
+                          if (swiper) {
+                            swiper.slideTo(0);
+                          }
+                        }}
+                      ></Button>
+                      상세정보
+                      <Button
+                        themeColor={"primary"}
+                        fillMode={"flat"}
+                        icon={"chevron-right"}
+                        onClick={() => {
+                          if (swiper) {
+                            swiper.slideTo(2);
+                          }
+                        }}
+                      ></Button>
+                    </GridTitle>
+                  </GridTitleContainer>
+
+                  <FormBoxWrap
+                    border
+                    className="FormBoxWrap"
+                    style={{ overflow: "auto", height: mobileheight2 }}
+                  >
+                    <FormBox>
+                      <tbody>
+                        <tr>
+                          <th>제목</th>
+                          <td colSpan={3}>
+                            <Input
+                              name="title"
+                              type="text"
+                              value={detailData.title}
+                              onChange={detailDataInputChange}
+                              className={isAdmin ? "readonly" : "required"}
+                              readOnly={isAdmin}
+                            />
+                          </td>
+                          <th>작성자</th>
+                          <td colSpan={3}>
+                            <Input
+                              name="user_name"
+                              type="text"
+                              value={detailData.user_name}
+                              onChange={detailDataInputChange}
+                              className={isAdmin ? "readonly" : "required"}
+                              readOnly={isAdmin}
+                            />
+                          </td>
+                        </tr>
+                        <tr>
+                          <th>연락처</th>
+                          <td>
+                            <Input
+                              name="user_tel"
+                              type="text"
+                              value={detailData.user_tel}
+                              onChange={detailDataInputChange}
+                              className={isAdmin ? "readonly" : ""}
+                              readOnly={isAdmin}
+                            />
+                          </td>
+                          <th>비밀번호</th>
+                          <td>
+                            <div className="filter-item-wrap">
+                              <Input
+                                name="password"
+                                type="password"
+                                value={detailData.password}
+                                onChange={detailDataInputChange}
+                                className={
+                                  isAdmin
+                                    ? "readonly"
+                                    : detailData.is_lock
+                                    ? "required"
+                                    : ""
+                                }
+                                readOnly={isAdmin}
+                                autoComplete={"false"}
+                              />
+                              <Button
+                                icon={detailData.is_lock ? "lock" : "unlock"}
+                                themeColor={"primary"}
+                                fillMode={"flat"}
+                                onClick={() =>
+                                  setDetailData((prev) => ({
+                                    ...prev,
+                                    is_lock: !prev.is_lock,
+                                  }))
+                                }
+                                disabled={isAdmin}
+                              />
+                            </div>
+                          </td>
+                          <th>공개 여부</th>
+                          <td colSpan={3}>
+                            <RadioGroup
+                              name="is_public"
+                              data={isPublicListData.filter(
+                                (data) => data.value !== "All"
+                              )}
+                              value={detailData.is_public}
+                              onChange={(e) =>
+                                setDetailData((prev) => ({
+                                  ...prev,
+                                  is_public: e.value,
+                                }))
+                              }
+                              layout="horizontal"
+                              className={isAdmin ? "readonly" : "required"}
+                              disabled={
+                                detailData.is_lock && !isAdmin ? false : true
+                              }
+                            />
+                          </td>
+                        </tr>
+                        <tr>
+                          <th>요청일</th>
+                          <td>
+                            {isAdmin ? (
+                              <Input
+                                name="request_date"
+                                type="text"
+                                value={dateformat2(
+                                  convertDateToStr(detailData.request_date)
+                                )}
+                                className="readonly"
+                                readOnly
+                              />
+                            ) : (
+                              <DatePicker
+                                name="request_date"
+                                value={detailData.request_date}
+                                onChange={detailDataInputChange}
+                                format="yyyy-MM-dd"
+                                className={"required"}
+                                placeholder=""
+                              />
+                            )}
+                          </td>
+                          <th>완료예정일</th>
+                          <td>
+                            <Input
+                              name="be_finished_date"
+                              type="text"
+                              value={detailData.be_finished_date}
+                              onChange={detailDataInputChange}
+                              className="readonly"
+                              readOnly
+                            />
+                          </td>
+                          <th>접수일</th>
+                          <td>
+                            <Input
+                              name="reception_date"
+                              type="text"
+                              value={detailData.reception_date}
+                              onChange={detailDataInputChange}
+                              className="readonly"
+                              readOnly
+                            />
+                          </td>
+                          <th>상태</th>
+                          <td>
+                            <Input
+                              name="status"
+                              type="text"
+                              value={detailData.status.code_name}
+                              onChange={detailDataInputChange}
+                              className="readonly"
+                              readOnly
+                            />
+                          </td>
+                        </tr>
+                      </tbody>
+                    </FormBox>
+                  </FormBoxWrap>
+                </SwiperSlide>
+                <SwiperSlide key={2}>
+                  <GridTitleContainer className="ButtonContainer4">
+                    <GridTitle>
+                      <Button
+                        themeColor={"primary"}
+                        fillMode={"flat"}
+                        icon={"chevron-left"}
+                        onClick={() => {
+                          if (swiper) {
+                            swiper.slideTo(1);
+                          }
+                        }}
+                      ></Button>
+                      문의
+                      <Button
+                        themeColor={"primary"}
+                        fillMode={"flat"}
+                        icon={"chevron-right"}
+                        onClick={() => {
+                          if (swiper) {
+                            swiper.slideTo(3);
+                          }
+                        }}
+                      ></Button>
+                    </GridTitle>
+                  </GridTitleContainer>
+                  <div style={{ height: mobileheight3 }}>
+                    <RichEditor
+                      id="qEditor"
+                      ref={qEditorRef}
+                      hideTools={isAdmin}
+                    />
+                  </div>
+                  <FormBoxWrap
+                    border
+                    className="FormBoxWrap2"
+                    style={{
+                      margin: 0,
+                      borderTop: 0,
+                    }}
+                  >
+                    <FormBox>
+                      <tbody>
+                        <tr>
+                          <th style={{ width: 0 }}>첨부파일</th>
+                          <td style={{ width: "auto" }}>
+                            <div className="filter-item-wrap">
+                              <Input
+                                name="attachment_q"
+                                value={detailData.files}
+                                className="readonly"
+                              />
+                              <Button
+                                icon="more-horizontal"
+                                fillMode={"flat"}
+                                onClick={() =>
+                                  setAttachmentsWindowVisibleQ(true)
+                                }
+                              />
+                            </div>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </FormBox>
+                  </FormBoxWrap>
+                </SwiperSlide>
+                <SwiperSlide key={3}>
+                  <GridTitleContainer className="ButtonContainer3">
+                    <GridTitle>
+                      {" "}
+                      <Button
+                        themeColor={"primary"}
+                        fillMode={"flat"}
+                        icon={"chevron-left"}
+                        onClick={() => {
+                          if (swiper) {
+                            swiper.slideTo(2);
+                          }
+                        }}
+                      ></Button>
+                      답변
+                    </GridTitle>
+                    <ButtonContainer>
+                      {!isAdmin && (
+                        <Button
+                          themeColor={"primary"}
+                          fillMode={"flat"}
+                          icon={isChecked ? "x" : "check"}
+                          onClick={checkAnswer}
+                        >
+                          {isChecked ? "답변 확인 취소" : "답변 확인"}
+                        </Button>
+                      )}
+                    </ButtonContainer>
+                  </GridTitleContainer>
+                  <div style={{ height: mobileheight4 }}>
+                    <RichEditor id="aEditor" ref={aEditorRef} hideTools />
+                  </div>
+                  <FormBoxWrap
+                    className="FormBoxWrap3"
+                    border
+                    style={{
+                      margin: 0,
+                      borderTop: 0,
+                    }}
+                  >
+                    <FormBox>
+                      <tbody>
+                        <tr>
+                          <th style={{ width: 0 }}>첨부파일</th>
+                          <td style={{ width: "auto" }}>
+                            <div className="filter-item-wrap">
+                              <Input
+                                name="attachment_a"
+                                value={detailData.answer_files}
+                                className="readonly"
+                              />
+                              <Button
+                                icon="more-horizontal"
+                                fillMode={"flat"}
+                                onClick={() =>
+                                  setAttachmentsWindowVisibleA(true)
+                                }
+                              />
+                            </div>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </FormBox>
+                  </FormBoxWrap>
+                </SwiperSlide>
+              </>
+            )}
+          </Swiper>
+        </>
+      ) : (
+        <>
+          <GridContainerWrap>
+            <GridContainer width={`40%`}>
+              {isMobile ? (
+                ""
+              ) : (
+                <GridTitleContainer className="ButtonContainer">
+                  <GridTitle>조회조건</GridTitle>
+                </GridTitleContainer>
+              )}
+              <FilterContainer>
+                <FilterBoxWrap ref={filterRef} style={{ padding: "0 0 10px" }}>
+                  <FilterBox
+                    onKeyPress={(e) => {
+                      handleKeyPressSearch(e, search);
+                    }}
+                  >
+                    <tbody>
+                      <tr>
+                        <th style={{ paddingRight: "5px", paddingLeft: "5px" }}>
+                          <DropDownList
+                            name="dateType"
+                            data={dateType}
+                            textField="label"
+                            dataItemKey="value"
+                            value={filters.dateType}
+                            onChange={filterInputChange}
+                          />
+                        </th>
+                        <td>
+                          <div className="filter-item-wrap">
+                            <DatePicker
+                              name="fromDate"
+                              value={filters.fromDate}
+                              format="yyyy-MM-dd"
+                              onChange={filterInputChange}
+                              placeholder=""
+                              className="required"
+                            />
+                            ~
+                            <DatePicker
+                              name="toDate"
+                              value={filters.toDate}
+                              format="yyyy-MM-dd"
+                              onChange={filterInputChange}
+                              placeholder=""
+                              className="required"
+                            />
+                          </div>
+                        </td>
+                        <th>공개 여부</th>
+                        <td colSpan={3}>
+                          <RadioGroup
+                            name="isPublic"
+                            data={isPublicListData}
+                            value={filters.isPublic}
+                            onChange={(e) =>
+                              setFilters((prev) => ({
+                                ...prev,
+                                isPublic: e.value,
+                              }))
+                            }
+                            layout="horizontal"
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>상태</th>
+                        <td>
+                          <MultiSelect
+                            data={statusListData}
+                            onChange={filterMultiSelectChange}
+                            value={filters.status}
+                            textField="code_name"
+                            dataItemKey="sub_code"
+                          />
+                        </td>
+                        <th>작성자</th>
+                        <td>
+                          <Input
+                            name="userName"
+                            type="text"
+                            value={filters.userName}
+                            onChange={filterInputChange}
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>제목 및 내용</th>
+                        <td>
+                          <Input
+                            name="contents"
+                            type="text"
+                            value={filters.contents}
+                            onChange={filterInputChange}
+                          />
+                        </td>
+                        <th>업체명</th>
+                        <td>
+                          <Input
+                            name="custnm"
+                            type="text"
+                            value={filters.custnm}
+                            onChange={filterInputChange}
+                          />
+                        </td>
+                      </tr>
+                    </tbody>
+                  </FilterBox>
+                </FilterBoxWrap>
+              </FilterContainer>
+              <GridTitleContainer className="ButtonContainer">
+                <GridTitle>요약정보</GridTitle>
+              </GridTitleContainer>
+              <Grid
+                style={{
+                  height: webheight,
+                }}
+                data={process(
+                  mainDataResult.data.map((row) => ({
+                    ...row,
+                    request_date: dateformat2(row.request_date),
+                    reception_date: dateformat2(row.reception_date),
+                    be_finished_date: dateformat2(row.be_finished_date),
+                    completion_date: dateformat2(row.completion_date),
+                    [SELECTED_FIELD]: selectedState[idGetter(row)],
+                  })),
+                  mainDataState
+                )}
+                {...mainDataState}
+                onDataStateChange={onMainDataStateChange}
+                //선택 기능
+                dataItemKey={DATA_ITEM_KEY}
+                selectedField={SELECTED_FIELD}
+                selectable={{
+                  enabled: true,
+                  mode: "single",
+                }}
+                onSelectionChange={onSelectionChange}
+                fixedScroll={true}
+                total={mainDataResult.total}
+                skip={page.skip}
+                take={page.take}
+                pageable={true}
+                onPageChange={pageChange}
+                //원하는 행 위치로 스크롤 기능
+                ref={gridRef}
+                rowHeight={30}
+                //정렬기능
+                sortable={true}
+                onSortChange={onMainSortChange}
+                //컬럼순서조정
+                reorderable={true}
+                //컬럼너비조정
+                resizable={true}
+              >
+                <GridColumn
+                  field="status"
+                  title="상태"
+                  width={80}
+                  cell={QnAStateCell}
+                  footerCell={mainTotalFooterCell}
+                />
+                <GridColumn
+                  field="request_date"
+                  title="요청일"
+                  width={100}
+                  cell={CenterCell}
+                />
+                {isAdmin && (
+                  <GridColumn
+                    field="customer_name"
+                    title="업체명"
+                    width={120}
+                  />
+                )}
+                <GridColumn field="user_name" title="작성자" width={100} />
+                <GridColumn field="title" title="제목" width={200} />
+                {!isAdmin && (
+                  <GridColumn
+                    field="is_checked"
+                    title="답변 확인"
+                    width={80}
+                    cell={CheckCell}
+                  />
+                )}
+                <GridColumn
+                  field="reception_date"
+                  title="접수일"
+                  width={100}
+                  cell={CenterCell}
+                />
+                <GridColumn
+                  field="be_finished_date"
+                  title="완료예정일"
+                  width={100}
+                  cell={CenterCell}
+                />
+                <GridColumn
+                  field="completion_date"
+                  title="처리완료일"
+                  width={100}
+                  cell={CenterCell}
+                />
+                <GridColumn field="contents" title="내용" width={150} />
+              </Grid>
+            </GridContainer>
+            <GridContainerWrap flexDirection="column">
+              <GridTitleContainer className="ButtonContainer2">
+                <GridTitle>상세정보</GridTitle>
+              </GridTitleContainer>
+
+              <GridContainer
+                style={
+                  !isAdmin && isDataLocked
+                    ? { display: "none", height: "100%" }
+                    : { height: "100%" }
+                }
+              >
+                <FormBoxWrap border className="FormBoxWrap">
+                  <FormBox>
+                    <tbody>
+                      <tr>
+                        <th>제목</th>
+                        <td colSpan={3}>
+                          <Input
+                            name="title"
+                            type="text"
+                            value={detailData.title}
+                            onChange={detailDataInputChange}
+                            className={isAdmin ? "readonly" : "required"}
+                            readOnly={isAdmin}
+                          />
+                        </td>
+                        <th>작성자</th>
+                        <td colSpan={3}>
+                          <Input
+                            name="user_name"
+                            type="text"
+                            value={detailData.user_name}
+                            onChange={detailDataInputChange}
+                            className={isAdmin ? "readonly" : "required"}
+                            readOnly={isAdmin}
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>연락처</th>
+                        <td>
+                          <Input
+                            name="user_tel"
+                            type="text"
+                            value={detailData.user_tel}
+                            onChange={detailDataInputChange}
+                            className={isAdmin ? "readonly" : ""}
+                            readOnly={isAdmin}
+                          />
+                        </td>
+                        <th>비밀번호</th>
+                        <td>
+                          <div className="filter-item-wrap">
+                            <Input
+                              name="password"
+                              type="password"
+                              value={detailData.password}
+                              onChange={detailDataInputChange}
+                              className={
+                                isAdmin
+                                  ? "readonly"
+                                  : detailData.is_lock
+                                  ? "required"
+                                  : ""
+                              }
+                              readOnly={isAdmin}
+                              autoComplete={"false"}
+                            />
+                            <Button
+                              icon={detailData.is_lock ? "lock" : "unlock"}
+                              themeColor={"primary"}
+                              fillMode={"flat"}
+                              onClick={() =>
+                                setDetailData((prev) => ({
+                                  ...prev,
+                                  is_lock: !prev.is_lock,
+                                }))
+                              }
+                              disabled={isAdmin}
+                            />
+                          </div>
+                        </td>
+                        <th>공개 여부</th>
+                        <td colSpan={3}>
+                          <RadioGroup
+                            name="is_public"
+                            data={isPublicListData.filter(
+                              (data) => data.value !== "All"
+                            )}
+                            value={detailData.is_public}
+                            onChange={(e) =>
+                              setDetailData((prev) => ({
+                                ...prev,
+                                is_public: e.value,
+                              }))
+                            }
+                            layout="horizontal"
+                            className={isAdmin ? "readonly" : "required"}
+                            disabled={
+                              detailData.is_lock && !isAdmin ? false : true
+                            }
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>요청일</th>
+                        <td>
+                          {isAdmin ? (
+                            <Input
+                              name="request_date"
+                              type="text"
+                              value={dateformat2(
+                                convertDateToStr(detailData.request_date)
+                              )}
+                              className="readonly"
+                              readOnly
+                            />
+                          ) : (
+                            <DatePicker
+                              name="request_date"
+                              value={detailData.request_date}
+                              onChange={detailDataInputChange}
+                              format="yyyy-MM-dd"
+                              className={"required"}
+                              placeholder=""
+                            />
+                          )}
+                        </td>
+                        <th>완료예정일</th>
+                        <td>
+                          <Input
+                            name="be_finished_date"
+                            type="text"
+                            value={detailData.be_finished_date}
+                            onChange={detailDataInputChange}
+                            className="readonly"
+                            readOnly
+                          />
+                        </td>
+                        <th>접수일</th>
+                        <td>
+                          <Input
+                            name="reception_date"
+                            type="text"
+                            value={detailData.reception_date}
+                            onChange={detailDataInputChange}
+                            className="readonly"
+                            readOnly
+                          />
+                        </td>
+                        <th>상태</th>
+                        <td>
+                          <Input
+                            name="status"
+                            type="text"
+                            value={detailData.status.code_name}
+                            onChange={detailDataInputChange}
+                            className="readonly"
+                            readOnly
+                          />
+                        </td>
+                      </tr>
+                    </tbody>
+                  </FormBox>
+                </FormBoxWrap>
+                <div style={{ height: webheight2 }}>
+                  <RichEditor
+                    id="qEditor"
+                    ref={qEditorRef}
+                    hideTools={isAdmin}
+                  />
+                </div>
+                <FormBoxWrap
+                  border
+                  className="FormBoxWrap2"
+                  style={{
+                    margin: 0,
+                    borderTop: 0,
+                  }}
+                >
+                  <FormBox>
+                    <tbody>
+                      <tr>
+                        <th style={{ width: 0 }}>첨부파일</th>
+                        <td style={{ width: "auto" }}>
+                          <div className="filter-item-wrap">
+                            <Input
+                              name="attachment_q"
+                              value={detailData.files}
+                              className="readonly"
+                            />
+                            <Button
+                              icon="more-horizontal"
+                              fillMode={"flat"}
+                              onClick={() => setAttachmentsWindowVisibleQ(true)}
+                            />
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </FormBox>
+                </FormBoxWrap>
+                <GridTitleContainer className="ButtonContainer3">
+                  <GridTitle>답변</GridTitle>
+                  <ButtonContainer>
+                    {!isAdmin && (
+                      <Button
+                        themeColor={"primary"}
+                        fillMode={"flat"}
+                        icon={isChecked ? "x" : "check"}
+                        onClick={checkAnswer}
+                      >
+                        {isChecked ? "답변 확인 취소" : "답변 확인"}
+                      </Button>
+                    )}
+                  </ButtonContainer>
+                </GridTitleContainer>
+                <div style={{ height: webheight3 }}>
+                  <RichEditor id="aEditor" ref={aEditorRef} hideTools />
+                </div>
+                <FormBoxWrap
+                  className="FormBoxWrap3"
+                  border
+                  style={{
+                    margin: 0,
+                    borderTop: 0,
+                  }}
+                >
+                  <FormBox>
+                    <tbody>
+                      <tr>
+                        <th style={{ width: 0 }}>첨부파일</th>
+                        <td style={{ width: "auto" }}>
+                          <div className="filter-item-wrap">
+                            <Input
+                              name="attachment_a"
+                              value={detailData.answer_files}
+                              className="readonly"
+                            />
+                            <Button
+                              icon="more-horizontal"
+                              fillMode={"flat"}
+                              onClick={() => setAttachmentsWindowVisibleA(true)}
+                            />
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </FormBox>
+                </FormBoxWrap>
+              </GridContainer>
+              {!isAdmin && isDataLocked && (
+                <QnAPwBox onKeyPress={handleKeyPressSearchDetail}>
+                  <div className="inner">
+                    <Icon name="lock" themeColor="primary" size={"xlarge"} />
+                    <p>비밀번호를 입력해주세요.</p>
+                    <Input
+                      name="password"
+                      type="password"
+                      value={detailData.password}
+                      onChange={detailDataInputChange}
+                      ref={pwInputRef}
+                    />
+                    <Button
+                      themeColor={"primary"}
+                      onClick={() => fetchDetail(detailData.password)}
+                    >
+                      확인
+                    </Button>
+                  </div>
+                </QnAPwBox>
+              )}
+            </GridContainerWrap>
+          </GridContainerWrap>
+        </>
+      )}
       {attachmentsWindowVisibleQ && (
         <AttachmentsWindow
           type="question"

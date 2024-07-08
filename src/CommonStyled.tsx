@@ -715,7 +715,7 @@ export const Gnv = styled.div<TGnv>`
   min-width: ${GNV_WIDTH}px;
   text-align: center;
 
-  min-height: calc(100vh - 30px);
+  min-height: calc(100vh - 80px);
 
   background-color: ${(props) =>
     props.theme === "dark" ? "rgb(16, 16,16)" : "#fff"};
@@ -807,6 +807,7 @@ export const Header = styled.div`
   padding: 1rem;
   min-width: 150px;
   position: relative;
+  background-color: #fff;
   @media (max-width: 1200px) {
     display: none;
   }
@@ -819,7 +820,15 @@ export const Content = styled.div<ContentType>`
   width: calc(
     100% - ${(props) => (props.isMenuOpen ? GNV_WIDTH : CLOSED_GNV_WIDTH)}px
   );
-
+  background-color: #fff;
+  /* 컨테이너 고정 추가 */
+  left: calc(${(props) => (props.isMenuOpen ? GNV_WIDTH : "25")}px);
+  height: 97vh;
+  position: fixed;
+  overflow: scroll;
+  ::-webkit-scrollbar {
+    display: none;
+  }
   /*=========================================================================
   미디어 쿼리
   ##Device = 모바일
@@ -827,7 +836,8 @@ export const Content = styled.div<ContentType>`
   =========================================================================*/
   @media (max-width: 1200px) {
     width: 100%;
-    padding-bottom: 5vh;
+    left: 0;
+    height: 100vh;
   }
 `;
 

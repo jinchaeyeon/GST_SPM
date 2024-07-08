@@ -52,6 +52,7 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useState,
 } from "react";
 import { useRecoilState, useSetRecoilState } from "recoil";
@@ -75,7 +76,9 @@ import {
   convertDateToStrWithTime2,
   dateformat2,
   getCodeFromValue,
+  getDeviceHeight,
   getGridItemChangedData,
+  getHeight,
   handleKeyPressSearch,
   projectItemQueryStr,
   toDate,
@@ -98,6 +101,7 @@ import { Iparameters } from "../store/types";
 import NumberPercentCell from "../components/Cells/NumberPercentCell";
 import RequiredHeader from "../components/RequiredHeader";
 import DetailWindow from "../components/Windows/CommonWindows/ProjectScheduleDetailWindow";
+import FilterContainer from "../components/FilterContainer";
 type TSavedPara = {
   row_status?: "N" | "U" | "D";
   guid?: string;
@@ -181,6 +185,9 @@ const deletedGridData: any[] = [];
 
 let taskForDeleting: any[] = []; // 삭제할때 참조되는 용도
 
+var height = 0;
+var height2 = 0;
+
 const App = () => {
   const processApi = useApi();
   const [pc, setPc] = useState("");
@@ -188,7 +195,33 @@ const App = () => {
   const [filterValue, setFilterValue] = useRecoilState(filterValueState);
   const [title, setTitle] = useRecoilState(titles);
   let deviceWidth = window.innerWidth;
-  let isMobile = deviceWidth <= 1200;
+  const [isMobile, setIsMobile] = useState(deviceWidth <= 1200);
+  const [mobileheight, setMobileHeight] = useState(0);
+  const [mobileheight2, setMobileHeight2] = useState(0);
+  const [mobileheight3, setMobileHeight3] = useState(0);
+  const [webheight, setWebHeight] = useState(0);
+  const [webheight2, setWebHeight2] = useState(0);
+  const [webheight3, setWebHeight3] = useState(0);
+
+  useLayoutEffect(() => {
+    height = getHeight(".ButtonContainer");
+    height2 = getHeight(".TitleContainer");
+
+    const handleWindowResize = () => {
+      let deviceWidth = document.documentElement.clientWidth;
+      setIsMobile(deviceWidth <= 1200);
+      setMobileHeight(getDeviceHeight(true) - height - height2);
+
+      setWebHeight(getDeviceHeight(true) - height - height2);
+      setWebHeight2(getDeviceHeight(true) - height - height2);
+    };
+    handleWindowResize();
+    window.addEventListener("resize", handleWindowResize);
+    return () => {
+      window.removeEventListener("resize", handleWindowResize);
+    };
+  }, [webheight, webheight2]);
+
   const [loginResult] = useRecoilState(loginResultState);
   const userId = loginResult ? loginResult.userId : "";
   const role = loginResult ? loginResult.role : "";
@@ -1151,7 +1184,7 @@ const App = () => {
   return (
     <>
       <CodesContext.Provider value={{ projectItems: projectItems }}>
-        <TitleContainer>
+        <TitleContainer className="TitleContainer">
           {!isMobile ? "" : <Title>프로젝트 일정계획</Title>}
           <ButtonContainer>
             <Button onClick={search} icon="search" themeColor={"primary"}>
@@ -1189,10 +1222,14 @@ const App = () => {
             )}
           </ButtonContainer>
         </TitleContainer>
-        <GridTitleContainer>
-          <GridTitle>조회조건</GridTitle>
-        </GridTitleContainer>
-        <FilterBoxWrap>
+        {!isMobile ? (
+          <GridTitleContainer className="ButtonContainer">
+            <GridTitle>조회조건</GridTitle>
+          </GridTitleContainer>
+        ) : (
+          ""
+        )}
+        <FilterContainer>
           <FilterBox onKeyPress={(e) => handleKeyPressSearch(e, search)}>
             <tbody>
               <tr>
@@ -1248,14 +1285,14 @@ const App = () => {
               </tr>
             </tbody>
           </FilterBox>
-        </FilterBoxWrap>
+        </FilterContainer>
 
-        <GridContainer height={"78%"}>
+        <GridContainer style={{ width: "100%" }}>
           {view === "Scheduler" ? (
             <Gantt
-              taskListWidth={500}
+              taskListWidth={!isMobile ? 500 : 200}
               scaleType={scale}
-              height={"100%"}
+              height={webheight}
               onDependencyInserted={onDependencyInserted}
               onDependencyInserting={onDependencyInserting}
               onDependencyDeleted={onDependencyDeleted}
@@ -1267,6 +1304,7 @@ const App = () => {
               // onResourceAssigned={onResourceAssigned}
               // onResourceUnassigned={onResourceUnassigned}
               onTaskEditDialogShowing={onTaskEditDialogShowing}
+              style={{ marginTop: "5px" }}
             >
               <Tasks dataSource={task} />
               <Dependencies dataSource={dependency} />
@@ -1307,7 +1345,7 @@ const App = () => {
             </Gantt>
           ) : (
             <Grid
-              style={{ height: `100%` }}
+              style={{ height: webheight2 }}
               data={process(
                 gridData.data.map((row) => ({
                   ...row,

@@ -27,13 +27,21 @@ import { Splitter, SplitterOnChangeEvent } from "@progress/kendo-react-layout";
 
 import { bytesToBase64 } from "byte-base64";
 import Cookies from "js-cookie";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { useHistory, useLocation } from "react-router-dom";
 import { useRecoilState, useSetRecoilState } from "recoil";
+import SwiperCore from "swiper";
+import "swiper/css";
+import { Swiper, SwiperSlide } from "swiper/react";
 import {
   ButtonContainer,
   FilterBox,
-  FilterBoxWrap,
   FormBox,
   FormBoxWrap,
   GridContainer,
@@ -48,12 +56,15 @@ import {
   chkScrollHandler,
   convertDateToStr,
   dateformat2,
+  getDeviceHeight,
+  getHeight,
   handleKeyPressSearch,
   isWithinOneMonth,
   toDate,
   UseParaPc,
 } from "../components/CommonFunction";
-import { GAP, PAGE_SIZE, SELECTED_FIELD } from "../components/CommonString";
+import { PAGE_SIZE, SELECTED_FIELD } from "../components/CommonString";
+import FilterContainer from "../components/FilterContainer";
 import RichEditor from "../components/RichEditor";
 import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
 import CustomersWindow from "../components/Windows/CommonWindows/CustomersWindow";
@@ -110,6 +121,16 @@ const defaultDetailData: {
 
 const DATA_ITEM_KEY = "document_id";
 
+var index = 0;
+
+var height = 0;
+var height2 = 0;
+var height3 = 0;
+var height4 = 0;
+var height5 = 0;
+var height6 = 0;
+var height7 = 0;
+
 const App = () => {
   const [loginResult] = useRecoilState(loginResultState);
   const setLoading = useSetRecoilState(isLoading);
@@ -121,8 +142,53 @@ const App = () => {
   const [pc, setPc] = useState("");
   UseParaPc(setPc);
   const [title, setTitle] = useRecoilState(titles);
+  const [swiper, setSwiper] = useState<SwiperCore>();
+
   let deviceWidth = window.innerWidth;
-  let isMobile = deviceWidth <= 1200;
+  const [isMobile, setIsMobile] = useState(deviceWidth <= 1200);
+  const [mobileheight, setMobileHeight] = useState(0);
+  const [mobileheight2, setMobileHeight2] = useState(0);
+  const [mobileheight3, setMobileHeight3] = useState(0);
+  const [webheight, setWebHeight] = useState(0);
+  const [webheight2, setWebHeight2] = useState(0);
+  const [webheight3, setWebHeight3] = useState(0);
+
+  useLayoutEffect(() => {
+    height = getHeight(".ButtonContainer");
+    height2 = getHeight(".ButtonContainer2");
+    height3 = getHeight(".ButtonContainer3");
+    height4 = getHeight(".ButtonContainer4");
+    height5 = getHeight(".FormBoxWrap");
+    height6 = getHeight(".FormBoxWrap2");
+    height7 = getHeight(".TitleContainer");
+
+    const handleWindowResize = () => {
+      let deviceWidth = document.documentElement.clientWidth;
+      setIsMobile(deviceWidth <= 1200);
+      setMobileHeight(getDeviceHeight(true) - height2 - height7);
+      setMobileHeight2(getDeviceHeight(true) - height3 - height7);
+      setMobileHeight3(
+        getDeviceHeight(true) - height4 - height6 - height7 + 14
+      );
+
+      setWebHeight(getDeviceHeight(true) - height - height2 - height7);
+      setWebHeight2(
+        getDeviceHeight(true) -
+          height -
+          height3 -
+          height5 -
+          height6 -
+          height7 +
+          16
+      );
+    };
+    handleWindowResize();
+    window.addEventListener("resize", handleWindowResize);
+    return () => {
+      window.removeEventListener("resize", handleWindowResize);
+    };
+  }, [webheight, webheight2, webheight3]);
+
   const location = useLocation();
   const pathname = location.pathname.replace("/", "");
   const processApi = useApi();
@@ -259,6 +325,9 @@ const App = () => {
       isFetch: true,
       isReset: true,
     }));
+    if (swiper && isMobile) {
+      swiper.slideTo(0);
+    }
   };
 
   useEffect(() => {
@@ -312,6 +381,9 @@ const App = () => {
     setSelectedState(newSelectedState);
     setFileList([]);
     setSavenmList([]);
+    if (swiper && isMobile) {
+      swiper.slideTo(1);
+    }
   };
 
   const onMainScrollHandler = (event: GridEvent) => {
@@ -571,7 +643,11 @@ const App = () => {
   };
 
   const createSharedDocument = () => {
-    setDetailData({ ...defaultDetailData, work_type: "N", write_date: new Date() });
+    setDetailData({
+      ...defaultDetailData,
+      work_type: "N",
+      write_date: new Date(),
+    });
 
     // Edior에 HTML & CSS 세팅
     setHtmlOnEditor("");
@@ -839,10 +915,9 @@ const App = () => {
 
   return (
     <>
-      {" "}
-      <TitleContainer>
+      <TitleContainer className="TitleContainer">
         {!isMobile ? "" : <Title>공유문서 관리</Title>}
-        <ButtonContainer>
+        <ButtonContainer style={{ rowGap: "5px" }}>
           <Button onClick={search} icon="search" themeColor={"primary"}>
             조회
           </Button>
@@ -891,10 +966,14 @@ const App = () => {
           </Button>
         </ButtonContainer>
       </TitleContainer>
-      <GridTitleContainer>
-        <GridTitle>조회조건</GridTitle>
-      </GridTitleContainer>
-      <FilterBoxWrap>
+      {!isMobile ? (
+        <GridTitleContainer className="ButtonContainer">
+          <GridTitle>조회조건</GridTitle>
+        </GridTitleContainer>
+      ) : (
+        ""
+      )}
+      <FilterContainer>
         <FilterBox onKeyPress={(e) => handleKeyPressSearch(e, search)}>
           <tbody>
             <tr>
@@ -976,230 +1055,271 @@ const App = () => {
             </tr>
           </tbody>
         </FilterBox>
-      </FilterBoxWrap>
-      <GridContainerWrap height={"78%"}>
-      <Splitter
-        panes={panes}
-        onChange={onChange}
-        style={{ width: "100%", borderColor: "#00000000" }}
-      >
-          <GridContainer>
-            <GridTitleContainer>
-              <GridTitle>요약정보</GridTitle>
-            </GridTitleContainer>
-            <Grid
-              style={{ height: `calc(100% - 35px)` }}
-              data={process(
-                mainDataResult.data.map((row) => ({
-                  ...row,
-                  [SELECTED_FIELD]: selectedState[idGetter(row)],
-                  write_date: dateformat2(row.write_date),
-                })),
-                mainDataState
-              )}
-              {...mainDataState}
-              onDataStateChange={onMainDataStateChange}
-              //선택 기능
-              dataItemKey={DATA_ITEM_KEY}
-              selectedField={SELECTED_FIELD}
-              selectable={{
-                enabled: true,
-                mode: "single",
-              }}
-              onSelectionChange={onSelectionChange}
-              //스크롤 조회 기능
-              fixedScroll={true}
-              total={mainDataResult.total}
-              onScroll={onMainScrollHandler}
-              //정렬기능
-              sortable={true}
-              onSortChange={onMainSortChange}
-              //컬럼순서조정
-              reorderable={true}
-              //컬럼너비조정
-              resizable={true}
-            >
-              <GridColumn
-                field="write_date"
-                title="작성일자"
-                width={110}
-                cell={CenterCell}
-                footerCell={mainTotalFooterCell}
-              />
-              <GridColumn
-                field="typenm"
-                title="구분"
-                width={100}
-                cell={CenterCell}
-              />
-              <GridColumn
-                field="customer_name"
-                title="업체명"
-                width={120}
-                //cell={CenterCell}
-              />
-              <GridColumn field="title" title="제목" />
-            </Grid>
-          </GridContainer>
-          <GridContainer >
-            <GridTitleContainer>
+      </FilterContainer>
+      {isMobile ? (
+        <Swiper
+          onSwiper={(swiper) => {
+            setSwiper(swiper);
+          }}
+          onActiveIndexChange={(swiper) => {
+            index = swiper.activeIndex;
+          }}
+        >
+          <SwiperSlide key={0}>
+            <GridContainer>
+              <GridTitleContainer className="ButtonContainer2">
+                <GridTitle>
+                  요약정보{" "}
+                  <Button
+                    themeColor={"primary"}
+                    fillMode={"flat"}
+                    icon={"chevron-right"}
+                    onClick={() => {
+                      if (swiper) {
+                        swiper.slideTo(1);
+                      }
+                    }}
+                  ></Button>
+                </GridTitle>
+              </GridTitleContainer>
+              <Grid
+                style={{ height: mobileheight }}
+                data={process(
+                  mainDataResult.data.map((row) => ({
+                    ...row,
+                    [SELECTED_FIELD]: selectedState[idGetter(row)],
+                    write_date: dateformat2(row.write_date),
+                  })),
+                  mainDataState
+                )}
+                {...mainDataState}
+                onDataStateChange={onMainDataStateChange}
+                //선택 기능
+                dataItemKey={DATA_ITEM_KEY}
+                selectedField={SELECTED_FIELD}
+                selectable={{
+                  enabled: true,
+                  mode: "single",
+                }}
+                onSelectionChange={onSelectionChange}
+                //스크롤 조회 기능
+                fixedScroll={true}
+                total={mainDataResult.total}
+                onScroll={onMainScrollHandler}
+                //정렬기능
+                sortable={true}
+                onSortChange={onMainSortChange}
+                //컬럼순서조정
+                reorderable={true}
+                //컬럼너비조정
+                resizable={true}
+              >
+                <GridColumn
+                  field="write_date"
+                  title="작성일자"
+                  width={110}
+                  cell={CenterCell}
+                  footerCell={mainTotalFooterCell}
+                />
+                <GridColumn
+                  field="typenm"
+                  title="구분"
+                  width={100}
+                  cell={CenterCell}
+                />
+                <GridColumn
+                  field="customer_name"
+                  title="업체명"
+                  width={120}
+                  //cell={CenterCell}
+                />
+                <GridColumn field="title" title="제목" />
+              </Grid>
+            </GridContainer>
+          </SwiperSlide>
+          <SwiperSlide key={1}>
+            <GridContainer>
+              <GridTitleContainer className="ButtonContainer3">
+                <GridTitle>
+                  <Button
+                    themeColor={"primary"}
+                    fillMode={"flat"}
+                    icon={"chevron-left"}
+                    onClick={() => {
+                      if (swiper) {
+                        swiper.slideTo(0);
+                      }
+                    }}
+                  ></Button>
+                  기본정보{" "}
+                  <Button
+                    themeColor={"primary"}
+                    fillMode={"flat"}
+                    icon={"chevron-right"}
+                    onClick={() => {
+                      if (swiper) {
+                        swiper.slideTo(2);
+                      }
+                    }}
+                  ></Button>
+                </GridTitle>
+              </GridTitleContainer>
+              <FormBoxWrap
+                border
+                className="FormBoxWrap"
+                style={{ height: mobileheight2 }}
+              >
+                <FormBox>
+                  <tbody>
+                    <tr>
+                      <th>구분</th>
+                      <td>
+                        <MultiColumnComboBox
+                          name="type"
+                          data={
+                            typeFilter
+                              ? filterBy(typesData, typeFilter)
+                              : typesData
+                          }
+                          value={detailData.type}
+                          columns={dataTypeColumns}
+                          textField={"code_name"}
+                          onChange={DetailComboBoxChange}
+                          className="required"
+                          filterable={true}
+                          onFilterChange={handleFilterChange}
+                          clearButton={false}
+                        />
+                      </td>
+                      <th>업체코드</th>
+                      <td>
+                        <div className="filter-item-wrap">
+                          <Input
+                            name="customer_code"
+                            value={
+                              detailData.customer
+                                ? detailData.customer.custcd
+                                : ""
+                            }
+                            className="readonly"
+                          />
+                          <Button
+                            icon="more-horizontal"
+                            fillMode={"flat"}
+                            onClick={() => setCustWindowVisible(true)}
+                          />
+                        </div>
+                      </td>
+                      <th>업체명</th>
+                      <td>
+                        {customersData && (
+                          <MultiColumnComboBox
+                            name="customer"
+                            data={
+                              custFilter
+                                ? filterBy(customersData, custFilter)
+                                : customersData
+                            }
+                            value={detailData.customer}
+                            columns={custTypeColumns}
+                            textField={"custnm"}
+                            onChange={DetailComboBoxChange}
+                            className=""
+                            filterable={true}
+                            onFilterChange={handleFilterChange}
+                          />
+                        )}
+                      </td>
+                    </tr>
+                    <tr>
+                      <th>작성일자</th>
+                      <td>
+                        {isAdmin ? (
+                          <DatePicker
+                            name="write_date"
+                            value={detailData.write_date}
+                            format="yyyy-MM-dd"
+                            onChange={detailDataInputChange}
+                            className={"required"}
+                            placeholder=""
+                          />
+                        ) : (
+                          <Input
+                            name="write_date"
+                            type="text"
+                            value={dateformat2(
+                              convertDateToStr(detailData.write_date)
+                            )}
+                            onChange={detailDataInputChange}
+                            className={!isAdmin ? "readonly" : "required"}
+                            readOnly={!isAdmin}
+                          />
+                        )}
+                      </td>
+                      <th>제목</th>
+                      <td colSpan={2}>
+                        <Input
+                          name="title"
+                          type="text"
+                          value={detailData.title}
+                          onChange={detailDataInputChange}
+                          className={!isAdmin ? "readonly" : "required"}
+                          readOnly={!isAdmin}
+                        />
+                      </td>
+                      <td>
+                        <Button
+                          themeColor={"primary"}
+                          style={{ width: "100%" }}
+                          onClick={() => {
+                            if (detailData.work_type == "N") {
+                              alert("저장 후 등록할 수 있습니다.");
+                            } else if (
+                              Object.getOwnPropertyNames(selectedState)[0] !=
+                              undefined
+                            ) {
+                              setSignWindowVisible(true);
+                            } else {
+                              alert("선택된 데이터가 없습니다.");
+                            }
+                          }}
+                        >
+                          참석자 등록
+                        </Button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </FormBox>
+              </FormBoxWrap>
+            </GridContainer>
+          </SwiperSlide>
+          <SwiperSlide key={2}>
+            <GridTitleContainer className="ButtonContainer4">
               <GridTitle>
+                {" "}
                 <Button
                   themeColor={"primary"}
                   fillMode={"flat"}
-                  icon={isVisibleDetail ? "chevron-left" : "chevron-right"}
+                  icon={"chevron-left"}
                   onClick={() => {
-                    if (isVisibleDetail == true) {
-                      setPanes([
-                        { size: "0%", min: "0px", collapsible: true },
-                        {},
-                      ]);
-                    } else {
-                      setPanes([
-                        { size: "100%", min: "0px", collapsible: true },
-                        {},
-                      ]);
+                    if (swiper) {
+                      swiper.slideTo(1);
                     }
-                    setIsVisableDetail((prev) => !prev);
                   }}
                 ></Button>
                 상세정보
               </GridTitle>
             </GridTitleContainer>
-            <FormBoxWrap border>
-              <FormBox>
-                <tbody>
-                  <tr>
-                    <th>구분</th>
-                    <td>
-                      <MultiColumnComboBox
-                        name="type"
-                        data={
-                          typeFilter
-                            ? filterBy(typesData, typeFilter)
-                            : typesData
-                        }
-                        value={detailData.type}
-                        columns={dataTypeColumns}
-                        textField={"code_name"}
-                        onChange={DetailComboBoxChange}
-                        className="required"
-                        filterable={true}
-                        onFilterChange={handleFilterChange}
-                        clearButton={false}
-                      />
-                    </td>
-                    <th>업체코드</th>
-                    <td>
-                      <div className="filter-item-wrap">
-                        <Input
-                          name="customer_code"
-                          value={
-                            detailData.customer
-                              ? detailData.customer.custcd
-                              : ""
-                          }
-                          className="readonly"
-                        />
-                        <Button
-                          icon="more-horizontal"
-                          fillMode={"flat"}
-                          onClick={() => setCustWindowVisible(true)}
-                        />
-                      </div>
-                    </td>
-                    <th>업체명</th>
-                    <td>
-                      {customersData && (
-                        <MultiColumnComboBox
-                          name="customer"
-                          data={
-                            custFilter
-                              ? filterBy(customersData, custFilter)
-                              : customersData
-                          }
-                          value={detailData.customer}
-                          columns={custTypeColumns}
-                          textField={"custnm"}
-                          onChange={DetailComboBoxChange}
-                          className=""
-                          filterable={true}
-                          onFilterChange={handleFilterChange}
-                        />
-                      )}
-                    </td>
-                  </tr>
-                  <tr>
-                    <th>작성일자</th>
-                    <td>
-                      {isAdmin ? (
-                        <DatePicker
-                          name="write_date"
-                          value={detailData.write_date}
-                          format="yyyy-MM-dd"
-                          onChange={detailDataInputChange}
-                          className={"required"}
-                          placeholder=""
-                        />
-                      ) : (
-                        <Input
-                          name="write_date"
-                          type="text"
-                          value={dateformat2(
-                            convertDateToStr(detailData.write_date)
-                          )}
-                          onChange={detailDataInputChange}
-                          className={!isAdmin ? "readonly" : "required"}
-                          readOnly={!isAdmin}
-                        />
-                      )}
-                    </td>
-                    <th>제목</th>
-                    <td colSpan={2}>
-                      <Input
-                        name="title"
-                        type="text"
-                        value={detailData.title}
-                        onChange={detailDataInputChange}
-                        className={!isAdmin ? "readonly" : "required"}
-                        readOnly={!isAdmin}
-                      />
-                    </td>
-                    <td>
-                      <Button
-                        themeColor={"primary"}
-                        style={{ width: "100%" }}
-                        onClick={() => {
-                          if (detailData.work_type == "N") {
-                            alert("저장 후 등록할 수 있습니다.");
-                          } else if (
-                            Object.getOwnPropertyNames(selectedState)[0] !=
-                            undefined
-                          ) {
-                            setSignWindowVisible(true);
-                          } else {
-                            alert("선택된 데이터가 없습니다.");
-                          }
-                        }}
-                      >
-                        참석자 등록
-                      </Button>
-                    </td>
-                  </tr>
-                </tbody>
-              </FormBox>
-            </FormBoxWrap>
-            <RichEditor
-              id="editor"
-              ref={editorRef}
-              hideTools={!isAdmin}
-            />
+            <div style={{ height: mobileheight3 }}>
+              <RichEditor id="editor" ref={editorRef} hideTools={!isAdmin} />
+            </div>
             <FormBoxWrap
               border
               style={{
                 margin: 0,
                 borderTop: 0,
               }}
+              className="FormBoxWrap2"
             >
               <FormBox>
                 <tbody>
@@ -1223,9 +1343,265 @@ const App = () => {
                 </tbody>
               </FormBox>
             </FormBoxWrap>
-          </GridContainer>
-      </Splitter>
-        </GridContainerWrap>
+          </SwiperSlide>
+        </Swiper>
+      ) : (
+        <>
+          <GridContainerWrap>
+            <Splitter
+              panes={panes}
+              onChange={onChange}
+              style={{ width: "100%", borderColor: "#00000000" }}
+            >
+              <GridContainer>
+                <GridTitleContainer className="ButtonContainer2">
+                  <GridTitle>요약정보</GridTitle>
+                </GridTitleContainer>
+                <Grid
+                  style={{ height: webheight }}
+                  data={process(
+                    mainDataResult.data.map((row) => ({
+                      ...row,
+                      [SELECTED_FIELD]: selectedState[idGetter(row)],
+                      write_date: dateformat2(row.write_date),
+                    })),
+                    mainDataState
+                  )}
+                  {...mainDataState}
+                  onDataStateChange={onMainDataStateChange}
+                  //선택 기능
+                  dataItemKey={DATA_ITEM_KEY}
+                  selectedField={SELECTED_FIELD}
+                  selectable={{
+                    enabled: true,
+                    mode: "single",
+                  }}
+                  onSelectionChange={onSelectionChange}
+                  //스크롤 조회 기능
+                  fixedScroll={true}
+                  total={mainDataResult.total}
+                  onScroll={onMainScrollHandler}
+                  //정렬기능
+                  sortable={true}
+                  onSortChange={onMainSortChange}
+                  //컬럼순서조정
+                  reorderable={true}
+                  //컬럼너비조정
+                  resizable={true}
+                >
+                  <GridColumn
+                    field="write_date"
+                    title="작성일자"
+                    width={110}
+                    cell={CenterCell}
+                    footerCell={mainTotalFooterCell}
+                  />
+                  <GridColumn
+                    field="typenm"
+                    title="구분"
+                    width={100}
+                    cell={CenterCell}
+                  />
+                  <GridColumn
+                    field="customer_name"
+                    title="업체명"
+                    width={120}
+                    //cell={CenterCell}
+                  />
+                  <GridColumn field="title" title="제목" />
+                </Grid>
+              </GridContainer>
+              <GridContainer>
+                <GridTitleContainer className="ButtonContainer3">
+                  <GridTitle>
+                    <Button
+                      themeColor={"primary"}
+                      fillMode={"flat"}
+                      icon={isVisibleDetail ? "chevron-left" : "chevron-right"}
+                      onClick={() => {
+                        if (isVisibleDetail == true) {
+                          setPanes([
+                            { size: "0%", min: "0px", collapsible: true },
+                            {},
+                          ]);
+                        } else {
+                          setPanes([
+                            { size: "100%", min: "0px", collapsible: true },
+                            {},
+                          ]);
+                        }
+                        setIsVisableDetail((prev) => !prev);
+                      }}
+                    ></Button>
+                    상세정보
+                  </GridTitle>
+                </GridTitleContainer>
+                <FormBoxWrap border className="FormBoxWrap">
+                  <FormBox>
+                    <tbody>
+                      <tr>
+                        <th>구분</th>
+                        <td>
+                          <MultiColumnComboBox
+                            name="type"
+                            data={
+                              typeFilter
+                                ? filterBy(typesData, typeFilter)
+                                : typesData
+                            }
+                            value={detailData.type}
+                            columns={dataTypeColumns}
+                            textField={"code_name"}
+                            onChange={DetailComboBoxChange}
+                            className="required"
+                            filterable={true}
+                            onFilterChange={handleFilterChange}
+                            clearButton={false}
+                          />
+                        </td>
+                        <th>업체코드</th>
+                        <td>
+                          <div className="filter-item-wrap">
+                            <Input
+                              name="customer_code"
+                              value={
+                                detailData.customer
+                                  ? detailData.customer.custcd
+                                  : ""
+                              }
+                              className="readonly"
+                            />
+                            <Button
+                              icon="more-horizontal"
+                              fillMode={"flat"}
+                              onClick={() => setCustWindowVisible(true)}
+                            />
+                          </div>
+                        </td>
+                        <th>업체명</th>
+                        <td>
+                          {customersData && (
+                            <MultiColumnComboBox
+                              name="customer"
+                              data={
+                                custFilter
+                                  ? filterBy(customersData, custFilter)
+                                  : customersData
+                              }
+                              value={detailData.customer}
+                              columns={custTypeColumns}
+                              textField={"custnm"}
+                              onChange={DetailComboBoxChange}
+                              className=""
+                              filterable={true}
+                              onFilterChange={handleFilterChange}
+                            />
+                          )}
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>작성일자</th>
+                        <td>
+                          {isAdmin ? (
+                            <DatePicker
+                              name="write_date"
+                              value={detailData.write_date}
+                              format="yyyy-MM-dd"
+                              onChange={detailDataInputChange}
+                              className={"required"}
+                              placeholder=""
+                            />
+                          ) : (
+                            <Input
+                              name="write_date"
+                              type="text"
+                              value={dateformat2(
+                                convertDateToStr(detailData.write_date)
+                              )}
+                              onChange={detailDataInputChange}
+                              className={!isAdmin ? "readonly" : "required"}
+                              readOnly={!isAdmin}
+                            />
+                          )}
+                        </td>
+                        <th>제목</th>
+                        <td colSpan={2}>
+                          <Input
+                            name="title"
+                            type="text"
+                            value={detailData.title}
+                            onChange={detailDataInputChange}
+                            className={!isAdmin ? "readonly" : "required"}
+                            readOnly={!isAdmin}
+                          />
+                        </td>
+                        <td>
+                          <Button
+                            themeColor={"primary"}
+                            style={{ width: "100%" }}
+                            onClick={() => {
+                              if (detailData.work_type == "N") {
+                                alert("저장 후 등록할 수 있습니다.");
+                              } else if (
+                                Object.getOwnPropertyNames(selectedState)[0] !=
+                                undefined
+                              ) {
+                                setSignWindowVisible(true);
+                              } else {
+                                alert("선택된 데이터가 없습니다.");
+                              }
+                            }}
+                          >
+                            참석자 등록
+                          </Button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </FormBox>
+                </FormBoxWrap>
+                <div style={{ height: webheight2 }}>
+                  <RichEditor
+                    id="editor"
+                    ref={editorRef}
+                    hideTools={!isAdmin}
+                  />
+                </div>
+                <FormBoxWrap
+                  border
+                  style={{
+                    margin: 0,
+                    borderTop: 0,
+                  }}
+                  className="FormBoxWrap2"
+                >
+                  <FormBox>
+                    <tbody>
+                      <tr>
+                        <th style={{ width: 0 }}>첨부파일</th>
+                        <td style={{ width: "auto" }}>
+                          <div className="filter-item-wrap">
+                            <Input
+                              name="attachment_q"
+                              value={detailData.files}
+                              className="readonly"
+                            />
+                            <Button
+                              icon="more-horizontal"
+                              fillMode={"flat"}
+                              onClick={() => setAttachmentsWindowVisible(true)}
+                            />
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </FormBox>
+                </FormBoxWrap>
+              </GridContainer>
+            </Splitter>
+          </GridContainerWrap>
+        </>
+      )}
+
       {attachmentsWindowVisible && (
         <AttachmentsWindow
           type="sharedDocument"
