@@ -365,8 +365,12 @@ const App = () => {
       );
 
       setWebHeight(getDeviceHeight(false) - height - height6);
-      setWebHeight2((getDeviceHeight(false) - height6 + 13) / 2 - height2 - height4);
-      setWebHeight3((getDeviceHeight(false) - height6 + 13) / 2 - height3 - height5);
+      setWebHeight2(
+        (getDeviceHeight(false) - height6 + 13) / 2 - height2 - height4
+      );
+      setWebHeight3(
+        (getDeviceHeight(false) - height6 + 13) / 2 - height3 - height5
+      );
     };
     handleWindowResize();
     window.addEventListener("resize", handleWindowResize);
@@ -2343,576 +2347,560 @@ const App = () => {
                 onClick={onConfirmClick}
               >
                 저장
-              </Button>
-              <Button onClick={search} icon="search" themeColor={"primary"}>
-                조회
-              </Button>
+              </Button>          
             </ButtonContainer>
-            </TitleContainer>
-            <GridContainerWrap>
-              <GridContainer width={`15%`} height={"auto"}>
-                <GridTitleContainer>
-                  <GridTitle>조회조건</GridTitle>
-                </GridTitleContainer>
-                <FilterContainer>
-                  <FilterBox
-                    onKeyPress={(e) => handleKeyPressSearch(e, search)}
-                  >
-                    <tbody>
-                      <tr>
-                        <th>기간</th>
-                        <td>
-                          <MultiSelect
-                            name="date_type"
-                            data={dateTypeData}
-                            onChange={filterMultiSelectChange}
-                            value={filters.date_type}
-                            textField="code_name"
-                            dataItemKey="sub_code"
-                          />
-                          <CommonDateRangePicker
-                            value={{
-                              start: filters.fromDate,
-                              end: filters.toDate,
-                            }}
-                            onChange={(e: {
-                              value: { start: any; end: any };
-                            }) =>
-                              setFilters((prev) => ({
-                                ...prev,
-                                fromDate: e.value.start,
-                                toDate: e.value.end,
-                              }))
-                            }
-                            style={{ display: "inline-block" }}
-                            className="required"
-                          />
-                        </td>
-                      </tr>
-                      <tr>
-                        <th>처리담당자</th>
-                        <td>
-                          <MultiColumnComboBox
-                            name="work_person"
-                            data={
-                              filter ? filterBy(usersData, filter) : usersData
-                            }
-                            value={filters.work_person}
-                            columns={userColumns}
-                            textField={"user_name"}
-                            onChange={filterComboBoxChange}
-                            filterable={true}
-                            onFilterChange={handleFilterChange}
-                          />
-                        </td>
-                      </tr>
-                      <tr>
-                        <th>접수담당자</th>
-                        <td>
-                          <MultiColumnComboBox
-                            name="receptionist"
-                            data={
-                              filter2 ? filterBy(usersData, filter2) : usersData
-                            }
-                            value={filters.receptionist}
-                            columns={userColumns}
-                            textField={"user_name"}
-                            onChange={filterComboBoxChange}
-                            filterable={true}
-                            onFilterChange={handleFilterChange2}
-                          />
-                        </td>
-                      </tr>
-                      <tr>
-                        <th>업체명</th>
-                        <td>
-                          <Input
-                            name="custnm"
-                            type="text"
-                            value={filters.custnm}
-                            onChange={filterInputChange}
-                          />
-                        </td>
-                      </tr>
-                      <tr>
-                        <th>작성자</th>
-                        <td>
-                          <Input
-                            name="user_name"
-                            type="text"
-                            value={filters.user_name}
-                            onChange={filterInputChange}
-                          />
-                        </td>
-                      </tr>
-                      <tr>
-                        <th>접수자</th>
-                        <td>
-                          <MultiColumnComboBox
-                            name="reception_person"
-                            data={
-                              filter3 ? filterBy(usersData, filter3) : usersData
-                            }
-                            value={filters.reception_person}
-                            columns={userColumns}
-                            textField={"user_name"}
-                            onChange={filterComboBoxChange}
-                            filterable={true}
-                            onFilterChange={handleFilterChange3}
-                          />
-                        </td>
-                      </tr>
-                      <tr>
-                        <th>접수 구분</th>
-                        <td>
-                          <MultiColumnComboBox
-                            name="reception_type"
-                            data={
-                              filter3
-                                ? filterBy(receptionTypeData, filter3)
-                                : receptionTypeData
-                            }
-                            value={filters.reception_type}
-                            columns={dataTypeColumns}
-                            textField={"code_name"}
-                            onChange={filterComboBoxChange}
-                            filterable={true}
-                            onFilterChange={handleFilterChange3}
-                          />
-                        </td>
-                      </tr>
-                      <tr>
-                        <th>제목 및 내용</th>
-                        <td>
-                          <Input
-                            name="contents"
-                            type="text"
-                            value={filters.contents}
-                            onChange={filterInputChange}
-                          />
-                        </td>
-                      </tr>
-                      <tr>
-                        <th>Value 구분</th>
-                        <td>
-                          <MultiColumnComboBox
-                            name="value_code3"
-                            data={
-                              filter4
-                                ? filterBy(valuecodeItems, filter4)
-                                : valuecodeItems
-                            }
-                            value={filters.value_code3}
-                            columns={dataTypeColumns2}
-                            textField={"code_name"}
-                            onChange={filterComboBoxChange}
-                            filterable={true}
-                            onFilterChange={handleFilterChange4}
-                          />
-                        </td>
-                      </tr>
-                      <tr>
-                        <th>상태</th>
-                        <td>
-                          <MultiSelect
-                            name="status"
-                            data={statusListData}
-                            onChange={filterMultiSelectChange}
-                            value={filters.status}
-                            textField="code_name"
-                            dataItemKey="sub_code"
-                          />
-                        </td>
-                      </tr>
-                    </tbody>
-                  </FilterBox>
-                </FilterContainer>
-              </GridContainer>
-              <Splitter
-                panes={panes}
-                onChange={onChange}
-                style={{
-                  width: `calc(85% - ${GAP}px)`,
-                  borderColor: "#00000000",
+          </TitleContainer>
+          <GridContainerWrap>
+            <GridContainer width={`15%`} height={"auto"}>
+              <GridTitleContainer>
+                <GridTitle>조회조건</GridTitle>
+                <Button onClick={search} icon="search" themeColor={"primary"}>
+                  조회
+                </Button>
+              </GridTitleContainer>
+              <FilterContainer>
+                <FilterBox onKeyPress={(e) => handleKeyPressSearch(e, search)}>
+                  <tbody>
+                    <tr>
+                      <th>기간</th>
+                      <td>
+                        <MultiSelect
+                          name="date_type"
+                          data={dateTypeData}
+                          onChange={filterMultiSelectChange}
+                          value={filters.date_type}
+                          textField="code_name"
+                          dataItemKey="sub_code"
+                        />
+                        <CommonDateRangePicker
+                          value={{
+                            start: filters.fromDate,
+                            end: filters.toDate,
+                          }}
+                          onChange={(e: { value: { start: any; end: any } }) =>
+                            setFilters((prev) => ({
+                              ...prev,
+                              fromDate: e.value.start,
+                              toDate: e.value.end,
+                            }))
+                          }
+                          style={{ display: "inline-block" }}
+                          className="required"
+                        />
+                      </td>
+                    </tr>
+                    <tr>
+                      <th>처리담당자</th>
+                      <td>
+                        <MultiColumnComboBox
+                          name="work_person"
+                          data={
+                            filter ? filterBy(usersData, filter) : usersData
+                          }
+                          value={filters.work_person}
+                          columns={userColumns}
+                          textField={"user_name"}
+                          onChange={filterComboBoxChange}
+                          filterable={true}
+                          onFilterChange={handleFilterChange}
+                        />
+                      </td>
+                    </tr>
+                    <tr>
+                      <th>접수담당자</th>
+                      <td>
+                        <MultiColumnComboBox
+                          name="receptionist"
+                          data={
+                            filter2 ? filterBy(usersData, filter2) : usersData
+                          }
+                          value={filters.receptionist}
+                          columns={userColumns}
+                          textField={"user_name"}
+                          onChange={filterComboBoxChange}
+                          filterable={true}
+                          onFilterChange={handleFilterChange2}
+                        />
+                      </td>
+                    </tr>
+                    <tr>
+                      <th>업체명</th>
+                      <td>
+                        <Input
+                          name="custnm"
+                          type="text"
+                          value={filters.custnm}
+                          onChange={filterInputChange}
+                        />
+                      </td>
+                    </tr>
+                    <tr>
+                      <th>작성자</th>
+                      <td>
+                        <Input
+                          name="user_name"
+                          type="text"
+                          value={filters.user_name}
+                          onChange={filterInputChange}
+                        />
+                      </td>
+                    </tr>
+                    <tr>
+                      <th>접수자</th>
+                      <td>
+                        <MultiColumnComboBox
+                          name="reception_person"
+                          data={
+                            filter3 ? filterBy(usersData, filter3) : usersData
+                          }
+                          value={filters.reception_person}
+                          columns={userColumns}
+                          textField={"user_name"}
+                          onChange={filterComboBoxChange}
+                          filterable={true}
+                          onFilterChange={handleFilterChange3}
+                        />
+                      </td>
+                    </tr>
+                    <tr>
+                      <th>접수 구분</th>
+                      <td>
+                        <MultiColumnComboBox
+                          name="reception_type"
+                          data={
+                            filter3
+                              ? filterBy(receptionTypeData, filter3)
+                              : receptionTypeData
+                          }
+                          value={filters.reception_type}
+                          columns={dataTypeColumns}
+                          textField={"code_name"}
+                          onChange={filterComboBoxChange}
+                          filterable={true}
+                          onFilterChange={handleFilterChange3}
+                        />
+                      </td>
+                    </tr>
+                    <tr>
+                      <th>제목 및 내용</th>
+                      <td>
+                        <Input
+                          name="contents"
+                          type="text"
+                          value={filters.contents}
+                          onChange={filterInputChange}
+                        />
+                      </td>
+                    </tr>
+                    <tr>
+                      <th>Value 구분</th>
+                      <td>
+                        <MultiColumnComboBox
+                          name="value_code3"
+                          data={
+                            filter4
+                              ? filterBy(valuecodeItems, filter4)
+                              : valuecodeItems
+                          }
+                          value={filters.value_code3}
+                          columns={dataTypeColumns2}
+                          textField={"code_name"}
+                          onChange={filterComboBoxChange}
+                          filterable={true}
+                          onFilterChange={handleFilterChange4}
+                        />
+                      </td>
+                    </tr>
+                    <tr>
+                      <th>상태</th>
+                      <td>
+                        <MultiSelect
+                          name="status"
+                          data={statusListData}
+                          onChange={filterMultiSelectChange}
+                          value={filters.status}
+                          textField="code_name"
+                          dataItemKey="sub_code"
+                        />
+                      </td>
+                    </tr>
+                  </tbody>
+                </FilterBox>
+              </FilterContainer>
+            </GridContainer>
+            <Splitter
+              panes={panes}
+              onChange={onChange}
+              style={{
+                width: `calc(85% - ${GAP}px)`,
+                borderColor: "#00000000",
+              }}
+            >
+              <StatusContext.Provider
+                value={{
+                  statusListData: statusListData,
                 }}
               >
-                <StatusContext.Provider
-                  value={{
-                    statusListData: statusListData,
-                  }}
-                >
-                  <UserContext.Provider value={{ usersData: usersData }}>
-                    <ValueCodeContext.Provider
-                      value={{ valuecodeItems: valuecodeItems }}
+                <UserContext.Provider value={{ usersData: usersData }}>
+                  <ValueCodeContext.Provider
+                    value={{ valuecodeItems: valuecodeItems }}
+                  >
+                    <FilesContext.Provider
+                      value={{
+                        attdatnum,
+                        attach_exists,
+                        fileList,
+                        savenmList,
+                        setAttdatnum,
+                        setAttach_exists,
+                        setFileList,
+                        setSavenmList,
+                        mainDataState,
+                        setMainDataState,
+                        // fetchGrid,
+                      }}
                     >
-                      <FilesContext.Provider
-                        value={{
-                          attdatnum,
-                          attach_exists,
-                          fileList,
-                          savenmList,
-                          setAttdatnum,
-                          setAttach_exists,
-                          setFileList,
-                          setSavenmList,
-                          mainDataState,
-                          setMainDataState,
-                          // fetchGrid,
-                        }}
-                      >
-                        <GridContainer>
-                          <GridTitleContainer className="ButtonContainer">
-                            <GridTitle>업무지시 정보</GridTitle>
-                          </GridTitleContainer>
-                          <Grid
-                            style={{ height: webheight }}
-                            data={process(
-                              mainDataResult.data.map((row) => ({
-                                ...row,
-                                reception_type: reception_typeData.find(
-                                  (items: any) =>
-                                    items.sub_code == row.reception_type
-                                )?.code_name,
-                                [SELECTED_FIELD]: selectedState[idGetter(row)],
-                              })),
-                              mainDataState
-                            )}
-                            {...mainDataState}
-                            onDataStateChange={onMainDataStateChange}
-                            //선택 기능
-                            dataItemKey={DATA_ITEM_KEY}
-                            selectedField={SELECTED_FIELD}
-                            selectable={{
-                              enabled: true,
-                              mode: "single",
-                            }}
-                            onSelectionChange={onSelectionChange}
-                            //스크롤 조회 기능
-                            fixedScroll={true}
-                            total={mainDataResult.total}
-                            skip={page.skip}
-                            take={page.take}
-                            pageable={true}
-                            onPageChange={pageChange}
-                            //원하는 행 위치로 스크롤 기능
-                            ref={gridRef}
-                            rowHeight={30}
-                            //정렬기능
-                            sortable={true}
-                            onSortChange={onMainSortChange}
-                            //컬럼순서조정
-                            reorderable={true}
-                            //컬럼너비조정
-                            resizable={true}
-                            onItemChange={onItemChange}
-                            cellRender={customCellRender}
-                            rowRender={customRowRender}
-                            editField={EDIT_FIELD}
-                          >
-                            <GridColumn
-                              field="rowstatus"
-                              title=" "
-                              width="40px"
-                            />
-                            <GridColumn
-                              field="status"
-                              title="상태"
-                              width={90}
-                              cell={StatusCell}
-                            />
-                            <GridColumn
-                              field="request_date"
-                              title="요청일"
-                              width={100}
-                              cell={DateCell}
-                            />
-                            <GridColumn
-                              field="customer_name"
-                              title="업체명"
-                              width={150}
-                            />
-                            <GridColumn
-                              field="user_name"
-                              title="작성자"
-                              width={80}
-                            />
-                            <GridColumn
-                              field="user_tel"
-                              title="연락처"
-                              width={120}
-                            />
-                            <GridColumn
-                              field="title"
-                              title="제목"
-                              width={300}
-                            />
-                            <GridColumn
-                              field="reception_person"
-                              title="접수자"
-                              width={80}
-                              cell={UserCell}
-                            />
-                            <GridColumn
-                              field="reception_date"
-                              title="접수일"
-                              width={100}
-                              cell={DateCell}
-                            />
-                            <GridColumn
-                              field="be_finished_date"
-                              title="완료예정일"
-                              width={100}
-                              cell={DateCell}
-                            />
-                            <GridColumn
-                              field="reception_time"
-                              title="접수소요시간"
-                              width={100}
-                              cell={NumberCell}
-                            />
-                            <GridColumn
-                              field="reception_type"
-                              title="접수구분"
-                              width={75}
-                              footerCell={mainTotalFooterCell}
-                            />
-                            <GridColumn
-                              field="exists_task"
-                              title="지시여부"
-                              width={90}
-                              cell={Exists_taskCell}
-                            />
-                            <GridColumn
-                              field="is_finish"
-                              title="완료여부"
-                              width={75}
-                              cell={CheckBoxReadOnlyCell}
-                            />
-                            <GridColumn
-                              field="customer_code"
-                              title="업체코드"
-                              width={80}
-                            />
-                            <GridColumn
-                              field="value_code3"
-                              title="Value구분"
-                              width={110}
-                              cell={ValueCodeCell}
-                            />
-                            <GridColumn
-                              field="completion_date"
-                              title="처리완료일"
-                              width={100}
-                              cell={DateCell}
-                            />
-                            <GridColumn
-                              field="reception_attach_number"
-                              title="접수자료첨부"
-                              width={120}
-                              cell={FilesCell}
-                            />
-                            <GridColumn
-                              field="document_id"
-                              title="문서번호"
-                              width={150}
-                            />
-                            <GridColumn
-                              field="answer_document_id"
-                              title="답변문서번호"
-                              width={150}
-                            />
-                            <GridColumn
-                              field="ref_number"
-                              title="접수일지번호"
-                              width={150}
-                            />
-                          </Grid>
-                        </GridContainer>
-                      </FilesContext.Provider>
-                    </ValueCodeContext.Provider>
-                  </UserContext.Provider>
-                </StatusContext.Provider>
-                <GridContainer>
-                  <GridContainer>
-                    <GridTitleContainer className="ButtonContainer2">
-                      <GridTitle>
-                        <Button
-                          themeColor={"primary"}
-                          fillMode={"flat"}
-                          icon={
-                            isVisibleDetail ? "chevron-left" : "chevron-right"
-                          }
-                          onClick={() => {
-                            if (isVisibleDetail == true) {
-                              setPanes([
-                                { size: "0%", min: "0px", collapsible: true },
-                                {},
-                              ]);
-                            } else {
-                              setPanes([
-                                { size: "60%", min: "0px", collapsible: true },
-                                {},
-                              ]);
-                            }
-                            setIsVisableDetail((prev) => !prev);
+                      <GridContainer>
+                        <GridTitleContainer className="ButtonContainer">
+                          <GridTitle>업무지시 정보</GridTitle>
+                        </GridTitleContainer>
+                        <Grid
+                          style={{ height: webheight }}
+                          data={process(
+                            mainDataResult.data.map((row) => ({
+                              ...row,
+                              reception_type: reception_typeData.find(
+                                (items: any) =>
+                                  items.sub_code == row.reception_type
+                              )?.code_name,
+                              [SELECTED_FIELD]: selectedState[idGetter(row)],
+                            })),
+                            mainDataState
+                          )}
+                          {...mainDataState}
+                          onDataStateChange={onMainDataStateChange}
+                          //선택 기능
+                          dataItemKey={DATA_ITEM_KEY}
+                          selectedField={SELECTED_FIELD}
+                          selectable={{
+                            enabled: true,
+                            mode: "single",
                           }}
-                        ></Button>
-                        문의 내용
-                      </GridTitle>
-                      <ButtonContainer>
-                        <Button
-                          icon={"pencil"}
-                          onClick={onQuestionWndClick}
-                          themeColor={"primary"}
-                          fillMode={"outline"}
-                          disabled={
-                            mainDataResult.data.filter(
-                              (item) =>
-                                item[DATA_ITEM_KEY] ==
-                                Object.getOwnPropertyNames(selectedState)[0]
-                            )[0] == undefined
-                              ? true
-                              : mainDataResult.data.filter(
+                          onSelectionChange={onSelectionChange}
+                          //스크롤 조회 기능
+                          fixedScroll={true}
+                          total={mainDataResult.total}
+                          skip={page.skip}
+                          take={page.take}
+                          pageable={true}
+                          onPageChange={pageChange}
+                          //원하는 행 위치로 스크롤 기능
+                          ref={gridRef}
+                          rowHeight={30}
+                          //정렬기능
+                          sortable={true}
+                          onSortChange={onMainSortChange}
+                          //컬럼순서조정
+                          reorderable={true}
+                          //컬럼너비조정
+                          resizable={true}
+                          onItemChange={onItemChange}
+                          cellRender={customCellRender}
+                          rowRender={customRowRender}
+                          editField={EDIT_FIELD}
+                        >
+                          <GridColumn
+                            field="rowstatus"
+                            title=" "
+                            width="40px"
+                          />
+                          <GridColumn
+                            field="status"
+                            title="상태"
+                            width={90}
+                            cell={StatusCell}
+                          />
+                          <GridColumn
+                            field="request_date"
+                            title="요청일"
+                            width={100}
+                            cell={DateCell}
+                          />
+                          <GridColumn
+                            field="customer_name"
+                            title="업체명"
+                            width={150}
+                          />
+                          <GridColumn
+                            field="user_name"
+                            title="작성자"
+                            width={80}
+                          />
+                          <GridColumn
+                            field="user_tel"
+                            title="연락처"
+                            width={120}
+                          />
+                          <GridColumn field="title" title="제목" width={300} />
+                          <GridColumn
+                            field="reception_person"
+                            title="접수자"
+                            width={80}
+                            cell={UserCell}
+                          />
+                          <GridColumn
+                            field="reception_date"
+                            title="접수일"
+                            width={100}
+                            cell={DateCell}
+                          />
+                          <GridColumn
+                            field="be_finished_date"
+                            title="완료예정일"
+                            width={100}
+                            cell={DateCell}
+                          />
+                          <GridColumn
+                            field="reception_time"
+                            title="접수소요시간"
+                            width={100}
+                            cell={NumberCell}
+                          />
+                          <GridColumn
+                            field="reception_type"
+                            title="접수구분"
+                            width={75}
+                            footerCell={mainTotalFooterCell}
+                          />
+                          <GridColumn
+                            field="exists_task"
+                            title="지시여부"
+                            width={90}
+                            cell={Exists_taskCell}
+                          />
+                          <GridColumn
+                            field="is_finish"
+                            title="완료여부"
+                            width={75}
+                            cell={CheckBoxReadOnlyCell}
+                          />
+                          <GridColumn
+                            field="customer_code"
+                            title="업체코드"
+                            width={80}
+                          />
+                          <GridColumn
+                            field="value_code3"
+                            title="Value구분"
+                            width={110}
+                            cell={ValueCodeCell}
+                          />
+                          <GridColumn
+                            field="completion_date"
+                            title="처리완료일"
+                            width={100}
+                            cell={DateCell}
+                          />
+                          <GridColumn
+                            field="reception_attach_number"
+                            title="접수자료첨부"
+                            width={120}
+                            cell={FilesCell}
+                          />
+                          <GridColumn
+                            field="document_id"
+                            title="문서번호"
+                            width={150}
+                          />
+                          <GridColumn
+                            field="answer_document_id"
+                            title="답변문서번호"
+                            width={150}
+                          />
+                          <GridColumn
+                            field="ref_number"
+                            title="접수일지번호"
+                            width={150}
+                          />
+                        </Grid>
+                      </GridContainer>
+                    </FilesContext.Provider>
+                  </ValueCodeContext.Provider>
+                </UserContext.Provider>
+              </StatusContext.Provider>
+              <GridContainer>
+                <GridContainer>
+                  <GridTitleContainer className="ButtonContainer2">
+                    <GridTitle>
+                      <Button
+                        themeColor={"primary"}
+                        fillMode={"flat"}
+                        icon={
+                          isVisibleDetail ? "chevron-left" : "chevron-right"
+                        }
+                        onClick={() => {
+                          if (isVisibleDetail == true) {
+                            setPanes([
+                              { size: "0%", min: "0px", collapsible: true },
+                              {},
+                            ]);
+                          } else {
+                            setPanes([
+                              { size: "60%", min: "0px", collapsible: true },
+                              {},
+                            ]);
+                          }
+                          setIsVisableDetail((prev) => !prev);
+                        }}
+                      ></Button>
+                      문의 내용
+                    </GridTitle>
+                    <ButtonContainer>
+                      <Button
+                        icon={"pencil"}
+                        onClick={onQuestionWndClick}
+                        themeColor={"primary"}
+                        fillMode={"outline"}
+                        disabled={
+                          mainDataResult.data.filter(
+                            (item) =>
+                              item[DATA_ITEM_KEY] ==
+                              Object.getOwnPropertyNames(selectedState)[0]
+                          )[0] == undefined
+                            ? true
+                            : mainDataResult.data.filter(
+                                (item) =>
+                                  item[DATA_ITEM_KEY] ==
+                                  Object.getOwnPropertyNames(selectedState)[0]
+                              )[0].reception_type == "Q"
+                            ? true
+                            : false
+                        }
+                        style={{ marginTop: "5px" }}
+                      >
+                        수정
+                      </Button>
+                      <Button
+                        icon={"file-word"}
+                        name="meeting"
+                        onClick={downloadDoc}
+                        themeColor={"primary"}
+                        fillMode={"outline"}
+                        style={{ marginTop: "5px" }}
+                      >
+                        다운로드
+                      </Button>
+                    </ButtonContainer>
+                  </GridTitleContainer>
+                  <div style={{ height: webheight2 }}>
+                    <RichEditor id="docEditor" ref={docEditorRef} hideTools />
+                  </div>
+                  <FormBoxWrap border={true} className="FormBoxWrap">
+                    <FormBox>
+                      <tbody>
+                        <tr>
+                          <th style={{ width: "5%" }}>첨부파일</th>
+                          <td>
+                            <Input
+                              name="answer_files"
+                              type="text"
+                              value={
+                                mainDataResult.data.filter(
                                   (item) =>
                                     item[DATA_ITEM_KEY] ==
                                     Object.getOwnPropertyNames(selectedState)[0]
-                                )[0].reception_type == "Q"
-                              ? true
-                              : false
-                          }
-                          style={{ marginTop: "5px" }}
-                        >
-                          수정
-                        </Button>
-                        <Button
-                          icon={"file-word"}
-                          name="meeting"
-                          onClick={downloadDoc}
-                          themeColor={"primary"}
-                          fillMode={"outline"}
-                          style={{ marginTop: "5px" }}
-                        >
-                          다운로드
-                        </Button>
-                      </ButtonContainer>
-                    </GridTitleContainer>
-                    <div style={{ height: webheight2 }}>
-                      <RichEditor id="docEditor" ref={docEditorRef} hideTools />
-                    </div>
-                    <FormBoxWrap border={true} className="FormBoxWrap">
-                      <FormBox>
-                        <tbody>
-                          <tr>
-                            <th style={{ width: "5%" }}>첨부파일</th>
-                            <td>
-                              <Input
-                                name="answer_files"
-                                type="text"
-                                value={
-                                  mainDataResult.data.filter(
-                                    (item) =>
-                                      item[DATA_ITEM_KEY] ==
-                                      Object.getOwnPropertyNames(
-                                        selectedState
-                                      )[0]
-                                  )[0] == undefined
-                                    ? ""
-                                    : mainDataResult.data.filter(
-                                        (item) =>
-                                          item[DATA_ITEM_KEY] ==
-                                          Object.getOwnPropertyNames(
-                                            selectedState
-                                          )[0]
-                                      )[0].files
-                                }
-                                className="readonly"
+                                )[0] == undefined
+                                  ? ""
+                                  : mainDataResult.data.filter(
+                                      (item) =>
+                                        item[DATA_ITEM_KEY] ==
+                                        Object.getOwnPropertyNames(
+                                          selectedState
+                                        )[0]
+                                    )[0].files
+                              }
+                              className="readonly"
+                            />
+                            <ButtonInGridInput>
+                              <Button
+                                onClick={onAttWndClick}
+                                icon="more-horizontal"
+                                fillMode="flat"
                               />
-                              <ButtonInGridInput>
-                                <Button
-                                  onClick={onAttWndClick}
-                                  icon="more-horizontal"
-                                  fillMode="flat"
-                                />
-                              </ButtonInGridInput>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </FormBox>
-                    </FormBoxWrap>
-                  </GridContainer>
-                  <GridContainer>
-                    <GridTitleContainer className="ButtonContainer3">
-                      <GridTitle>답변 내용</GridTitle>
-                      <ButtonContainer>
-                        <Button
-                          icon={"pencil"}
-                          onClick={onAnswerWndClick}
-                          themeColor={"primary"}
-                          fillMode={"outline"}
-                        >
-                          수정
-                        </Button>
-                        <Button
-                          icon={"notification"}
-                          onClick={onAlertClick}
-                          themeColor={"primary"}
-                          fillMode={"outline"}
-                        >
-                          답변 알림 전송
-                        </Button>
-                      </ButtonContainer>
-                    </GridTitleContainer>
-                    <div style={{ height: webheight3 }}>
-                      <RichEditor
-                        id="docEditor2"
-                        ref={docEditorRef2}
-                        hideTools
-                      />
-                    </div>
-                    <FormBoxWrap border={true} className="FormBoxWrap2">
-                      <FormBox>
-                        <tbody>
-                          <tr>
-                            <th style={{ width: "5%" }}>첨부파일</th>
-                            <td>
-                              <Input
-                                name="answer_files"
-                                type="text"
-                                value={
-                                  mainDataResult.data.filter(
-                                    (item) =>
-                                      item[DATA_ITEM_KEY] ==
-                                      Object.getOwnPropertyNames(
-                                        selectedState
-                                      )[0]
-                                  )[0] == undefined
-                                    ? ""
-                                    : mainDataResult.data.filter(
-                                        (item) =>
-                                          item[DATA_ITEM_KEY] ==
-                                          Object.getOwnPropertyNames(
-                                            selectedState
-                                          )[0]
-                                      )[0].answer_files
-                                }
-                                className="readonly"
-                              />
-                              <ButtonInGridInput>
-                                <Button
-                                  onClick={onAttWndClick3}
-                                  icon="more-horizontal"
-                                  fillMode="flat"
-                                />
-                              </ButtonInGridInput>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </FormBox>
-                    </FormBoxWrap>
-                  </GridContainer>
+                            </ButtonInGridInput>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </FormBox>
+                  </FormBoxWrap>
                 </GridContainer>
-              </Splitter>
-            </GridContainerWrap>
+                <GridContainer>
+                  <GridTitleContainer className="ButtonContainer3">
+                    <GridTitle>답변 내용</GridTitle>
+                    <ButtonContainer>
+                      <Button
+                        icon={"pencil"}
+                        onClick={onAnswerWndClick}
+                        themeColor={"primary"}
+                        fillMode={"outline"}
+                      >
+                        수정
+                      </Button>
+                      <Button
+                        icon={"notification"}
+                        onClick={onAlertClick}
+                        themeColor={"primary"}
+                        fillMode={"outline"}
+                      >
+                        답변 알림 전송
+                      </Button>
+                    </ButtonContainer>
+                  </GridTitleContainer>
+                  <div style={{ height: webheight3 }}>
+                    <RichEditor id="docEditor2" ref={docEditorRef2} hideTools />
+                  </div>
+                  <FormBoxWrap border={true} className="FormBoxWrap2">
+                    <FormBox>
+                      <tbody>
+                        <tr>
+                          <th style={{ width: "5%" }}>첨부파일</th>
+                          <td>
+                            <Input
+                              name="answer_files"
+                              type="text"
+                              value={
+                                mainDataResult.data.filter(
+                                  (item) =>
+                                    item[DATA_ITEM_KEY] ==
+                                    Object.getOwnPropertyNames(selectedState)[0]
+                                )[0] == undefined
+                                  ? ""
+                                  : mainDataResult.data.filter(
+                                      (item) =>
+                                        item[DATA_ITEM_KEY] ==
+                                        Object.getOwnPropertyNames(
+                                          selectedState
+                                        )[0]
+                                    )[0].answer_files
+                              }
+                              className="readonly"
+                            />
+                            <ButtonInGridInput>
+                              <Button
+                                onClick={onAttWndClick3}
+                                icon="more-horizontal"
+                                fillMode="flat"
+                              />
+                            </ButtonInGridInput>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </FormBox>
+                  </FormBoxWrap>
+                </GridContainer>
+              </GridContainer>
+            </Splitter>
+          </GridContainerWrap>
         </>
       )}
       {attachmentsWindowVisible && (

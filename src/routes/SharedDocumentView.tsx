@@ -46,7 +46,7 @@ import {
   GridTitle,
   GridTitleContainer,
   Title,
-  TitleContainer
+  TitleContainer,
 } from "../CommonStyled";
 import CenterCell from "../components/Cells/CenterCell";
 import {
@@ -155,16 +155,9 @@ const App = () => {
     const handleWindowResize = () => {
       let deviceWidth = document.documentElement.clientWidth;
       setIsMobile(deviceWidth <= 1200);
-      setMobileHeight(getDeviceHeight(true) - height - height2 - height6);
-      setMobileHeight2(
-        getDeviceHeight(true) -
-          height -
-          height3 -
-          height4 -
-          height5 -
-          height6 -
-          12
-      );
+      setMobileHeight(getDeviceHeight(true) - height - height6);
+      setMobileHeight2(getDeviceHeight(true) - height2 - height6);
+      setMobileHeight3(getDeviceHeight(true) - height3 - height5 - height6 + 15);
 
       setWebHeight(getDeviceHeight(true) - height - height2 - height6);
       setWebHeight2(
@@ -648,7 +641,7 @@ const App = () => {
         >
           <SwiperSlide key={0}>
             <GridContainer style={{ width: "100%" }}>
-              <GridTitleContainer className="ButtonContainer2">
+              <GridTitleContainer className="ButtonContainer">
                 <GridTitle>
                   요약정보
                   <Button
@@ -726,10 +719,24 @@ const App = () => {
                       }
                     }}
                   ></Button>
-                  상세정보
+                  기본정보
+                  <Button
+                    themeColor={"primary"}
+                    fillMode={"flat"}
+                    icon={"chevron-right"}
+                    onClick={() => {
+                      if (swiper) {
+                        swiper.slideTo(2);
+                      }
+                    }}
+                  ></Button>
                 </GridTitle>
               </GridTitleContainer>
-              <FormBoxWrap border className="FormBoxWrap">
+              <FormBoxWrap
+                border
+                className="FormBoxWrap"
+                style={{ height: mobileheight2, overflow: "auto" }}
+              >
                 <FormBox>
                   <tbody>
                     <tr>
@@ -789,40 +796,57 @@ const App = () => {
                   </tbody>
                 </FormBox>
               </FormBoxWrap>
-              <div style={{ height: mobileheight2 }}>
-                <RichEditor id="editor" ref={editorRef} hideTools={true} />
-              </div>
-              <FormBoxWrap
-                border
-                className="FormBoxWrap2"
-                style={{
-                  margin: 0,
-                  borderTop: 0,
-                }}
-              >
-                <FormBox>
-                  <tbody>
-                    <tr>
-                      <th style={{ width: 0 }}>첨부파일</th>
-                      <td style={{ width: "auto" }}>
-                        <div className="filter-item-wrap">
-                          <Input
-                            name="attachment_q"
-                            value={detailData.files}
-                            className="readonly"
-                          />
-                          <Button
-                            icon="more-horizontal"
-                            fillMode={"flat"}
-                            onClick={() => setAttachmentsWindowVisible(true)}
-                          />
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </FormBox>
-              </FormBoxWrap>
             </GridContainer>
+          </SwiperSlide>
+          <SwiperSlide key={2}>
+            <GridTitleContainer className="ButtonContainer3">
+              <GridTitle>
+                <Button
+                  themeColor={"primary"}
+                  fillMode={"flat"}
+                  icon={"chevron-left"}
+                  onClick={() => {
+                    if (swiper) {
+                      swiper.slideTo(1);
+                    }
+                  }}
+                ></Button>
+                상세정보
+              </GridTitle>
+            </GridTitleContainer>
+            <div style={{ height: mobileheight3 }}>
+              <RichEditor id="editor" ref={editorRef} hideTools={true} />
+            </div>
+            <FormBoxWrap
+              border
+              className="FormBoxWrap2"
+              style={{
+                margin: 0,
+                borderTop: 0,
+              }}
+            >
+              <FormBox>
+                <tbody>
+                  <tr>
+                    <th style={{ width: 0 }}>첨부파일</th>
+                    <td style={{ width: "auto" }}>
+                      <div className="filter-item-wrap">
+                        <Input
+                          name="attachment_q"
+                          value={detailData.files}
+                          className="readonly"
+                        />
+                        <Button
+                          icon="more-horizontal"
+                          fillMode={"flat"}
+                          onClick={() => setAttachmentsWindowVisible(true)}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </FormBox>
+            </FormBoxWrap>
           </SwiperSlide>
         </Swiper>
       ) : (

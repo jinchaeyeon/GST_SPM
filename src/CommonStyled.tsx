@@ -824,7 +824,7 @@ export const Content = styled.div<ContentType>`
   /* 컨테이너 고정 추가 */
   left: calc(${(props) => (props.isMenuOpen ? GNV_WIDTH : "25")}px);
   height: 97vh;
-  position: fixed;
+  // position: fixed;
   overflow: scroll;
   ::-webkit-scrollbar {
     display: none;

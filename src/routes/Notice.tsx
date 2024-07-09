@@ -36,7 +36,7 @@ import {
   GridTitle,
   GridTitleContainer,
   Title,
-  TitleContainer
+  TitleContainer,
 } from "../CommonStyled";
 import CenterCell from "../components/Cells/CenterCell";
 import {
@@ -127,6 +127,7 @@ var height5 = 0;
 var height6 = 0;
 var height7 = 0;
 var height8 = 0;
+var height9 = 0;
 
 const App = () => {
   const [loginResult] = useRecoilState(loginResultState);
@@ -147,6 +148,7 @@ const App = () => {
   const [mobileheight2, setMobileHeight2] = useState(0);
   const [mobileheight3, setMobileHeight3] = useState(0);
   const [mobileheight4, setMobileHeight4] = useState(0);
+  const [mobileheight5, setMobileHeight5] = useState(0);
   const [webheight, setWebHeight] = useState(0);
   const [webheight2, setWebHeight2] = useState(0);
   const [webheight3, setWebHeight3] = useState(0);
@@ -161,13 +163,15 @@ const App = () => {
     height6 = getHeight(".FormBoxWrap");
     height7 = getHeight(".FormBoxWrap2");
     height8 = getHeight(".TitleContainer");
+    height9 = getHeight(".ButtonContainer6");
 
     const handleWindowResize = () => {
       let deviceWidth = document.documentElement.clientWidth;
       setIsMobile(deviceWidth <= 1200);
       setMobileHeight(getDeviceHeight(true) - height2 - height8);
+      setMobileHeight5(getDeviceHeight(true) - height9 - height8);
       setMobileHeight2(
-        getDeviceHeight(true) - height3 - height6 - height7 - height8 + 15
+        getDeviceHeight(true) - height3 - height7 - height8 + 15
       );
       setMobileHeight3(
         (getDeviceHeight(true) - height - height8) / 2 - height4 - 5
@@ -1152,7 +1156,7 @@ const App = () => {
             </SwiperSlide>
             <SwiperSlide key={1}>
               <GridContainer style={{ width: "100%" }}>
-                <GridTitleContainer className="ButtonContainer3">
+                <GridTitleContainer className="ButtonContainer6">
                   <GridTitle>
                     <Button
                       themeColor={"primary"}
@@ -1164,22 +1168,24 @@ const App = () => {
                         }
                       }}
                     ></Button>
-                    상세정보
-                    {isAdmin && (
-                      <Button
-                        themeColor={"primary"}
-                        fillMode={"flat"}
-                        icon={"chevron-right"}
-                        onClick={() => {
-                          if (swiper) {
-                            swiper.slideTo(2);
-                          }
-                        }}
-                      ></Button>
-                    )}
+                    기본정보
+                    <Button
+                      themeColor={"primary"}
+                      fillMode={"flat"}
+                      icon={"chevron-right"}
+                      onClick={() => {
+                        if (swiper) {
+                          swiper.slideTo(2);
+                        }
+                      }}
+                    ></Button>
                   </GridTitle>
                 </GridTitleContainer>
-                <FormBoxWrap border className="FormBoxWrap">
+                <FormBoxWrap
+                  border
+                  className="FormBoxWrap"
+                  style={{ height: mobileheight5, overflow: "auto" }}
+                >
                   <FormBox>
                     <tbody>
                       <tr>
@@ -1234,41 +1240,72 @@ const App = () => {
                     </tbody>
                   </FormBox>
                 </FormBoxWrap>
-                <RichEditor id="editor" ref={editorRef} hideTools={!isAdmin} />
-                <FormBoxWrap
-                  border
-                  className="FormBoxWrap2"
-                  style={{
-                    margin: "0 0 20px 0",
-                    borderTop: 0,
-                  }}
-                >
-                  <FormBox>
-                    <tbody>
-                      <tr>
-                        <th style={{ width: 0 }}>첨부파일</th>
-                        <td style={{ width: "auto" }}>
-                          <div className="filter-item-wrap">
-                            <Input
-                              name="attachment_q"
-                              value={detailData.files}
-                              className="readonly"
-                            />
-                            <Button
-                              icon="more-horizontal"
-                              fillMode={"flat"}
-                              onClick={() => setAttachmentsWindowVisible(true)}
-                            />
-                          </div>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </FormBox>
-                </FormBoxWrap>
               </GridContainer>
             </SwiperSlide>
+            <SwiperSlide key={2}>
+              <GridTitleContainer className="ButtonContainer3">
+                <GridTitle>
+                  <Button
+                    themeColor={"primary"}
+                    fillMode={"flat"}
+                    icon={"chevron-left"}
+                    onClick={() => {
+                      if (swiper) {
+                        swiper.slideTo(1);
+                      }
+                    }}
+                  ></Button>
+                  상세정보
+                  {isAdmin && (
+                    <Button
+                      themeColor={"primary"}
+                      fillMode={"flat"}
+                      icon={"chevron-right"}
+                      onClick={() => {
+                        if (swiper) {
+                          swiper.slideTo(3);
+                        }
+                      }}
+                    ></Button>
+                  )}
+                </GridTitle>
+              </GridTitleContainer>
+              <div style={{ height: mobileheight2 }}>
+                <RichEditor id="editor" ref={editorRef} hideTools={!isAdmin} />
+              </div>
+              <FormBoxWrap
+                border
+                className="FormBoxWrap2"
+                style={{
+                  margin: 0,
+                  borderTop: 0,
+                }}
+              >
+                <FormBox>
+                  <tbody>
+                    <tr>
+                      <th style={{ width: 0 }}>첨부파일</th>
+                      <td style={{ width: "auto" }}>
+                        <div className="filter-item-wrap">
+                          <Input
+                            name="attachment_q"
+                            value={detailData.files}
+                            className="readonly"
+                          />
+                          <Button
+                            icon="more-horizontal"
+                            fillMode={"flat"}
+                            onClick={() => setAttachmentsWindowVisible(true)}
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </FormBox>
+              </FormBoxWrap>
+            </SwiperSlide>
             {isAdmin && (
-              <SwiperSlide key={2}>
+              <SwiperSlide key={3}>
                 <GridContainer>
                   <GridTitleContainer className="ButtonContainer4">
                     <GridTitle>
@@ -1278,7 +1315,7 @@ const App = () => {
                         icon={"chevron-left"}
                         onClick={() => {
                           if (swiper) {
-                            swiper.slideTo(1);
+                            swiper.slideTo(2);
                           }
                         }}
                       ></Button>

@@ -2155,7 +2155,7 @@ const App = () => {
 
     paraData.work_type = "";
   };
-
+  
   return (
     <>
       <TitleContainer className="TitleContainer">
@@ -2169,9 +2169,11 @@ const App = () => {
           >
             저장
           </Button>
-          <Button onClick={search} icon="search" themeColor={"primary"}>
-            조회
-          </Button>
+          { isMobile && (
+            <Button onClick={search} icon="search" themeColor={"primary"}>
+              조회
+            </Button>
+          )}
         </ButtonContainer>
       </TitleContainer>
       {isMobile ? (
@@ -3078,7 +3080,11 @@ const App = () => {
                           <FormBoxWrap
                             border={true}
                             className="FormBoxWrap"
-                            style={{ height: mobileheight7, overflow: "auto", marginBottom: 0 }}
+                            style={{
+                              height: mobileheight7,
+                              overflow: "auto",
+                              marginBottom: 0,
+                            }}
                           >
                             <FormBox>
                               <tbody>
@@ -3225,7 +3231,7 @@ const App = () => {
                         </SwiperSlide>
                         <SwiperSlide key={1}>
                           <GridTitleContainer className="ButtonContainer5">
-                            <GridTitle>                           
+                            <GridTitle>
                               <Button
                                 themeColor={"primary"}
                                 fillMode={"flat"}
@@ -3252,7 +3258,11 @@ const App = () => {
                           <FormBoxWrap
                             border={true}
                             className="FormBoxWrap2"
-                            style={{ height: mobileheight8, overflow: "auto", marginBottom: 0 }}
+                            style={{
+                              height: mobileheight8,
+                              overflow: "auto",
+                              marginBottom: 0,
+                            }}
                           >
                             <FormBox>
                               <tbody>
@@ -3397,7 +3407,7 @@ const App = () => {
                         </SwiperSlide>
                         <SwiperSlide key={2}>
                           <GridTitleContainer className="ButtonContainer6">
-                            <GridTitle>               
+                            <GridTitle>
                               <Button
                                 themeColor={"primary"}
                                 fillMode={"flat"}
@@ -3439,6 +3449,9 @@ const App = () => {
               {!isMobile ? (
                 <GridTitleContainer>
                   <GridTitle>조회조건</GridTitle>
+                  <Button onClick={search} icon="search" themeColor={"primary"}>
+                    조회
+                  </Button>
                 </GridTitleContainer>
               ) : (
                 ""

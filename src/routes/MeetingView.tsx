@@ -31,7 +31,7 @@ import {
   GridTitle,
   GridTitleContainer,
   Title,
-  TitleContainer
+  TitleContainer,
 } from "../CommonStyled";
 import CenterCell from "../components/Cells/CenterCell";
 import {
@@ -104,6 +104,7 @@ const App = () => {
   const [mobileheight, setMobileHeight] = useState(0);
   const [mobileheight2, setMobileHeight2] = useState(0);
   const [mobileheight3, setMobileHeight3] = useState(0);
+  const [mobileheight4, setMobileHeight4] = useState(0);
   const [webheight, setWebHeight] = useState(0);
   const [webheight2, setWebHeight2] = useState(0);
   const [webheight3, setWebHeight3] = useState(0);
@@ -119,9 +120,10 @@ const App = () => {
     const handleWindowResize = () => {
       let deviceWidth = document.documentElement.clientWidth;
       setIsMobile(deviceWidth <= 1200);
-      setMobileHeight(getDeviceHeight(true) - height2 - height6);
-      setMobileHeight2(getDeviceHeight(true) - height3 - height5 - height6);
-      setMobileHeight3(getDeviceHeight(true) - height4 - height6);
+      setMobileHeight(getDeviceHeight(true) - height - height6);
+      setMobileHeight2(getDeviceHeight(true) - height2 - height6);
+      setMobileHeight3(getDeviceHeight(true) - height3 - height6);
+      setMobileHeight4(getDeviceHeight(true) - height4 - height6);
 
       setWebHeight(getDeviceHeight(true) - height - height2 - height6);
       setWebHeight2(getDeviceHeight(false) - height3 - height5 - height6 - 2);
@@ -511,9 +513,11 @@ const App = () => {
       <TitleContainer className="TitleContainer">
         {!isMobile ? "" : <Title>회의록 열람</Title>}
         <ButtonContainer>
-          <Button onClick={search} icon="search" themeColor={"primary"}>
-            조회
-          </Button>
+          { isMobile && (
+            <Button onClick={search} icon="search" themeColor={"primary"}>
+              조회
+            </Button>
+          )}
           <Button
             icon={"file-word"}
             name="meeting"
@@ -576,7 +580,7 @@ const App = () => {
           >
             <SwiperSlide key={0}>
               <GridContainer style={{ width: "100%" }}>
-                <GridTitleContainer className="ButtonContainer2">
+                <GridTitleContainer className="ButtonContainer">
                   <GridTitle>
                     요약정보
                     <Button
@@ -637,7 +641,7 @@ const App = () => {
             </SwiperSlide>
             <SwiperSlide key={1}>
               <GridContainer style={{ width: "100%" }}>
-                <GridTitleContainer className="ButtonContainer3">
+                <GridTitleContainer className="ButtonContainer2">
                   <GridTitle>
                     <Button
                       themeColor={"primary"}
@@ -649,7 +653,7 @@ const App = () => {
                         }
                       }}
                     ></Button>
-                    회의록
+                    기본정보
                     <Button
                       themeColor={"primary"}
                       fillMode={"flat"}
@@ -662,7 +666,11 @@ const App = () => {
                     ></Button>
                   </GridTitle>
                 </GridTitleContainer>
-                <FormBoxWrap border className="FormBoxWrap">
+                <FormBoxWrap
+                  border
+                  className="FormBoxWrap"
+                  style={{ height: mobileheight2, overflow: "auto" }}
+                >
                   <FormBox>
                     <tbody>
                       <tr>
@@ -735,12 +743,39 @@ const App = () => {
                     </tbody>
                   </FormBox>
                 </FormBoxWrap>
-                <div style={{ height: mobileheight2 }}>
-                  <RichEditor id="docEditor" ref={docEditorRef} hideTools />
-                </div>
               </GridContainer>
             </SwiperSlide>
             <SwiperSlide key={2}>
+              <GridTitleContainer className="ButtonContainer3">
+                <GridTitle>
+                  <Button
+                    themeColor={"primary"}
+                    fillMode={"flat"}
+                    icon={"chevron-left"}
+                    onClick={() => {
+                      if (swiper) {
+                        swiper.slideTo(1);
+                      }
+                    }}
+                  ></Button>
+                  상세정보
+                  <Button
+                    themeColor={"primary"}
+                    fillMode={"flat"}
+                    icon={"chevron-right"}
+                    onClick={() => {
+                      if (swiper) {
+                        swiper.slideTo(3);
+                      }
+                    }}
+                  ></Button>
+                </GridTitle>
+              </GridTitleContainer>
+              <div style={{ height: mobileheight3 }}>
+                <RichEditor id="docEditor" ref={docEditorRef} hideTools />
+              </div>
+            </SwiperSlide>
+            <SwiperSlide key={3}>
               <GridContainer style={{ width: "100%" }}>
                 <GridTitleContainer className="ButtonContainer4">
                   <GridTitle>
@@ -757,7 +792,7 @@ const App = () => {
                     참고자료
                   </GridTitle>
                 </GridTitleContainer>
-                <div style={{ height: mobileheight3 }}>
+                <div style={{ height: mobileheight4 }}>
                   <RichEditor id="refEditor" ref={refEditorRef} hideTools />
                 </div>
               </GridContainer>
@@ -769,12 +804,15 @@ const App = () => {
           <Splitter
             panes={panes}
             onChange={onChange}
-            style={{ paddingBottom: "10px" }}
+            style={{ borderColor: "#00000000" }}
           >
             <div className="pane-content">
               <GridContainer>
                 <GridTitleContainer className="ButtonContainer">
                   <GridTitle>조회조건</GridTitle>
+                  <Button onClick={search} icon="search" themeColor={"primary"}>
+                    조회
+                  </Button>
                 </GridTitleContainer>
                 <FilterContainer>
                   <FilterBox

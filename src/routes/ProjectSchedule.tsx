@@ -201,7 +201,6 @@ const App = () => {
   const [mobileheight3, setMobileHeight3] = useState(0);
   const [webheight, setWebHeight] = useState(0);
   const [webheight2, setWebHeight2] = useState(0);
-  const [webheight3, setWebHeight3] = useState(0);
 
   useLayoutEffect(() => {
     height = getHeight(".ButtonContainer");

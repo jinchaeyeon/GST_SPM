@@ -3973,9 +3973,6 @@ const App = () => {
               ) : (
                 ""
               )}
-              <Button onClick={search} icon="search" themeColor={"primary"}>
-                조회
-              </Button>
             </ButtonContainer>
           </TitleContainer>
           <GridContainerWrap>
@@ -3990,6 +3987,13 @@ const App = () => {
                   <GridContainer width={`15%`}>
                     <GridTitleContainer>
                       <GridTitle>조회조건</GridTitle>
+                      <Button
+                        onClick={search}
+                        icon="search"
+                        themeColor={"primary"}
+                      >
+                        조회
+                      </Button>
                     </GridTitleContainer>
                     <FilterContainer>
                       <FilterBox
@@ -4448,6 +4452,13 @@ const App = () => {
                   <GridContainer width={`15%`}>
                     <GridTitleContainer>
                       <GridTitle>조회조건</GridTitle>
+                      <Button
+                        onClick={search}
+                        icon="search"
+                        themeColor={"primary"}
+                      >
+                        조회
+                      </Button>
                     </GridTitleContainer>
                     <FilterBoxWrap>
                       <FilterBox
@@ -4859,6 +4870,13 @@ const App = () => {
                   <GridContainer width={`15%`}>
                     <GridTitleContainer>
                       <GridTitle>조회조건</GridTitle>
+                      <Button
+                        onClick={search}
+                        icon="search"
+                        themeColor={"primary"}
+                      >
+                        조회
+                      </Button>
                     </GridTitleContainer>
                     <FilterContainer>
                       <FilterBox
@@ -5245,6 +5263,13 @@ const App = () => {
                   <GridContainer width={`15%`}>
                     <GridTitleContainer>
                       <GridTitle>조회조건</GridTitle>
+                      <Button
+                        onClick={search}
+                        icon="search"
+                        themeColor={"primary"}
+                      >
+                        조회
+                      </Button>
                     </GridTitleContainer>
                     <FilterContainer>
                       <FilterBox

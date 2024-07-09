@@ -314,7 +314,7 @@ const App = () => {
     }));
     if (swiper && isMobile) {
       swiper.slideTo(0);
-		}
+    }
   };
 
   const [mainDataState, setMainDataState] = useState<State>({
@@ -352,7 +352,7 @@ const App = () => {
     setSavenmList([]);
     if (swiper && isMobile) {
       swiper.slideTo(1);
-		}
+    }
   };
 
   const onMainSortChange = (e: any) => {
@@ -1068,9 +1068,11 @@ const App = () => {
       <TitleContainer className="TitleContainer">
         {!isMobile ? "" : <Title>QnA</Title>}
         <ButtonContainer>
-          <Button onClick={search} icon="search" themeColor={"primary"}>
-            조회
-          </Button>
+          {isMobile && (
+            <Button onClick={search} icon="search" themeColor={"primary"}>
+              조회
+            </Button>
+          )}
           {!isAdmin && (
             <>
               <Button onClick={addData} icon="file-add" themeColor={"primary"}>
@@ -1677,6 +1679,9 @@ const App = () => {
               ) : (
                 <GridTitleContainer className="ButtonContainer">
                   <GridTitle>조회조건</GridTitle>
+                  <Button onClick={search} icon="search" themeColor={"primary"}>
+                    조회
+                  </Button>
                 </GridTitleContainer>
               )}
               <FilterContainer>

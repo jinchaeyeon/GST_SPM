@@ -302,16 +302,9 @@ const App = () => {
   const [mobileheight2, setMobileHeight2] = useState(0);
   const [mobileheight3, setMobileHeight3] = useState(0);
   const [mobileheight4, setMobileHeight4] = useState(0);
-  const [mobileheight5, setMobileHeight5] = useState(0);
-  const [mobileheight6, setMobileHeight6] = useState(0);
-  const [mobileheight7, setMobileHeight7] = useState(0);
   const [webheight, setWebHeight] = useState(0);
   const [webheight2, setWebHeight2] = useState(0);
   const [webheight3, setWebHeight3] = useState(0);
-  const [webheight4, setWebHeight4] = useState(0);
-  const [webheight5, setWebHeight5] = useState(0);
-  const [webheight6, setWebHeight6] = useState(0);
-  const [webheight7, setWebHeight7] = useState(0);
 
   const [isFilterHideStates, setIsFilterHideStates] =
     useRecoilState(isFilterHideState);
@@ -528,6 +521,7 @@ const App = () => {
         isSearch: true,
       }));
     }
+    setIsFilterHideStates(true);
   };
 
   const currentDate = new Date();
@@ -3574,18 +3568,20 @@ const App = () => {
           >
             저장
           </Button>
-          <Button
-            onClick={search}
-            icon="search"
-            themeColor={"primary"}
-            disabled={AlltabSelected != 0 ? true : false}
-          >
-            조회
-          </Button>
+          {isMobile && (
+            <Button
+              onClick={search}
+              icon="search"
+              themeColor={"primary"}
+              disabled={AlltabSelected != 0 ? true : false}
+            >
+              조회
+            </Button>
+          )}
         </ButtonContainer>
       </TitleContainer>
       <TabStrip
-        style={{ width: "100%", height: !isMobile? `85vh` : "" }}
+        style={{ width: "100%", height: !isMobile ? `85vh` : "" }}
         selected={AlltabSelected}
         onSelect={handleSelectAllTab}
       >
@@ -3803,6 +3799,14 @@ const App = () => {
               <GridContainer width="15%">
                 <GridTitleContainer>
                   <GridTitle>조회조건</GridTitle>
+                  <Button
+                    onClick={search}
+                    icon="search"
+                    themeColor={"primary"}
+                    disabled={AlltabSelected != 0 ? true : false}
+                  >
+                    조회
+                  </Button>
                 </GridTitleContainer>
                 <FilterBoxWrap>
                   <FilterBox
@@ -4052,7 +4056,11 @@ const App = () => {
                   <FormBoxWrap
                     border={true}
                     className="FormBoxWrap"
-                    style={{ height: mobileheight2, overflow: "auto", marginBottom: 0 }}
+                    style={{
+                      height: mobileheight2,
+                      overflow: "auto",
+                      marginBottom: 0,
+                    }}
                   >
                     <FormBox>
                       <tbody>
@@ -4772,38 +4780,38 @@ const App = () => {
             >
               <GridTitle>상세정보</GridTitle>
               <ButtonContainer style={{ rowGap: "5px" }}>
-              <div>
-                <Button
-                  onClick={onValueBoxWndClick}
-                  themeColor={"primary"}
-                  icon="folder"
-                >
-                  ValueBox 참조
-                </Button>
-                <Button
-                  onClick={onValueBoxWndClick2}
-                  fillMode="outline"
-                  themeColor={"primary"}
-                  icon="folder"
-                >
-                  Value 구분 관리
-                </Button>
-              </div>
-              <div>
-                <Button
-                  onClick={onAddClick}
-                  themeColor={"primary"}
-                  icon="plus"
-                  title="행 추가"
-                ></Button>
-                <Button
-                  onClick={onRemoveClick}
-                  fillMode="outline"
-                  themeColor={"primary"}
-                  icon="minus"
-                  title="행 삭제"
-                ></Button>
-              </div>
+                <div>
+                  <Button
+                    onClick={onValueBoxWndClick}
+                    themeColor={"primary"}
+                    icon="folder"
+                  >
+                    ValueBox 참조
+                  </Button>
+                  <Button
+                    onClick={onValueBoxWndClick2}
+                    fillMode="outline"
+                    themeColor={"primary"}
+                    icon="folder"
+                  >
+                    Value 구분 관리
+                  </Button>
+                </div>
+                <div>
+                  <Button
+                    onClick={onAddClick}
+                    themeColor={"primary"}
+                    icon="plus"
+                    title="행 추가"
+                  ></Button>
+                  <Button
+                    onClick={onRemoveClick}
+                    fillMode="outline"
+                    themeColor={"primary"}
+                    icon="minus"
+                    title="행 삭제"
+                  ></Button>
+                </div>
               </ButtonContainer>
             </GridTitleContainer>
             <DevContext.Provider value={{ devdivItems: devdivItems }}>
@@ -4816,7 +4824,9 @@ const App = () => {
                   <LvlContext.Provider value={{ lvlItems: lvlItems }}>
                     <UserContext.Provider value={{ usersData: usersData }}>
                       <Grid
-                        style={{ height: !isMobile? webheight3 : mobileheight4 }}
+                        style={{
+                          height: !isMobile ? webheight3 : mobileheight4,
+                        }}
                         data={newData.map((item) => ({
                           ...item,
                           items: item.items.map((row: any) => ({

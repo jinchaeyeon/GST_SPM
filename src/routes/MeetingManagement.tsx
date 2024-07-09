@@ -58,7 +58,7 @@ import {
   GridTitle,
   GridTitleContainer,
   Title,
-  TitleContainer
+  TitleContainer,
 } from "../CommonStyled";
 import CenterCell from "../components/Cells/CenterCell";
 import CheckBoxCell from "../components/Cells/CheckBoxCell";
@@ -82,7 +82,7 @@ import {
 import {
   EDIT_FIELD,
   PAGE_SIZE,
-  SELECTED_FIELD
+  SELECTED_FIELD,
 } from "../components/CommonString";
 import FilterContainer from "../components/FilterContainer";
 import { CellRender, RowRender } from "../components/Renderers/Renderers";
@@ -1768,9 +1768,11 @@ const App = () => {
         <TitleContainer className="TitleContainer">
           {!isMobile ? "" : <Title>회의록 관리</Title>}
           <ButtonContainer style={{ rowGap: "5px" }}>
-            <Button onClick={search} icon="search" themeColor={"primary"}>
-              조회
-            </Button>
+            { isMobile && (
+              <Button onClick={search} icon="search" themeColor={"primary"}>
+                조회
+              </Button>
+            )}
             <Button
               themeColor={"primary"}
               icon="file-add"
@@ -2413,6 +2415,13 @@ const App = () => {
                 <GridContainer>
                   <GridTitleContainer className="ButtonContainer">
                     <GridTitle>조회조건</GridTitle>
+                    <Button
+                      onClick={search}
+                      icon="search"
+                      themeColor={"primary"}
+                    >
+                      조회
+                    </Button>
                   </GridTitleContainer>
                   <FilterContainer>
                     <FilterBox
