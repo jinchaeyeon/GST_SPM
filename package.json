@@ -121,7 +121,7 @@
   },
   "scripts": {
     "prestart": "gulp sass",
-    "start": "webpack-dev-server --mode development --open --hot",
+    "start": "webpack-dev-server --open --mode=development --progress --no-hot --watch",
     "build": "webpack --mode production",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
