@@ -718,7 +718,7 @@ const App = () => {
       data = null;
     }
 
-    if (data != null) {
+    if (data && data.isSuccess === true) {
       const totalRowCnt = data.tables[0].TotalRowCount;
       const rows = data.tables[0].Rows;
       if (filters.find_row_value != "") {
@@ -1006,7 +1006,7 @@ const App = () => {
     } catch (error) {
       data = null;
     }
-    if (data != null) {
+    if (data && data.isSuccess === true) {
       let idx = 0;
       const totalRowCnt = data.tables[0].TotalRowCount;
       const rows = data.tables[0].Rows.map((row: any) => {

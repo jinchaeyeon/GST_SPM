@@ -40,7 +40,8 @@ function AuthRoute({ component, ...rest }: RouteProps) {
       link == "ProjectMaster" ||
       link == "SharedDocumentManagement" ||
       link == "SharedDocumentView" ||
-      link == "FAQ"
+      link == "FAQ" ||
+      link == "ProjectMonitoring"
     ) {
       return false;
     } else {
@@ -49,7 +50,7 @@ function AuthRoute({ component, ...rest }: RouteProps) {
   }
   return (
     <>
-      <Route {...rest} component={component} />
+      {isLoggedIn && <Route {...rest} component={component} />}
       {!isLoggedIn && setting() && <Redirect to="/" />}
       {isLoggedIn && error() && <Redirect to="/Error" />}
     </>

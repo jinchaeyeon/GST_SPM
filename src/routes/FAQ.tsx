@@ -227,6 +227,7 @@ const App = () => {
       }));
 
       // 그리드 조회
+      fetchUsers();
       fetchGrid(deepCopiedFilters);
     }
   }, [filters]);
