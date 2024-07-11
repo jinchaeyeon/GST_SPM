@@ -10,7 +10,6 @@ import { DatePicker } from "@progress/kendo-react-dateinputs";
 import {
   ComboBoxChangeEvent,
   ComboBoxFilterChangeEvent,
-  MultiColumnComboBox,
 } from "@progress/kendo-react-dropdowns";
 import {
   getSelectedState,
@@ -66,6 +65,7 @@ import { useApi } from "../hooks/api";
 import { isLoading, loginResultState, titles } from "../store/atoms";
 import { dataTypeColumns } from "../store/columns/common-columns";
 import { TEditorHandle } from "../store/types";
+import CustomMultiColumnComboBox from "../components/ComboBoxes/CustomMultiColumnComboBox";
 
 type TFilters = {
   type: { sub_code: ""; code_name: "" };
@@ -959,7 +959,7 @@ const App = () => {
               <th>구분</th>
               <td>
                 <div className="filter-item-wrap">
-                  <MultiColumnComboBox
+                  <CustomMultiColumnComboBox
                     name="type"
                     data={
                       typeFilterTop
@@ -1156,7 +1156,7 @@ const App = () => {
                       <th>구분</th>
                       <td>
                         {isAdmin ? (
-                          <MultiColumnComboBox
+                          <CustomMultiColumnComboBox
                             name="type"
                             data={
                               typeFilter
@@ -1374,7 +1374,7 @@ const App = () => {
                       <th>구분</th>
                       <td>
                         {isAdmin ? (
-                          <MultiColumnComboBox
+                          <CustomMultiColumnComboBox
                             name="type"
                             data={
                               typeFilter

@@ -9,7 +9,6 @@ import {
 import { Button } from "@progress/kendo-react-buttons";
 import {
   ComboBoxFilterChangeEvent,
-  MultiColumnComboBox,
   MultiSelect,
   MultiSelectChangeEvent,
 } from "@progress/kendo-react-dropdowns";
@@ -104,6 +103,7 @@ import {
   userColumns,
 } from "../store/columns/common-columns";
 import { Iparameters, TEditorHandle } from "../store/types";
+import CustomMultiColumnComboBox from "../components/ComboBoxes/CustomMultiColumnComboBox";
 
 const StatusContext = createContext<{
   statusListData: any[];
@@ -4003,7 +4003,7 @@ const App = () => {
                           <tr>
                             <th>기간</th>
                             <td>
-                              <MultiColumnComboBox
+                              <CustomMultiColumnComboBox
                                 name="date_type"
                                 data={
                                   filter
@@ -4051,7 +4051,7 @@ const App = () => {
                           <tr>
                             <th>Value 구분</th>
                             <td>
-                              <MultiColumnComboBox
+                              <CustomMultiColumnComboBox
                                 name="value_code3"
                                 data={
                                   filter2
@@ -4081,7 +4081,7 @@ const App = () => {
                           <tr>
                             <th>접수 구분</th>
                             <td>
-                              <MultiColumnComboBox
+                              <CustomMultiColumnComboBox
                                 name="reception_type"
                                 data={
                                   filter3
@@ -4100,7 +4100,7 @@ const App = () => {
                           <tr>
                             <th>접수자</th>
                             <td>
-                              <MultiColumnComboBox
+                              <CustomMultiColumnComboBox
                                 name="reception_person"
                                 data={
                                   filter4
@@ -4132,7 +4132,7 @@ const App = () => {
                           <tr>
                             <th>접수담당자</th>
                             <td>
-                              <MultiColumnComboBox
+                              <CustomMultiColumnComboBox
                                 name="receptionist"
                                 data={
                                   filter5
@@ -4151,7 +4151,7 @@ const App = () => {
                           <tr>
                             <th>처리담당자</th>
                             <td>
-                              <MultiColumnComboBox
+                              <CustomMultiColumnComboBox
                                 name="worker"
                                 data={
                                   filter6
@@ -4468,7 +4468,7 @@ const App = () => {
                           <tr>
                             <th>기간</th>
                             <td>
-                              <MultiColumnComboBox
+                              <CustomMultiColumnComboBox
                                 name="date_type"
                                 data={
                                   filter7
@@ -4506,7 +4506,7 @@ const App = () => {
                           <tr>
                             <th>Value 구분</th>
                             <td>
-                              <MultiColumnComboBox
+                              <CustomMultiColumnComboBox
                                 name="value_code3"
                                 data={
                                   filter8
@@ -4536,7 +4536,7 @@ const App = () => {
                           <tr>
                             <th>사업진행담당</th>
                             <td>
-                              <MultiColumnComboBox
+                              <CustomMultiColumnComboBox
                                 name="reception_person"
                                 data={
                                   filter9
@@ -4555,7 +4555,7 @@ const App = () => {
                           <tr>
                             <th>담당PM</th>
                             <td>
-                              <MultiColumnComboBox
+                              <CustomMultiColumnComboBox
                                 name="user_name"
                                 data={
                                   filter10
@@ -4598,7 +4598,7 @@ const App = () => {
                           <tr>
                             <th>처리담당자</th>
                             <td>
-                              <MultiColumnComboBox
+                              <CustomMultiColumnComboBox
                                 name="worker"
                                 data={
                                   filter11
@@ -4886,7 +4886,7 @@ const App = () => {
                           <tr>
                             <th>기간</th>
                             <td colSpan={3}>
-                              <MultiColumnComboBox
+                              <CustomMultiColumnComboBox
                                 name="date_type"
                                 data={
                                   filter12
@@ -4948,7 +4948,7 @@ const App = () => {
                           <tr>
                             <th>접수담당자</th>
                             <td>
-                              <MultiColumnComboBox
+                              <CustomMultiColumnComboBox
                                 name="receptionist"
                                 data={
                                   filter13
@@ -4967,7 +4967,7 @@ const App = () => {
                           <tr>
                             <th>처리담당자</th>
                             <td>
-                              <MultiColumnComboBox
+                              <CustomMultiColumnComboBox
                                 name="worker"
                                 data={
                                   filter14
@@ -4997,7 +4997,7 @@ const App = () => {
                           <tr>
                             <th>Value 구분</th>
                             <td>
-                              <MultiColumnComboBox
+                              <CustomMultiColumnComboBox
                                 name="value_code3"
                                 data={
                                   filter15
@@ -5279,7 +5279,7 @@ const App = () => {
                           <tr>
                             <th>기간</th>
                             <td>
-                              <MultiColumnComboBox
+                              <CustomMultiColumnComboBox
                                 name="date_type"
                                 data={
                                   filter16
@@ -5317,7 +5317,7 @@ const App = () => {
                           <tr>
                             <th>접수담당자</th>
                             <td>
-                              <MultiColumnComboBox
+                              <CustomMultiColumnComboBox
                                 name="receptionist"
                                 data={
                                   filter17
@@ -5397,7 +5397,7 @@ const App = () => {
                           <tr>
                             <th>지시자</th>
                             <td>
-                              <MultiColumnComboBox
+                              <CustomMultiColumnComboBox
                                 name="user_name"
                                 data={
                                   filter18
@@ -5416,7 +5416,7 @@ const App = () => {
                           <tr>
                             <th>처리담당자</th>
                             <td>
-                              <MultiColumnComboBox
+                              <CustomMultiColumnComboBox
                                 name="worker"
                                 data={
                                   filter19
@@ -5786,7 +5786,7 @@ const App = () => {
                     <tr>
                       <th>기간</th>
                       <td>
-                        <MultiColumnComboBox
+                        <CustomMultiColumnComboBox
                           name="date_type"
                           data={
                             filter
@@ -5832,7 +5832,7 @@ const App = () => {
                     <tr>
                       <th>Value 구분</th>
                       <td>
-                        <MultiColumnComboBox
+                        <CustomMultiColumnComboBox
                           name="value_code3"
                           data={
                             filter2
@@ -5862,7 +5862,7 @@ const App = () => {
                     <tr>
                       <th>접수 구분</th>
                       <td>
-                        <MultiColumnComboBox
+                        <CustomMultiColumnComboBox
                           name="reception_type"
                           data={
                             filter3
@@ -5881,7 +5881,7 @@ const App = () => {
                     <tr>
                       <th>접수자</th>
                       <td>
-                        <MultiColumnComboBox
+                        <CustomMultiColumnComboBox
                           name="reception_person"
                           data={
                             filter4 ? filterBy(usersData, filter4) : usersData
@@ -5911,7 +5911,7 @@ const App = () => {
                     <tr>
                       <th>접수담당자</th>
                       <td>
-                        <MultiColumnComboBox
+                        <CustomMultiColumnComboBox
                           name="receptionist"
                           data={
                             filter5 ? filterBy(usersData, filter5) : usersData
@@ -5928,7 +5928,7 @@ const App = () => {
                     <tr>
                       <th>처리담당자</th>
                       <td>
-                        <MultiColumnComboBox
+                        <CustomMultiColumnComboBox
                           name="worker"
                           data={
                             filter6 ? filterBy(usersData, filter6) : usersData
@@ -6244,7 +6244,7 @@ const App = () => {
                       <tr>
                         <th>기간</th>
                         <td>
-                          <MultiColumnComboBox
+                          <CustomMultiColumnComboBox
                             name="date_type"
                             data={
                               filter7
@@ -6282,7 +6282,7 @@ const App = () => {
                       <tr>
                         <th>Value 구분</th>
                         <td>
-                          <MultiColumnComboBox
+                          <CustomMultiColumnComboBox
                             name="value_code3"
                             data={
                               filter8
@@ -6312,7 +6312,7 @@ const App = () => {
                       <tr>
                         <th>사업진행담당</th>
                         <td>
-                          <MultiColumnComboBox
+                          <CustomMultiColumnComboBox
                             name="reception_person"
                             data={
                               filter9 ? filterBy(usersData, filter9) : usersData
@@ -6329,7 +6329,7 @@ const App = () => {
                       <tr>
                         <th>담당PM</th>
                         <td>
-                          <MultiColumnComboBox
+                          <CustomMultiColumnComboBox
                             name="user_name"
                             data={
                               filter10
@@ -6372,7 +6372,7 @@ const App = () => {
                       <tr>
                         <th>처리담당자</th>
                         <td>
-                          <MultiColumnComboBox
+                          <CustomMultiColumnComboBox
                             name="worker"
                             data={
                               filter11
@@ -6639,7 +6639,7 @@ const App = () => {
                       <tr>
                         <th>기간</th>
                         <td colSpan={3}>
-                          <MultiColumnComboBox
+                          <CustomMultiColumnComboBox
                             name="date_type"
                             data={
                               filter12
@@ -6701,7 +6701,7 @@ const App = () => {
                       <tr>
                         <th>접수담당자</th>
                         <td>
-                          <MultiColumnComboBox
+                          <CustomMultiColumnComboBox
                             name="receptionist"
                             data={
                               filter13
@@ -6720,7 +6720,7 @@ const App = () => {
                       <tr>
                         <th>처리담당자</th>
                         <td>
-                          <MultiColumnComboBox
+                          <CustomMultiColumnComboBox
                             name="worker"
                             data={
                               filter14
@@ -6750,7 +6750,7 @@ const App = () => {
                       <tr>
                         <th>Value 구분</th>
                         <td>
-                          <MultiColumnComboBox
+                          <CustomMultiColumnComboBox
                             name="value_code3"
                             data={
                               filter15
@@ -7030,7 +7030,7 @@ const App = () => {
                       <tr>
                         <th>기간</th>
                         <td>
-                          <MultiColumnComboBox
+                          <CustomMultiColumnComboBox
                             name="date_type"
                             data={
                               filter16
@@ -7068,7 +7068,7 @@ const App = () => {
                       <tr>
                         <th>접수담당자</th>
                         <td>
-                          <MultiColumnComboBox
+                          <CustomMultiColumnComboBox
                             name="receptionist"
                             data={
                               filter17
@@ -7148,7 +7148,7 @@ const App = () => {
                       <tr>
                         <th>지시자</th>
                         <td>
-                          <MultiColumnComboBox
+                          <CustomMultiColumnComboBox
                             name="user_name"
                             data={
                               filter18
@@ -7167,7 +7167,7 @@ const App = () => {
                       <tr>
                         <th>처리담당자</th>
                         <td>
-                          <MultiColumnComboBox
+                          <CustomMultiColumnComboBox
                             name="worker"
                             data={
                               filter19

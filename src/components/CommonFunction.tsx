@@ -1133,3 +1133,14 @@ export const getDeviceHeight = (bool: boolean) => {
     }
   }
 };
+
+export const GetPropertyValueByName = (target: any, name: string) => {
+  const findName = name.toLowerCase();
+
+  const propertyName = Object.keys(target).find(
+    (x) => x.toLowerCase() == findName
+  );
+  const propertyValue = propertyName ? target[propertyName] : undefined;
+
+  return propertyValue == undefined ? [] : propertyValue;
+};

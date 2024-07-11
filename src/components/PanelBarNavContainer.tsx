@@ -373,6 +373,13 @@ const PanelBarNavContainer = (props: any) => {
     }
 
     if (route) {
+      if (isMobile) {
+        setIsFilterheightstates(30);
+        setIsFilterHideStates(true);
+      } else {
+        setIsFilterheightstates(0);
+        setIsFilterHideStates(false);
+      }
       setIsMobileMenuOpend(false);
       setUserOptionsWindowVisible(false);
       setChangePasswordWindowVisible(false);

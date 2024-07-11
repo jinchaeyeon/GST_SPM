@@ -9,7 +9,6 @@ import {
 import { Button } from "@progress/kendo-react-buttons";
 import {
   ComboBoxFilterChangeEvent,
-  MultiColumnComboBox,
   MultiSelect,
   MultiSelectChangeEvent,
 } from "@progress/kendo-react-dropdowns";
@@ -97,6 +96,7 @@ import {
 } from "../store/columns/common-columns";
 import { Iparameters, TEditorHandle } from "../store/types";
 import FilterContainer from "../components/FilterContainer";
+import CustomMultiColumnComboBox from "../components/ComboBoxes/CustomMultiColumnComboBox";
 
 const valueCodeQueryStr = `select sub_code, code_name
 from comCodeMaster
@@ -1792,7 +1792,7 @@ const App = () => {
                 <tr>
                   <th>처리담당자</th>
                   <td>
-                    <MultiColumnComboBox
+                    <CustomMultiColumnComboBox
                       name="work_person"
                       data={filter ? filterBy(usersData, filter) : usersData}
                       value={filters.work_person}
@@ -1807,7 +1807,7 @@ const App = () => {
                 <tr>
                   <th>접수담당자</th>
                   <td>
-                    <MultiColumnComboBox
+                    <CustomMultiColumnComboBox
                       name="receptionist"
                       data={filter2 ? filterBy(usersData, filter2) : usersData}
                       value={filters.receptionist}
@@ -1844,7 +1844,7 @@ const App = () => {
                 <tr>
                   <th>접수자</th>
                   <td>
-                    <MultiColumnComboBox
+                    <CustomMultiColumnComboBox
                       name="reception_person"
                       data={filter3 ? filterBy(usersData, filter3) : usersData}
                       value={filters.reception_person}
@@ -1859,7 +1859,7 @@ const App = () => {
                 <tr>
                   <th>접수 구분</th>
                   <td>
-                    <MultiColumnComboBox
+                    <CustomMultiColumnComboBox
                       name="reception_type"
                       data={
                         filter3
@@ -1889,7 +1889,7 @@ const App = () => {
                 <tr>
                   <th>Value 구분</th>
                   <td>
-                    <MultiColumnComboBox
+                    <CustomMultiColumnComboBox
                       name="value_code3"
                       data={
                         filter4
@@ -2392,7 +2392,7 @@ const App = () => {
                     <tr>
                       <th>처리담당자</th>
                       <td>
-                        <MultiColumnComboBox
+                        <CustomMultiColumnComboBox
                           name="work_person"
                           data={
                             filter ? filterBy(usersData, filter) : usersData
@@ -2409,7 +2409,7 @@ const App = () => {
                     <tr>
                       <th>접수담당자</th>
                       <td>
-                        <MultiColumnComboBox
+                        <CustomMultiColumnComboBox
                           name="receptionist"
                           data={
                             filter2 ? filterBy(usersData, filter2) : usersData
@@ -2448,7 +2448,7 @@ const App = () => {
                     <tr>
                       <th>접수자</th>
                       <td>
-                        <MultiColumnComboBox
+                        <CustomMultiColumnComboBox
                           name="reception_person"
                           data={
                             filter3 ? filterBy(usersData, filter3) : usersData
@@ -2465,7 +2465,7 @@ const App = () => {
                     <tr>
                       <th>접수 구분</th>
                       <td>
-                        <MultiColumnComboBox
+                        <CustomMultiColumnComboBox
                           name="reception_type"
                           data={
                             filter3
@@ -2495,7 +2495,7 @@ const App = () => {
                     <tr>
                       <th>Value 구분</th>
                       <td>
-                        <MultiColumnComboBox
+                        <CustomMultiColumnComboBox
                           name="value_code3"
                           data={
                             filter4

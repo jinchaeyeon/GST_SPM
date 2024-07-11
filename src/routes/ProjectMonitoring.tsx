@@ -2,7 +2,6 @@ import { DataResult, State, process } from "@progress/kendo-data-query";
 import { Button } from "@progress/kendo-react-buttons";
 import { DatePicker } from "@progress/kendo-react-dateinputs";
 import {
-  MultiColumnComboBox,
   MultiSelect,
   MultiSelectChangeEvent,
 } from "@progress/kendo-react-dropdowns";
@@ -54,6 +53,7 @@ import { isLoading, loginResultState, titles } from "../store/atoms";
 import { dateTypeColumns } from "../store/columns/common-columns";
 import { Iparameters } from "../store/types";
 import BizComponentRadioGroup from "../components/RadioGroups/BizComponentRadioGroup";
+import CustomMultiColumnComboBox from "../components/ComboBoxes/CustomMultiColumnComboBox";
 const usersQueryStr = `SELECT user_id, user_name + (CASE WHEN rtrchk = 'Y' THEN '-퇴' ELSE '' END) as user_name FROM sysUserMaster ORDER BY (CASE WHEN rtrchk = 'Y' THEN 2 ELSE 1 END), user_id`;
 const statusQueryStr = `
 SELECT 'Y' as code, '완료' as name
@@ -860,7 +860,7 @@ const ProjectMonitoring: React.FC = () => {
                 <th>기간</th>
                 <td colSpan={3}>
                   <div className="filter-item-wrap">
-                    <MultiColumnComboBox
+                    <CustomMultiColumnComboBox
                       name="date_type"
                       data={dateTypeData}
                       value={filters.date_type}

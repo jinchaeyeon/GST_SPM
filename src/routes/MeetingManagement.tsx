@@ -14,7 +14,6 @@ import {
 import {
   ComboBoxChangeEvent,
   ComboBoxFilterChangeEvent,
-  MultiColumnComboBox,
 } from "@progress/kendo-react-dropdowns";
 import {
   Grid,
@@ -95,6 +94,7 @@ import { useApi } from "../hooks/api";
 import { ICustData, IPrjData } from "../hooks/interfaces";
 import { isLoading, loginResultState, titles } from "../store/atoms";
 import { TEditorHandle } from "../store/types";
+import CustomMultiColumnComboBox from "../components/ComboBoxes/CustomMultiColumnComboBox";
 
 const DATA_ITEM_KEY = "meetingnum";
 const DETAIL_ITEM_KEY = "meetingseq";
@@ -2084,7 +2084,7 @@ const App = () => {
                           <th>업체명</th>
                           <td>
                             {customersState && (
-                              <MultiColumnComboBox
+                              <CustomMultiColumnComboBox
                                 name="cust_data"
                                 data={
                                   custFilter
@@ -2660,7 +2660,7 @@ const App = () => {
                             <th>업체명</th>
                             <td>
                               {customersState && (
-                                <MultiColumnComboBox
+                                <CustomMultiColumnComboBox
                                   name="cust_data"
                                   data={
                                     custFilter

@@ -17,7 +17,6 @@ import {
 import { DatePicker } from "@progress/kendo-react-dateinputs";
 import {
   ComboBoxFilterChangeEvent,
-  MultiColumnComboBox,
   MultiSelect,
   MultiSelectChangeEvent,
 } from "@progress/kendo-react-dropdowns";
@@ -102,6 +101,7 @@ import { ICustData } from "../hooks/interfaces";
 import {
   isFilterHideState,
   isLoading,
+  isMobileMenuOpendState,
   loginResultState,
   titles,
 } from "../store/atoms";
@@ -118,6 +118,7 @@ import SwiperCore from "swiper";
 import "swiper/css";
 import { Swiper, SwiperSlide } from "swiper/react";
 import FilterContainer from "../components/FilterContainer";
+import CustomMultiColumnComboBox from "../components/ComboBoxes/CustomMultiColumnComboBox";
 
 const DATA_ITEM_KEY = "devmngnum";
 const SUB_DATA_ITEM_KEY = "devmngseq";
@@ -135,15 +136,15 @@ const processWithGroups = (data: any[], group: GroupDescriptor[]) => {
 
   return newDataState;
 };
-const datetypeQueryStr = `SELECT 'A' as code, '사업시작일(계약일)' as name
+const datetypeQueryStr = `SELECT 'A' as code, '협약시작일(계약일)' as name
 UNION ALL
-SELECT 'B' as code, '완료일' as name
+SELECT 'B' as code, '사업완료일(AS포함)' as name
 UNION ALL
 SELECT 'C' as code, '중간점검일' as name
 UNION ALL
 SELECT 'D' as code, '최종점검일' as name
 UNION ALL
-SELECT 'E' as code, '사업종료일' as name
+SELECT 'E' as code, '협약종료일' as name
 UNION ALL
 SELECT '%' as code, '전체' as name`;
 const progressstatusQueryStr = `SELECT 'Y' as code, '진행' as name
@@ -350,7 +351,31 @@ const App = () => {
   const [filter4, setFilter4] = React.useState<FilterDescriptor>();
   const [filter5, setFilter5] = React.useState<FilterDescriptor>();
   const [filter6, setFilter6] = React.useState<FilterDescriptor>();
+  const [isMobileMenuOpend, setIsMobileMenuOpend] = useRecoilState(
+    isMobileMenuOpendState
+  );
+  const [openComboId, setOpenComboId] = useState("");
+  const handleToggle = (id: string) => {
+    setOpenComboId(prevId => (prevId === id ? "" : id));
+  };
+  // useEffect(() => {
+  //   const handleDocumentClick = (event: MouseEvent) => {
+  //     const target = event.target as HTMLElement;
+  //     if (openComboId && !target.closest(`#${openComboId}`)) {
+  //       setOpenComboId("");
+  //     }
+  //   };
 
+  //   document.addEventListener('click', handleDocumentClick, true);
+
+  //   return () => {
+  //     document.removeEventListener('click', handleDocumentClick, true);
+  //   };
+  // }, [openComboId]);
+  // useEffect(() => {
+  //   setOpenComboId("");
+  // }, [isMobileMenuOpend]);
+  
   const handleFilterChange = (event: ComboBoxFilterChangeEvent) => {
     if (event) {
       setFilter(event.filter);
@@ -470,6 +495,8 @@ const App = () => {
       ...prev,
       [name]: value,
     }));
+
+    setState(false);
   };
 
   const filterMultiSelectChange = (event: MultiSelectChangeEvent) => {
@@ -526,8 +553,8 @@ const App = () => {
 
   const currentDate = new Date();
   const fromDate = new Date(
-    currentDate.getFullYear(),
-    currentDate.getMonth() - 6,
+    currentDate.getFullYear() - 2,
+    currentDate.getMonth(),
     currentDate.getDate()
   );
   const [custWindowVisible, setCustWindowVisible] = useState<boolean>(false);
@@ -1439,6 +1466,12 @@ const App = () => {
       setTitle("프로젝트 마스터");
     }
   }, []);
+
+  const [state, setState] = useState(false);
+
+  document.getElementById(title)?.addEventListener("focusout", (event) => {
+    setState(false);
+  });
 
   const onMainSortChange = (e: any) => {
     setMainDataState((prev) => ({ ...prev, sort: e.sort }));
@@ -3594,7 +3627,7 @@ const App = () => {
                     <tr>
                       <th>기간</th>
                       <td>
-                        <MultiColumnComboBox
+                        <CustomMultiColumnComboBox
                           name="date_type"
                           data={
                             filter
@@ -3640,7 +3673,7 @@ const App = () => {
                     <tr>
                       <th>진행여부</th>
                       <td>
-                        <MultiColumnComboBox
+                        <CustomMultiColumnComboBox
                           name="progress_status"
                           data={
                             filter2
@@ -3654,6 +3687,7 @@ const App = () => {
                           className="required"
                           filterable={true}
                           onFilterChange={handleFilterChange2}
+                          id="progress_status"            
                         />
                       </td>
                     </tr>
@@ -3684,7 +3718,7 @@ const App = () => {
                     <tr>
                       <th>사업진행담당</th>
                       <td>
-                        <MultiColumnComboBox
+                        <CustomMultiColumnComboBox
                           name="pjt_person"
                           data={
                             filter3 ? filterBy(usersData, filter3) : usersData
@@ -3757,13 +3791,13 @@ const App = () => {
                   <GridColumn field="project" title="프로젝트" width={200} />
                   <GridColumn
                     field="cotracdt"
-                    title="사업시작일"
+                    title="협약시작일"
                     width={120}
                     cell={DateCell}
                   />
                   <GridColumn
                     field="finexpdt"
-                    title="사업종료일"
+                    title="협약종료일"
                     width={120}
                     cell={DateCell}
                   />
@@ -3816,7 +3850,7 @@ const App = () => {
                       <tr>
                         <th>기간</th>
                         <td>
-                          <MultiColumnComboBox
+                          <CustomMultiColumnComboBox
                             name="date_type"
                             data={
                               filter
@@ -3864,7 +3898,7 @@ const App = () => {
                       <tr>
                         <th>진행여부</th>
                         <td>
-                          <MultiColumnComboBox
+                          <CustomMultiColumnComboBox
                             name="progress_status"
                             data={
                               filter2
@@ -3908,7 +3942,7 @@ const App = () => {
                       <tr>
                         <th>사업진행담당</th>
                         <td>
-                          <MultiColumnComboBox
+                          <CustomMultiColumnComboBox
                             name="pjt_person"
                             data={
                               filter3 ? filterBy(usersData, filter3) : usersData
@@ -3982,13 +4016,13 @@ const App = () => {
                   <GridColumn field="project" title="프로젝트" width={200} />
                   <GridColumn
                     field="cotracdt"
-                    title="사업시작일"
+                    title="협약시작일"
                     width={120}
                     cell={DateCell}
                   />
                   <GridColumn
                     field="finexpdt"
-                    title="사업종료일"
+                    title="협약종료일"
                     width={120}
                     cell={DateCell}
                   />
@@ -4104,7 +4138,7 @@ const App = () => {
                               className="required"
                             />
                           </td>
-                          <th>완료일</th>
+                          <th>사업완료일(AS포함)</th>
                           <td>
                             <DatePicker
                               name="findt"
@@ -4134,7 +4168,7 @@ const App = () => {
                           </td>
                           <th>업체명</th>
                           <td>
-                            <MultiColumnComboBox
+                            <CustomMultiColumnComboBox
                               name="custnm"
                               data={
                                 filter4
@@ -4152,7 +4186,7 @@ const App = () => {
                           </td>
                           <th>담당PM</th>
                           <td>
-                            <MultiColumnComboBox
+                            <CustomMultiColumnComboBox
                               name="pjtmanager"
                               data={
                                 filter5
@@ -4170,7 +4204,7 @@ const App = () => {
                           </td>
                           <th>사업진행담당</th>
                           <td>
-                            <MultiColumnComboBox
+                            <CustomMultiColumnComboBox
                               name="pjtperson"
                               data={
                                 filter6
@@ -4188,7 +4222,7 @@ const App = () => {
                           </td>
                         </tr>
                         <tr>
-                          <th>사업시작일</th>
+                          <th>협약시작일</th>
                           <td>
                             <DatePicker
                               name="cotracdt"
@@ -4199,7 +4233,7 @@ const App = () => {
                               className="required"
                             />
                           </td>
-                          <th>사업종료일</th>
+                          <th>협약종료일</th>
                           <td>
                             <DatePicker
                               name="finexpdt"
@@ -4210,7 +4244,7 @@ const App = () => {
                               className="required"
                             />
                           </td>
-                          <th>위원</th>
+                          <th>위원/연락처</th>
                           <td colSpan={3}>
                             <Input
                               name="revperson"
@@ -4472,16 +4506,7 @@ const App = () => {
                           className="required"
                         />
                       </td>
-                      <th>완료일</th>
-                      <td>
-                        <DatePicker
-                          name="findt"
-                          value={information.findt}
-                          format="yyyy-MM-dd"
-                          onChange={InputChange}
-                          placeholder=""
-                        />
-                      </td>
+                     
                     </tr>
                     <tr>
                       <th>업체코드</th>
@@ -4502,7 +4527,7 @@ const App = () => {
                       </td>
                       <th>업체명</th>
                       <td>
-                        <MultiColumnComboBox
+                        <CustomMultiColumnComboBox
                           name="custnm"
                           data={
                             filter4
@@ -4520,7 +4545,7 @@ const App = () => {
                       </td>
                       <th>담당PM</th>
                       <td>
-                        <MultiColumnComboBox
+                        <CustomMultiColumnComboBox
                           name="pjtmanager"
                           data={
                             filter5 ? filterBy(usersData, filter5) : usersData
@@ -4536,7 +4561,7 @@ const App = () => {
                       </td>
                       <th>사업진행담당</th>
                       <td>
-                        <MultiColumnComboBox
+                        <CustomMultiColumnComboBox
                           name="pjtperson"
                           data={
                             filter6 ? filterBy(usersData, filter6) : usersData
@@ -4552,7 +4577,7 @@ const App = () => {
                       </td>
                     </tr>
                     <tr>
-                      <th>사업시작일</th>
+                      <th>협약시작일</th>
                       <td>
                         <DatePicker
                           name="cotracdt"
@@ -4563,7 +4588,7 @@ const App = () => {
                           className="required"
                         />
                       </td>
-                      <th>사업종료일</th>
+                      <th>협약종료일</th>
                       <td>
                         <DatePicker
                           name="finexpdt"
@@ -4574,8 +4599,18 @@ const App = () => {
                           className="required"
                         />
                       </td>
-                      <th>위원</th>
-                      <td colSpan={3}>
+                      <th>사업완료일(AS포함)</th>
+                      <td>
+                        <DatePicker
+                          name="findt"
+                          value={information.findt}
+                          format="yyyy-MM-dd"
+                          onChange={InputChange}
+                          placeholder=""
+                        />
+                      </td>
+                      <th>위원/연락처</th>
+                      <td>
                         <Input
                           name="revperson"
                           type="text"
@@ -4983,7 +5018,7 @@ const App = () => {
                         />
                         <GridColumn
                           field="DesignEndDate"
-                          title="설계완료일"
+                          title="설계사업완료일(AS포함)"
                           width={120}
                           cell={DateCell}
                         />
@@ -5001,7 +5036,7 @@ const App = () => {
                         />
                         <GridColumn
                           field="findt"
-                          title="완료일"
+                          title="사업완료일(AS포함)"
                           width={120}
                           cell={DateCell}
                         />

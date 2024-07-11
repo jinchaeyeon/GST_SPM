@@ -9,7 +9,6 @@ import { Button } from "@progress/kendo-react-buttons";
 import { getter } from "@progress/kendo-react-common";
 import {
   ComboBoxFilterChangeEvent,
-  MultiColumnComboBox,
 } from "@progress/kendo-react-dropdowns";
 import {
   Grid,
@@ -102,6 +101,7 @@ import NumberPercentCell from "../components/Cells/NumberPercentCell";
 import RequiredHeader from "../components/RequiredHeader";
 import DetailWindow from "../components/Windows/CommonWindows/ProjectScheduleDetailWindow";
 import FilterContainer from "../components/FilterContainer";
+import CustomMultiColumnComboBox from "../components/ComboBoxes/CustomMultiColumnComboBox";
 type TSavedPara = {
   row_status?: "N" | "U" | "D";
   guid?: string;
@@ -1234,7 +1234,7 @@ const App = () => {
               <tr>
                 <th>프로젝트 명</th>
                 <td>
-                  <MultiColumnComboBox
+                  <CustomMultiColumnComboBox
                     columns={projectColumns}
                     name="user_name"
                     data={
@@ -1248,7 +1248,7 @@ const App = () => {
                     onFilterChange={handleProjectFilterChange}
                     onChange={handleChange}
                     className="required"
-                  ></MultiColumnComboBox>
+                  ></CustomMultiColumnComboBox>
                 </td>
                 <th>프로젝트 번호</th>
                 <td>

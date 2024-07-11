@@ -823,8 +823,8 @@ export const Content = styled.div<ContentType>`
   background-color: #fff;
   /* 컨테이너 고정 추가 */
   left: calc(${(props) => (props.isMenuOpen ? GNV_WIDTH : "25")}px);
-  height: 97vh;
-  // position: fixed;
+  height: 91vh;
+  position: fixed;
   overflow: scroll;
   ::-webkit-scrollbar {
     display: none;
@@ -843,7 +843,7 @@ export const Content = styled.div<ContentType>`
 
 export const PageWrap = styled.div`
   padding: 0 15px;
-  height: calc(100vh - 30px);
+  height: calc(100vh - 95px);
 
   @media (max-width: 1200px) {
     min-height: auto;

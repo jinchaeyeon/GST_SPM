@@ -11,7 +11,6 @@ import { DatePicker } from "@progress/kendo-react-dateinputs";
 import {
   ComboBoxChangeEvent,
   ComboBoxFilterChangeEvent,
-  MultiColumnComboBox,
 } from "@progress/kendo-react-dropdowns";
 import {
   getSelectedState,
@@ -77,6 +76,7 @@ import {
   dataTypeColumns,
 } from "../store/columns/common-columns";
 import { TEditorHandle } from "../store/types";
+import CustomMultiColumnComboBox from "../components/ComboBoxes/CustomMultiColumnComboBox";
 
 type TFilters = {
   fromDate: Date;
@@ -999,7 +999,7 @@ const App = () => {
               </td>
               <th>구분</th>
               <td>
-                <MultiColumnComboBox
+                <CustomMultiColumnComboBox
                   name="type"
                   data={
                     typeFilterTop
@@ -1026,7 +1026,7 @@ const App = () => {
               </td>
               {/* <td>
                 {customersData && (
-                  <MultiColumnComboBox
+                  <CustomMultiColumnComboBox
                     name="customer"
                     data={
                       custFilterTop
@@ -1174,7 +1174,7 @@ const App = () => {
                     <tr>
                       <th>구분</th>
                       <td>
-                        <MultiColumnComboBox
+                        <CustomMultiColumnComboBox
                           name="type"
                           data={
                             typeFilter
@@ -1213,7 +1213,7 @@ const App = () => {
                       <th>업체명</th>
                       <td>
                         {customersData && (
-                          <MultiColumnComboBox
+                          <CustomMultiColumnComboBox
                             name="customer"
                             data={
                               custFilter
@@ -1442,7 +1442,7 @@ const App = () => {
                       <tr>
                         <th>구분</th>
                         <td>
-                          <MultiColumnComboBox
+                          <CustomMultiColumnComboBox
                             name="type"
                             data={
                               typeFilter
@@ -1481,7 +1481,7 @@ const App = () => {
                         <th>업체명</th>
                         <td>
                           {customersData && (
-                            <MultiColumnComboBox
+                            <CustomMultiColumnComboBox
                               name="customer"
                               data={
                                 custFilter

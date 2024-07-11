@@ -18,6 +18,10 @@ code {
   touch-action: auto !important;
 }
 
+.k-table-scroller {
+  max-height: 200px;
+}
+
 .datepicker_button {
   margin-top: 5px !important;
   height: 30px !important;
@@ -312,19 +316,19 @@ input.required,
 input.required:hover,
 input.required.k-hover,
 .k-daterangepicker.required input {
-  background-color: #fff0ef;
+  background-color: #fff0ef !important;
   width: "100%";
 }
 
 .k-daterangepicker.required,
 .k-daterangepicker.required:hover {
-  background-color: unset;
+  background-color: unset !important;
 }
 
 ul.readonly,
 span.readonly,
 input.readonly {
-  background-color: #efefef;
+  background-color: #efefef !important;
 }
 
 .k-radio-label {
