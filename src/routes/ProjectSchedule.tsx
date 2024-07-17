@@ -7,9 +7,7 @@ import {
 } from "@progress/kendo-data-query";
 import { Button } from "@progress/kendo-react-buttons";
 import { getter } from "@progress/kendo-react-common";
-import {
-  ComboBoxFilterChangeEvent,
-} from "@progress/kendo-react-dropdowns";
+import { ComboBoxFilterChangeEvent } from "@progress/kendo-react-dropdowns";
 import {
   Grid,
   GridCellProps,
@@ -70,6 +68,7 @@ import ComboBoxCell from "../components/Cells/ComboBoxCell";
 import DateCell from "../components/Cells/DateCell";
 import NameCell from "../components/Cells/NameCell";
 import {
+  UseBizComponent,
   UseParaPc,
   convertDateToStr,
   convertDateToStrWithTime2,
@@ -102,6 +101,8 @@ import RequiredHeader from "../components/RequiredHeader";
 import DetailWindow from "../components/Windows/CommonWindows/ProjectScheduleDetailWindow";
 import FilterContainer from "../components/FilterContainer";
 import CustomMultiColumnComboBox from "../components/ComboBoxes/CustomMultiColumnComboBox";
+import BizComponentRadioGroup from "../components/RadioGroups/BizComponentRadioGroup";
+import { useLocation } from "react-router-dom";
 type TSavedPara = {
   row_status?: "N" | "U" | "D";
   guid?: string;
@@ -120,6 +121,8 @@ type TSavedPara = {
 };
 
 type TTask = {
+  project: string;
+  devmngnum: string;
   id: string;
   parentId: string;
   title: string;
@@ -194,6 +197,7 @@ const App = () => {
   UseParaPc(setPc);
   const [filterValue, setFilterValue] = useRecoilState(filterValueState);
   const [title, setTitle] = useRecoilState(titles);
+  const [bizComponentData, setBizComponentData] = useState<any>(null);
   let deviceWidth = window.innerWidth;
   const [isMobile, setIsMobile] = useState(deviceWidth <= 1200);
   const [mobileheight, setMobileHeight] = useState(0);
@@ -220,6 +224,12 @@ const App = () => {
       window.removeEventListener("resize", handleWindowResize);
     };
   }, [webheight, webheight2]);
+
+  UseBizComponent(
+    "R_YN",
+    //완료여부,
+    setBizComponentData
+  );
 
   const [loginResult] = useRecoilState(loginResultState);
   const userId = loginResult ? loginResult.userId : "";
@@ -255,6 +265,13 @@ const App = () => {
     project: string;
     devmngnum: string;
   } | null>(null);
+
+  function useQuery() {
+    return new URLSearchParams(useLocation().search);
+  }
+
+  const query = useQuery();
+  const projectNumber = query.get('projectNumber');
 
   const [scale, setScale] = useState<GanttScaleType>("weeks");
   const [view, setView] = useState<"Scheduler" | "Grid">("Scheduler");
@@ -401,11 +418,38 @@ const App = () => {
     return newUuid;
   };
 
+  const [detailFilters, setDetailFilters] = useState({
+    work_type: "detail",
+    date_type: { code: "%", name: "전체" },
+    from_date: "19000101",
+    to_date: new Date(),
+    customer_code: "%",
+    customer_name: "%",
+    pjt_person: "%",
+    status: [{ code: "N", name: "미완료" }],
+    project: "%",
+    progress_status: "%",
+    progress_fin: "N", // 라디오버튼 초기값 진행
+    find_row_value: "",
+    devmngnum: "%",
+    isSearch: true, // 조회여부 초기값
+    pgNum: 1,
+  });
+
   const fetchProjectList = async () => {
     let data: any;
 
+    const status =
+    detailFilters.progress_fin === "%"
+      ? "Y,N" // 전체 선택
+      : detailFilters.progress_fin;
+
+  const para = {
+    status: `&status=${status}`,
+  };
+
     try {
-      data = await processApi<any>("project-schedule-list");
+      data = await processApi<any>("project-schedule-list", para);
     } catch (error) {
       data = null;
     }
@@ -485,6 +529,31 @@ const App = () => {
       taskForDeleting.push(...taskRows);
     }
   };
+
+  // 프로젝트 모니터링 데이터 조회
+  useEffect(() => {
+    if (projectNumber) {
+      fetchProjectList();
+    }
+  }, [projectNumber]);
+
+  useEffect(() => {
+    if (projectNumber && projectsData.length > 0) {
+      const matchingProject = projectsData.find(project => project.devmngnum === projectNumber);
+      if (matchingProject) {
+        setProjectValue({
+          project: matchingProject.project,
+          devmngnum: matchingProject.devmngnum
+        });
+      } else {
+        setProjectValue({
+          project: "Unknown Project",
+          devmngnum: projectNumber
+        });
+      }
+      fetchProjectDetail(projectNumber);
+    }
+  }, [projectNumber, projectsData]);
 
   const reorderTasks = (data: TTask[]): TTask[] => {
     // parentId가 null인 항목의 id 찾기
@@ -714,6 +783,21 @@ const App = () => {
     }
     setLoading(false);
   };
+
+  //조회조건 Radio Group Change 함수 => 사용자가 선택한 라디오버튼 값을 조회 파라미터로 세팅
+  const filterRadioChange = (e: any) => {
+    const { name, value } = e;
+
+    setDetailFilters((prev) => ({
+      ...prev,
+      [name]: value,
+      isSearch: true,
+    }));
+  };
+
+  useEffect(() => {
+      fetchProjectList();
+  }, [detailFilters]);
 
   const search = () => {
     setGridSelectedState({});
@@ -1222,8 +1306,20 @@ const App = () => {
           </ButtonContainer>
         </TitleContainer>
         {!isMobile ? (
-          <GridTitleContainer className="ButtonContainer">
+          <GridTitleContainer
+            className="ButtonContainer"
+            style={{ justifyContent: "flex-start", gap: 35}}
+          >
             <GridTitle>조회조건</GridTitle>
+            {bizComponentData !== null && (
+              <BizComponentRadioGroup
+                name="progress_fin"
+                value={detailFilters.progress_fin}
+                bizComponentId="R_YN"
+                bizComponentData={bizComponentData}
+                changeData={filterRadioChange}
+              />
+            )}
           </GridTitleContainer>
         ) : (
           ""
@@ -1232,6 +1328,22 @@ const App = () => {
           <FilterBox onKeyPress={(e) => handleKeyPressSearch(e, search)}>
             <tbody>
               <tr>
+                {isMobile && (
+                  <>
+                    <th>완료여부</th>
+                    <td>
+                      {bizComponentData !== null && (
+                        <BizComponentRadioGroup
+                          name="progress_fin"
+                          value={detailFilters.progress_fin}
+                          bizComponentId="R_YN"
+                          bizComponentData={bizComponentData}
+                          changeData={filterRadioChange}
+                        />
+                      )}
+                    </td>
+                  </>
+                )}
                 <th>프로젝트 명</th>
                 <td>
                   <CustomMultiColumnComboBox
