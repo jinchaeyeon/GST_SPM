@@ -47,6 +47,9 @@ import React, {
 } from "react";
 import { useHistory, useLocation } from "react-router-dom";
 import { useRecoilState, useSetRecoilState } from "recoil";
+import SwiperCore from "swiper";
+import "swiper/css";
+import { Swiper, SwiperSlide } from "swiper/react";
 import { v4 as uuidv4 } from "uuid";
 import {
   ButtonContainer,
@@ -60,7 +63,7 @@ import {
   GridTitle,
   GridTitleContainer,
   Title,
-  TitleContainer,
+  TitleContainer
 } from "../CommonStyled";
 import CenterCell from "../components/Cells/CenterCell";
 import CheckBoxCell from "../components/Cells/CheckBoxCell";
@@ -69,6 +72,7 @@ import DateCell from "../components/Cells/DateCell";
 import NumberCell from "../components/Cells/NumberCell";
 import ProgressCell from "../components/Cells/ProgressCell";
 import RadioGroupCell from "../components/Cells/RadioGroupCell";
+import CustomMultiColumnComboBox from "../components/ComboBoxes/CustomMultiColumnComboBox";
 import {
   UseParaPc,
   convertDateToStr,
@@ -86,6 +90,7 @@ import {
   SELECTED_FIELD,
 } from "../components/CommonString";
 import CommonDateRangePicker from "../components/DateRangePicker/CommonDateRangePicker";
+import FilterContainer from "../components/FilterContainer";
 import {
   CellRender as CellRender2,
   RowRender as RowRender2,
@@ -114,11 +119,6 @@ import {
   userColumns,
 } from "../store/columns/common-columns";
 import { Iparameters } from "../store/types";
-import SwiperCore from "swiper";
-import "swiper/css";
-import { Swiper, SwiperSlide } from "swiper/react";
-import FilterContainer from "../components/FilterContainer";
-import CustomMultiColumnComboBox from "../components/ComboBoxes/CustomMultiColumnComboBox";
 
 const DATA_ITEM_KEY = "devmngnum";
 const SUB_DATA_ITEM_KEY = "devmngseq";
@@ -356,7 +356,7 @@ const App = () => {
   );
   const [openComboId, setOpenComboId] = useState("");
   const handleToggle = (id: string) => {
-    setOpenComboId(prevId => (prevId === id ? "" : id));
+    setOpenComboId((prevId) => (prevId === id ? "" : id));
   };
   // useEffect(() => {
   //   const handleDocumentClick = (event: MouseEvent) => {
@@ -375,7 +375,7 @@ const App = () => {
   // useEffect(() => {
   //   setOpenComboId("");
   // }, [isMobileMenuOpend]);
-  
+
   const handleFilterChange = (event: ComboBoxFilterChangeEvent) => {
     if (event) {
       setFilter(event.filter);
@@ -453,6 +453,13 @@ const App = () => {
   }>({});
   let gridRef: any = useRef(null);
   let gridRef2: any = useRef(null);
+
+  function useQuery() {
+    return new URLSearchParams(useLocation().search);
+  }
+
+  const query = useQuery();
+  const projectNumber = query.get("projectNumber");
 
   useEffect(() => {
     // 접근 권한 검증
@@ -834,8 +841,13 @@ const App = () => {
       });
 
       if (totalRowCnt > 0) {
+        const rowIndex = rows.findIndex(
+          (row: any) => row.devmngnum === projectNumber
+        );
         const selectedRow =
-          filters.find_row_value == ""
+          rowIndex >= 0
+            ? rows[rowIndex]
+            : filters.find_row_value == ""
             ? rows[0]
             : rows.find(
                 (row: any) => row[DATA_ITEM_KEY] == filters.find_row_value
@@ -1108,7 +1120,6 @@ const App = () => {
           idx: idx++,
         };
       });
-
       if (subfilters.findRowValue !== "") {
         // find_row_value 행으로 스크롤 이동
         if (gridRef2.current) {
@@ -3520,7 +3531,27 @@ const App = () => {
 
   useEffect(() => {
     setAllTabSelected(0);
+    if (projectNumber) {
+      setAllTabSelected(1);
+    }
   }, [valuecodeItems]);
+
+  useEffect(() => {
+    if (projectNumber) {
+      setSubFilters((prev) => ({
+        ...prev,
+        devmngnum: projectNumber,
+        pgNum: 1,
+        isSearch: true,
+      }));
+      setSubFilters2((prev) => ({
+        ...prev,
+        devmngnum: projectNumber,
+        pgNum: 1,
+        isSearch: true,
+      }));
+    }
+  }, [projectNumber]);
 
   const CustomCheckBoxCell5 = (props: GridCellProps) => {
     const { ariaColumnIndex, columnIndex, dataItem, field } = props;
@@ -3575,6 +3606,10 @@ const App = () => {
       </td>
     );
   };
+
+  const labelStyle = information.findt
+    ? { color: "#7a76ce", fontWeight: "bold" }
+    : {};
 
   return (
     <>
@@ -3687,7 +3722,7 @@ const App = () => {
                           className="required"
                           filterable={true}
                           onFilterChange={handleFilterChange2}
-                          id="progress_status"            
+                          id="progress_status"
                         />
                       </td>
                     </tr>
@@ -4138,7 +4173,7 @@ const App = () => {
                               className="required"
                             />
                           </td>
-                          <th>사업완료일(AS포함)</th>
+                          <th style={labelStyle}>사업완료일(AS포함)</th>
                           <td>
                             <DatePicker
                               name="findt"
@@ -4333,7 +4368,6 @@ const App = () => {
                 <GridContainer>
                   <GridTitleContainer className="ButtonContainer2">
                     <GridTitle>
-                      {" "}
                       <Button
                         themeColor={"primary"}
                         fillMode={"flat"}
@@ -4506,7 +4540,6 @@ const App = () => {
                           className="required"
                         />
                       </td>
-                     
                     </tr>
                     <tr>
                       <th>업체코드</th>
@@ -4599,7 +4632,7 @@ const App = () => {
                           className="required"
                         />
                       </td>
-                      <th>사업완료일(AS포함)</th>
+                      <th style={labelStyle}> 사업완료일(AS포함)</th>
                       <td>
                         <DatePicker
                           name="findt"

@@ -45,15 +45,23 @@ import {
   UseParaPc,
   convertDateToStr,
   dateformat3,
+  getDeviceHeight,
+  getHeight,
   handleKeyPressSearch,
 } from "../components/CommonFunction";
 import { PAGE_SIZE } from "../components/CommonString";
 import { useApi } from "../hooks/api";
-import { isLoading, loginResultState, titles } from "../store/atoms";
+import {
+  isFilterHideState,
+  isLoading,
+  loginResultState,
+  titles,
+} from "../store/atoms";
 import { dateTypeColumns } from "../store/columns/common-columns";
 import { Iparameters } from "../store/types";
 import BizComponentRadioGroup from "../components/RadioGroups/BizComponentRadioGroup";
 import CustomMultiColumnComboBox from "../components/ComboBoxes/CustomMultiColumnComboBox";
+import FilterContainer from "../components/FilterContainer";
 const usersQueryStr = `SELECT user_id, user_name + (CASE WHEN rtrchk = 'Y' THEN '-퇴' ELSE '' END) as user_name FROM sysUserMaster ORDER BY (CASE WHEN rtrchk = 'Y' THEN 2 ELSE 1 END), user_id`;
 const statusQueryStr = `
 SELECT 'Y' as code, '완료' as name
@@ -70,12 +78,18 @@ UNION ALL
 SELECT 'E' as code, '사업종료일' as name
 UNION ALL
 SELECT '%' as code, '전체' as name`;
+
 var height = 0;
+var height2 = 0;
+var height3 = 0;
+var height4 = 0;
+var height5 = 0;
+
 var index = 0;
+
 const ProjectMonitoring: React.FC = () => {
   const [swiper, setSwiper] = useState<SwiperCore>();
   const setLoading = useSetRecoilState(isLoading);
-  let deviceWidth = window.innerWidth;
   let deviceHeight = document.documentElement.clientHeight;
   const [loginResult] = useRecoilState(loginResultState);
   const userId = loginResult ? loginResult.userId : "";
@@ -87,11 +101,39 @@ const ProjectMonitoring: React.FC = () => {
   const [title, setTitle] = useRecoilState(titles);
   const initialPageState = { skip: 0, take: PAGE_SIZE };
   const [page, setPage] = useState(initialPageState);
-  const [isMobile, setIsMobile] = useState(deviceWidth <= 1200);
-  const [isFilterVisible, setIsFilterVisible] = useState(!isMobile);
   const [labelwidth, setLabelwidth] = useState(0);
   const [bizComponentData, setBizComponentData] = useState<any>(null);
   const history = useHistory();
+  let deviceWidth = window.innerWidth;
+  const [isMobile, setIsMobile] = useState(deviceWidth <= 1200);
+  const [isFilterHideStates, setIsFilterHideStates] =
+    useRecoilState(isFilterHideState);
+  const [mobileheight, setMobileHeight] = useState(0);
+  const [mobileheight2, setMobileHeight2] = useState(0);
+  const [webheight, setWebHeight] = useState(0);
+  const [webheight2, setWebHeight2] = useState(0);
+
+  useLayoutEffect(() => {
+    height = getHeight(".ButtonContainer");
+    height2 = getHeight(".ButtonContainer2");
+    height3 = getHeight(".ButtonContainer3");
+    height4 = getHeight(".TitleContainer");
+
+    const handleWindowResize = () => {
+      let deviceWidth = document.documentElement.clientWidth;
+      setIsMobile(deviceWidth <= 1200);
+      setMobileHeight(getDeviceHeight(true) - height4);
+      setMobileHeight2(getDeviceHeight(true) - height2 - height4);
+      setWebHeight(getDeviceHeight(true) - height - height4 - 42);
+      setWebHeight2(getDeviceHeight(true) - height - height3 - height4);
+    };
+    handleWindowResize();
+    window.addEventListener("resize", handleWindowResize);
+    return () => {
+      window.removeEventListener("resize", handleWindowResize);
+    };
+  }, [webheight, webheight2]);
+
   useEffect(() => {
     // 접근 권한 검증
     if (loginResult) {
@@ -111,9 +153,6 @@ const ProjectMonitoring: React.FC = () => {
     setBizComponentData
   );
 
-  const toggleFilterBox = () => {
-    setIsFilterVisible((prev) => !prev);
-  };
   const pageChange = (event: GridPageChangeEvent) => {
     const { page } = event;
 
@@ -354,6 +393,7 @@ const ProjectMonitoring: React.FC = () => {
 
     if (isMobile && swiper) {
       swiper.slideTo(0);
+      setIsFilterHideStates(true);
     }
   };
 
@@ -536,6 +576,16 @@ const ProjectMonitoring: React.FC = () => {
     }
   }, []);
 
+  // 프로젝트 일정계획으로 이동
+  const handleButtonClick = (devmngnum: string) => {
+    history.push(`/ProjectSchedule?projectNumber=${devmngnum}`);
+  };
+
+  // 프로젝트 마스터로 이동
+  const handleButtonClick2 = (devmngnum: string) => {
+    history.push(`/ProjectMaster?projectNumber=${devmngnum}`);
+  };
+
   // 체크박스 셀
   const CheckboxCell = (props: {
     onChange?: any;
@@ -604,6 +654,12 @@ const ProjectMonitoring: React.FC = () => {
         건
       </td>
     );
+  };
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const handleSlideChange = () => {
+    if (swiper) {
+      setCurrentSlide(swiper.activeIndex);
+    }
   };
 
   // 리스트 클릭 이벤트
@@ -814,37 +870,42 @@ const ProjectMonitoring: React.FC = () => {
     <>
       {!isMobile ? (
         <>
-          <TitleContainer>
+          <TitleContainer className="TitleContainer">
             <ButtonContainer>
               <Button onClick={search} icon="search" themeColor={"primary"}>
                 조회
               </Button>
             </ButtonContainer>
           </TitleContainer>
-          <GridTitleContainer>
+          <GridTitleContainer className="ButtonContainer">
             <GridTitle>조회조건</GridTitle>
           </GridTitleContainer>
         </>
       ) : (
         <>
-          <TitleContainer>
+          <TitleContainer className="TitleContainer">
             <Title>프로젝트 모니터링</Title>
-            <GridTitleContainer></GridTitleContainer>
-            <ButtonContainer
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                width: "100%",
-              }}
-            >
-              <ButtonContainer>
-                <GridTitle>조회조건</GridTitle>
-                <Button
-                  onClick={toggleFilterBox}
-                  icon={isFilterVisible ? "chevron-up" : "chevron-down"}
-                  fillMode={"flat"}
-                />
-              </ButtonContainer>
+            <ButtonContainer>
+              {currentSlide === 1 && (
+                <>
+                  <Button
+                    icon="redo"
+                    themeColor={"primary"}
+                    fillMode={"outline"}
+                    onClick={() => handleButtonClick(detailFilters.devmngnum)}
+                  >
+                    프로젝트 일정계획
+                  </Button>
+                  <Button
+                    icon="redo"
+                    themeColor={"primary"}
+                    fillMode={"outline"}
+                    onClick={() => handleButtonClick2(detailFilters.devmngnum)}
+                  >
+                    프로젝트 마스터
+                  </Button>
+                </>
+              )}
               <Button onClick={search} icon="search" themeColor={"primary"}>
                 조회
               </Button>
@@ -852,85 +913,82 @@ const ProjectMonitoring: React.FC = () => {
           </TitleContainer>
         </>
       )}
-      {isFilterVisible && (
-        <FilterBoxWrap>
-          <FilterBox onKeyPress={(e) => handleKeyPressSearch(e, search)}>
-            <tbody>
-              <tr>
-                <th>기간</th>
-                <td colSpan={3}>
-                  <div className="filter-item-wrap">
-                    <CustomMultiColumnComboBox
-                      name="date_type"
-                      data={dateTypeData}
-                      value={filters.date_type}
-                      columns={dateTypeColumns}
-                      textField={"name"}
-                      onChange={filterComboBoxChange}
-                      className="required"
-                      filterable={true}
-                    />
-                    <DatePicker
-                      name="from_date"
-                      value={filters.from_date}
-                      format="yyyy-MM-dd"
-                      onChange={filterInputChange}
-                      placeholder=""
-                      className="required"
-                    />
-                    ~
-                    <DatePicker
-                      name="to_date"
-                      value={filters.to_date}
-                      format="yyyy-MM-dd"
-                      onChange={filterInputChange}
-                      placeholder=""
-                      className="required"
-                    />
-                  </div>
-                </td>
-                <th>완료여부</th>
-                <td>
-                  <MultiSelect
-                    name="status"
-                    data={statusData}
-                    onChange={filterMultiSelectChange}
-                    value={filters.status}
-                    textField="name"
-                    dataItemKey="code"
+
+      <FilterContainer>
+        <FilterBox onKeyPress={(e) => handleKeyPressSearch(e, search)}>
+          <tbody>
+            <tr>
+              <th>기간</th>
+              <td colSpan={3}>
+                <div className="filter-item-wrap">
+                  <CustomMultiColumnComboBox
+                    name="date_type"
+                    data={dateTypeData}
+                    value={filters.date_type}
+                    columns={dateTypeColumns}
+                    textField={"name"}
+                    onChange={filterComboBoxChange}
+                    className="required"
+                    filterable={true}
                   />
-                </td>
-                <th>업체명</th>
-                <td>
-                  <Input
-                    name="customer_name"
-                    type="text"
-                    value={filters.customer_name}
+                  <DatePicker
+                    name="from_date"
+                    value={filters.from_date}
+                    format="yyyy-MM-dd"
                     onChange={filterInputChange}
+                    placeholder=""
+                    className="required"
                   />
-                </td>
-                <th>프로젝트명</th>
-                <td>
-                  <Input
-                    name="project"
-                    type="text"
-                    value={filters.project}
+                  ~
+                  <DatePicker
+                    name="to_date"
+                    value={filters.to_date}
+                    format="yyyy-MM-dd"
                     onChange={filterInputChange}
+                    placeholder=""
+                    className="required"
                   />
-                </td>
-              </tr>
-            </tbody>
-          </FilterBox>
-        </FilterBoxWrap>
-      )}
+                </div>
+              </td>
+              <th>완료여부</th>
+              <td>
+                <MultiSelect
+                  name="status"
+                  data={statusData}
+                  onChange={filterMultiSelectChange}
+                  value={filters.status}
+                  textField="name"
+                  dataItemKey="code"
+                />
+              </td>
+              <th>업체명</th>
+              <td>
+                <Input
+                  name="customer_name"
+                  type="text"
+                  value={filters.customer_name}
+                  onChange={filterInputChange}
+                />
+              </td>
+              <th>프로젝트명</th>
+              <td>
+                <Input
+                  name="project"
+                  type="text"
+                  value={filters.project}
+                  onChange={filterInputChange}
+                />
+              </td>
+            </tr>
+          </tbody>
+        </FilterBox>
+      </FilterContainer>
       {isMobile ? (
         <Swiper
           onSwiper={(swiper) => {
             setSwiper(swiper);
           }}
-          onActiveIndexChange={(swiper) => {
-            index = swiper.activeIndex;
-          }}
+          onActiveIndexChange={handleSlideChange}
         >
           <SwiperSlide key={0}>
             {mainDataResult.total === 0 ? (
@@ -943,7 +1001,7 @@ const ProjectMonitoring: React.FC = () => {
                   data={mainDataResult.data}
                   item={MyItemRender}
                   style={{
-                    height: deviceHeight - 190,
+                    height: mobileheight,
                     overflow: "auto",
                     marginTop: "8px",
                     width: "100%",
@@ -955,7 +1013,20 @@ const ProjectMonitoring: React.FC = () => {
             )}
           </SwiperSlide>
           <SwiperSlide key={1}>
-            <GridTitleContainer>
+            <GridTitleContainer
+              className="ButtonContainer2"
+              style={{ justifyContent: "space-between" }}
+            >
+              <Button
+                themeColor={"primary"}
+                fillMode={"flat"}
+                icon={"chevron-left"}
+                onClick={() => {
+                  if (swiper) {
+                    swiper.slideTo(0);
+                  }
+                }}
+              ></Button>
               {bizComponentData !== null && (
                 <BizComponentRadioGroup
                   name="progress_fin"
@@ -966,9 +1037,10 @@ const ProjectMonitoring: React.FC = () => {
                 />
               )}
             </GridTitleContainer>
+
             <GridContainer>
               <Grid
-                style={{ height: deviceHeight - 220, width: "100%" }}
+                style={{ height: mobileheight2, width: "100%" }}
                 data={process(
                   detailDataResult.data.map((row) => ({
                     ...row,
@@ -1074,7 +1146,7 @@ const ProjectMonitoring: React.FC = () => {
         </Swiper>
       ) : (
         <>
-          <GridContainerWrap height={"78%"}>
+          <GridContainerWrap>
             <Splitter
               panes={panes}
               onChange={onChange}
@@ -1086,14 +1158,14 @@ const ProjectMonitoring: React.FC = () => {
                 </InfoTitle>
               ) : (
                 <>
-                  <GridTitleContainer>
+                  <GridTitleContainer className="ButtonContainer2">
                     <GridTitle>기본정보</GridTitle>
                   </GridTitleContainer>
                   <ListView
                     data={mainDataResult.data}
                     item={MyItemRender}
                     style={{
-                      height: `calc(100% - 50px)`,
+                      height: webheight,
                       overflow: "auto",
                       marginTop: "8px",
                       width: "100%",
@@ -1104,20 +1176,51 @@ const ProjectMonitoring: React.FC = () => {
                 </>
               )}
               <GridContainer>
-                <GridTitleContainer>
-                  <GridTitle>상세정보</GridTitle>
-                  {bizComponentData !== null && (
-                    <BizComponentRadioGroup
-                      name="progress_fin"
-                      value={detailFilters.progress_fin}
-                      bizComponentId="R_YN"
-                      bizComponentData={bizComponentData}
-                      changeData={filterRadioChange}
-                    />
-                  )}
+                <GridTitleContainer
+                className="ButtonContainer3"
+                  style={{
+                    justifyContent: "space-between",
+
+                    width: "100%",
+                  }}
+                >
+                  <GridTitleContainer
+                    style={{ gap: 15, justifyContent: "flex-start" }}
+                  >
+                    <GridTitle>상세정보</GridTitle>
+                    {bizComponentData !== null && (
+                      <BizComponentRadioGroup
+                        name="progress_fin"
+                        value={detailFilters.progress_fin}
+                        bizComponentId="R_YN"
+                        bizComponentData={bizComponentData}
+                        changeData={filterRadioChange}
+                      />
+                    )}
+                  </GridTitleContainer>
+                  <ButtonContainer>
+                    <Button
+                      icon="redo"
+                      themeColor={"primary"}
+                      fillMode={"outline"}
+                      onClick={() => handleButtonClick(detailFilters.devmngnum)}
+                    >
+                      프로젝트 일정계획
+                    </Button>
+                    <Button
+                      icon="redo"
+                      themeColor={"primary"}
+                      fillMode={"outline"}
+                      onClick={() =>
+                        handleButtonClick2(detailFilters.devmngnum)
+                      }
+                    >
+                      프로젝트 마스터
+                    </Button>
+                  </ButtonContainer>
                 </GridTitleContainer>
                 <Grid
-                  style={{ height: `calc(100% - 35px)` }}
+                  style={{ height: webheight2 }}
                   data={process(
                     detailDataResult.data.map((row) => ({
                       ...row,
