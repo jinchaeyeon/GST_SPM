@@ -24,7 +24,11 @@ import {
   getSelectedState,
 } from "@progress/kendo-react-grid";
 import { Checkbox, Input } from "@progress/kendo-react-inputs";
-import { Splitter, SplitterOnChangeEvent } from "@progress/kendo-react-layout";
+import {
+  Splitter,
+  SplitterOnChangeEvent,
+  SplitterPaneProps,
+} from "@progress/kendo-react-layout";
 import { bytesToBase64 } from "byte-base64";
 import {
   createContext,
@@ -344,6 +348,16 @@ const App = () => {
   const [webheight, setWebHeight] = useState(0);
   const [webheight2, setWebHeight2] = useState(0);
   const [webheight3, setWebHeight3] = useState(0);
+  const [panes, setPanes] = useState<Array<any>>([
+    { size: "60%", min: "0px", collapsible: true },
+    {},
+  ]);
+  const [nestedPanes, setNestedPanes] = useState<SplitterPaneProps[]>([
+    { size: "40%", min: "60px", resizable: true },
+    { min: "60px"},
+  ]);
+  const [isPane1Collapsed, setIsPane1Collapsed] = useState(false);
+  const [isPane2Collapsed, setIsPane2Collapsed] = useState(false);
 
   useLayoutEffect(() => {
     height = getHeight(".ButtonContainer");
@@ -364,20 +378,35 @@ const App = () => {
         getDeviceHeight(true) - height3 - height5 - height6 + 13
       );
 
-      setWebHeight(getDeviceHeight(false) - height - height6);
+      setWebHeight(getDeviceHeight(false) - height - height6 - 6);
       setWebHeight2(
-        (getDeviceHeight(false) - height6 + 13) / 2 - height2 - height4
+        ((getDeviceHeight(false) - height6 + 13) *
+          parseFloat(nestedPanes[0].size as string)) /
+          100 -
+          height2 -
+          height4
       );
-      setWebHeight3(
-        (getDeviceHeight(false) - height6 + 13) / 2 - height3 - height5
-      );
+      if (nestedPanes[1].size) {
+        setWebHeight3(
+          ((getDeviceHeight(false) - height6 + 13) *
+            parseFloat(nestedPanes[1].size as string)) /
+            100 -
+            height3 -
+            height5
+        );
+      } else {
+        setWebHeight3(
+          getDeviceHeight(false) - height6 + 13 - webheight2 - height3 - height5
+        );
+      }
     };
     handleWindowResize();
+
     window.addEventListener("resize", handleWindowResize);
     return () => {
       window.removeEventListener("resize", handleWindowResize);
     };
-  }, [webheight, webheight2, webheight3]);
+  }, [webheight, webheight2, webheight3, nestedPanes]);
 
   const [title, setTitle] = useRecoilState(titles);
   const setLoading = useSetRecoilState(isLoading);
@@ -448,13 +477,45 @@ const App = () => {
       setFilter4(event.filter);
     }
   };
-  const [panes, setPanes] = useState<Array<any>>([
-    { size: "60%", min: "0px", collapsible: true },
-    {},
-  ]);
 
   const onChange = (event: SplitterOnChangeEvent) => {
     setPanes(event.newState);
+  };
+
+  const onNestedChange = (event: SplitterOnChangeEvent) => {
+    setNestedPanes(event.newState);
+  };
+
+  const togglePane1 = () => {
+    setIsPane1Collapsed((prev) => {
+      const newPane1Collapsed = !prev;
+      setIsPane2Collapsed(newPane1Collapsed);
+      setNestedPanes([
+        {
+          size: newPane1Collapsed ? "100%" : "45%",
+          min: "0px",
+          resizable: !newPane1Collapsed,
+        },
+        {},
+      ]);
+      return newPane1Collapsed;
+    });
+  };
+
+  const togglePane2 = () => {
+    setIsPane2Collapsed((prev) => {
+      const newPane2Collapsed = !prev;
+      setIsPane1Collapsed(newPane2Collapsed);
+      setNestedPanes([
+        {
+          size: newPane2Collapsed ? "0%" : "45%",
+          min: "0px",
+          resizable: !newPane2Collapsed,
+        },
+        {},
+      ]);
+      return newPane2Collapsed;
+    });
   };
 
   const search = () => {
@@ -2347,7 +2408,7 @@ const App = () => {
                 onClick={onConfirmClick}
               >
                 저장
-              </Button>          
+              </Button>
             </ButtonContainer>
           </TitleContainer>
           <GridContainerWrap>
@@ -2729,175 +2790,211 @@ const App = () => {
                 </UserContext.Provider>
               </StatusContext.Provider>
               <GridContainer>
-                <GridContainer>
-                  <GridTitleContainer className="ButtonContainer2">
-                    <GridTitle>
-                      <Button
-                        themeColor={"primary"}
-                        fillMode={"flat"}
-                        icon={
-                          isVisibleDetail ? "chevron-left" : "chevron-right"
-                        }
-                        onClick={() => {
-                          if (isVisibleDetail == true) {
-                            setPanes([
-                              { size: "0%", min: "0px", collapsible: true },
-                              {},
-                            ]);
-                          } else {
-                            setPanes([
-                              { size: "60%", min: "0px", collapsible: true },
-                              {},
-                            ]);
+                <Splitter
+                  style={{
+                    borderColor: "#00000000",
+                    height: getDeviceHeight(false) - height6,
+                  }}
+                  panes={nestedPanes}
+                  orientation={"vertical"}
+                  onChange={onNestedChange}
+                >
+                  <GridContainer>
+                    <GridTitleContainer className="ButtonContainer2">
+                      <GridTitle>
+                        <Button
+                          themeColor={"primary"}
+                          fillMode={"flat"}
+                          icon={
+                            isVisibleDetail ? "chevron-left" : "chevron-right"
                           }
-                          setIsVisableDetail((prev) => !prev);
-                        }}
-                      ></Button>
-                      문의 내용
-                    </GridTitle>
-                    <ButtonContainer>
-                      <Button
-                        icon={"pencil"}
-                        onClick={onQuestionWndClick}
-                        themeColor={"primary"}
-                        fillMode={"outline"}
-                        disabled={
-                          mainDataResult.data.filter(
-                            (item) =>
-                              item[DATA_ITEM_KEY] ==
-                              Object.getOwnPropertyNames(selectedState)[0]
-                          )[0] == undefined
-                            ? true
-                            : mainDataResult.data.filter(
-                                (item) =>
-                                  item[DATA_ITEM_KEY] ==
-                                  Object.getOwnPropertyNames(selectedState)[0]
-                              )[0].reception_type == "Q"
-                            ? true
-                            : false
-                        }
-                        style={{ marginTop: "5px" }}
-                      >
-                        수정
-                      </Button>
-                      <Button
-                        icon={"file-word"}
-                        name="meeting"
-                        onClick={downloadDoc}
-                        themeColor={"primary"}
-                        fillMode={"outline"}
-                        style={{ marginTop: "5px" }}
-                      >
-                        다운로드
-                      </Button>
-                    </ButtonContainer>
-                  </GridTitleContainer>
-                  <div style={{ height: webheight2 }}>
-                    <RichEditor id="docEditor" ref={docEditorRef} hideTools />
-                  </div>
-                  <FormBoxWrap border={true} className="FormBoxWrap">
-                    <FormBox>
-                      <tbody>
-                        <tr>
-                          <th style={{ width: "5%" }}>첨부파일</th>
-                          <td>
-                            <Input
-                              name="answer_files"
-                              type="text"
-                              value={
-                                mainDataResult.data.filter(
+                          onClick={() => {
+                            if (isVisibleDetail == true) {
+                              setPanes([
+                                { size: "0%", min: "0px", collapsible: true },
+                                {},
+                              ]);
+                            } else {
+                              setPanes([
+                                { size: "60%", min: "0px", collapsible: true },
+                                {},
+                              ]);
+                            }
+                            setIsVisableDetail((prev) => !prev);
+                          }}
+                        ></Button>
+                        문의 내용
+                        <Button
+                          themeColor={"primary"}
+                          fillMode={"flat"}
+                          icon={
+                            isPane1Collapsed ? "chevron-up" : "chevron-down"
+                          }
+                          onClick={togglePane1}
+                        ></Button>
+                      </GridTitle>
+                      <ButtonContainer>
+                        <Button
+                          icon={"pencil"}
+                          onClick={onQuestionWndClick}
+                          themeColor={"primary"}
+                          fillMode={"outline"}
+                          disabled={
+                            mainDataResult.data.filter(
+                              (item) =>
+                                item[DATA_ITEM_KEY] ==
+                                Object.getOwnPropertyNames(selectedState)[0]
+                            )[0] == undefined
+                              ? true
+                              : mainDataResult.data.filter(
                                   (item) =>
                                     item[DATA_ITEM_KEY] ==
                                     Object.getOwnPropertyNames(selectedState)[0]
-                                )[0] == undefined
-                                  ? ""
-                                  : mainDataResult.data.filter(
-                                      (item) =>
-                                        item[DATA_ITEM_KEY] ==
-                                        Object.getOwnPropertyNames(
-                                          selectedState
-                                        )[0]
-                                    )[0].files
-                              }
-                              className="readonly"
-                            />
-                            <ButtonInGridInput>
-                              <Button
-                                onClick={onAttWndClick}
-                                icon="more-horizontal"
-                                fillMode="flat"
+                                )[0].reception_type == "Q"
+                              ? true
+                              : false
+                          }
+                          style={{ marginTop: "5px" }}
+                        >
+                          수정
+                        </Button>
+                        <Button
+                          icon={"file-word"}
+                          name="meeting"
+                          onClick={downloadDoc}
+                          themeColor={"primary"}
+                          fillMode={"outline"}
+                          style={{ marginTop: "5px" }}
+                        >
+                          다운로드
+                        </Button>
+                      </ButtonContainer>
+                    </GridTitleContainer>
+                    <div style={{ height: webheight2 }}>
+                      <RichEditor id="docEditor" ref={docEditorRef} hideTools />
+                    </div>
+                    <FormBoxWrap border={true} className="FormBoxWrap" style={{ margin: 0}}>
+                      <FormBox>
+                        <tbody>
+                          <tr>
+                            <th style={{ width: "5%" }}>첨부파일</th>
+                            <td>
+                              <Input
+                                name="answer_files"
+                                type="text"
+                                value={
+                                  mainDataResult.data.filter(
+                                    (item) =>
+                                      item[DATA_ITEM_KEY] ==
+                                      Object.getOwnPropertyNames(
+                                        selectedState
+                                      )[0]
+                                  )[0] == undefined
+                                    ? ""
+                                    : mainDataResult.data.filter(
+                                        (item) =>
+                                          item[DATA_ITEM_KEY] ==
+                                          Object.getOwnPropertyNames(
+                                            selectedState
+                                          )[0]
+                                      )[0].files
+                                }
+                                className="readonly"
                               />
-                            </ButtonInGridInput>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </FormBox>
-                  </FormBoxWrap>
-                </GridContainer>
-                <GridContainer>
-                  <GridTitleContainer className="ButtonContainer3">
-                    <GridTitle>답변 내용</GridTitle>
-                    <ButtonContainer>
-                      <Button
-                        icon={"pencil"}
-                        onClick={onAnswerWndClick}
-                        themeColor={"primary"}
-                        fillMode={"outline"}
-                      >
-                        수정
-                      </Button>
-                      <Button
-                        icon={"notification"}
-                        onClick={onAlertClick}
-                        themeColor={"primary"}
-                        fillMode={"outline"}
-                      >
-                        답변 알림 전송
-                      </Button>
-                    </ButtonContainer>
-                  </GridTitleContainer>
-                  <div style={{ height: webheight3 }}>
-                    <RichEditor id="docEditor2" ref={docEditorRef2} hideTools />
-                  </div>
-                  <FormBoxWrap border={true} className="FormBoxWrap2">
-                    <FormBox>
-                      <tbody>
-                        <tr>
-                          <th style={{ width: "5%" }}>첨부파일</th>
-                          <td>
-                            <Input
-                              name="answer_files"
-                              type="text"
-                              value={
-                                mainDataResult.data.filter(
-                                  (item) =>
-                                    item[DATA_ITEM_KEY] ==
-                                    Object.getOwnPropertyNames(selectedState)[0]
-                                )[0] == undefined
-                                  ? ""
-                                  : mainDataResult.data.filter(
-                                      (item) =>
-                                        item[DATA_ITEM_KEY] ==
-                                        Object.getOwnPropertyNames(
-                                          selectedState
-                                        )[0]
-                                    )[0].answer_files
-                              }
-                              className="readonly"
-                            />
-                            <ButtonInGridInput>
-                              <Button
-                                onClick={onAttWndClick3}
-                                icon="more-horizontal"
-                                fillMode="flat"
+                              <ButtonInGridInput>
+                                <Button
+                                  onClick={onAttWndClick}
+                                  icon="more-horizontal"
+                                  fillMode="flat"
+                                />
+                              </ButtonInGridInput>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </FormBox>
+                    </FormBoxWrap>
+                  </GridContainer>
+                  <GridContainer>
+                    <GridTitleContainer className="ButtonContainer3">
+                      <GridTitle>
+                        답변 내용
+                        <Button
+                          themeColor={"primary"}
+                          fillMode={"flat"}
+                          icon={
+                            isPane2Collapsed ? "chevron-down" : "chevron-up"
+                          }
+                          onClick={togglePane2}
+                        ></Button>
+                      </GridTitle>
+                      <ButtonContainer>
+                        <Button
+                          icon={"pencil"}
+                          onClick={onAnswerWndClick}
+                          themeColor={"primary"}
+                          fillMode={"outline"}
+                        >
+                          수정
+                        </Button>
+                        <Button
+                          icon={"notification"}
+                          onClick={onAlertClick}
+                          themeColor={"primary"}
+                          fillMode={"outline"}
+                        >
+                          답변 알림 전송
+                        </Button>
+                      </ButtonContainer>
+                    </GridTitleContainer>
+                    <div style={{ height: webheight3 }}>
+                      <RichEditor
+                        id="docEditor2"
+                        ref={docEditorRef2}
+                        hideTools
+                      />
+                    </div>
+                    <FormBoxWrap border={true} className="FormBoxWrap2" style={{ margin: 0}}>
+                      <FormBox>
+                        <tbody>
+                          <tr>
+                            <th style={{ width: "5%" }}>첨부파일</th>
+                            <td>
+                              <Input
+                                name="answer_files"
+                                type="text"
+                                value={
+                                  mainDataResult.data.filter(
+                                    (item) =>
+                                      item[DATA_ITEM_KEY] ==
+                                      Object.getOwnPropertyNames(
+                                        selectedState
+                                      )[0]
+                                  )[0] == undefined
+                                    ? ""
+                                    : mainDataResult.data.filter(
+                                        (item) =>
+                                          item[DATA_ITEM_KEY] ==
+                                          Object.getOwnPropertyNames(
+                                            selectedState
+                                          )[0]
+                                      )[0].answer_files
+                                }
+                                className="readonly"
                               />
-                            </ButtonInGridInput>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </FormBox>
-                  </FormBoxWrap>
-                </GridContainer>
+                              <ButtonInGridInput>
+                                <Button
+                                  onClick={onAttWndClick3}
+                                  icon="more-horizontal"
+                                  fillMode="flat"
+                                />
+                              </ButtonInGridInput>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </FormBox>
+                    </FormBoxWrap>
+                  </GridContainer>
+                </Splitter>
               </GridContainer>
             </Splitter>
           </GridContainerWrap>
