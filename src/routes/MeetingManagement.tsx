@@ -1311,6 +1311,10 @@ const App = () => {
       refEditorRef.current.setHtml("");
     }
     setWorktype("N");
+
+    if (swiper && isMobile) {
+      swiper.slideTo(1);
+    }
   };
 
   const deleteMeeting = async () => {

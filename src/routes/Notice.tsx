@@ -701,6 +701,10 @@ const App = () => {
 
     // Edior에 HTML & CSS 세팅
     setHtmlOnEditor("");
+
+    if (swiper && isMobile) {
+      swiper.slideTo(1);
+    }
   };
 
   // ex. 파라미터 = {custcd : "10192", custnm : "a"}, {custcd : "43049", custnm : "b"} ]

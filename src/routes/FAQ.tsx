@@ -595,6 +595,10 @@ const App = () => {
     });
     // Edior에 HTML & CSS 세팅
     setHtmlOnEditor("");
+
+    if (swiper && isMobile) {
+      swiper.slideTo(1);
+    }
   };
 
   const copyFAQ = () => {
