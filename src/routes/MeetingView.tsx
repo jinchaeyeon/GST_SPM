@@ -508,6 +508,29 @@ const App = () => {
   const onChange = (event: SplitterOnChangeEvent) => {
     setPanes(event.newState);
   };
+
+  const onPrint = async () => {
+    setLoading(true);
+
+    if (mainDataResult.total == 0) {
+      alert("데이터가 없습니다.");
+    } else {
+     let windowObject = window.open('', "PrintWindow", "width=800, height=800, top=100, left=300, toolbars=no, scrollbars=no, status=no, resizale=no");
+     if(docEditorRef.current?.getContent() != undefined) {
+      windowObject?.document.writeln(docEditorRef.current?.getContent());
+     }
+     if(refEditorRef.current?.getContent() != undefined) {
+      windowObject?.document.writeln("<h1>참고자료</h1>");
+      windowObject?.document.writeln(refEditorRef.current?.getContent());
+     }
+     windowObject?.document.close();
+     windowObject?.focus();
+     windowObject?.print();
+     windowObject?.close();
+    }
+    setLoading(false);
+  }
+
   return (
     <>
       <TitleContainer className="TitleContainer">
@@ -518,6 +541,15 @@ const App = () => {
               조회
             </Button>
           )}
+          <Button
+            icon={"print"}
+            name="meeting"
+            onClick={onPrint}
+            themeColor={"primary"}
+            fillMode={"outline"}
+          >
+            출력
+          </Button>
           <Button
             icon={"file-word"}
             name="meeting"

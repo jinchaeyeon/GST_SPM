@@ -65,6 +65,7 @@ import ComboBoxCell from "../components/Cells/ComboBoxCell";
 import DateCell from "../components/Cells/DateCell";
 import NumberCell from "../components/Cells/NumberCell";
 import ProgressCell from "../components/Cells/ProgressCell";
+import CustomMultiColumnComboBox from "../components/ComboBoxes/CustomMultiColumnComboBox";
 import {
   UseParaPc,
   convertDateToStr,
@@ -103,7 +104,6 @@ import {
   userColumns,
 } from "../store/columns/common-columns";
 import { Iparameters, TEditorHandle } from "../store/types";
-import CustomMultiColumnComboBox from "../components/ComboBoxes/CustomMultiColumnComboBox";
 
 const StatusContext = createContext<{
   statusListData: any[];
@@ -4835,7 +4835,7 @@ const App = () => {
                             width={80}
                             cell={CheckBoxReadOnlyCell}
                           />
-                          <GridColumn field="remark" title="비고" width={200} />
+                          <GridColumn field="remark" title="비고" width={300} />
                           <GridColumn
                             field="CustCheckDate"
                             title="검수일자"
@@ -5634,15 +5634,15 @@ const App = () => {
                                       footerCell={gridSumQtyFooterCell}
                                     />
                                     <GridColumn
+                                      field="remark"
+                                      title="비고"
+                                      width={300}
+                                    />
+                                    <GridColumn
                                       field="attdatnum"
                                       title="첨부"
                                       width={120}
                                       cell={FilesCell2}
-                                    />
-                                    <GridColumn
-                                      field="remark"
-                                      title="비고"
-                                      width={150}
                                     />
                                     <GridColumn
                                       field="recdt"
@@ -6600,7 +6600,7 @@ const App = () => {
                         width={80}
                         cell={CheckBoxReadOnlyCell}
                       />
-                      <GridColumn field="remark" title="비고" width={200} />
+                      <GridColumn field="remark" title="비고" width={300} />
                       <GridColumn
                         field="CustCheckDate"
                         title="검수일자"
@@ -7397,15 +7397,15 @@ const App = () => {
                                     footerCell={gridSumQtyFooterCell}
                                   />
                                   <GridColumn
+                                    field="remark"
+                                    title="비고"
+                                    width={300}
+                                  />
+                                  <GridColumn
                                     field="attdatnum"
                                     title="첨부"
                                     width={120}
                                     cell={FilesCell2}
-                                  />
-                                  <GridColumn
-                                    field="remark"
-                                    title="비고"
-                                    width={150}
                                   />
                                   <GridColumn
                                     field="recdt"
