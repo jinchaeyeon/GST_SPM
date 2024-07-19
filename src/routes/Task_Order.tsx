@@ -2988,6 +2988,7 @@ const App = () => {
       groupcd: "",
       indicator: userId,
       is_defective: "N",
+      is_urgent: "N",
       orgdiv: "01",
       person: "",
       recdt: convertDateToStr(new Date()),
