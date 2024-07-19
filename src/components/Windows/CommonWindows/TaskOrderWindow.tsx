@@ -2029,18 +2029,6 @@ const KendoWindow = ({
                 >
                   <GridColumn field="rowstatus" title=" " width="45px" />
                   <GridColumn
-                    field="is_defective"
-                    title="불량"
-                    width={80}
-                    cell={defectiveCell}
-                  />
-                  <GridColumn
-                    field="check_yn"
-                    title="확인"
-                    width={80}
-                    cell={Check_ynCell}
-                  />
-                  <GridColumn
                     field="groupcd"
                     title="업무분류"
                     width={120}
@@ -2117,6 +2105,18 @@ const KendoWindow = ({
                     title="참조번호2"
                     width={120}
                     cell={NumberCell}
+                  />
+                   <GridColumn
+                    field="is_defective"
+                    title="불량"
+                    width={80}
+                    cell={defectiveCell}
+                  />
+                  <GridColumn
+                    field="check_yn"
+                    title="확인"
+                    width={80}
+                    cell={Check_ynCell}
                   />
                 </Grid>
               </UserContext.Provider>
