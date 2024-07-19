@@ -5569,24 +5569,6 @@ const App = () => {
                                       width="45px"
                                     />
                                     <GridColumn
-                                      field="is_defective"
-                                      title="불량"
-                                      width={80}
-                                      cell={defectiveCell}
-                                    />
-                                    <GridColumn
-                                      field="check_yn"
-                                      title="확인"
-                                      width={80}
-                                      cell={Check_ynCell}
-                                    />
-                                    <GridColumn
-                                      field="ref_type"
-                                      title="참조"
-                                      width={120}
-                                      cell={TypeCell}
-                                    />
-                                    <GridColumn
                                       field="custcd"
                                       title="업체"
                                       width={120}
@@ -5684,6 +5666,24 @@ const App = () => {
                                       title="완료"
                                       width={100}
                                       cell={CheckBoxReadOnlyCell}
+                                    />
+                                    <GridColumn
+                                      field="is_defective"
+                                      title="불량"
+                                      width={80}
+                                      cell={defectiveCell}
+                                    />
+                                    <GridColumn
+                                      field="check_yn"
+                                      title="확인"
+                                      width={80}
+                                      cell={Check_ynCell}
+                                    />
+                                    <GridColumn
+                                      field="ref_type"
+                                      title="참조"
+                                      width={120}
+                                      cell={TypeCell}
                                     />
                                   </Grid>
                                 </UserContext.Provider>
@@ -7332,24 +7332,6 @@ const App = () => {
                                     width="45px"
                                   />
                                   <GridColumn
-                                    field="is_defective"
-                                    title="불량"
-                                    width={80}
-                                    cell={defectiveCell}
-                                  />
-                                  <GridColumn
-                                    field="check_yn"
-                                    title="확인"
-                                    width={80}
-                                    cell={Check_ynCell}
-                                  />
-                                  <GridColumn
-                                    field="ref_type"
-                                    title="참조"
-                                    width={120}
-                                    cell={TypeCell}
-                                  />
-                                  <GridColumn
                                     field="custcd"
                                     title="업체"
                                     width={120}
@@ -7447,6 +7429,24 @@ const App = () => {
                                     title="완료"
                                     width={100}
                                     cell={CheckBoxReadOnlyCell}
+                                  />
+                                    <GridColumn
+                                    field="is_defective"
+                                    title="불량"
+                                    width={80}
+                                    cell={defectiveCell}
+                                  />
+                                  <GridColumn
+                                    field="check_yn"
+                                    title="확인"
+                                    width={80}
+                                    cell={Check_ynCell}
+                                  />
+                                  <GridColumn
+                                    field="ref_type"
+                                    title="참조"
+                                    width={120}
+                                    cell={TypeCell}
                                   />
                                 </Grid>
                               </UserContext.Provider>
