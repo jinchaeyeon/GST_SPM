@@ -36,11 +36,13 @@ import {
 } from "react";
 import { useHistory, useLocation } from "react-router-dom";
 import { useRecoilState, useSetRecoilState } from "recoil";
+import SwiperCore from "swiper";
+import "swiper/css";
+import { Swiper, SwiperSlide } from "swiper/react";
 import {
   ButtonContainer,
   ButtonInGridInput,
   FilterBox,
-  FilterBoxWrap,
   FormBox,
   FormBoxWrap,
   GridContainer,
@@ -48,7 +50,7 @@ import {
   GridTitle,
   GridTitleContainer,
   Title,
-  TitleContainer,
+  TitleContainer
 } from "../CommonStyled";
 import CenterCell from "../components/Cells/CenterCell";
 import CheckBoxCell from "../components/Cells/CheckBoxCell";
@@ -56,6 +58,7 @@ import CheckBoxReadOnlyCell from "../components/Cells/CheckBoxReadOnlyCell";
 import ComboBoxCell from "../components/Cells/ComboBoxCell";
 import DateCell from "../components/Cells/DateCell";
 import NumberCell from "../components/Cells/NumberCell";
+import CustomMultiColumnComboBox from "../components/ComboBoxes/CustomMultiColumnComboBox";
 import {
   UseParaPc,
   convertDateToStr,
@@ -73,6 +76,7 @@ import {
   SELECTED_FIELD,
 } from "../components/CommonString";
 import CommonDateRangePicker from "../components/DateRangePicker/CommonDateRangePicker";
+import FilterContainer from "../components/FilterContainer";
 import { CellRender, RowRender } from "../components/Renderers/Renderers";
 import RequiredHeader from "../components/RequiredHeader";
 import RichEditor from "../components/RichEditor";
@@ -92,11 +96,6 @@ import {
   userColumns,
 } from "../store/columns/common-columns";
 import { Iparameters, TEditorHandle } from "../store/types";
-import SwiperCore from "swiper";
-import "swiper/css";
-import { Swiper, SwiperSlide } from "swiper/react";
-import FilterContainer from "../components/FilterContainer";
-import CustomMultiColumnComboBox from "../components/ComboBoxes/CustomMultiColumnComboBox";
 
 const workTypeQueryStr = `select sub_code, code_name FROM comCodeMaster where group_code = 'CR004'`;
 
@@ -1283,6 +1282,25 @@ const App = () => {
     }
   }, [mainDataResult]);
 
+  const UrgentCell = (props: GridCellProps) => {
+    const data = props.dataItem;
+
+    if(data.is_urgent == "Y" || data.is_urgent == true) {
+      return(
+        <td style={{ textAlign: "center" }}>
+        <span
+          className="k-icon k-i-notification k-icon-lg"
+          style={{ color: "red" }}
+        ></span>
+      </td>
+      )
+    } else {
+      return (
+        <td />
+      )
+    }
+  };
+
   const onMainSortChange = (e: any) => {
     setMainDataState((prev) => ({ ...prev, sort: e.sort }));
   };
@@ -2155,7 +2173,7 @@ const App = () => {
 
     paraData.work_type = "";
   };
-  
+
   return (
     <>
       <TitleContainer className="TitleContainer">
@@ -2169,7 +2187,7 @@ const App = () => {
           >
             저장
           </Button>
-          { isMobile && (
+          {isMobile && (
             <Button onClick={search} icon="search" themeColor={"primary"}>
               조회
             </Button>
@@ -2407,6 +2425,12 @@ const App = () => {
                     rowRender={customRowRender}
                     editField={EDIT_FIELD}
                   >
+                    <GridColumn
+                      field="is_urgent"
+                      title="긴급"
+                      width={80}
+                      cell={UrgentCell}
+                    />
                     <GridColumn
                       field="is_finished"
                       title="처리"
@@ -3673,6 +3697,12 @@ const App = () => {
                       rowRender={customRowRender}
                       editField={EDIT_FIELD}
                     >
+                      <GridColumn
+                        field="is_urgent"
+                        title="긴급"
+                        width={80}
+                        cell={UrgentCell}
+                      />
                       <GridColumn
                         field="is_finished"
                         title="처리"

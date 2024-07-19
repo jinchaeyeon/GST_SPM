@@ -322,6 +322,24 @@ const KendoWindow = ({
     }
   };
 
+  const fetchUrgent = async (str: string) => {
+    let data: any;
+    let result: string = "";
+
+    const bytes = require("utf8-bytes");
+    const convertedQueryStr = bytesToBase64(bytes(str));
+
+    let query = {
+      query: convertedQueryStr,
+    };
+
+    try {
+      data = await processApi<any>("bizgst-query", query);
+    } catch (error) {
+      data = null;
+    }
+  };
+
   const Check_ynCell = (props: GridCellProps) => {
     const data = props.dataItem;
     const changeCheck = async () => {
@@ -376,6 +394,68 @@ const KendoWindow = ({
           <span
             className="k-icon k-i-checkmark-circle k-icon-lg"
             style={{ color: "green" }}
+          ></span>
+        </td>
+      ) : (
+        <td onClick={changeCheck} />
+      )
+    ) : (
+      <td onClick={changeCheck} />
+    );
+  };
+
+  const UrgentCell = (props: GridCellProps) => {
+    const data = props.dataItem;
+    const changeCheck = async () => {
+      if (data.indicator == userId) {
+        const urgentQueryStr = `UPDATE CR005T SET is_urgent = '${
+          data.is_urgent == "N" || data.is_urgent == ""
+            ? "Y"
+            : data.is_urgent == "Y"
+            ? "N"
+            : ""
+        }' WHERE orgdiv = '${data.orgdiv}' AND docunum = '${data.docunum}'`;
+        fetchUrgent(urgentQueryStr);
+        const newData = mainDataResult.data.map((item) =>
+          item[DATA_ITEM_KEY] == data[DATA_ITEM_KEY]
+            ? {
+                ...item,
+                is_urgent:
+                  item.is_urgent == "N" || item.is_urgent == ""
+                    ? true
+                    : item.is_urgent == "Y"
+                    ? false
+                    : !item.is_urgent,
+                [EDIT_FIELD]: props.field,
+              }
+            : {
+                ...item,
+                [EDIT_FIELD]: undefined,
+              }
+        );
+        setTempResult((prev) => {
+          return {
+            data: newData,
+            total: prev.total,
+          };
+        });
+        setMainDataResult((prev) => {
+          return {
+            data: newData,
+            total: prev.total,
+          };
+        });
+      } else {
+        alert("지시자가 본인인 경우만 긴급 처리 가능합니다.");
+      }
+    };
+
+    return data.indicator == userId ? (
+      data.is_urgent == "Y" || data.is_urgent == true ? (
+        <td style={{ textAlign: "center" }} onClick={changeCheck}>
+          <span
+            className="k-icon k-i-notification k-icon-lg"
+            style={{ color: "red" }}
           ></span>
         </td>
       ) : (
@@ -567,6 +647,7 @@ const KendoWindow = ({
         "@p_receptionist": "",
         "@p_status": "",
         "@p_check": "",
+        "@p_pgmnm": "",
         "@p_ref_type": type != undefined ? type : "",
         "@p_ref_key":
           para != undefined
@@ -1274,6 +1355,7 @@ const KendoWindow = ({
         custperson_s: string[];
         attdatnum_s: string[];
         value_code3_s: string[];
+        is_urgent_s: string[];
 
         ref_type_s: string[];
         ref_key_s: string[];
@@ -1299,6 +1381,7 @@ const KendoWindow = ({
         custperson_s: [],
         attdatnum_s: [],
         value_code3_s: [],
+        is_urgent_s: [],
 
         ref_type_s: [],
         ref_key_s: [],
@@ -1358,6 +1441,7 @@ const KendoWindow = ({
             expmm = "",
             custperson = "",
             value_code3 = "",
+            is_urgent = "",
 
             ref_type = "",
             ref_key = "",
@@ -1410,6 +1494,9 @@ const KendoWindow = ({
           rowsArr.expmm_s.push(expmm == "" ? 0 : expmm);
           rowsArr.custperson_s.push(custperson);
           rowsArr.value_code3_s.push(value_code3);
+          rowsArr.is_urgent_s.push(
+            is_urgent == true ? "Y" : is_urgent == false ? "N" : is_urgent
+          );
 
           rowsArr.ref_type_s.push(ref_type);
           rowsArr.ref_key_s.push(ref_key);
@@ -1437,6 +1524,7 @@ const KendoWindow = ({
             expmm = "",
             custperson = "",
             value_code3 = "",
+            is_urgent = "",
 
             ref_type = "",
             ref_key = "",
@@ -1485,6 +1573,9 @@ const KendoWindow = ({
           rowsArr.expmm_s.push(expmm == "" ? 0 : expmm);
           rowsArr.custperson_s.push(custperson);
           rowsArr.value_code3_s.push(value_code3);
+          rowsArr.is_urgent_s.push(
+            is_urgent == true ? "Y" : is_urgent == false ? "N" : is_urgent
+          );
 
           rowsArr.ref_type_s.push(ref_type);
           rowsArr.ref_key_s.push(ref_key);
@@ -1598,6 +1689,7 @@ const KendoWindow = ({
             "@p_ref_type": rowsArr.ref_type_s.join("|"),
             "@p_ref_key": rowsArr.ref_key_s.join("|"),
             "@p_ref_seq": rowsArr.ref_seq_s.join("|"),
+            "@p_is_urgent": rowsArr.is_urgent_s.join("|"),
             "@p_id": userId,
             "@p_pc": pc,
           },
@@ -1653,6 +1745,7 @@ const KendoWindow = ({
         custperson_s: string[];
         attdatnum_s: string[];
         value_code3_s: string[];
+        is_urgent_s: string[];
 
         ref_type_s: string[];
         ref_key_s: string[];
@@ -1678,6 +1771,7 @@ const KendoWindow = ({
         custperson_s: [],
         attdatnum_s: [],
         value_code3_s: [],
+        is_urgent_s: [],
 
         ref_type_s: [],
         ref_key_s: [],
@@ -1705,6 +1799,7 @@ const KendoWindow = ({
           expmm = "",
           custperson = "",
           value_code3 = "",
+          is_urgent = "",
 
           ref_type = "",
           ref_key = "",
@@ -1747,6 +1842,9 @@ const KendoWindow = ({
         rowsArr.expmm_s.push(expmm == "" ? 0 : expmm);
         rowsArr.custperson_s.push(custperson);
         rowsArr.value_code3_s.push(value_code3);
+        rowsArr.is_urgent_s.push(
+          is_urgent == true ? "Y" : is_urgent == false ? "N" : is_urgent
+        );
 
         rowsArr.ref_type_s.push(ref_type);
         rowsArr.ref_key_s.push(ref_key);
@@ -1800,6 +1898,7 @@ const KendoWindow = ({
           "@p_ref_type": rowsArr.ref_type_s.join("|"),
           "@p_ref_key": rowsArr.ref_key_s.join("|"),
           "@p_ref_seq": rowsArr.ref_seq_s.join("|"),
+          "@p_is_urgent": rowsArr.is_urgent_s.join("|"),
           "@p_id": userId,
           "@p_pc": pc,
         },
@@ -2029,6 +2128,12 @@ const KendoWindow = ({
                 >
                   <GridColumn field="rowstatus" title=" " width="45px" />
                   <GridColumn
+                    field="is_urgent"
+                    title="긴급"
+                    width={80}
+                    cell={UrgentCell}
+                  />
+                  <GridColumn
                     field="groupcd"
                     title="업무분류"
                     width={120}
@@ -2072,7 +2177,7 @@ const KendoWindow = ({
                     width={120}
                     cell={FilesCell}
                   />
-                  <GridColumn field="remark" title="비고" width={150} />
+                  <GridColumn field="remark" title="비고" width={300} />
                   <GridColumn
                     field="finyn"
                     title="완료"
@@ -2106,7 +2211,7 @@ const KendoWindow = ({
                     width={120}
                     cell={NumberCell}
                   />
-                   <GridColumn
+                  <GridColumn
                     field="is_defective"
                     title="불량"
                     width={80}

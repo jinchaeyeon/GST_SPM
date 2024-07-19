@@ -1,6 +1,34 @@
-import { createContext, useContext, useEffect, useRef, useState } from "react";
-import * as React from "react";
+import {
+  DataResult,
+  FilterDescriptor,
+  State,
+  filterBy,
+  getter,
+  process,
+} from "@progress/kendo-data-query";
+import { Button } from "@progress/kendo-react-buttons";
 import { Window, WindowMoveEvent } from "@progress/kendo-react-dialogs";
+import {
+  ComboBoxFilterChangeEvent,
+  MultiColumnComboBox,
+  MultiSelect,
+  MultiSelectChangeEvent,
+} from "@progress/kendo-react-dropdowns";
+import {
+  Grid,
+  GridCellProps,
+  GridColumn,
+  GridDataStateChangeEvent,
+  GridFooterCellProps,
+  GridPageChangeEvent,
+  GridSelectionChangeEvent,
+  getSelectedState,
+} from "@progress/kendo-react-grid";
+import { Input, RadioGroup } from "@progress/kendo-react-inputs";
+import { TabStrip, TabStripTab } from "@progress/kendo-react-layout";
+import { bytesToBase64 } from "byte-base64";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { useSetRecoilState } from "recoil";
 import {
   BottomContainer,
   ButtonContainer,
@@ -13,53 +41,24 @@ import {
   GridTitle,
   GridTitleContainer,
 } from "../../../CommonStyled";
-import { Button } from "@progress/kendo-react-buttons";
+import { useApi } from "../../../hooks/api";
 import { IWindowPosition } from "../../../hooks/interfaces";
-import { TabStrip, TabStripTab } from "@progress/kendo-react-layout";
-import { PAGE_SIZE, SELECTED_FIELD } from "../../CommonString";
-import {
-  Grid,
-  GridCellProps,
-  GridColumn,
-  GridDataStateChangeEvent,
-  GridFooterCellProps,
-  GridPageChangeEvent,
-  GridSelectionChangeEvent,
-  getSelectedState,
-} from "@progress/kendo-react-grid";
-import { convertDateToStr, handleKeyPressSearch } from "../../CommonFunction";
-import {
-  ComboBoxFilterChangeEvent,
-  MultiColumnComboBox,
-  MultiSelect,
-  MultiSelectChangeEvent,
-} from "@progress/kendo-react-dropdowns";
-import {
-  DataResult,
-  FilterDescriptor,
-  State,
-  process,
-  filterBy,
-  getter,
-} from "@progress/kendo-data-query";
+import { isLoading } from "../../../store/atoms";
 import {
   dataTypeColumns,
   dataTypeColumns2,
   userColumns,
 } from "../../../store/columns/common-columns";
-import CommonDateRangePicker from "../../DateRangePicker/CommonDateRangePicker";
-import { Input, RadioGroup } from "@progress/kendo-react-inputs";
-import { bytesToBase64 } from "byte-base64";
-import { useApi } from "../../../hooks/api";
 import { Iparameters, TEditorHandle } from "../../../store/types";
-import AttachmentsWindow from "./AttachmentsWindow";
-import { useSetRecoilState } from "recoil";
-import { isLoading } from "../../../store/atoms";
-import DateCell from "../../Cells/DateCell";
 import CheckBoxReadOnlyCell from "../../Cells/CheckBoxReadOnlyCell";
-import RichEditor from "../../RichEditor";
+import DateCell from "../../Cells/DateCell";
 import NumberCell from "../../Cells/NumberCell";
 import ProgressCell from "../../Cells/ProgressCell";
+import { convertDateToStr, handleKeyPressSearch } from "../../CommonFunction";
+import { PAGE_SIZE, SELECTED_FIELD } from "../../CommonString";
+import CommonDateRangePicker from "../../DateRangePicker/CommonDateRangePicker";
+import RichEditor from "../../RichEditor";
+import AttachmentsWindow from "./AttachmentsWindow";
 import PopUpAttachmentsWindow from "./PopUpAttachmentsWindow";
 
 type IKendoWindow = {
@@ -1056,6 +1055,7 @@ const KendoWindow = ({ setVisible, setData, modal = false }: IKendoWindow) => {
         "@p_user_name":
           filters.user_name != null ? filters.user_name.user_id : "",
         "@p_contents": filters.contents,
+        "@p_pgmnm": "",
         "@p_reception_type":
           filters.reception_type != null ? filters.reception_type.sub_code : "",
         "@p_value_code3":
@@ -1187,6 +1187,7 @@ const KendoWindow = ({ setVisible, setData, modal = false }: IKendoWindow) => {
         "@p_user_name":
           filters.user_name != null ? filters.user_name.user_id : "",
         "@p_contents": filters.contents,
+        "@p_pgmnm": "",
         "@p_reception_type":
           filters.reception_type != null ? filters.reception_type.sub_code : "",
         "@p_value_code3":
@@ -1311,6 +1312,7 @@ const KendoWindow = ({ setVisible, setData, modal = false }: IKendoWindow) => {
         "@p_to_date": convertDateToStr(filters.toDate),
         "@p_customer_code": "",
         "@p_customer_name": filters.custnm,
+        "@p_pgmnm": "",
         "@p_user_name":
           filters.user_name != null ? filters.user_name.user_id : "",
         "@p_contents": filters.contents,
