@@ -75,7 +75,6 @@ const SignWindow = ({ setVisible, para, reload }: IWindow) => {
   };
 
   const onClose = () => {
-    reload();
     setFileList([]);
     setSavenmList([]);
     setVisible(false);
