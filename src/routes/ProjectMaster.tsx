@@ -287,6 +287,7 @@ const App = () => {
     setSubFilters((prev) => ({
       ...prev,
       pgNum: Math.floor(page.skip / initialPageState.take) + 1,
+      findRowValue: "",
       isSearch: true,
     }));
 

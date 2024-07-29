@@ -210,6 +210,7 @@ const App = () => {
     setFilters((prev) => ({
       ...prev,
       pgNum: Math.floor(page.skip / initialPageState.take) + 1,
+      findRowValue: "",
       isFetch: true,
     }));
 
