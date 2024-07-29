@@ -349,11 +349,11 @@ const App = () => {
   const [webheight2, setWebHeight2] = useState(0);
   const [webheight3, setWebHeight3] = useState(0);
   const [panes, setPanes] = useState<Array<any>>([
-    { size: "60%", min: "0px", collapsible: true },
+    { size: "50%", min: "0px", collapsible: true },
     {},
   ]);
   const [nestedPanes, setNestedPanes] = useState<SplitterPaneProps[]>([
-    { size: "40%", min: "60px", resizable: true },
+    { size: "50%", min: "60px", resizable: true },
     { min: "60px"},
   ]);
   const [isPane1Collapsed, setIsPane1Collapsed] = useState(false);
@@ -2816,7 +2816,7 @@ const App = () => {
                               ]);
                             } else {
                               setPanes([
-                                { size: "60%", min: "0px", collapsible: true },
+                                { size: "50%", min: "0px", collapsible: true },
                                 {},
                               ]);
                             }
@@ -3065,6 +3065,7 @@ const App = () => {
               isSearch: true,
             }));
           }}
+          modal={true}
         />
       )}
       {questionWindowVisible && (

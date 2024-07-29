@@ -10,9 +10,8 @@ import { Button } from "@progress/kendo-react-buttons";
 import { Window, WindowMoveEvent } from "@progress/kendo-react-dialogs";
 import {
   ComboBoxFilterChangeEvent,
-  MultiColumnComboBox,
   MultiSelect,
-  MultiSelectChangeEvent,
+  MultiSelectChangeEvent
 } from "@progress/kendo-react-dropdowns";
 import {
   Grid,
@@ -54,6 +53,7 @@ import CheckBoxReadOnlyCell from "../../Cells/CheckBoxReadOnlyCell";
 import DateCell from "../../Cells/DateCell";
 import NumberCell from "../../Cells/NumberCell";
 import ProgressCell from "../../Cells/ProgressCell";
+import CustomMultiColumnComboBox from "../../ComboBoxes/CustomMultiColumnComboBox";
 import { convertDateToStr, handleKeyPressSearch } from "../../CommonFunction";
 import { PAGE_SIZE, SELECTED_FIELD } from "../../CommonString";
 import CommonDateRangePicker from "../../DateRangePicker/CommonDateRangePicker";
@@ -1495,7 +1495,7 @@ const KendoWindow = ({ setVisible, setData, modal = false }: IKendoWindow) => {
                 <tbody>
                   <tr>
                     <th>
-                      <MultiColumnComboBox
+                      <CustomMultiColumnComboBox
                         name="date_type"
                         data={
                           filter ? filterBy(dateTypeData, filter) : dateTypeData
@@ -1537,7 +1537,7 @@ const KendoWindow = ({ setVisible, setData, modal = false }: IKendoWindow) => {
                     </td>
                     <th>Value 구분</th>
                     <td>
-                      <MultiColumnComboBox
+                      <CustomMultiColumnComboBox
                         name="value_code3"
                         data={
                           filter2
@@ -1565,7 +1565,7 @@ const KendoWindow = ({ setVisible, setData, modal = false }: IKendoWindow) => {
                     </td>
                     <th>접수 구분</th>
                     <td>
-                      <MultiColumnComboBox
+                      <CustomMultiColumnComboBox
                         name="reception_type"
                         data={
                           filter3
@@ -1582,7 +1582,7 @@ const KendoWindow = ({ setVisible, setData, modal = false }: IKendoWindow) => {
                     </td>
                     <th>접수자</th>
                     <td>
-                      <MultiColumnComboBox
+                      <CustomMultiColumnComboBox
                         name="reception_person"
                         data={
                           filter4 ? filterBy(usersData, filter4) : usersData
@@ -1610,7 +1610,7 @@ const KendoWindow = ({ setVisible, setData, modal = false }: IKendoWindow) => {
                     </td>
                     <th>접수담당자</th>
                     <td>
-                      <MultiColumnComboBox
+                      <CustomMultiColumnComboBox
                         name="receptionist"
                         data={
                           filter5 ? filterBy(usersData, filter5) : usersData
@@ -1625,7 +1625,7 @@ const KendoWindow = ({ setVisible, setData, modal = false }: IKendoWindow) => {
                     </td>
                     <th>처리담당자</th>
                     <td>
-                      <MultiColumnComboBox
+                      <CustomMultiColumnComboBox
                         name="worker"
                         data={
                           filter6 ? filterBy(usersData, filter6) : usersData
@@ -1878,7 +1878,7 @@ const KendoWindow = ({ setVisible, setData, modal = false }: IKendoWindow) => {
                 <tbody>
                   <tr>
                     <th>
-                      <MultiColumnComboBox
+                      <CustomMultiColumnComboBox
                         name="date_type"
                         data={
                           filter7
@@ -1923,7 +1923,7 @@ const KendoWindow = ({ setVisible, setData, modal = false }: IKendoWindow) => {
                     </td>
                     <th>Value 구분</th>
                     <td>
-                      <MultiColumnComboBox
+                      <CustomMultiColumnComboBox
                         name="value_code3"
                         data={
                           filter8
@@ -1953,7 +1953,7 @@ const KendoWindow = ({ setVisible, setData, modal = false }: IKendoWindow) => {
                     </td>
                     <th>담당PM</th>
                     <td>
-                      <MultiColumnComboBox
+                      <CustomMultiColumnComboBox
                         name="user_name"
                         data={
                           filter10 ? filterBy(usersData, filter10) : usersData
@@ -1968,7 +1968,7 @@ const KendoWindow = ({ setVisible, setData, modal = false }: IKendoWindow) => {
                     </td>
                     <th>처리담당자</th>
                     <td>
-                      <MultiColumnComboBox
+                      <CustomMultiColumnComboBox
                         name="worker"
                         data={
                           filter11 ? filterBy(usersData, filter11) : usersData
@@ -2208,7 +2208,7 @@ const KendoWindow = ({ setVisible, setData, modal = false }: IKendoWindow) => {
                 <tbody>
                   <tr>
                     <th>
-                      <MultiColumnComboBox
+                      <CustomMultiColumnComboBox
                         name="date_type"
                         data={
                           filter12
@@ -2266,7 +2266,7 @@ const KendoWindow = ({ setVisible, setData, modal = false }: IKendoWindow) => {
                     </td>
                     <th>접수담당자</th>
                     <td>
-                      <MultiColumnComboBox
+                      <CustomMultiColumnComboBox
                         name="receptionist"
                         data={
                           filter13 ? filterBy(usersData, filter13) : usersData
@@ -2281,7 +2281,7 @@ const KendoWindow = ({ setVisible, setData, modal = false }: IKendoWindow) => {
                     </td>
                     <th>처리담당자</th>
                     <td>
-                      <MultiColumnComboBox
+                      <CustomMultiColumnComboBox
                         name="worker"
                         data={
                           filter14 ? filterBy(usersData, filter14) : usersData
@@ -2307,7 +2307,7 @@ const KendoWindow = ({ setVisible, setData, modal = false }: IKendoWindow) => {
                     </td>
                     <th>Value 구분</th>
                     <td colSpan={3}>
-                      <MultiColumnComboBox
+                      <CustomMultiColumnComboBox
                         name="value_code3"
                         data={
                           filter15

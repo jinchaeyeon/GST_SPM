@@ -1,14 +1,15 @@
-import { useEffect, useRef, useState } from "react";
-import { useRecoilState, useSetRecoilState } from "recoil";
-import {
-  ICustData,
-  IWindowPosition,
-} from "../../../hooks/interfaces";
-import {
-  isLoading,
-  loginResultState,
-} from "../../../store/atoms";
+import { FilterDescriptor, filterBy } from "@progress/kendo-data-query";
+import { Button } from "@progress/kendo-react-buttons";
+import { DatePicker } from "@progress/kendo-react-dateinputs";
 import { Window, WindowMoveEvent } from "@progress/kendo-react-dialogs";
+import {
+  ComboBoxFilterChangeEvent
+} from "@progress/kendo-react-dropdowns";
+import { Input } from "@progress/kendo-react-inputs";
+import { bytesToBase64 } from "byte-base64";
+import { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
+import { useRecoilState, useSetRecoilState } from "recoil";
 import {
   BottomContainer,
   ButtonContainer,
@@ -19,28 +20,21 @@ import {
   GridTitle,
   GridTitleContainer,
 } from "../../../CommonStyled";
-import { Button } from "@progress/kendo-react-buttons";
-import { Input } from "@progress/kendo-react-inputs";
-import {
-  ComboBoxFilterChangeEvent,
-  MultiColumnComboBox,
-} from "@progress/kendo-react-dropdowns";
-import { FilterDescriptor, filterBy } from "@progress/kendo-data-query";
+import { useApi } from "../../../hooks/api";
+import { ICustData, IWindowPosition } from "../../../hooks/interfaces";
+import { isLoading, loginResultState } from "../../../store/atoms";
 import {
   custTypeColumns,
   dataTypeColumns,
   dataTypeColumns2,
   userColumns,
 } from "../../../store/columns/common-columns";
-import { bytesToBase64 } from "byte-base64";
-import { useApi } from "../../../hooks/api";
-import CustomersWindow from "./CustomersWindow";
-import { DatePicker } from "@progress/kendo-react-dateinputs";
-import RichEditor from "../../RichEditor";
 import { TEditorHandle } from "../../../store/types";
-import PopUpAttachmentsWindow from "./PopUpAttachmentsWindow";
+import CustomMultiColumnComboBox from "../../ComboBoxes/CustomMultiColumnComboBox";
 import { UseParaPc, convertDateToStr, toDate } from "../../CommonFunction";
-import { useLocation } from "react-router-dom";
+import RichEditor from "../../RichEditor";
+import CustomersWindow from "./CustomersWindow";
+import PopUpAttachmentsWindow from "./PopUpAttachmentsWindow";
 
 type IKendoWindow = {
   setVisible(t: boolean): void;
@@ -410,15 +404,17 @@ const KendoWindow = ({
     setInformation((prev) => ({
       ...prev,
       attach_number: data.length > 0 ? data[0].attdatnum : prev.attach_number,
-      attach_files: data.length > 1
-      ? data[0].realnm + " 등 " + String(data.length) + "건"
-      : data.length == 0
-      ? ""
-      : data[0].realnm,
+      attach_files:
+        data.length > 1
+          ? data[0].realnm + " 등 " + String(data.length) + "건"
+          : data.length == 0
+          ? ""
+          : data[0].realnm,
     }));
   };
 
-  const getAttachmentsData2 = (data: any,
+  const getAttachmentsData2 = (
+    data: any,
     fileList?: FileList | any[],
     savenmList?: string[]
   ) => {
@@ -480,7 +476,7 @@ const KendoWindow = ({
   const uploadFile = async (
     files: File,
     type: string,
-    attdatnum? :string,
+    attdatnum?: string,
     newAttachmentNumber?: string
   ) => {
     let data: any;
@@ -490,10 +486,7 @@ const KendoWindow = ({
     if (newAttachmentNumber != undefined) {
       queryParams.append("attachmentNumber", newAttachmentNumber);
     } else if (attdatnum != undefined) {
-      queryParams.append(
-        "attachmentNumber",
-        attdatnum == "" ? "" : attdatnum
-      );
+      queryParams.append("attachmentNumber", attdatnum == "" ? "" : attdatnum);
     }
 
     const formid = "%28web%29" + pathname;
@@ -523,7 +516,6 @@ const KendoWindow = ({
     }
   };
 
-
   const onConfirmClick = async () => {
     if (
       Information.custnm.custnm == "" ||
@@ -551,14 +543,23 @@ const KendoWindow = ({
       for (const file of fileList) {
         // 최초 등록 시, 업로드 후 첨부번호를 가져옴 (다중 업로드 대응)
         if (Information.attach_number == "" && newAttachmentNumber == "") {
-          newAttachmentNumber = await uploadFile(file, "receipt", Information.attach_number);
+          newAttachmentNumber = await uploadFile(
+            file,
+            "receipt",
+            Information.attach_number
+          );
           const promise = newAttachmentNumber;
           promises.push(promise);
           continue;
         }
 
         const promise = newAttachmentNumber
-          ? await uploadFile(file, "receipt", Information.attach_number, newAttachmentNumber)
+          ? await uploadFile(
+              file,
+              "receipt",
+              Information.attach_number,
+              newAttachmentNumber
+            )
           : await uploadFile(file, "receipt", Information.attach_number);
         promises.push(promise);
       }
@@ -591,16 +592,25 @@ const KendoWindow = ({
       for (const file of fileList2) {
         // 최초 등록 시, 업로드 후 첨부번호를 가져옴 (다중 업로드 대응)
         if (Information.attdatnum == "" && newAttachmentNumber2 == "") {
-          newAttachmentNumber2 = await uploadFile(file, "question", Information.attdatnum);
+          newAttachmentNumber2 = await uploadFile(
+            file,
+            "question",
+            Information.attdatnum
+          );
           const promise = newAttachmentNumber2;
           promises2.push(promise);
           continue;
         }
 
         const promise = newAttachmentNumber2
-          ? await uploadFile(file, "question", Information.attdatnum, newAttachmentNumber2)
+          ? await uploadFile(
+              file,
+              "question",
+              Information.attdatnum,
+              newAttachmentNumber2
+            )
           : await uploadFile(file, "question", Information.attdatnum);
-          promises2.push(promise);
+        promises2.push(promise);
       }
 
       const results2 = await Promise.all(promises2);
@@ -690,11 +700,13 @@ const KendoWindow = ({
               : convertDateToStr(Information.be_finished_date),
           "@p_completion_date_s": para == "" ? "" : para.completion_date,
           "@p_status_s": para == "" ? "U" : para.status,
-          "@p_attach_number_s": results[0] == undefined ? Information.attach_number : results[0],
+          "@p_attach_number_s":
+            results[0] == undefined ? Information.attach_number : results[0],
           "@p_ref_number_s": para == "" ? "U" : para.ref_number,
 
           "@p_contents": textContent,
-          "@p_attdatnum": results2[0] == undefined ? Information.attdatnum : results2[0],
+          "@p_attdatnum":
+            results2[0] == undefined ? Information.attdatnum : results2[0],
 
           "@p_id": userId,
           "@p_pc": pc,
@@ -755,7 +767,7 @@ const KendoWindow = ({
               </td>
               <th>업체명</th>
               <td colSpan={3}>
-                <MultiColumnComboBox
+                <CustomMultiColumnComboBox
                   name="custnm"
                   data={filter ? filterBy(custListData, filter) : custListData}
                   value={Information.custnm}
@@ -814,7 +826,7 @@ const KendoWindow = ({
               </td>
               <th>접수구분</th>
               <td>
-                <MultiColumnComboBox
+                <CustomMultiColumnComboBox
                   name="reception_type"
                   data={
                     filter2
@@ -834,7 +846,7 @@ const KendoWindow = ({
             <tr>
               <th>접수자</th>
               <td>
-                <MultiColumnComboBox
+                <CustomMultiColumnComboBox
                   name="reception_person"
                   data={filter3 ? filterBy(usersData, filter3) : usersData}
                   value={Information.reception_person}
@@ -848,7 +860,7 @@ const KendoWindow = ({
               </td>
               <th>Value 구분</th>
               <td>
-                <MultiColumnComboBox
+                <CustomMultiColumnComboBox
                   name="value_code3"
                   data={
                     filter4 ? filterBy(valuecodeItems, filter4) : valuecodeItems

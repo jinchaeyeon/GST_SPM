@@ -1,6 +1,5 @@
 import { DataResult, getter, process } from "@progress/kendo-data-query";
 import { Button } from "@progress/kendo-react-buttons";
-import { Window, WindowMoveEvent } from "@progress/kendo-react-dialogs";
 import {
   Grid,
   GridColumn,
@@ -11,7 +10,7 @@ import {
 } from "@progress/kendo-react-grid";
 import { Checkbox } from "@progress/kendo-react-inputs";
 import * as React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useRecoilState, useSetRecoilState } from "recoil";
 import {
@@ -32,9 +31,12 @@ import {
   convertDateToStrWithTime3,
   extractDownloadFilename,
   getGridItemChangedData,
+  getHeight,
+  getWindowDeviceHeight,
 } from "../../CommonFunction";
 import { EDIT_FIELD, SELECTED_FIELD } from "../../CommonString";
 import { CellRender, RowRender } from "../../Renderers/Renderers";
+import Window from "../WindowComponent/Window";
 
 type permission = {
   upload: boolean;
@@ -59,6 +61,11 @@ type IKendoWindow = {
 
 const DATA_ITEM_KEY = "idx";
 let idx = 0;
+var height = 0;
+var height2 = 0;
+var height3 = 0;
+var height4 = 0;
+
 const KendoWindow = ({
   type,
   setVisible,
@@ -67,15 +74,45 @@ const KendoWindow = ({
   permission,
   fileLists = [],
   savenmLists = [],
+  modal = false,
 }: IKendoWindow) => {
   let deviceWidth = window.innerWidth;
+  let deviceHeight = document.documentElement.clientHeight;
   let isMobile = deviceWidth <= 1200;
+  const [mobileheight, setMobileHeight] = useState(0);
+  const [webheight, setWebHeight] = useState(0);
   const [position, setPosition] = useState<IWindowPosition>({
-    left: 300,
-    top: 100,
+    left: isMobile == true ? 0 : (deviceWidth - 1200) / 2,
+    top: isMobile == true ? 0 : (deviceHeight - 800) / 2,
     width: isMobile == true ? deviceWidth : 1200,
-    height: 800,
+    height: isMobile == true ? deviceHeight : 800,
   });
+  useLayoutEffect(() => {
+    height = getHeight(".k-window-titlebar");
+    height2 = getHeight(".WindowTitleContainer");
+    height3 = getHeight(".example");
+    height4 = getHeight(".BottomContainer");
+    setMobileHeight(
+      getWindowDeviceHeight(false, deviceHeight) - height - height2 - height4 - 5
+    );
+    setWebHeight(
+      getWindowDeviceHeight(false, position.height) -
+        height -
+        height2 -
+        height3 -
+        height4 - 5
+    );
+  }, []);
+  const onChangePostion = (position: any) => {
+    setPosition(position);
+    setWebHeight(
+      getWindowDeviceHeight(false, position.height) -
+        height -
+        height2 -
+        height3 -
+        height4 - 5
+    );
+  };
   const [loginResult] = useRecoilState(loginResultState);
   const userId = loginResult ? loginResult.userId : "";
   const username = loginResult ? loginResult.userName : "";
@@ -87,18 +124,6 @@ const KendoWindow = ({
   const [savenmList, setSavenmList] = useState<string[]>([]);
   const location = useLocation();
   const pathname = location.pathname.replace("/", "");
-
-  const handleMove = (event: WindowMoveEvent) => {
-    setPosition({ ...position, left: event.left, top: event.top });
-  };
-  const handleResize = (event: WindowMoveEvent) => {
-    setPosition({
-      left: event.left,
-      top: event.top,
-      width: event.width,
-      height: event.height,
-    });
-  };
 
   const onClose = () => {
     if (setData) {
@@ -476,15 +501,13 @@ const KendoWindow = ({
 
   return (
     <Window
-      title={"파일첨부관리"}
-      width={position.width}
-      height={position.height}
-      onMove={handleMove}
-      onResize={handleResize}
-      onClose={onClose}
-      modal={true}
+      titles={"파일첨부관리"}
+      positions={position}
+      Close={onClose}
+      modals={modal}
+      onChangePostion={onChangePostion}
     >
-      <TitleContainer>
+      <TitleContainer className="WindowTitleContainer">
         <ButtonContainer>
           <Button
             onClick={upload}
@@ -561,6 +584,7 @@ const KendoWindow = ({
             textAlign: "center",
             color: "rgba(0,0,0,0.8)",
           }}
+          className="example"
         >
           <span
             className="k-icon k-i-file-add"
@@ -575,7 +599,9 @@ const KendoWindow = ({
           height:
             !permission || (permission && permission.upload)
               ? "490px"
-              : "600px",
+              : !isMobile 
+              ? webheight 
+              : mobileheight,
         }}
         data={process(
           mainDataResult.data.map((row) => ({
@@ -632,8 +658,8 @@ const KendoWindow = ({
           cell={CenterCell}
         />
       </Grid>
+      <BottomContainer className="BottomContainer">
       <p>※ 최대 파일 크기 (400MB)</p>
-      <BottomContainer>
         <ButtonContainer>
           <Button themeColor={"primary"} onClick={onClose}>
             확인

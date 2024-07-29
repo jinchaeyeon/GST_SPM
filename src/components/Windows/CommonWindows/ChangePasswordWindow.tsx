@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useLayoutEffect } from "react";
 import * as React from "react";
-import { Window, WindowMoveEvent } from "@progress/kendo-react-dialogs";
 import { useApi } from "../../../hooks/api";
 import {
   BottomContainer,
@@ -15,39 +14,55 @@ import {
 } from "@progress/kendo-react-form";
 import { FormInput } from "../../Editors";
 import { TPasswordRequirements } from "../../../store/types";
-import { validator } from "../../CommonFunction";
+import {
+  getHeight,
+  getWindowDeviceHeight,
+  validator,
+} from "../../CommonFunction";
 import { Button } from "@progress/kendo-react-buttons";
 import { IWindowPosition } from "../../../hooks/interfaces";
 import { isLoading, passwordExpirationInfoState } from "../../../store/atoms";
 import { useRecoilState, useSetRecoilState } from "recoil";
+import Window from "../WindowComponent/Window";
 
 type TKendoWindow = {
   setVisible(t: boolean): void;
 };
 
+var height = 0;
+var height3 = 0;
+
 const KendoWindow = ({ setVisible }: TKendoWindow) => {
   const [pwExpInfo, setPwExpInfo] = useRecoilState(passwordExpirationInfoState);
   const [pwReq, setPwReq] = useState<TPasswordRequirements | null>(null);
   const setLoading = useSetRecoilState(isLoading);
-  let deviceWidth = window.innerWidth;
-  let isMobile = deviceWidth <= 1200;
-  const [position, setPosition] = useState<IWindowPosition>({
-    left: 300,
-    top: 100,
-    width: isMobile == true ? deviceWidth : 500,
-    height: 320,
-  });
 
-  const handleMove = (event: WindowMoveEvent) => {
-    setPosition({ ...position, left: event.left, top: event.top });
-  };
-  const handleResize = (event: WindowMoveEvent) => {
-    setPosition({
-      left: event.left,
-      top: event.top,
-      width: event.width,
-      height: event.height,
-    });
+  let deviceWidth = document.documentElement.clientWidth;
+  let deviceHeight = document.documentElement.clientHeight;
+  let isMobile = deviceWidth <= 1200;
+  const [mobileheight, setMobileHeight] = useState(0);
+  const [webheight, setWebHeight] = useState(0);
+  const [position, setPosition] = useState<IWindowPosition>({
+    left: isMobile == true ? 0 : (deviceWidth - 500) / 2,
+    top: isMobile == true ? 0 : (deviceHeight - 320) / 2,
+    width: isMobile == true ? deviceWidth : 500,
+    height: isMobile == true ? deviceHeight : 320,
+  });
+  useLayoutEffect(() => {
+    height = getHeight(".k-window-titlebar"); //공통 해더
+    height3 = getHeight(".BottomContainer"); //하단 버튼부분
+    setMobileHeight(
+      getWindowDeviceHeight(false, deviceHeight) - height - height3 - 25
+    );
+    setWebHeight(
+      getWindowDeviceHeight(false, position.height) - height - height3 - 25
+    );
+  }, []);
+  const onChangePostion = (position: any) => {
+    setPosition(position);
+    setWebHeight(
+      getWindowDeviceHeight(false, position.height) - height - height3 - 25
+    );
   };
 
   const onClose = () => {
@@ -152,13 +167,11 @@ const KendoWindow = ({ setVisible }: TKendoWindow) => {
 
   return (
     <Window
-      title={"비밀번호 변경"}
-      width={position.width}
-      height={position.height}
-      onMove={handleMove}
-      onResize={handleResize}
-      onClose={onClose}
-      modal={true}
+      titles={"비밀번호 변경"}
+      positions={position}
+      Close={onClose}
+      modals={false}
+      onChangePostion={onChangePostion}
     >
       <Form
         onSubmit={handleSubmit}
@@ -169,7 +182,13 @@ const KendoWindow = ({ setVisible }: TKendoWindow) => {
         }}
         render={(formRenderProps: FormRenderProps) => (
           <FormElement horizontal={true}>
-            <fieldset className={"k-form-fieldset"}>
+            <fieldset
+              className={"k-form-fieldset"}
+              style={{
+                overflow: "auto",
+                height: isMobile ? mobileheight : webheight,
+              }}
+            >
               <FieldWrap fieldWidth="100%">
                 <Field
                   name={"old_password"}
@@ -222,7 +241,7 @@ const KendoWindow = ({ setVisible }: TKendoWindow) => {
                 <p>- 비밀번호는 영문자, 숫자, 특수문자를 포함해주세요.</p>
               )}
             </div>
-            <BottomContainer>
+            <BottomContainer className="BottomContainer">
               <ButtonContainer>
                 {pwExpInfo &&
                   pwExpInfo.useChangeNext &&

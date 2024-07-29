@@ -1,24 +1,30 @@
-import { useEffect, useState } from "react";
-import * as React from "react";
+import { FilterDescriptor, filterBy } from "@progress/kendo-data-query";
+import { Button } from "@progress/kendo-react-buttons";
+import { DatePicker } from "@progress/kendo-react-dateinputs";
 import { Window, WindowMoveEvent } from "@progress/kendo-react-dialogs";
+import {
+  ComboBoxFilterChangeEvent
+} from "@progress/kendo-react-dropdowns";
+import { Input, NumericTextBox, TextArea } from "@progress/kendo-react-inputs";
+import { bytesToBase64 } from "byte-base64";
+import * as React from "react";
+import { useEffect, useState } from "react";
+import { useRecoilState, useSetRecoilState } from "recoil";
 import {
   BottomContainer,
   ButtonContainer,
   FormBox,
   FormBoxWrap,
 } from "../../../CommonStyled";
-import { Button } from "@progress/kendo-react-buttons";
+import { useApi } from "../../../hooks/api";
 import { IWindowPosition } from "../../../hooks/interfaces";
-import { useRecoilState, useSetRecoilState } from "recoil";
 import { isLoading, loginResultState } from "../../../store/atoms";
-import { Input, NumericTextBox, TextArea } from "@progress/kendo-react-inputs";
-import { DatePicker } from "@progress/kendo-react-dateinputs";
 import {
-  ComboBoxFilterChangeEvent,
-  MultiColumnComboBox,
-} from "@progress/kendo-react-dropdowns";
-import { FilterDescriptor, filterBy } from "@progress/kendo-data-query";
-import { bytesToBase64 } from "byte-base64";
+  projectItemsColumns,
+  userColumns,
+} from "../../../store/columns/common-columns";
+import { Iparameters } from "../../../store/types";
+import CustomMultiColumnComboBox from "../../ComboBoxes/CustomMultiColumnComboBox";
 import {
   UseParaPc,
   convertDateToStrWithTime2,
@@ -26,12 +32,6 @@ import {
   projectItemQueryStr,
   usersQueryStr,
 } from "../../CommonFunction";
-import {
-  projectItemsColumns,
-  userColumns,
-} from "../../../store/columns/common-columns";
-import { useApi } from "../../../hooks/api";
-import { Iparameters } from "../../../store/types";
 
 type IKendoWindow = {
   setVisible(t: boolean): void;
@@ -339,7 +339,7 @@ const KendoWindow = ({ setVisible, data, reload }: IKendoWindow) => {
             <tr>
               <th>일정 항목</th>
               <td>
-                <MultiColumnComboBox
+                <CustomMultiColumnComboBox
                   name="project"
                   data={
                     prjItemsFilter
@@ -370,7 +370,7 @@ const KendoWindow = ({ setVisible, data, reload }: IKendoWindow) => {
             <tr>
               <th>담당자</th>
               <td>
-                <MultiColumnComboBox
+                <CustomMultiColumnComboBox
                   name="pjt_person"
                   data={
                     userFilter ? filterBy(usersData, userFilter) : usersData
