@@ -267,6 +267,7 @@ const KendoWindow = ({ setVisible, setData, modal = false }: IKendoWindow) => {
     setFilters((prev) => ({
       ...prev,
       pgNum: Math.floor(page.skip / initialPageState.take) + 1,
+      findRowValue: "",
       isSearch: true,
     }));
 
@@ -282,6 +283,7 @@ const KendoWindow = ({ setVisible, setData, modal = false }: IKendoWindow) => {
     setFilters((prev) => ({
       ...prev,
       pgNum: Math.floor(page.skip / initialPageState.take) + 1,
+      findRowValue: "",
       isSearch: true,
     }));
 
@@ -296,6 +298,7 @@ const KendoWindow = ({ setVisible, setData, modal = false }: IKendoWindow) => {
     setFilters((prev) => ({
       ...prev,
       pgNum: Math.floor(page.skip / initialPageState.take) + 1,
+      findRowValue: "",
       isSearch: true,
     }));
 
