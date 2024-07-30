@@ -44,6 +44,11 @@ import Loading from "./Loading";
 import ChangePasswordWindow from "./Windows/CommonWindows/ChangePasswordWindow";
 import SystemOptionWindow from "./Windows/CommonWindows/SystemOptionWindow";
 import UserOptionsWindow from "./Windows/CommonWindows/UserOptionsWindow";
+import jwt_decode from "jwt-decode";
+
+interface DecodedToken {
+  exp: number;
+}
 
 const firebaseConfig = {
   apiKey: process.env.REACT_APP_API_KEY,
@@ -493,8 +498,46 @@ const PanelBarNavContainer = (props: any) => {
 
   const history = useHistory();
 
+  const fetchLogout = async () => {
+    let data: any;
+
+    const para = {
+      accessToken: accessToken,
+    };
+
+    try {
+      data = await processApi<any>("logout", para);
+    } catch (error) {
+      data = null;
+    }
+    if (data === null) {
+      console.log("[An error occured to log for logout]");
+      console.log(data);
+    }
+  };
+
+  const logout = () => {
+    // switcher({ theme: "light" });
+    setShow(false);
+    fetchLogout();
+    resetLocalStorage();
+    setIsMobileMenuOpend(false);
+    history.push("/");
+    // window.location.href = "/";
+  };
+
   // 새로고침하거나 Path 변경 시
   useEffect(() => {
+    if (accessToken) {
+      const decodedToken = jwt_decode<DecodedToken>(accessToken);
+      const currentTime = Date.now() / 1000;
+      if (decodedToken.exp < currentTime) {
+        alert("토큰이 만료되었습니다.");
+        logout();
+        resetLocalStorage();
+      }
+    }
+    
     const handleUnload = () => {
       // unsavedAttadatnums가 있으면 삭제처리
       if (unsavedAttadatnums.attdatnums.length > 0) {
@@ -614,15 +657,7 @@ const PanelBarNavContainer = (props: any) => {
       callApi("unsubscribe");
     }
   };
-  const logout = () => {
-    // switcher({ theme: "light" });
-    setShow(false);
-    fetchLogout();
-    resetLocalStorage();
-    setIsMobileMenuOpend(false);
-    history.push("/");
-    // window.location.href = "/";
-  };
+
   async function requestPermission() {
     const permission = await Notification.requestPermission();
     if (permission != "granted") {
@@ -674,23 +709,6 @@ const PanelBarNavContainer = (props: any) => {
       });
   };
 
-  const fetchLogout = async () => {
-    let data: any;
-
-    const para = {
-      accessToken: accessToken,
-    };
-
-    try {
-      data = await processApi<any>("logout", para);
-    } catch (error) {
-      data = null;
-    }
-    if (data === null) {
-      console.log("[An error occured to log for logout]");
-      console.log(data);
-    }
-  };
   const MyItemRender = (props: ListViewItemProps) => {
     let item = props.dataItem;
     return (
