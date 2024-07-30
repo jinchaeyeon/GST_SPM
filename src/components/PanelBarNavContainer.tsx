@@ -533,8 +533,8 @@ const PanelBarNavContainer = (props: any) => {
       const currentTime = Date.now() / 1000;
       if (decodedToken.exp < currentTime) {
         alert("토큰이 만료되었습니다.");
-        logout();
         resetLocalStorage();
+        logout();
       }
     }
     

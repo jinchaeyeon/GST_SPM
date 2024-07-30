@@ -234,10 +234,7 @@ export const useApi = () => {
   if (accessToken) {
     const decodedToken = jwt_decode<DecodedToken>(accessToken);
     const currentTime = Date.now() / 1000;
-    const previousPath = window.location.pathname;
-    console.log(previousPath);
     if (decodedToken.exp < currentTime) {
-
       removeBeforeUnloadListener();
       resetLocalStorage();
     }
