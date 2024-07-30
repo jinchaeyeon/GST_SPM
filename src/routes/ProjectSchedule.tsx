@@ -1020,6 +1020,12 @@ const App = () => {
   };
 
   const saveProject = () => {
+    if(!navigator.onLine) {
+      alert("네트워크 연결상태를 확인해주세요.");
+      setLoading(false);
+      return false;
+    }
+    
     if (view === "Scheduler") {
     } else {
       saveProjectGrid();

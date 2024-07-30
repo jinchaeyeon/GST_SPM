@@ -662,6 +662,11 @@ const App = () => {
 
   // 저장
   const saveFAQ = useCallback(async () => {
+    if(!navigator.onLine) {
+      alert("네트워크 연결상태를 확인해주세요.");
+      setLoading(false);
+      return false;
+    }
     let data: any;
     setLoading(true);
 

@@ -346,10 +346,48 @@ const PanelBarNavContainer = (props: any) => {
     useState<boolean>(false);
   const [systemOptionWindowWindowVisible, setSystemOptionWindowVisible] =
     useState<boolean>(false);
-
   const onSelect = (event: PanelBarSelectEventArguments) => {
     const { route, className = "" } = event.target.props;
+    if (navigator.onLine) {
+      props.history.push(route);
 
+      for (let key of Object.keys(localStorage)) {
+        if (
+          key != "passwordExpirationInfo" &&
+          key != "accessToken" &&
+          key != "loginResult" &&
+          key != "refreshToken" &&
+          key != "PopUpNotices" &&
+          key != "recoil-persist"
+        ) {
+          localStorage.removeItem(key);
+        }
+      }
+
+      if (route) {
+        if (isMobile) {
+          setIsFilterheightstates(30);
+          setIsFilterHideStates(true);
+        } else {
+          setIsFilterheightstates(0);
+          setIsFilterHideStates(false);
+        }
+        setIsMobileMenuOpend(false);
+        setUserOptionsWindowVisible(false);
+        setChangePasswordWindowVisible(false);
+        setSystemOptionWindowVisible(false);
+      }
+
+      if (className.includes("custom-option")) {
+        setUserOptionsWindowVisible(true);
+      } else if (className.includes("change-password")) {
+        setChangePasswordWindowVisible(true);
+      } else if (className.includes("system-option")) {
+        setSystemOptionWindowVisible(true);
+      }
+    } else {
+      alert("네트워크 연결상태를 확인해주세요.");
+    }
     // if (route) {
     //   if (route.includes("Home")) {
     //     switcher({ theme: "dark" });
@@ -357,42 +395,6 @@ const PanelBarNavContainer = (props: any) => {
     //     switcher({ theme: "light" });
     //   }
     // }
-    props.history.push(route);
-
-    for (let key of Object.keys(localStorage)) {
-      if (
-        key != "passwordExpirationInfo" &&
-        key != "accessToken" &&
-        key != "loginResult" &&
-        key != "refreshToken" &&
-        key != "PopUpNotices" &&
-        key != "recoil-persist"
-      ) {
-        localStorage.removeItem(key);
-      }
-    }
-
-    if (route) {
-      if (isMobile) {
-        setIsFilterheightstates(30);
-        setIsFilterHideStates(true);
-      } else {
-        setIsFilterheightstates(0);
-        setIsFilterHideStates(false);
-      }
-      setIsMobileMenuOpend(false);
-      setUserOptionsWindowVisible(false);
-      setChangePasswordWindowVisible(false);
-      setSystemOptionWindowVisible(false);
-    }
-
-    if (className.includes("custom-option")) {
-      setUserOptionsWindowVisible(true);
-    } else if (className.includes("change-password")) {
-      setChangePasswordWindowVisible(true);
-    } else if (className.includes("system-option")) {
-      setSystemOptionWindowVisible(true);
-    }
   };
 
   // useEffect(() => {
@@ -528,6 +530,7 @@ const PanelBarNavContainer = (props: any) => {
       window.addEventListener("beforeunload", handleTabClose);
       window.addEventListener("unload", handleUnload);
     }
+
     return () => {
       unlisten();
       window.removeEventListener("beforeunload", handleTabClose);

@@ -1856,6 +1856,11 @@ const App = () => {
   };
 
   const Save = async () => {
+    if(!navigator.onLine) {
+      alert("네트워크 연결상태를 확인해주세요.");
+      setLoading(false);
+      return false;
+    }
     type TRowsArr = {
       row_status: string[];
       devmngseq_s: string[];

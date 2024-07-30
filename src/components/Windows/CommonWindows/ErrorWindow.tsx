@@ -684,6 +684,12 @@ const KendoWindow = ({ setVisible, para, reload2 }: TKendoWindow) => {
   };
 
   const onSave = () => {
+    if(!navigator.onLine) {
+      alert("네트워크 연결상태를 확인해주세요.");
+      setLoading(false);
+      return false;
+    }
+    
     const dataItem = mainDataResult.data.filter(
       (item) => item.is_checked == true
     );

@@ -737,6 +737,11 @@ const App = () => {
   };
 
   const saveMeeting = async () => {
+    if(!navigator.onLine) {
+      alert("네트워크 연결상태를 확인해주세요.");
+      setLoading(false);
+      return false;
+    }
     const { cust_data, recdt, title } = detailData;
     let isValid = true;
     // 검증 로직

@@ -1,9 +1,8 @@
 import axios from "axios";
 import { useRecoilState } from "recoil";
 import { resetLocalStorage } from "../components/CommonFunction";
-import { loginResultState} from "../store/atoms";
-import { url } from "inspector";
 import { removeBeforeUnloadListener } from "../components/PanelBarNavContainer";
+import { loginResultState } from "../store/atoms";
 
 let BASE_URL = process.env.REACT_APP_API_URL;
 const cachios = require("cachios");
@@ -26,7 +25,6 @@ const domain: any = {
   // 처리일지
   document: { action: "get", url: "api/spm/:para" },
   "document-save": { action: "post", url: "api/spm/record" },
-
 
   //업무지시
   "taskorder-save": { action: "post", url: "api/spm/task-order" },
@@ -218,16 +216,16 @@ export const useApi = () => {
     if (
       window.location.pathname !== "/" &&
       window.location.pathname !== "/admin"
-    ) {    
-        removeBeforeUnloadListener();
-        const adminStatus = loginResult.role == "ADMIN";
-        resetLocalStorage();
-        if (adminStatus){
-          window.location.href = "/admin";
-        } else window.location.href = "/";
+    ) {
+      removeBeforeUnloadListener();
+      const adminStatus = loginResult.role == "ADMIN";
+      resetLocalStorage();
+      if (adminStatus) {
+        window.location.href = "/admin";
+      } else window.location.href = "/";
     }
   }
-  
+
   const processApi = <T>(name: string, params: any = null): Promise<T> => {
     return new Promise((resolve, reject) => {
       let info: any = domain[name];
@@ -241,7 +239,7 @@ export const useApi = () => {
           window.location.pathname = "/admin";
         }
       }
-      
+
       let headers: any = {};
 
       if (

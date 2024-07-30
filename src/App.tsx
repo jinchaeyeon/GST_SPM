@@ -11,6 +11,7 @@ import { RecoilRoot, useRecoilState, useSetRecoilState } from "recoil";
 import { createGlobalStyle } from "styled-components";
 import AuthRoute from "./components/AuthRoute";
 import PanelBarNavContainer from "./components/PanelBarNavContainer";
+import FAQ from "./routes/FAQ";
 import Login from "./routes/Login";
 import LoginAdmin from "./routes/LoginAdmin";
 import Main from "./routes/Main";
@@ -18,10 +19,9 @@ import MainAdmin from "./routes/MainAdmin";
 import MeetingManagement from "./routes/MeetingManagement";
 import MeetingView from "./routes/MeetingView";
 import Notice from "./routes/Notice";
+import ProjectMonitoring from "./routes/ProjectMonitoring";
 import ProjectSchedule from "./routes/ProjectSchedule";
 import QnA from "./routes/QnA";
-import FAQ from "./routes/FAQ";
-import ProjectMonitoring from "./routes/ProjectMonitoring";
 
 import SharedDocumentManagement from "./routes/SharedDocumentManagement";
 import SharedDocumentView from "./routes/SharedDocumentView";
@@ -264,6 +264,7 @@ const AppInner: React.FC = () => {
   } else {
     isAdmin = false;
   }
+
   const setLoading = useSetRecoilState(isLoading);
   const [isMenuOpend, setIsMenuOpend] = useRecoilState(isMenuOpendState);
   const [isMobileMenuOpend, setIsMobileMenuOpend] = useRecoilState(
@@ -542,7 +543,11 @@ const AppInner: React.FC = () => {
                   />
                   <AuthRoute path="/QnA" component={QnA} exact />
                   <AuthRoute path="/FAQ" component={FAQ} exact />
-                  <AuthRoute path="/ProjectMonitoring" component={ProjectMonitoring} exact />
+                  <AuthRoute
+                    path="/ProjectMonitoring"
+                    component={ProjectMonitoring}
+                    exact
+                  />
                   <AuthRoute path="/Notice" component={Notice} exact />
                   <AuthRoute
                     path="/ProjectSchedule"

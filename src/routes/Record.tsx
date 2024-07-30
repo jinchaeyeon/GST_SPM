@@ -1841,6 +1841,11 @@ const App = () => {
   }, [fileList2, savenmList2]);
 
   const saveProject = async () => {
+    if(!navigator.onLine) {
+      alert("네트워크 연결상태를 확인해주세요.");
+      setLoading(false);
+      return false;
+    }
     if (mainDataResult.total > 0) {
       type TRowsArr = {
         row_status: string[];
