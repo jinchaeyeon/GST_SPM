@@ -1112,6 +1112,18 @@ export const getHeight = (className: string) => {
   }
 };
 
+export const getWindowDeviceHeight = (bool: boolean, heights: any) => {
+  //라우터
+  let height = getHeight(".visible-mobile-only2"); //필터 모바일
+  let height2 = getHeight(".filterBox2"); //필터 웹
+  if (bool == false) {
+    //필터없는경우
+    return heights;
+  } else {
+    return heights - height - height2;
+  }
+};
+
 export const getDeviceHeight = (bool: boolean) => {
   //라우터
   let height = getHeight(".visible-mobile-only"); //필터 모바일

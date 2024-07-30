@@ -1,9 +1,8 @@
 import { Button } from "@progress/kendo-react-buttons";
 import { DatePicker } from "@progress/kendo-react-dateinputs";
-import { Window, WindowMoveEvent } from "@progress/kendo-react-dialogs";
 import { Checkbox, Input } from "@progress/kendo-react-inputs";
 import { bytesToBase64 } from "byte-base64";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useRecoilState, useSetRecoilState } from "recoil";
 import {
@@ -25,11 +24,17 @@ import {
   convertDateToStr,
   dateformat2,
   extractDownloadFilename,
+  getHeight,
+  getWindowDeviceHeight,
   toDate,
 } from "../../CommonFunction";
 import { PAGE_SIZE } from "../../CommonString";
 import RichEditor from "../../RichEditor";
 import PopUpAttachmentsWindow from "./PopUpAttachmentsWindow";
+import Window from "../WindowComponent/Window";
+import SwiperCore from "swiper";
+import "swiper/css";
+import { Swiper, SwiperSlide } from "swiper/react";
 
 interface IAnswer {
   reception_document_id: string;
@@ -39,11 +44,23 @@ type IWindow = {
   setVisible(t: boolean): void;
   para: IAnswer;
   reload(): void;
+  modal?: boolean;
 };
 
-const SignWindow = ({ setVisible, para, reload }: IWindow) => {
+var index = 0;
+
+var height = 0;
+var height2 = 0;
+var height3 = 0;
+var height4 = 0;
+var height5 = 0;
+var height6 = 0;
+var height7 = 0;
+
+const SignWindow = ({ setVisible, para, reload, modal = false }: IWindow) => {
   const setLoading = useSetRecoilState(isLoading);
   let deviceWidth = window.innerWidth;
+  let deviceHeight = document.documentElement.clientHeight;
   let isMobile = deviceWidth <= 1200;
   const [loginResult] = useRecoilState(loginResultState);
   const userId = loginResult ? loginResult.userId : "";
@@ -56,23 +73,56 @@ const SignWindow = ({ setVisible, para, reload }: IWindow) => {
   const pathname = location.pathname.replace("/", "");
 
   const [position, setPosition] = useState<IWindowPosition>({
-    left: 300,
-    top: 100,
+    left: isMobile == true ? 0 : (deviceWidth - 1050) / 2,
+    top: isMobile == true ? 0 : (deviceHeight - 850) / 2,
     width: isMobile == true ? deviceWidth : 1050,
-    height: 850,
+    height: isMobile == true ? deviceHeight : 850,
   });
 
-  const handleMove = (event: WindowMoveEvent) => {
-    setPosition({ ...position, left: event.left, top: event.top });
+  const onChangePostion = (position: any) => {
+    setPosition(position);
+    setWebHeight(
+      getWindowDeviceHeight(false, position.height) -
+        height -
+        height2 -
+        height3 -
+        height6 -
+        40
+    );
   };
-  const handleResize = (event: WindowMoveEvent) => {
-    setPosition({
-      left: event.left,
-      top: event.top,
-      width: event.width,
-      height: event.height,
-    });
-  };
+  const [swiper, setSwiper] = useState<SwiperCore>();
+  const [mobileheight, setMobileHeight] = useState(0);
+  const [mobileheight2, setMobileHeight2] = useState(0);
+  const [webheight, setWebHeight] = useState(0);
+
+  useLayoutEffect(() => {
+    height = getHeight(".k-window-titlebar"); //공통 해더
+    height2 = getHeight(".WindowTitleContainer"); //조회버튼있는 title부분
+    height3 = getHeight(".BottomContainer"); //하단 버튼부분
+    height4 = getHeight(".ButtonContainer"); //하단 버튼부분
+    height5 = getHeight(".ButtonContainer2"); //하단 버튼부분
+    height6 = getHeight(".FormBoxWrap");
+    height7 = getHeight(".FormBoxWrap2");
+
+    setMobileHeight(
+      getWindowDeviceHeight(false, deviceHeight) -
+        height -
+        height3 -
+        height4 -
+        20
+    );
+    setMobileHeight2(
+      getWindowDeviceHeight(false, deviceHeight) - height - height3 - 20
+    );
+    setWebHeight(
+      getWindowDeviceHeight(false, position.height) -
+        height -
+        height3 -
+        height4 -
+        height6 -
+        40
+    );
+  }, [position.height, webheight]);
 
   const onClose = () => {
     setFileList([]);
@@ -128,7 +178,9 @@ const SignWindow = ({ setVisible, para, reload }: IWindow) => {
           be_finished_date: rows[0].be_finished_date,
           check_date: rows[0].check_date,
           completion_date:
-            rows[0].completion_date == "" ? null : toDate(rows[0].completion_date),
+            rows[0].completion_date == ""
+              ? null
+              : toDate(rows[0].completion_date),
           contents: rows[0].contents,
           customer_code: rows[0].customer_code,
           customer_name: rows[0].customer_name,
@@ -564,165 +616,373 @@ const SignWindow = ({ setVisible, para, reload }: IWindow) => {
   return (
     <>
       <Window
-        title={"답변 작성"}
-        width={position.width}
-        height={position.height}
-        onMove={handleMove}
-        onResize={handleResize}
-        onClose={onClose}
-        modal={true}
+        titles={"답변 작성"}
+        positions={position}
+        Close={onClose}
+        modals={modal}
+        onChangePostion={onChangePostion}
       >
-        <GridTitleContainer>
-          <GridTitle>문의 정보</GridTitle>
-        </GridTitleContainer>
-        <FormBoxWrap border={true}>
-          <FormBox>
-            <tbody>
-              <tr>
-                <th style={{ width: "5%" }}>업체명</th>
-                <td>
-                  <Input
-                    name="customer_name"
-                    type="text"
-                    value={Information.customer_name}
-                    className="readonly"
-                  />
-                </td>
-                <th style={{ width: "5%" }}>제목</th>
-                <td colSpan={3}>
-                  <Input
-                    name="title"
-                    type="text"
-                    value={Information.title}
-                    className="readonly"
-                  />
-                </td>
-              </tr>
-              <tr>
-                <th style={{ width: "5%" }}>작성자</th>
-                <td>
-                  <Input
-                    name="user_name"
-                    type="text"
-                    value={Information.user_name}
-                    className="readonly"
-                  />
-                </td>
-                <th style={{ width: "5%" }}>연락처</th>
-                <td>
-                  <Input
-                    name="user_tel"
-                    type="text"
-                    value={Information.user_tel}
-                    className="readonly"
-                  />
-                </td>
-                <th style={{ width: "5%" }}>요청일</th>
-                <td>
-                  <Input
-                    name="request_date"
-                    type="text"
-                    value={dateformat2(Information.request_date)}
-                    className="readonly"
-                  />
-                </td>
-              </tr>
-            </tbody>
-          </FormBox>
-        </FormBoxWrap>
-        <GridContainer height={`calc(100% - 210px)`}>
-          <GridTitleContainer>
-            <GridTitle>답변 내용</GridTitle>
-          </GridTitleContainer>
-          <RichEditor id="refEditor" ref={refEditorRef} />
-          <FormBoxWrap border={true}>
-            <FormBox>
-              <tbody>
-                <tr>
-                  <th style={{ width: "5%" }}>첨부파일</th>
-                  <td>
-                    <Input
-                      name="answer_files"
-                      type="text"
-                      value={Information.answer_files}
-                      className="readonly"
+        {isMobile ? (
+          <Swiper
+            onSwiper={(swiper) => {
+              setSwiper(swiper);
+            }}
+            onActiveIndexChange={(swiper) => {
+              index = swiper.activeIndex;
+            }}
+          >
+            <SwiperSlide key={0}>
+              <GridTitleContainer className="ButtonContainer">
+                <GridTitle>
+                  문의 정보{" "}
+                  <Button
+                    themeColor={"primary"}
+                    fillMode={"flat"}
+                    icon={"chevron-right"}
+                    onClick={() => {
+                      if (swiper) {
+                        swiper.slideTo(1);
+                      }
+                    }}
+                  ></Button>
+                </GridTitle>
+              </GridTitleContainer>
+              <FormBoxWrap
+                border={true}
+                className="FormBoxWrap"
+                style={{ height: mobileheight }}
+              >
+                <FormBox>
+                  <tbody>
+                    <tr>
+                      <th style={{ width: "5%" }}>업체명</th>
+                      <td>
+                        <Input
+                          name="customer_name"
+                          type="text"
+                          value={Information.customer_name}
+                          className="readonly"
+                        />
+                      </td>
+                      <th style={{ width: "5%" }}>제목</th>
+                      <td colSpan={3}>
+                        <Input
+                          name="title"
+                          type="text"
+                          value={Information.title}
+                          className="readonly"
+                        />
+                      </td>
+                    </tr>
+                    <tr>
+                      <th style={{ width: "5%" }}>작성자</th>
+                      <td>
+                        <Input
+                          name="user_name"
+                          type="text"
+                          value={Information.user_name}
+                          className="readonly"
+                        />
+                      </td>
+                      <th style={{ width: "5%" }}>연락처</th>
+                      <td>
+                        <Input
+                          name="user_tel"
+                          type="text"
+                          value={Information.user_tel}
+                          className="readonly"
+                        />
+                      </td>
+                      <th style={{ width: "5%" }}>요청일</th>
+                      <td>
+                        <Input
+                          name="request_date"
+                          type="text"
+                          value={dateformat2(Information.request_date)}
+                          className="readonly"
+                        />
+                      </td>
+                    </tr>
+                  </tbody>
+                </FormBox>
+              </FormBoxWrap>
+            </SwiperSlide>
+            <SwiperSlide key={1}>
+              <GridContainer style={{ height: mobileheight2 }}>
+                <GridTitleContainer className="ButtonContainer2">
+                  <GridTitle>
+                    <Button
+                      themeColor={"primary"}
+                      fillMode={"flat"}
+                      icon={"chevron-left"}
+                      onClick={() => {
+                        if (swiper) {
+                          swiper.slideTo(0);
+                        }
+                      }}
+                    ></Button>
+                    답변 내용
+                  </GridTitle>
+                </GridTitleContainer>
+                <RichEditor id="refEditor" ref={refEditorRef} />
+                <FormBoxWrap
+                  border={true}
+                  className="FormBoxWrap2"
+                  style={{ marginBottom: 0 }}
+                >
+                  <FormBox>
+                    <tbody>
+                      <tr>
+                        <th style={{ width: "5%" }}>첨부파일</th>
+                        <td>
+                          <Input
+                            name="answer_files"
+                            type="text"
+                            value={Information.answer_files}
+                            className="readonly"
+                          />
+                          <ButtonInGridInput>
+                            <Button
+                              onClick={onAttWndClick}
+                              icon="more-horizontal"
+                              fillMode="flat"
+                            />
+                          </ButtonInGridInput>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </FormBox>
+                </FormBoxWrap>
+              </GridContainer>
+            </SwiperSlide>
+            <BottomContainer className="BottomContainer">
+              <ButtonContainer
+                style={{ justifyContent: "space-between", width: "100%" }}
+              >
+                <div style={{ float: "left" }}>
+                  <Button
+                    fillMode={"outline"}
+                    themeColor={"primary"}
+                    icon="delete"
+                    onClick={() => onSave("D")}
+                  >
+                    삭제
+                  </Button>
+                  <Button
+                    themeColor={"primary"}
+                    fillMode={"outline"}
+                    icon={"file-word"}
+                    onClick={downloadDoc}
+                  >
+                    다운로드
+                  </Button>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "row",
+                    marginTop: isMobile ? "10px" : "0px",
+                  }}
+                >
+                  <div style={{ marginTop: "10px", marginRight: "10px" }}>
+                    <Checkbox
+                      value={Information.is_finish}
+                      onClick={changeCheck}
+                      label="처리 완료"
                     />
-                    <ButtonInGridInput>
-                      <Button
-                        onClick={onAttWndClick}
-                        icon="more-horizontal"
-                        fillMode="flat"
+                  </div>
+                  <div className="datepicker_button">
+                    <DatePicker
+                      name="completion_date"
+                      value={Information.completion_date}
+                      onChange={InputChange}
+                      format="yyyy-MM-dd"
+                      className="required"
+                      placeholder=""
+                      disabled={Information.is_finish == true ? false : true}
+                      size={"small"}
+                    />
+                  </div>
+                  <Button
+                    themeColor={"primary"}
+                    onClick={() => onSave("U")}
+                    style={{ marginLeft: "10px" }}
+                  >
+                    확인
+                  </Button>
+                  <Button
+                    themeColor={"primary"}
+                    fillMode={"outline"}
+                    onClick={onClose}
+                  >
+                    취소
+                  </Button>
+                </div>
+              </ButtonContainer>
+            </BottomContainer>
+          </Swiper>
+        ) : (
+          <>
+            <GridTitleContainer className="ButtonContainer">
+              <GridTitle>문의 정보</GridTitle>
+            </GridTitleContainer>
+            <FormBoxWrap border={true} className="FormBoxWrap">
+              <FormBox>
+                <tbody>
+                  <tr>
+                    <th style={{ width: "5%" }}>업체명</th>
+                    <td>
+                      <Input
+                        name="customer_name"
+                        type="text"
+                        value={Information.customer_name}
+                        className="readonly"
                       />
-                    </ButtonInGridInput>
-                  </td>
-                </tr>
-              </tbody>
-            </FormBox>
-          </FormBoxWrap>
-        </GridContainer>
-        <BottomContainer>
-          <ButtonContainer style={{ justifyContent: "space-between" }}>
-            <div style={{ float: "left" }}>
-              <Button
-                fillMode={"outline"}
-                themeColor={"primary"}
-                icon="delete"
-                onClick={() => onSave("D")}
+                    </td>
+                    <th style={{ width: "5%" }}>제목</th>
+                    <td colSpan={3}>
+                      <Input
+                        name="title"
+                        type="text"
+                        value={Information.title}
+                        className="readonly"
+                      />
+                    </td>
+                  </tr>
+                  <tr>
+                    <th style={{ width: "5%" }}>작성자</th>
+                    <td>
+                      <Input
+                        name="user_name"
+                        type="text"
+                        value={Information.user_name}
+                        className="readonly"
+                      />
+                    </td>
+                    <th style={{ width: "5%" }}>연락처</th>
+                    <td>
+                      <Input
+                        name="user_tel"
+                        type="text"
+                        value={Information.user_tel}
+                        className="readonly"
+                      />
+                    </td>
+                    <th style={{ width: "5%" }}>요청일</th>
+                    <td>
+                      <Input
+                        name="request_date"
+                        type="text"
+                        value={dateformat2(Information.request_date)}
+                        className="readonly"
+                      />
+                    </td>
+                  </tr>
+                </tbody>
+              </FormBox>
+            </FormBoxWrap>
+            <GridContainer style={{ height: webheight }}>
+              <GridTitleContainer className="ButtonContainer2">
+                <GridTitle>답변 내용</GridTitle>
+              </GridTitleContainer>
+              <RichEditor id="refEditor" ref={refEditorRef} />
+              <FormBoxWrap
+                border={true}
+                className="FormBoxWrap2"
+                style={{ marginBottom: 0 }}
               >
-                삭제
-              </Button>
-              <Button
-                themeColor={"primary"}
-                fillMode={"outline"}
-                icon={"file-word"}
-                onClick={downloadDoc}
+                <FormBox>
+                  <tbody>
+                    <tr>
+                      <th style={{ width: "5%" }}>첨부파일</th>
+                      <td>
+                        <Input
+                          name="answer_files"
+                          type="text"
+                          value={Information.answer_files}
+                          className="readonly"
+                        />
+                        <ButtonInGridInput>
+                          <Button
+                            onClick={onAttWndClick}
+                            icon="more-horizontal"
+                            fillMode="flat"
+                          />
+                        </ButtonInGridInput>
+                      </td>
+                    </tr>
+                  </tbody>
+                </FormBox>
+              </FormBoxWrap>
+            </GridContainer>
+            <BottomContainer className="BottomContainer">
+              <ButtonContainer
+                style={{ justifyContent: "space-between" }}
               >
-                다운로드
-              </Button>
-            </div>
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "row",
-                marginTop: isMobile ? "10px" : "0px",
-              }}
-            >
-              <div style={{ marginTop: "10px", marginRight: "10px" }}>
-                <Checkbox
-                  value={Information.is_finish}
-                  onClick={changeCheck}
-                  label="처리 완료"
-                />
-              </div>
-              <div className="datepicker_button">
-                <DatePicker
-                  name="completion_date"
-                  value={Information.completion_date}
-                  onChange={InputChange}
-                  format="yyyy-MM-dd"
-                  className="required"
-                  placeholder=""
-                  disabled={Information.is_finish == true ? false : true}
-                  size={"small"}
-                />
-              </div>
-              <Button
-                themeColor={"primary"}
-                onClick={() => onSave("U")}
-                style={{ marginLeft: "10px" }}
-              >
-                확인
-              </Button>
-              <Button
-                themeColor={"primary"}
-                fillMode={"outline"}
-                onClick={onClose}
-              >
-                취소
-              </Button>
-            </div>
-          </ButtonContainer>
-        </BottomContainer>
+                <div style={{ float: "left" }}>
+                  <Button
+                    fillMode={"outline"}
+                    themeColor={"primary"}
+                    icon="delete"
+                    onClick={() => onSave("D")}
+                  >
+                    삭제
+                  </Button>
+                  <Button
+                    themeColor={"primary"}
+                    fillMode={"outline"}
+                    icon={"file-word"}
+                    onClick={downloadDoc}
+                  >
+                    다운로드
+                  </Button>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "row",
+                    marginTop: isMobile ? "10px" : "0px",
+                    flexWrap: "wrap"
+                  }}
+                >
+                  <div style={{ marginTop: "10px", marginRight: "10px" }}>
+                    <Checkbox
+                      value={Information.is_finish}
+                      onClick={changeCheck}
+                      label="처리 완료"
+                    />
+                  </div>
+                  <div className="datepicker_button">
+                    <DatePicker
+                      name="completion_date"
+                      value={Information.completion_date}
+                      onChange={InputChange}
+                      format="yyyy-MM-dd"
+                      className="required"
+                      placeholder=""
+                      disabled={Information.is_finish == true ? false : true}
+                      size={"small"}
+                    />
+                  </div>
+                  <Button
+                    themeColor={"primary"}
+                    onClick={() => onSave("U")}
+                    style={{ marginLeft: "10px" }}
+                  >
+                    확인
+                  </Button>
+                  <Button
+                    themeColor={"primary"}
+                    fillMode={"outline"}
+                    onClick={onClose}
+                  >
+                    취소
+                  </Button>
+                </div>
+              </ButtonContainer>
+            </BottomContainer>
+          </>
+        )}
       </Window>
       {attachmentsWindowVisible && (
         <PopUpAttachmentsWindow

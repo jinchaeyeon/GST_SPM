@@ -110,6 +110,7 @@ export const ButtonContainer = styled.div<TButtonContainer>`
 
 export const BottomContainer = styled(TitleContainer)`
   flex-direction: row-reverse;
+  width: 100%;
   button {
     width: 100px;
     height: 40px;

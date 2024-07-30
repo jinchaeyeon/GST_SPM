@@ -1,17 +1,22 @@
-import { useEffect, useState } from "react";
-import * as React from "react";
+import { DataResult, getter, process, State } from "@progress/kendo-data-query";
+import { Button } from "@progress/kendo-react-buttons";
+import { DatePicker } from "@progress/kendo-react-dateinputs";
 import { Window, WindowMoveEvent } from "@progress/kendo-react-dialogs";
 import {
+  ComboBoxChangeEvent
+} from "@progress/kendo-react-dropdowns";
+import {
+  getSelectedState,
   Grid,
   GridColumn,
-  GridFooterCellProps,
-  GridEvent,
   GridDataStateChangeEvent,
-  getSelectedState,
-  GridSelectionChangeEvent,
+  GridFooterCellProps,
+  GridSelectionChangeEvent
 } from "@progress/kendo-react-grid";
-import { DataResult, process, State, getter } from "@progress/kendo-data-query";
-import { useApi } from "../../../hooks/api";
+import { Input, RadioGroup } from "@progress/kendo-react-inputs";
+import { bytesToBase64 } from "byte-base64";
+import { useEffect, useState } from "react";
+import { useSetRecoilState } from "recoil";
 import {
   BottomContainer,
   ButtonContainer,
@@ -21,31 +26,23 @@ import {
   Title,
   TitleContainer,
 } from "../../../CommonStyled";
-import { Input, RadioGroup } from "@progress/kendo-react-inputs";
-import { Button } from "@progress/kendo-react-buttons";
+import { useApi } from "../../../hooks/api";
 import { IWindowPosition } from "../../../hooks/interfaces";
-import {
-  chkScrollHandler,
-  convertDateToStr,
-  getCodeFromValue,
-  usersQueryStr,
-} from "../../CommonFunction";
-import { PAGE_SIZE, SELECTED_FIELD } from "../../CommonString";
-import { useSetRecoilState } from "recoil";
 import { isLoading } from "../../../store/atoms";
-import { handleKeyPressSearch } from "../../CommonFunction";
-import { DatePicker } from "@progress/kendo-react-dateinputs";
-import {
-  ComboBoxChangeEvent,
-  MultiColumnComboBox,
-} from "@progress/kendo-react-dropdowns";
-import DateCell from "../../Cells/DateCell";
-import { bytesToBase64 } from "byte-base64";
-import CenterCell from "../../Cells/CenterCell";
 import {
   dateTypeColumns,
   userColumns,
 } from "../../../store/columns/common-columns";
+import CenterCell from "../../Cells/CenterCell";
+import DateCell from "../../Cells/DateCell";
+import CustomMultiColumnComboBox from "../../ComboBoxes/CustomMultiColumnComboBox";
+import {
+  convertDateToStr,
+  getCodeFromValue,
+  handleKeyPressSearch,
+  usersQueryStr
+} from "../../CommonFunction";
+import { SELECTED_FIELD } from "../../CommonString";
 
 type IKendoWindow = {
   setVisible(t: boolean): void;
@@ -215,7 +212,7 @@ const KendoWindow = ({ setVisible, setData, para }: IKendoWindow) => {
         setMainDataResult((prev) => {
           return {
             data: rows,
-             total: totalRowCnt == -1 ? 0 : totalRowCnt,
+            total: totalRowCnt == -1 ? 0 : totalRowCnt,
           };
         });
       }
@@ -377,7 +374,7 @@ const KendoWindow = ({ setVisible, setData, para }: IKendoWindow) => {
           <tbody>
             <tr>
               <th style={{ padding: "0 10px" }}>
-                <MultiColumnComboBox
+                <CustomMultiColumnComboBox
                   name="date_type"
                   data={dateTypeState}
                   value={filters.date_type}
@@ -464,7 +461,7 @@ const KendoWindow = ({ setVisible, setData, para }: IKendoWindow) => {
               </td>
               <th>사업진행담당</th>
               <td>
-                <MultiColumnComboBox
+                <CustomMultiColumnComboBox
                   name="pjt_person"
                   data={usersData}
                   value={filters.pjt_person}
