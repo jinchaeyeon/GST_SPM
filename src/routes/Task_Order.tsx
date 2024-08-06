@@ -577,7 +577,8 @@ const App = () => {
   UseParaPc(setPc);
   const history = useHistory();
   const location = useLocation();
-
+  const docEditorRef = useRef<TEditorHandle>(null);
+  const refEditorRef = useRef<TEditorHandle>(null);
   const [swiper, setSwiper] = useState<SwiperCore>();
   let deviceWidth = window.innerWidth;
   const [isMobile, setIsMobile] = useState(deviceWidth <= 1200);
@@ -602,7 +603,7 @@ const App = () => {
   const [isVisibleDetail, setIsVisableDetail] = useState(true);
   const [isVisibleDetail2, setIsVisableDetail2] = useState(true);
   const [isVisibleDetail3, setIsVisableDetail3] = useState(true);
-
+  let editorContent: any = refEditorRef.current?.getContent();
   useLayoutEffect(() => {
     height = getHeight(".ButtonContainer");
     height2 = getHeight(".ButtonContainer2");
@@ -682,7 +683,14 @@ const App = () => {
     isVisibleDetail,
     isVisibleDetail2,
   ]);
-
+  useEffect(() => {
+    if(isMobile == true && deviceWidth <= 1200 && refEditorRef.current != null) {
+      refEditorRef.current.setHtml(editorContent);
+    }
+    if(isMobile == false && deviceWidth > 1200 && refEditorRef.current != null) {
+      refEditorRef.current.setHtml(editorContent);
+    }
+  }, [isMobile])
   const pathname = location.pathname.replace("/", "");
 
   useEffect(() => {
@@ -2670,8 +2678,6 @@ const App = () => {
       alert("데이터가 없습니다.");
     }
   };
-  const docEditorRef = useRef<TEditorHandle>(null);
-  const refEditorRef = useRef<TEditorHandle>(null);
 
   const setHtmlOnEditor = ({ document }: { document: string }) => {
     if (docEditorRef.current) {
