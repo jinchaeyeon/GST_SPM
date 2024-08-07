@@ -152,7 +152,7 @@ const App = () => {
   const [webheight, setWebHeight] = useState(0);
   const [webheight2, setWebHeight2] = useState(0);
   const [webheight3, setWebHeight3] = useState(0);
-
+  let editorContent: any = editorRef.current?.getContent();
   useLayoutEffect(() => {
     height = getHeight(".ButtonContainer");
     height2 = getHeight(".ButtonContainer2");
@@ -189,6 +189,14 @@ const App = () => {
     };
   }, [webheight, webheight2, webheight3]);
 
+  useEffect(() => {
+    if(isMobile == true && deviceWidth <= 1200 && editorRef.current != null) {
+      setHtmlOnEditor(editorContent);
+    }
+    if(isMobile == false && deviceWidth > 1200 && editorRef.current != null) {
+      setHtmlOnEditor(editorContent);
+    }
+  }, [isMobile])
   const location = useLocation();
   const pathname = location.pathname.replace("/", "");
   const processApi = useApi();

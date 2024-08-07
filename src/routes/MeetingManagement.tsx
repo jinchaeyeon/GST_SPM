@@ -194,7 +194,7 @@ const App = () => {
   const location = useLocation();
   const [title, setTitle] = useRecoilState(titles);
   const [swiper, setSwiper] = useState<SwiperCore>();
-
+  const refEditorRef = useRef<TEditorHandle>(null);
   let deviceWidth = window.innerWidth;
   const [isMobile, setIsMobile] = useState(deviceWidth <= 1200);
   const [mobileheight, setMobileHeight] = useState(0);
@@ -205,7 +205,7 @@ const App = () => {
   const [webheight2, setWebHeight2] = useState(0);
   const [webheight3, setWebHeight3] = useState(0);
   const [webheight4, setWebHeight4] = useState(0);
-
+  let editorContent: any = refEditorRef.current?.getContent();
   useLayoutEffect(() => {
     height = getHeight(".ButtonContainer");
     height2 = getHeight(".ButtonContainer2");
@@ -234,7 +234,14 @@ const App = () => {
       window.removeEventListener("resize", handleWindowResize);
     };
   }, [webheight, webheight2, webheight3]);
-
+  useEffect(() => {
+    if(isMobile == true && deviceWidth <= 1200 && refEditorRef.current != null) {
+      refEditorRef.current.setHtml(editorContent);
+    }
+    if(isMobile == false && deviceWidth > 1200 && refEditorRef.current != null) {
+      refEditorRef.current.setHtml(editorContent);
+    }
+  }, [isMobile])
   const pathname = location.pathname.replace("/", "");
   const history = useHistory();
   const [workType, setWorktype] = useState("U");
@@ -450,7 +457,6 @@ const App = () => {
     setMainDataState((prev) => ({ ...prev, sort: e.sort }));
   };
 
-  const refEditorRef = useRef<TEditorHandle>(null);
 
   const currentDate = new Date();
   const fromDate = new Date(
@@ -2407,6 +2413,7 @@ const App = () => {
                       id="refEditor"
                       key={Object.getOwnPropertyNames(selectedState)[0]}
                       ref={refEditorRef}
+                      change={onChanges}
                     />
                   </div>
                 </GridContainer>

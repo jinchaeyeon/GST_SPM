@@ -153,7 +153,7 @@ const App = () => {
   const [webheight2, setWebHeight2] = useState(0);
   const [webheight3, setWebHeight3] = useState(0);
   const [webheight4, setWebHeight4] = useState(0);
-
+  let editorContent: any = editorRef.current?.getContent();
   useLayoutEffect(() => {
     height = getHeight(".ButtonContainer");
     height2 = getHeight(".ButtonContainer2");
@@ -167,7 +167,9 @@ const App = () => {
 
     const handleWindowResize = () => {
       let deviceWidth = document.documentElement.clientWidth;
+
       setIsMobile(deviceWidth <= 1200);
+
       setMobileHeight(getDeviceHeight(true) - height2 - height8);
       setMobileHeight5(getDeviceHeight(true) - height9 - height8);
       setMobileHeight2(
@@ -203,6 +205,14 @@ const App = () => {
     };
   }, [webheight, webheight2, webheight3, webheight4]);
 
+  useEffect(() => {
+    if(isMobile == true && deviceWidth <= 1200 && editorRef.current != null) {
+      setHtmlOnEditor(editorContent);
+    }
+    if(isMobile == false && deviceWidth > 1200 && editorRef.current != null) {
+      setHtmlOnEditor(editorContent);
+    }
+  }, [isMobile])
   const [page, setPage] = useState(initialPageState);
   const pageChange = (event: GridPageChangeEvent) => {
     const { page } = event;
