@@ -221,6 +221,7 @@ const KendoWindow = ({ setVisible, para, modal }: IKendoWindow) => {
           "@p_receptionist": "",
           "@p_status": "",
           "@p_check": "",
+          "@p_pgmnm": "",
           "@p_ref_type": "접수",
           "@p_ref_key": para.ref_number,
           "@p_ref_seq": 0,
