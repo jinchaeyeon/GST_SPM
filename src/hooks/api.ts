@@ -3,6 +3,11 @@ import { useRecoilState } from "recoil";
 import { resetLocalStorage } from "../components/CommonFunction";
 import { removeBeforeUnloadListener } from "../components/PanelBarNavContainer";
 import { loginResultState } from "../store/atoms";
+import jwt_decode from "jwt-decode";
+
+interface DecodedToken {
+  exp: number;
+}
 
 let BASE_URL = process.env.REACT_APP_API_URL;
 const cachios = require("cachios");
@@ -226,6 +231,15 @@ export const useApi = () => {
     }
   }
 
+  if (accessToken) {
+    const decodedToken = jwt_decode<DecodedToken>(accessToken);
+    const currentTime = Date.now() / 1000;
+    if (decodedToken.exp < currentTime) {
+      removeBeforeUnloadListener();
+      resetLocalStorage();
+    }
+  }
+ 
   const processApi = <T>(name: string, params: any = null): Promise<T> => {
     return new Promise((resolve, reject) => {
       let info: any = domain[name];
