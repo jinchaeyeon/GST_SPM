@@ -63,7 +63,7 @@ import {
   GridTitle,
   GridTitleContainer,
   Title,
-  TitleContainer
+  TitleContainer,
 } from "../CommonStyled";
 import CenterCell from "../components/Cells/CenterCell";
 import CheckBoxCell from "../components/Cells/CheckBoxCell";
@@ -106,9 +106,8 @@ import { ICustData } from "../hooks/interfaces";
 import {
   isFilterHideState,
   isLoading,
-  isMobileMenuOpendState,
   loginResultState,
-  titles,
+  titles
 } from "../store/atoms";
 import {
   custTypeColumns,
@@ -352,30 +351,8 @@ const App = () => {
   const [filter4, setFilter4] = React.useState<FilterDescriptor>();
   const [filter5, setFilter5] = React.useState<FilterDescriptor>();
   const [filter6, setFilter6] = React.useState<FilterDescriptor>();
-  const [isMobileMenuOpend, setIsMobileMenuOpend] = useRecoilState(
-    isMobileMenuOpendState
-  );
-  const [openComboId, setOpenComboId] = useState("");
-  const handleToggle = (id: string) => {
-    setOpenComboId((prevId) => (prevId === id ? "" : id));
-  };
-  // useEffect(() => {
-  //   const handleDocumentClick = (event: MouseEvent) => {
-  //     const target = event.target as HTMLElement;
-  //     if (openComboId && !target.closest(`#${openComboId}`)) {
-  //       setOpenComboId("");
-  //     }
-  //   };
-
-  //   document.addEventListener('click', handleDocumentClick, true);
-
-  //   return () => {
-  //     document.removeEventListener('click', handleDocumentClick, true);
-  //   };
-  // }, [openComboId]);
-  // useEffect(() => {
-  //   setOpenComboId("");
-  // }, [isMobileMenuOpend]);
+  const [filter7, setFilter7] = React.useState<FilterDescriptor>();
+  const [filter8, setFilter8] = React.useState<FilterDescriptor>();
 
   const handleFilterChange = (event: ComboBoxFilterChangeEvent) => {
     if (event) {
@@ -405,6 +382,16 @@ const App = () => {
   const handleFilterChange6 = (event: ComboBoxFilterChangeEvent) => {
     if (event) {
       setFilter6(event.filter);
+    }
+  };
+  const handleFilterChange7 = (event: ComboBoxFilterChangeEvent) => {
+    if (event) {
+      setFilter7(event.filter);
+    }
+  };
+  const handleFilterChange8 = (event: ComboBoxFilterChangeEvent) => {
+    if (event) {
+      setFilter8(event.filter);
     }
   };
   const [workType, setWorkType] = useState("N");
@@ -700,6 +687,8 @@ const App = () => {
     project: string;
     status: any;
     pjt_person: any;
+    pjtmanager: any;
+    devperson: any;
     findRowValue: string;
     pgSize: number;
     pgNum: number;
@@ -723,6 +712,8 @@ const App = () => {
     project: "",
     status: [{ code: "N", name: "미완료" }],
     pjt_person: { user_id: "", user_name: "" },
+    pjtmanager: { user_id: "", user_name: "" },
+    devperson: { user_id: "", user_name: "" },
     findRowValue: "",
     pgSize: PAGE_SIZE,
     pgNum: 1,
@@ -800,6 +791,10 @@ const App = () => {
         "@p_customer_name": filters.custnm,
         "@p_pjt_person":
           filters.pjt_person != null ? filters.pjt_person.user_id : "",
+        "@p_pjtmanager":
+          filters.pjtmanager != null ? filters.pjtmanager.user_id : "",
+        "@p_devperson":
+          filters.devperson != null ? filters.devperson.user_id : "",
         "@p_status": status,
         "@p_project": filters.project,
         "@p_progress_status": filters.progress_status.code,
@@ -1094,6 +1089,10 @@ const App = () => {
         "@p_customer_name": "",
         "@p_pjt_person":
           filters.pjt_person != null ? filters.pjt_person.user_id : "",
+        "@p_pjtmanager":
+          filters.pjtmanager != null ? filters.pjtmanager.user_id : "",
+        "@p_devperson":
+          filters.devperson != null ? filters.devperson.user_id : "",
         "@p_status": status,
         "@p_project": filters.project,
         "@p_progress_status": filters.progress_status.code,
@@ -1856,7 +1855,7 @@ const App = () => {
   };
 
   const Save = async () => {
-    if(!navigator.onLine) {
+    if (!navigator.onLine) {
       alert("네트워크 연결상태를 확인해주세요.");
       setLoading(false);
       return false;
@@ -3773,6 +3772,40 @@ const App = () => {
                         />
                       </td>
                     </tr>
+                    <tr>
+                      <th>담당PM</th>
+                      <td>
+                        <CustomMultiColumnComboBox
+                          name="pjtmanager"
+                          data={
+                            filter7 ? filterBy(usersData, filter7) : usersData
+                          }
+                          value={filters.pjtmanager}
+                          columns={userColumns}
+                          textField={"user_name"}
+                          onChange={filterComboBoxChange}
+                          filterable={true}
+                          onFilterChange={handleFilterChange7}
+                        />
+                      </td>
+                    </tr>
+                    <tr>
+                      <th>개발담당자</th>
+                      <td>
+                        <CustomMultiColumnComboBox
+                          name="devperson"
+                          data={
+                            filter8 ? filterBy(usersData, filter8) : usersData
+                          }
+                          value={filters.devperson}
+                          columns={userColumns}
+                          textField={"user_name"}
+                          onChange={filterComboBoxChange}
+                          filterable={true}
+                          onFilterChange={handleFilterChange8}
+                        />
+                      </td>
+                    </tr>
                   </tbody>
                 </FilterBox>
               </FilterContainer>
@@ -3994,6 +4027,40 @@ const App = () => {
                             onChange={filterComboBoxChange}
                             filterable={true}
                             onFilterChange={handleFilterChange3}
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>담당PM</th>
+                        <td>
+                          <CustomMultiColumnComboBox
+                            name="pjtmanager"
+                            data={
+                              filter7 ? filterBy(usersData, filter7) : usersData
+                            }
+                            value={filters.pjtmanager}
+                            columns={userColumns}
+                            textField={"user_name"}
+                            onChange={filterComboBoxChange}
+                            filterable={true}
+                            onFilterChange={handleFilterChange7}
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>개발담당자</th>
+                        <td>
+                          <CustomMultiColumnComboBox
+                            name="devperson"
+                            data={
+                              filter8 ? filterBy(usersData, filter8) : usersData
+                            }
+                            value={filters.devperson}
+                            columns={userColumns}
+                            textField={"user_name"}
+                            onChange={filterComboBoxChange}
+                            filterable={true}
+                            onFilterChange={handleFilterChange8}
                           />
                         </td>
                       </tr>
