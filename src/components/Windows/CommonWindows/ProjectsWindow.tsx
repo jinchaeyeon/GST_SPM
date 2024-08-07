@@ -2,16 +2,14 @@ import { DataResult, getter, process, State } from "@progress/kendo-data-query";
 import { Button } from "@progress/kendo-react-buttons";
 import { DatePicker } from "@progress/kendo-react-dateinputs";
 import { Window, WindowMoveEvent } from "@progress/kendo-react-dialogs";
-import {
-  ComboBoxChangeEvent
-} from "@progress/kendo-react-dropdowns";
+import { ComboBoxChangeEvent } from "@progress/kendo-react-dropdowns";
 import {
   getSelectedState,
   Grid,
   GridColumn,
   GridDataStateChangeEvent,
   GridFooterCellProps,
-  GridSelectionChangeEvent
+  GridSelectionChangeEvent,
 } from "@progress/kendo-react-grid";
 import { Input, RadioGroup } from "@progress/kendo-react-inputs";
 import { bytesToBase64 } from "byte-base64";
@@ -40,7 +38,7 @@ import {
   convertDateToStr,
   getCodeFromValue,
   handleKeyPressSearch,
-  usersQueryStr
+  usersQueryStr,
 } from "../../CommonFunction";
 import { SELECTED_FIELD } from "../../CommonString";
 
@@ -156,6 +154,8 @@ const KendoWindow = ({ setVisible, setData, para }: IKendoWindow) => {
     customer_code: "",
     customer_name: cust_data ? cust_data.custnm : "",
     pjt_person: "",
+    pjtmanager: "",
+    devperson: "",
     status: "N",
     project: "",
     progress_status: "%",
@@ -177,6 +177,8 @@ const KendoWindow = ({ setVisible, setData, para }: IKendoWindow) => {
       "@p_customer_code": filters.customer_code,
       "@p_customer_name": filters.customer_name,
       "@p_pjt_person": getCodeFromValue(filters.pjt_person, "user_id"),
+      "@p_pjtmanager": getCodeFromValue(filters.pjtmanager, "user_id"),
+      "@p_devperson": getCodeFromValue(filters.devperson, "user_id"),
       "@p_status": filters.status,
       "@p_project": filters.project,
       "@p_progress_status": filters.progress_status,
@@ -465,6 +467,30 @@ const KendoWindow = ({ setVisible, setData, para }: IKendoWindow) => {
                   name="pjt_person"
                   data={usersData}
                   value={filters.pjt_person}
+                  columns={userColumns}
+                  textField={"user_name"}
+                  onChange={filterComboBoxChange}
+                />
+              </td>
+            </tr>
+            <tr>
+              <th>담당PM</th>
+              <td>
+                <CustomMultiColumnComboBox
+                  name="pjtmanager"
+                  data={usersData}
+                  value={filters.pjtmanager}
+                  columns={userColumns}
+                  textField={"user_name"}
+                  onChange={filterComboBoxChange}
+                />
+              </td>
+              <th>개발담당자</th>
+              <td>
+                <CustomMultiColumnComboBox
+                  name="devperson"
+                  data={usersData}
+                  value={filters.devperson}
                   columns={userColumns}
                   textField={"user_name"}
                   onChange={filterComboBoxChange}
