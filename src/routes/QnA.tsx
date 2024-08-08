@@ -28,6 +28,9 @@ import React, {
 } from "react";
 import { useHistory, useLocation } from "react-router-dom";
 import { useRecoilState, useSetRecoilState } from "recoil";
+import SwiperCore from "swiper";
+import "swiper/css";
+import { Swiper, SwiperSlide } from "swiper/react";
 import {
   ButtonContainer,
   FilterBox,
@@ -54,21 +57,17 @@ import {
   toDate,
 } from "../components/CommonFunction";
 import { PAGE_SIZE, SELECTED_FIELD } from "../components/CommonString";
+import FilterContainer from "../components/FilterContainer";
 import RichEditor from "../components/RichEditor";
 import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
 import { useApi } from "../hooks/api";
 import {
   filterValueState,
-  isFilterheightstate,
   isLoading,
   loginResultState,
-  titles,
+  titles
 } from "../store/atoms";
 import { TEditorHandle } from "../store/types";
-import SwiperCore from "swiper";
-import "swiper/css";
-import { Swiper, SwiperSlide } from "swiper/react";
-import FilterContainer from "../components/FilterContainer";
 
 type TItem = {
   sub_code: string;
@@ -88,8 +87,7 @@ type TFilters = {
   findRowValue: string;
   pgNum: number;
   pgSize: number;
-  isFetch: boolean;
-  isReset: boolean;
+  isSearch: boolean;
 };
 
 const dateType = [
@@ -242,7 +240,7 @@ const App = () => {
       ...prev,
       pgNum: Math.floor(page.skip / initialPageState.take) + 1,
       findRowValue: "",
-      isFetch: true,
+      isSearch: true,
     }));
 
     setPage({
@@ -298,8 +296,7 @@ const App = () => {
     findRowValue: "",
     pgNum: 1,
     pgSize: PAGE_SIZE,
-    isFetch: true, // 조회여부 초기값
-    isReset: false, // 리셋여부 초기값
+    isSearch: false, // 조회여부 초기값
   });
 
   const search = () => {
@@ -310,8 +307,7 @@ const App = () => {
     setFilters((prev) => ({
       ...prev,
       pgNum: 1,
-      isFetch: true,
-      isReset: true,
+      isSearch: true,
     }));
     if (swiper && isMobile) {
       swiper.slideTo(0);
@@ -354,6 +350,7 @@ const App = () => {
     if (swiper && isMobile) {
       swiper.slideTo(1);
     }
+    fetchDetail();
   };
 
   const onMainSortChange = (e: any) => {
@@ -436,6 +433,7 @@ const App = () => {
         } else {
           setSelectedState({ [rows[0][DATA_ITEM_KEY]]: true });
         }
+        fetchDetail()
       } else {
         // 결과 행이 0인 경우 데이터 리셋
         setMainDataResult(process([], mainDataState));
@@ -451,71 +449,68 @@ const App = () => {
     setLoading(false);
   };
 
-  const fetchDetail = useCallback(
-    async (enteredPw: string = "") => {
-      let data: any;
-      setLoading(true);
+  const fetchDetail = async (enteredPw: string = "") => {
+    let data: any;
+    setLoading(true);
 
-      const bytes = require("utf8-bytes");
-      const convertedPassword = bytesToBase64(bytes(detailData.password));
+    const bytes = require("utf8-bytes");
+    const convertedPassword = bytesToBase64(bytes(detailData.password));
 
-      const mainDataId = Object.getOwnPropertyNames(selectedState)[0];
-      const para = {
-        id: mainDataId,
-        password: convertedPassword,
-      };
+    const mainDataId = Object.getOwnPropertyNames(selectedState)[0];
+    const para = {
+      id: mainDataId,
+      password: convertedPassword,
+    };
 
-      try {
-        data = await processApi<any>("qna-detail", para);
-      } catch (error: any) {
-        data = null;
-        console.log(
-          "It shoud be 'true' => " +
-            (error.message === "비밀번호를 확인해 주십시오.")
-        );
-        console.log(error);
-        if (error.message === "비밀번호를 확인해 주십시오.") {
-          setIsDataLocked(true);
-        }
+    try {
+      data = await processApi<any>("qna-detail", para);
+    } catch (error: any) {
+      data = null;
+      console.log(
+        "It shoud be 'true' => " +
+          (error.message === "비밀번호를 확인해 주십시오.")
+      );
+      console.log(error);
+      if (error.message === "비밀번호를 확인해 주십시오.") {
+        setIsDataLocked(true);
+      }
+    }
+
+    if (data && data.result.isSuccess === true) {
+      const questionDocument = data.questionDocument;
+      const answerDocument = data.answerDocument;
+      const rowCount = data.result.tables[0].RowCount;
+
+      if (rowCount) {
+        setIsDataLocked(false);
+        // 상세정보 데이터 세팅
+        const row = data.result.tables[0].Rows[0];
+        setDetailData((prev) => ({
+          ...row,
+          work_type: "U",
+          password: enteredPw,
+          is_lock: row.is_lock === "Y" ? true : false,
+          status: detailDataStatusListData.find(
+            (item: any) => item["sub_code"] === row.status
+          ),
+          request_date: toDate(row.request_date),
+          reception_date: dateformat2(row.reception_date),
+          be_finished_date: dateformat2(row.be_finished_date),
+        }));
       }
 
-      if (data && data.result.isSuccess === true) {
-        const questionDocument = data.questionDocument;
-        const answerDocument = data.answerDocument;
-        const rowCount = data.result.tables[0].RowCount;
+      setHtmlOnEditor({
+        questionDocument,
+        answerDocument,
+      });
+    } else {
+      console.log("[에러발생]");
+      console.log(data);
 
-        if (rowCount) {
-          setIsDataLocked(false);
-          // 상세정보 데이터 세팅
-          const row = data.result.tables[0].Rows[0];
-          setDetailData((prev) => ({
-            ...row,
-            work_type: "U",
-            password: enteredPw,
-            is_lock: row.is_lock === "Y" ? true : false,
-            status: detailDataStatusListData.find(
-              (item: any) => item["sub_code"] === row.status
-            ),
-            request_date: toDate(row.request_date),
-            reception_date: dateformat2(row.reception_date),
-            be_finished_date: dateformat2(row.be_finished_date),
-          }));
-        }
-
-        setHtmlOnEditor({
-          questionDocument,
-          answerDocument,
-        });
-      } else {
-        console.log("[에러발생]");
-        console.log(data);
-
-        resetDetailData();
-      }
-      setLoading(false);
-    },
-    [selectedState, setLoading, detailData, setIsDataLocked]
-  );
+      resetDetailData();
+    }
+    setLoading(false);
+  };
 
   const setHtmlOnEditor = ({
     questionDocument,
@@ -734,7 +729,7 @@ const App = () => {
       // 조회
       setFilters((prev) => ({
         ...prev,
-        isFetch: true,
+        isSearch: true,
         pgNum: 1,
         findRowValue: data.returnString,
       }));
@@ -807,7 +802,7 @@ const App = () => {
       alert("삭제되었습니다.");
       setFilters((prev) => ({
         ...prev,
-        isFetch: true,
+        isSearch: true,
       }));
     } else {
       console.log("[에러발생]");
@@ -829,7 +824,7 @@ const App = () => {
   useEffect(() => {
     if (
       filterValue.type !== "qna" &&
-      filters.isFetch &&
+      filters.isSearch &&
       localStorage.getItem("accessToken")
     ) {
       const _ = require("lodash");
@@ -838,8 +833,7 @@ const App = () => {
       // 기본값으로 세팅
       setFilters((prev) => ({
         ...prev,
-        isFetch: false,
-        isReset: false,
+        isSearch: false,
         findRowValue: "",
       }));
 
@@ -865,24 +859,13 @@ const App = () => {
         ],
         custnm: filterValue.dataItem.customer_name,
         fromDate: isExceedFromDate ? newFromDate : fromDate,
-        isFetch: true,
-        isReset: true,
+        isSearch: true,
         findRowValue: filterValue.dataItem[DATA_ITEM_KEY],
       }));
 
       setFilterValue({ type: null, dataItem: {} });
     }
   }, [filterValue]);
-
-  useEffect(() => {
-    if (localStorage.getItem("accessToken")) {
-      const mainDataId = Object.getOwnPropertyNames(selectedState)[0];
-
-      if (mainDataId) {
-        fetchDetail();
-      }
-    }
-  }, [selectedState]);
 
   useEffect(() => {
     // 미잠금시, 공개여부 공개로 설정
@@ -920,7 +903,7 @@ const App = () => {
             { sub_code: "4", code_name: "보류" },
             { sub_code: "8", code_name: "완료" },
           ],
-          isFetch: true,
+          isSearch: true,
           findRowValue: queryParams.get("go") as string,
         }));
       }
@@ -1035,7 +1018,7 @@ const App = () => {
       // 조회
       setFilters((prev) => ({
         ...prev,
-        isFetch: true,
+        isSearch: true,
         pgNum: 1,
         findRowValue: selectedRow.document_id,
       }));
