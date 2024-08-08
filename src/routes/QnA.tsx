@@ -350,7 +350,9 @@ const App = () => {
     if (swiper && isMobile) {
       swiper.slideTo(1);
     }
-    fetchDetail();
+    const selectedIdx = event.startRowIndex;
+    const selectedRowData = event.dataItems[selectedIdx];
+    fetchDetail(selectedRowData[DATA_ITEM_KEY], selectedRowData.password);
   };
 
   const onMainSortChange = (e: any) => {
@@ -430,10 +432,11 @@ const App = () => {
         });
         if (selectedRow != undefined) {
           setSelectedState({ [selectedRow[DATA_ITEM_KEY]]: true });
+          fetchDetail(selectedRow[DATA_ITEM_KEY], selectedRow.password);
         } else {
           setSelectedState({ [rows[0][DATA_ITEM_KEY]]: true });
+          fetchDetail(rows[0][DATA_ITEM_KEY], rows[0].password);
         }
-        fetchDetail()
       } else {
         // 결과 행이 0인 경우 데이터 리셋
         setMainDataResult(process([], mainDataState));
@@ -449,14 +452,13 @@ const App = () => {
     setLoading(false);
   };
 
-  const fetchDetail = async (enteredPw: string = "") => {
+  const fetchDetail = async (mainDataId: string, enteredPw: string = "") => {
     let data: any;
     setLoading(true);
 
     const bytes = require("utf8-bytes");
     const convertedPassword = bytesToBase64(bytes(detailData.password));
 
-    const mainDataId = Object.getOwnPropertyNames(selectedState)[0];
     const para = {
       id: mainDataId,
       password: convertedPassword,
@@ -929,7 +931,7 @@ const App = () => {
     e: React.KeyboardEvent<HTMLDivElement>
   ) => {
     if (e.key === "Enter") {
-      fetchDetail(detailData.password);
+      fetchDetail(detailData.document_id, detailData.password);
     }
   };
 
@@ -1324,7 +1326,9 @@ const App = () => {
                     />
                     <Button
                       themeColor={"primary"}
-                      onClick={() => fetchDetail(detailData.password)}
+                      onClick={() =>
+                        fetchDetail(detailData.document_id, detailData.password)
+                      }
                     >
                       확인
                     </Button>
@@ -2131,7 +2135,9 @@ const App = () => {
                     />
                     <Button
                       themeColor={"primary"}
-                      onClick={() => fetchDetail(detailData.password)}
+                      onClick={() =>
+                        fetchDetail(detailData.document_id, detailData.password)
+                      }
                     >
                       확인
                     </Button>
