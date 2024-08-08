@@ -65,7 +65,7 @@ import {
   filterValueState,
   isLoading,
   loginResultState,
-  titles
+  titles,
 } from "../store/atoms";
 import { TEditorHandle } from "../store/types";
 
@@ -88,6 +88,7 @@ type TFilters = {
   pgNum: number;
   pgSize: number;
   isSearch: boolean;
+  isChecked: string;
 };
 
 const dateType = [
@@ -102,7 +103,11 @@ const isPublicListData = [
   { value: "N", label: "비공개" },
   { value: "All", label: "전체" },
 ];
-
+const isCheckedListData = [
+  { value: "Y", label: "확인" },
+  { value: "N", label: "미확인" },
+  { value: "%", label: "전체" },
+];
 const columns = [
   { field: "code_name", header: "이름", width: "200px" },
   { field: "sub_code", header: "코드", width: "200px" },
@@ -287,16 +292,24 @@ const App = () => {
     userName: "",
     contents: "",
     isPublic: "All",
-    status: [
-      { sub_code: "1", code_name: "대기" },
-      { sub_code: "2", code_name: "진행중" },
-      { sub_code: "4", code_name: "보류" },
-    ],
+    status: isAdmin
+      ? [
+          { sub_code: "1", code_name: "대기" },
+          { sub_code: "2", code_name: "진행중" },
+          { sub_code: "4", code_name: "보류" },
+        ]
+      : [
+          { sub_code: "1", code_name: "대기" },
+          { sub_code: "2", code_name: "진행중" },
+          { sub_code: "4", code_name: "보류" },
+          { sub_code: "8", code_name: "완료" },
+        ],
+    isChecked: "N",
     custnm: "",
     findRowValue: "",
     pgNum: 1,
     pgSize: PAGE_SIZE,
-    isSearch: false, // 조회여부 초기값
+    isSearch: true, // 조회여부 초기값
   });
 
   const search = () => {
@@ -383,7 +396,9 @@ const App = () => {
         filters.userName
       }&contents=${filters.contents}&customerName=${filters.custnm}&isPublic=${
         filters.isPublic
-      }&status=${status}&page=${filters.pgNum}&pageSize=${filters.pgSize}`,
+      }&status=${status}&isChecked=${filters.isChecked}&page=${
+        filters.pgNum
+      }&pageSize=${filters.pgSize}`,
     };
 
     try {
@@ -449,6 +464,14 @@ const App = () => {
         setIsDataLocked(false);
       }
     }
+    setFilters((prev) => ({
+      ...prev,
+      pgNum:
+        data && data.hasOwnProperty("pageNumber")
+          ? data.pageNumber
+          : prev.pgNum,
+      isSearch: false,
+    }));
     setLoading(false);
   };
 
@@ -836,7 +859,6 @@ const App = () => {
       setFilters((prev) => ({
         ...prev,
         isSearch: false,
-        findRowValue: "",
       }));
 
       // 그리드 조회
@@ -854,11 +876,18 @@ const App = () => {
 
       setFilters((prev) => ({
         ...prev,
-        status: [
-          { sub_code: "1", code_name: "대기" },
-          { sub_code: "2", code_name: "진행중" },
-          { sub_code: "4", code_name: "보류" },
-        ],
+        status: isAdmin
+          ? [
+              { sub_code: "1", code_name: "대기" },
+              { sub_code: "2", code_name: "진행중" },
+              { sub_code: "4", code_name: "보류" },
+            ]
+          : [
+              { sub_code: "1", code_name: "대기" },
+              { sub_code: "2", code_name: "진행중" },
+              { sub_code: "4", code_name: "보류" },
+              { sub_code: "8", code_name: "완료" },
+            ],
         custnm: filterValue.dataItem.customer_name,
         fromDate: isExceedFromDate ? newFromDate : fromDate,
         isSearch: true,
@@ -899,12 +928,18 @@ const App = () => {
         history.replace({}, "");
         setFilters((prev) => ({
           ...prev,
-          status: [
-            { sub_code: "1", code_name: "대기" },
-            { sub_code: "2", code_name: "진행중" },
-            { sub_code: "4", code_name: "보류" },
-            { sub_code: "8", code_name: "완료" },
-          ],
+          status: isAdmin
+            ? [
+                { sub_code: "1", code_name: "대기" },
+                { sub_code: "2", code_name: "진행중" },
+                { sub_code: "4", code_name: "보류" },
+              ]
+            : [
+                { sub_code: "1", code_name: "대기" },
+                { sub_code: "2", code_name: "진행중" },
+                { sub_code: "4", code_name: "보류" },
+                { sub_code: "8", code_name: "완료" },
+              ],
           isSearch: true,
           findRowValue: queryParams.get("go") as string,
         }));
@@ -1181,6 +1216,23 @@ const App = () => {
                         type="text"
                         value={filters.custnm}
                         onChange={filterInputChange}
+                      />
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>고객사 확인 구분</th>
+                    <td>
+                      <RadioGroup
+                        name="isChecked"
+                        data={isCheckedListData}
+                        value={filters.isChecked}
+                        onChange={(e) =>
+                          setFilters((prev) => ({
+                            ...prev,
+                            isChecked: e.value,
+                          }))
+                        }
+                        layout="horizontal"
                       />
                     </td>
                   </tr>
@@ -1766,6 +1818,23 @@ const App = () => {
                             type="text"
                             value={filters.custnm}
                             onChange={filterInputChange}
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>고객사 확인 구분</th>
+                        <td>
+                          <RadioGroup
+                            name="isChecked"
+                            data={isCheckedListData}
+                            value={filters.isChecked}
+                            onChange={(e) =>
+                              setFilters((prev) => ({
+                                ...prev,
+                                isChecked: e.value,
+                              }))
+                            }
+                            layout="horizontal"
                           />
                         </td>
                       </tr>
