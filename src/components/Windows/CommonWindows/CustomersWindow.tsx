@@ -1,6 +1,4 @@
-import { useEffect, useState } from "react";
-import * as React from "react";
-import { Window, WindowMoveEvent } from "@progress/kendo-react-dialogs";
+import { useEffect, useLayoutEffect, useState } from "react";
 import {
   Grid,
   GridColumn,
@@ -25,14 +23,16 @@ import { Input } from "@progress/kendo-react-inputs";
 import { Iparameters } from "../../../store/types";
 import { Button } from "@progress/kendo-react-buttons";
 import { IWindowPosition, TCommonCodeData } from "../../../hooks/interfaces";
-import { chkScrollHandler, UseBizComponent } from "../../CommonFunction";
+import { chkScrollHandler, getHeight, getWindowDeviceHeight, UseBizComponent } from "../../CommonFunction";
 import { PAGE_SIZE, SELECTED_FIELD } from "../../CommonString";
 import BizComponentRadioGroup from "../../RadioGroups/BizComponentRadioGroup";
 import BizComponentComboBox from "../../ComboBoxes/BizComponentComboBox";
-import { useSetRecoilState } from "recoil";
-import { isLoading } from "../../../store/atoms";
+import { useRecoilState, useSetRecoilState } from "recoil";
+import { isFilterHideState2, isLoading } from "../../../store/atoms";
 import { handleKeyPressSearch } from "../../CommonFunction";
 import { bytesToBase64 } from "byte-base64";
+import Window from "../WindowComponent/Window";
+import WindowFilterContainer from "../../WindowFilterContainer";
 
 type IKendoWindow = {
   setVisible(t: boolean): void;
@@ -43,14 +43,51 @@ type IKendoWindow = {
 };
 
 const DATA_ITEM_KEY = "custcd";
+var height = 0;
+var height2 = 0;
+var height3 = 0;
 
 const KendoWindow = ({ setVisible, workType, setData, para, modal = false }: IKendoWindow) => {
+  let deviceWidth = window.innerWidth;
+  let deviceHeight = document.documentElement.clientHeight;
+  let isMobile = deviceWidth <= 1200;
+
   const [position, setPosition] = useState<IWindowPosition>({
-    left: 300,
-    top: 100,
-    width: 600,
-    height: 800,
+    left: isMobile == true ? 0 : (deviceWidth - 600) / 2,
+    top: isMobile == true ? 0 : (deviceHeight - 800) / 2,
+    width: isMobile == true ? deviceWidth : 600,
+    height: isMobile == true ? deviceHeight : 800,
   });
+
+  const [mobileheight, setMobileHeight] = useState(0);
+  const [webheight, setWebHeight] = useState(0);
+  const [isFilterHideStates2, setisFilterHideStates2] =
+    useRecoilState(isFilterHideState2);
+
+  useLayoutEffect(() => {
+    height = getHeight(".k-window-titlebar");
+    height2 = getHeight(".WindowTitleContainer");
+    height3 = getHeight(".BottomContainer");
+    setMobileHeight(
+      getWindowDeviceHeight(true, deviceHeight) - height - height2 - height3
+    );
+    setWebHeight(
+      getWindowDeviceHeight(true, position.height) -
+        height -
+        height2 -
+        height3
+    );
+  }, [webheight]);
+
+  const onChangePostion = (position: any) => {
+    setPosition(position);
+    setWebHeight(
+      getWindowDeviceHeight(false, position.height) -
+        height -
+        height2 -
+        height3
+    );
+  };
 
   const setLoading = useSetRecoilState(isLoading);
 
@@ -94,19 +131,9 @@ const KendoWindow = ({ setVisible, workType, setData, para, modal = false }: IKe
     }));
   };
 
-  const handleMove = (event: WindowMoveEvent) => {
-    setPosition({ ...position, left: event.left, top: event.top });
-  };
-  const handleResize = (event: WindowMoveEvent) => {
-    setPosition({
-      left: event.left,
-      top: event.top,
-      width: event.width,
-      height: event.height,
-    });
-  };
 
   const onClose = () => {
+    setisFilterHideStates2(true);
     setVisible(false);
   };
 
@@ -242,16 +269,13 @@ const KendoWindow = ({ setVisible, workType, setData, para, modal = false }: IKe
 
   return (
     <Window
-      title={"업체마스터"}
-      width={position.width}
-      height={position.height}
-      onMove={handleMove}
-      onResize={handleResize}
-      onClose={onClose}
-      modal={modal}
+      titles={"업체마스터"}
+      positions={position}
+      Close={onClose}
+      modals={modal}
+      onChangePostion={onChangePostion}
     >
-      <TitleContainer>
-        <Title />
+      <TitleContainer className="WindowTitleContainer">
         <ButtonContainer>
           <Button
             onClick={() => {
@@ -265,7 +289,7 @@ const KendoWindow = ({ setVisible, workType, setData, para, modal = false }: IKe
           </Button>
         </ButtonContainer>
       </TitleContainer>
-      <FilterBoxWrap>
+      <WindowFilterContainer>
         <FilterBox onKeyPress={(e) => handleKeyPressSearch(e, search)}>
           <tbody>
             <tr>
@@ -314,8 +338,8 @@ const KendoWindow = ({ setVisible, workType, setData, para, modal = false }: IKe
             </tr>
           </tbody>
         </FilterBox>
-      </FilterBoxWrap>
-      <GridContainer height="calc(100% - 170px)">
+      </WindowFilterContainer>
+      <GridContainer height={`${isMobile ? mobileheight : webheight}px`}>
         <Grid
           style={{ height: "100%" }}
           data={process(
@@ -370,7 +394,7 @@ const KendoWindow = ({ setVisible, workType, setData, para, modal = false }: IKe
           <GridColumn field="remark" title="비고" width="300px" /> */}
         </Grid>
       </GridContainer>
-      <BottomContainer>
+      <BottomContainer className="BottomContainer">
         <ButtonContainer>
           <Button themeColor={"primary"} onClick={onConfirmClick}>
             확인

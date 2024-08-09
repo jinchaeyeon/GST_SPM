@@ -103,7 +103,7 @@ const KendoWindow = ({
         height4 - 5
     );
   }, []);
-  const onChangePostion = (position: any) => {
+  const onChangePosition = (position: any) => {
     setPosition(position);
     setWebHeight(
       getWindowDeviceHeight(false, position.height) -
@@ -505,7 +505,7 @@ const KendoWindow = ({
       positions={position}
       Close={onClose}
       modals={modal}
-      onChangePostion={onChangePostion}
+      onChangePostion={onChangePosition}
     >
       <TitleContainer className="WindowTitleContainer">
         <ButtonContainer>

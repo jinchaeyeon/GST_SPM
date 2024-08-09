@@ -19,12 +19,14 @@ const WindowFilterContainer = ({ children }: TChildren) => {
 
   return (
     <>
-      <div className="visible-mobile-only2" style={{ textAlign: "right" }}>
-        <FilterHideToggleButtonBox
-          isFilterHide={isFilterHideStates2}
-          toggleFilterHide={toggleFilterHide}
-        />
-      </div>
+      {isMobile && (
+        <div className="visible-mobile-only2" style={{ textAlign: "right" }}>
+          <FilterHideToggleButtonBox
+            isFilterHide={isFilterHideStates2}
+            toggleFilterHide={toggleFilterHide}
+          />
+        </div>
+      )}
       {(!isFilterHideStates2 || !isMobile) && (
         <div className="filterBox2">
           <FilterBoxWrap>{children}</FilterBoxWrap>

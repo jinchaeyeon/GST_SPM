@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import * as React from "react";
+import { createContext, useEffect, useLayoutEffect, useState } from "react";
 import { useApi } from "../../../hooks/api";
 import {
   BottomContainer,
@@ -25,6 +24,8 @@ import {
   convertDateToStr,
   dateformat2,
   getGridItemChangedData,
+  getHeight,
+  getWindowDeviceHeight,
 } from "../../CommonFunction";
 import { bytesToBase64 } from "byte-base64";
 import PopUpAttachmentsWindow from "./PopUpAttachmentsWindow";
@@ -47,10 +48,15 @@ import { useRecoilState, useSetRecoilState } from "recoil";
 import { isLoading, loginResultState } from "../../../store/atoms";
 import CheckBoxCell from "../../Cells/CheckBoxCell";
 import { CellRender, RowRender } from "../../Renderers/Renderers";
+import SwiperCore from "swiper";
+import "swiper/css";
+import { Swiper, SwiperSlide } from "swiper/react";
+
 const DATA_ITEM_KEY = "num";
 const DATA_ITEM_KEY2 = "num";
+
 // Create React.Context to pass props to the Form Field components from the main component
-export const FormGridEditContext = React.createContext<{
+export const FormGridEditContext = createContext<{
   onEdit: (dataItem: any, isNew: boolean) => void;
   onSave: () => void;
   editIndex: number | undefined;
@@ -79,16 +85,64 @@ const workTypeQueryStr = `select sub_code, code_name FROM comCodeMaster where gr
 
 const ErrorQueryStr = `select sub_code, code_name from BizGST.dbo.comCodeMaster A where A.group_code = 'QC002'`;
 
+var index = 0;
+
+var paperHeight = 0;
+var height = 0;
+var height2 = 0;
+var height3 = 0;
+var height4 = 0;
+var height5 = 0;
+var height6 = 0;
+var height7 = 0;
+
 const KendoWindow = ({ setVisible, para, reload2 }: TKendoWindow) => {
   // 비즈니스 컴포넌트 조회
   let deviceWidth = window.innerWidth;
+  let deviceHeight = document.documentElement.clientHeight;
   let isMobile = deviceWidth <= 1200;
   const [position, setPosition] = useState<IWindowPosition>({
     left: isMobile == true ? 0 : 150,
     top: 0,
     width: isMobile == true ? deviceWidth : 1500,
-    height: isMobile == true ? window.innerHeight : 900,
+    height: isMobile == true ? deviceHeight : 900,
   });
+
+  const [swiper, setSwiper] = useState<SwiperCore>();
+
+  const [mobileheight, setMobileHeight] = useState(0);
+  const [mobileheight2, setMobileHeight2] = useState(0);
+  const [mobileheight3, setMobileHeight3] = useState(0);
+
+  useLayoutEffect(() => {
+    requestAnimationFrame(() => {
+      paperHeight = getWindowDeviceHeight(false, deviceHeight) - 64; //dialog높이
+      height = getHeight(".MuiDialogTitle-root") + 35; //title부분
+      height2 = getHeight(".WindowTitleContainer"); //조회버튼있는 title부분
+      height3 = getHeight(".BottomContainer"); //하단 버튼부분
+      height4 = getHeight(".k-tabstrip-items-wrapper");
+      height5 = getHeight(".ButtonContainer");
+      height6 = getHeight(".ButtonContainer2");
+      height7 = getHeight(".ButtonContainer3");
+
+      setMobileHeight(paperHeight - height - height3 - height5);
+      setMobileHeight2(
+        paperHeight -
+          height -
+          height3 -
+          height4 -
+          height6
+      );
+      setMobileHeight3(
+        paperHeight -
+          height -
+          height3 -
+          height4 -
+          height6 -
+          height7
+      );
+    });
+  }, []);
 
   const onClose = () => {
     setVisible(false);
@@ -415,13 +469,13 @@ const KendoWindow = ({ setVisible, para, reload2 }: TKendoWindow) => {
     }
   }, [filters]);
 
-  const [values2, setValues2] = React.useState<boolean>(false);
+  const [values2, setValues2] = useState<boolean>(false);
   const CustomCheckBoxCell2 = (props: GridHeaderCellProps) => {
     const changeCheck = () => {
       const newData = mainDataResult.data.map((item) => ({
         ...item,
         is_checked: !values2,
-        rowstatus: item.rowstatus == "N" ? "N": "U",
+        rowstatus: item.rowstatus == "N" ? "N" : "U",
         [EDIT_FIELD]: props.field,
       }));
       setValues2(!values2);
@@ -440,13 +494,13 @@ const KendoWindow = ({ setVisible, para, reload2 }: TKendoWindow) => {
     );
   };
 
-  const [values, setValues] = React.useState<boolean>(false);
+  const [values, setValues] = useState<boolean>(false);
   const CustomCheckBoxCell = (props: GridHeaderCellProps) => {
     const changeCheck = () => {
       const newData = mainDataResult2.data.map((item) => ({
         ...item,
         is_checked: !values,
-        rowstatus: item.rowstatus == "N" ? "N": "U",
+        rowstatus: item.rowstatus == "N" ? "N" : "U",
         [EDIT_FIELD]: props.field,
       }));
       setValues(!values);
@@ -684,12 +738,12 @@ const KendoWindow = ({ setVisible, para, reload2 }: TKendoWindow) => {
   };
 
   const onSave = () => {
-    if(!navigator.onLine) {
+    if (!navigator.onLine) {
       alert("네트워크 연결상태를 확인해주세요.");
       setLoading(false);
       return false;
     }
-    
+
     const dataItem = mainDataResult.data.filter(
       (item) => item.is_checked == true
     );
@@ -952,153 +1006,205 @@ const KendoWindow = ({ setVisible, para, reload2 }: TKendoWindow) => {
     >
       <DialogTitle>불량 처리 팝업</DialogTitle>
       <DialogContent>
-        <GridContainerWrap height="calc(100% - 70px)">
-          <GridContainer width={`40%`}>
-            <GridTitleContainer>
-              <GridTitle>업무 지시 정보</GridTitle>
-            </GridTitleContainer>
-            <FormBoxWrap border={true}>
-              <FormBox>
-                <tbody>
-                  <tr>
-                    <th>지시일</th>
-                    <td>
-                      <Input
-                        name="recdt"
-                        type="text"
-                        value={
-                          para.recdt == undefined ? "" : dateformat2(para.recdt)
-                        }
-                        className="readonly"
-                      />
-                    </td>
-                    <th>지시자</th>
-                    <td>
-                      <Input
-                        name="insert_userid"
-                        type="text"
-                        value={
-                          para.insert_userid == undefined
-                            ? ""
-                            : usersData.find(
-                                (items: any) =>
-                                  items.user_id == para.insert_userid
-                              ) == undefined
-                            ? ""
-                            : usersData.find(
-                                (items: any) =>
-                                  items.user_id == para.insert_userid
-                              )?.user_name
-                        }
-                        className="readonly"
-                      />
-                    </td>
-                  </tr>
-                  <tr>
-                    <th>완료예정일</th>
-                    <td>
-                      <Input
-                        name="finexpdt"
-                        type="text"
-                        value={
-                          para.finexpdt == undefined
-                            ? ""
-                            : dateformat2(para.finexpdt)
-                        }
-                        className="readonly"
-                      />
-                    </td>
-                    <th>업무분류</th>
-                    <td>
-                      <Input
-                        name="groupcd"
-                        type="text"
-                        value={
-                          para.groupcd == undefined
-                            ? ""
-                            : para.insert_userid == undefined
-                            ? ""
-                            : WorkTypeItems.find(
-                                (items: any) => items.sub_code == para.groupcd
-                              ) == undefined
-                            ? ""
-                            : WorkTypeItems.find(
-                                (items: any) => items.sub_code == para.groupcd
-                              )?.code_name
-                        }
-                        className="readonly"
-                      />
-                    </td>
-                  </tr>
-                  <tr>
-                    <th>처리담당자</th>
-                    <td>
-                      <Input
-                        name="person"
-                        type="text"
-                        value={
-                          para.person == undefined
-                            ? ""
-                            : usersData.find(
-                                (items: any) => items.user_id == para.person
-                              ) == undefined
-                            ? ""
-                            : usersData.find(
-                                (items: any) => items.user_id == para.person
-                              )?.user_name
-                        }
-                        className="readonly"
-                      />
-                    </td>
-                    <th>예상시간</th>
-                    <td>
-                      <Input
-                        name="expect_time"
-                        type="text"
-                        value={
-                          para.expect_time == undefined ? "" : para.expect_time
-                        }
-                        className="readonly"
-                      />
-                    </td>
-                  </tr>
-                  <tr>
-                    <th>내용</th>
-                    <td colSpan={3}>
-                      <TextArea
-                        value={para.contents == undefined ? "" : para.contents}
-                        name="contents"
-                        rows={10}
-                        className="readonly"
-                      />
-                    </td>
-                  </tr>
-                  <tr>
-                    <th>비고</th>
-                    <td colSpan={3}>
-                      <TextArea
-                        value={para.remark == undefined ? "" : para.remark}
-                        name="remark"
-                        rows={5}
-                        className="readonly"
-                      />
-                    </td>
-                  </tr>
-                  <tr>
-                    <th style={{ width: "5%" }}>첨부파일</th>
-                    <td colSpan={3}>
-                      <Input
-                        name="attach_exists"
-                        type="text"
-                        value={""}
-                        className="readonly"
-                      />
-                      {para.attach_exists != undefined ? (
-                        para.attach_exists == "Y" ? (
-                          <div>
-                            <ButtonCenterGridInput>
-                              <span className="k-icon k-i-file k-icon-lg"></span>
-                            </ButtonCenterGridInput>
+        {isMobile ? (
+          <Swiper
+            onSwiper={(swiper) => {
+              setSwiper(swiper);
+            }}
+            onActiveIndexChange={(swiper) => {
+              index = swiper.activeIndex;
+            }}
+          >
+            <SwiperSlide key={0}>
+              <GridContainer width={`100%`}>
+                <GridTitleContainer className="ButtonContainer">
+                  <GridTitle>업무 지시 정보</GridTitle>
+                  <Button
+                    themeColor={"primary"}
+                    fillMode={"flat"}
+                    icon={"chevron-right"}
+                    onClick={() => {
+                      if (swiper) {
+                        swiper.slideTo(1);
+                      }
+                    }}
+                  ></Button>
+                </GridTitleContainer>
+                <FormBoxWrap
+                  border={true}
+                  style={{
+                    width: "100%",
+                    height: mobileheight,
+                    overflow: "auto",
+                  }}
+                >
+                  <FormBox>
+                    <tbody>
+                      <tr>
+                        <th>지시일</th>
+                        <td>
+                          <Input
+                            name="recdt"
+                            type="text"
+                            value={
+                              para.recdt == undefined
+                                ? ""
+                                : dateformat2(para.recdt)
+                            }
+                            className="readonly"
+                          />
+                        </td>
+                        <th>지시자</th>
+                        <td>
+                          <Input
+                            name="insert_userid"
+                            type="text"
+                            value={
+                              para.insert_userid == undefined
+                                ? ""
+                                : usersData.find(
+                                    (items: any) =>
+                                      items.user_id == para.insert_userid
+                                  ) == undefined
+                                ? ""
+                                : usersData.find(
+                                    (items: any) =>
+                                      items.user_id == para.insert_userid
+                                  )?.user_name
+                            }
+                            className="readonly"
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>완료예정일</th>
+                        <td>
+                          <Input
+                            name="finexpdt"
+                            type="text"
+                            value={
+                              para.finexpdt == undefined
+                                ? ""
+                                : dateformat2(para.finexpdt)
+                            }
+                            className="readonly"
+                          />
+                        </td>
+                        <th>업무분류</th>
+                        <td>
+                          <Input
+                            name="groupcd"
+                            type="text"
+                            value={
+                              para.groupcd == undefined
+                                ? ""
+                                : para.insert_userid == undefined
+                                ? ""
+                                : WorkTypeItems.find(
+                                    (items: any) =>
+                                      items.sub_code == para.groupcd
+                                  ) == undefined
+                                ? ""
+                                : WorkTypeItems.find(
+                                    (items: any) =>
+                                      items.sub_code == para.groupcd
+                                  )?.code_name
+                            }
+                            className="readonly"
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>처리담당자</th>
+                        <td>
+                          <Input
+                            name="person"
+                            type="text"
+                            value={
+                              para.person == undefined
+                                ? ""
+                                : usersData.find(
+                                    (items: any) => items.user_id == para.person
+                                  ) == undefined
+                                ? ""
+                                : usersData.find(
+                                    (items: any) => items.user_id == para.person
+                                  )?.user_name
+                            }
+                            className="readonly"
+                          />
+                        </td>
+                        <th>예상시간</th>
+                        <td>
+                          <Input
+                            name="expect_time"
+                            type="text"
+                            value={
+                              para.expect_time == undefined
+                                ? ""
+                                : para.expect_time
+                            }
+                            className="readonly"
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>내용</th>
+                        <td colSpan={3}>
+                          <TextArea
+                            value={
+                              para.contents == undefined ? "" : para.contents
+                            }
+                            name="contents"
+                            rows={10}
+                            className="readonly"
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>비고</th>
+                        <td colSpan={3}>
+                          <TextArea
+                            value={para.remark == undefined ? "" : para.remark}
+                            name="remark"
+                            rows={5}
+                            className="readonly"
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th style={{ width: "5%" }}>첨부파일</th>
+                        <td colSpan={3}>
+                          <Input
+                            name="attach_exists"
+                            type="text"
+                            value={""}
+                            className="readonly"
+                          />
+                          {para.attach_exists != undefined ? (
+                            para.attach_exists == "Y" ? (
+                              <div>
+                                <ButtonCenterGridInput>
+                                  <span className="k-icon k-i-file k-icon-lg"></span>
+                                </ButtonCenterGridInput>
+                                <ButtonInGridInput>
+                                  <Button
+                                    onClick={onAttWndClick}
+                                    icon="more-horizontal"
+                                    fillMode="flat"
+                                  />
+                                </ButtonInGridInput>
+                              </div>
+                            ) : (
+                              <ButtonInGridInput>
+                                <Button
+                                  onClick={onAttWndClick}
+                                  icon="more-horizontal"
+                                  fillMode="flat"
+                                />
+                              </ButtonInGridInput>
+                            )
+                          ) : (
                             <ButtonInGridInput>
                               <Button
                                 onClick={onAttWndClick}
@@ -1106,186 +1212,539 @@ const KendoWindow = ({ setVisible, para, reload2 }: TKendoWindow) => {
                                 fillMode="flat"
                               />
                             </ButtonInGridInput>
-                          </div>
-                        ) : (
-                          <ButtonInGridInput>
-                            <Button
-                              onClick={onAttWndClick}
-                              icon="more-horizontal"
-                              fillMode="flat"
-                            />
-                          </ButtonInGridInput>
-                        )
-                      ) : (
-                        <ButtonInGridInput>
-                          <Button
-                            onClick={onAttWndClick}
-                            icon="more-horizontal"
-                            fillMode="flat"
-                          />
-                        </ButtonInGridInput>
-                      )}
-                    </td>
-                  </tr>
-                </tbody>
-              </FormBox>
-            </FormBoxWrap>
-          </GridContainer>
-          <GridContainer width={"60%"}>
-            <TabStrip
-              style={{
-                width: "100%",
-                height: "530px",
-              }}
-              selected={tabSelected}
-              onSelect={handleSelectTab}
-            >
-              <TabStripTab title="불량 등록">
-                <GridContainer>
-                  <GridTitleContainer>
-                    <GridTitle>불량 정보</GridTitle>
-                  </GridTitleContainer>
-                  <Grid
-                    style={{ height: "420px" }}
-                    data={process(
-                      mainDataResult.data.map((row) => ({
-                        ...row,
-                        badcd: ErrorItems.find(
-                          (items: any) => items.sub_code == row.badcd
-                        )?.code_name,
-                        [SELECTED_FIELD]: selectedState[idGetter(row)],
-                      })),
-                      mainDataState
-                    )}
-                    {...mainDataState}
-                    onDataStateChange={onMainDataStateChange}
-                    //선택 기능
-                    dataItemKey={DATA_ITEM_KEY}
-                    selectedField={SELECTED_FIELD}
-                    selectable={{
-                      enabled: true,
-                      mode: "single",
-                    }}
-                    onSelectionChange={onSelectionChange}
-                    //스크롤 조회 기능
-                    fixedScroll={true}
-                    total={mainDataResult.total}
-                    //정렬기능
-                    sortable={true}
-                    onSortChange={onMainSortChange}
-                    //컬럼순서조정
-                    reorderable={true}
-                    //컬럼너비조정
-                    resizable={true}
-                    onItemChange={onItemChange}
-                    cellRender={customCellRender}
-                    rowRender={customRowRender}
-                    editField={EDIT_FIELD}
-                  >
-                    <GridColumn field="rowstatus" title=" " width="50px" />
-                    <GridColumn
-                      field="is_checked"
-                      title=" "
-                      width="45px"
-                      headerCell={CustomCheckBoxCell2}
-                      cell={CheckBoxCell}
-                    />
-                    <GridColumn
-                      field="baddt"
-                      title="불량일"
-                      width={120}
-                      footerCell={mainTotalFooterCell}
-                      cell={DateCell}
-                    />
-                    <GridColumn field="badcd" title="불량코드" width={150} />
-                    <GridColumn field="remark" title="비고" width={400} />
-                  </Grid>
-                </GridContainer>
-              </TabStripTab>
-              <TabStripTab title="불량 등록 내역">
-                <GridContainer>
-                  <GridTitleContainer>
-                    <GridTitle>불량 정보</GridTitle>
-                    <ButtonContainer>
-                      <Button
-                        onClick={onRemoveClick}
-                        fillMode="outline"
-                        themeColor={"primary"}
-                        icon="delete"
+                          )}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </FormBox>
+                </FormBoxWrap>
+              </GridContainer>
+            </SwiperSlide>
+            <SwiperSlide key={1}>
+              <GridContainer>
+                <GridTitleContainer className="ButtonContainer2">
+                  <GridTitle>
+                    <Button
+                      themeColor={"primary"}
+                      fillMode={"flat"}
+                      icon={"chevron-left"}
+                      onClick={() => {
+                        if (swiper) {
+                          swiper.slideTo(0);
+                        }
+                      }}
+                    ></Button>
+                    불량 정보
+                  </GridTitle>
+                </GridTitleContainer>
+                <TabStrip
+                  selected={tabSelected}
+                  onSelect={handleSelectTab}                
+                >
+                  <TabStripTab title="불량 등록">
+                    <GridContainer>
+                      <Grid
+                        style={{ height: mobileheight2 }}
+                        data={process(
+                          mainDataResult.data.map((row) => ({
+                            ...row,
+                            badcd: ErrorItems.find(
+                              (items: any) => items.sub_code == row.badcd
+                            )?.code_name,
+                            [SELECTED_FIELD]: selectedState[idGetter(row)],
+                          })),
+                          mainDataState
+                        )}
+                        {...mainDataState}
+                        onDataStateChange={onMainDataStateChange}
+                        //선택 기능
+                        dataItemKey={DATA_ITEM_KEY}
+                        selectedField={SELECTED_FIELD}
+                        selectable={{
+                          enabled: true,
+                          mode: "single",
+                        }}
+                        onSelectionChange={onSelectionChange}
+                        //스크롤 조회 기능
+                        fixedScroll={true}
+                        total={mainDataResult.total}
+                        //정렬기능
+                        sortable={true}
+                        onSortChange={onMainSortChange}
+                        //컬럼순서조정
+                        reorderable={true}
+                        //컬럼너비조정
+                        resizable={true}
+                        onItemChange={onItemChange}
+                        cellRender={customCellRender}
+                        rowRender={customRowRender}
+                        editField={EDIT_FIELD}
                       >
-                        선택 자료 삭제
-                      </Button>
-                    </ButtonContainer>
-                  </GridTitleContainer>
-                  <Grid
-                    style={{ height: "420px" }}
-                    data={process(
-                      mainDataResult2.data.map((row) => ({
-                        ...row,
-                        badcd: ErrorItems.find(
-                          (items: any) => items.sub_code == row.badcd
-                        )?.code_name,
-                        insert_userid: usersData.find(
-                          (items: any) => items.user_id == row.insert_userid
-                        )?.user_name,
-                        [SELECTED_FIELD]: selectedState2[idGetter2(row)],
-                      })),
-                      mainDataState2
-                    )}
-                    {...mainDataState2}
-                    onDataStateChange={onMainDataStateChange2}
-                    //선택 기능
-                    dataItemKey={DATA_ITEM_KEY2}
-                    selectedField={SELECTED_FIELD}
-                    selectable={{
-                      enabled: true,
-                      mode: "single",
-                    }}
-                    onSelectionChange={onSelectionChange2}
-                    //스크롤 조회 기능
-                    fixedScroll={true}
-                    total={mainDataResult2.total}
-                    //정렬기능
-                    sortable={true}
-                    onSortChange={onMainSortChange2}
-                    //컬럼순서조정
-                    reorderable={true}
-                    //컬럼너비조정
-                    resizable={true}
-                    onItemChange={onItemChange2}
-                    cellRender={customCellRender2}
-                    rowRender={customRowRender2}
-                    editField={EDIT_FIELD}
-                  >
-                    <GridColumn field="rowstatus" title=" " width="50px" />
-                    <GridColumn
-                      field="is_checked"
-                      title=" "
-                      width="45px"
-                      headerCell={CustomCheckBoxCell}
-                      cell={CheckBoxCell}
-                    />
-                    <GridColumn
-                      field="baddt"
-                      title="불량일"
-                      width={120}
-                      footerCell={mainTotalFooterCell2}
-                      cell={DateCell}
-                    />
-                    <GridColumn field="badcd" title="불량코드" width={150} />
-                    <GridColumn field="remark" title="비고" width={300} />
-                    <GridColumn
-                      field="insert_userid"
-                      title="등록자"
-                      width={100}
-                    />
-                  </Grid>
-                </GridContainer>
-              </TabStripTab>
-            </TabStrip>
-          </GridContainer>
-        </GridContainerWrap>
-        <BottomContainer>
+                        <GridColumn field="rowstatus" title=" " width="50px" />
+                        <GridColumn
+                          field="is_checked"
+                          title=" "
+                          width="45px"
+                          headerCell={CustomCheckBoxCell2}
+                          cell={CheckBoxCell}
+                        />
+                        <GridColumn
+                          field="baddt"
+                          title="불량일"
+                          width={120}
+                          footerCell={mainTotalFooterCell}
+                          cell={DateCell}
+                        />
+                        <GridColumn
+                          field="badcd"
+                          title="불량코드"
+                          width={150}
+                        />
+                        <GridColumn field="remark" title="비고" width={400} />
+                      </Grid>
+                    </GridContainer>
+                  </TabStripTab>
+                  <TabStripTab title="불량 등록 내역">
+                    <GridContainer>
+                      <GridTitleContainer className="ButtonContainer3">
+                        <ButtonContainer>
+                          <Button
+                            onClick={onRemoveClick}
+                            fillMode="outline"
+                            themeColor={"primary"}
+                            icon="delete"
+                          >
+                            선택 자료 삭제
+                          </Button>
+                        </ButtonContainer>
+                      </GridTitleContainer>
+                      <Grid
+                        style={{ height: mobileheight3 }}
+                        data={process(
+                          mainDataResult2.data.map((row) => ({
+                            ...row,
+                            badcd: ErrorItems.find(
+                              (items: any) => items.sub_code == row.badcd
+                            )?.code_name,
+                            insert_userid: usersData.find(
+                              (items: any) => items.user_id == row.insert_userid
+                            )?.user_name,
+                            [SELECTED_FIELD]: selectedState2[idGetter2(row)],
+                          })),
+                          mainDataState2
+                        )}
+                        {...mainDataState2}
+                        onDataStateChange={onMainDataStateChange2}
+                        //선택 기능
+                        dataItemKey={DATA_ITEM_KEY2}
+                        selectedField={SELECTED_FIELD}
+                        selectable={{
+                          enabled: true,
+                          mode: "single",
+                        }}
+                        onSelectionChange={onSelectionChange2}
+                        //스크롤 조회 기능
+                        fixedScroll={true}
+                        total={mainDataResult2.total}
+                        //정렬기능
+                        sortable={true}
+                        onSortChange={onMainSortChange2}
+                        //컬럼순서조정
+                        reorderable={true}
+                        //컬럼너비조정
+                        resizable={true}
+                        onItemChange={onItemChange2}
+                        cellRender={customCellRender2}
+                        rowRender={customRowRender2}
+                        editField={EDIT_FIELD}
+                      >
+                        <GridColumn field="rowstatus" title=" " width="50px" />
+                        <GridColumn
+                          field="is_checked"
+                          title=" "
+                          width="45px"
+                          headerCell={CustomCheckBoxCell}
+                          cell={CheckBoxCell}
+                        />
+                        <GridColumn
+                          field="baddt"
+                          title="불량일"
+                          width={120}
+                          footerCell={mainTotalFooterCell2}
+                          cell={DateCell}
+                        />
+                        <GridColumn
+                          field="badcd"
+                          title="불량코드"
+                          width={150}
+                        />
+                        <GridColumn field="remark" title="비고" width={300} />
+                        <GridColumn
+                          field="insert_userid"
+                          title="등록자"
+                          width={100}
+                        />
+                      </Grid>
+                    </GridContainer>
+                  </TabStripTab>
+                </TabStrip>
+              </GridContainer>
+            </SwiperSlide>
+          </Swiper>
+        ) : (
+          <>
+            <GridContainerWrap height="calc(100% - 70px)">
+              <GridContainer width={`40%`}>
+                <GridTitleContainer>
+                  <GridTitle>업무 지시 정보</GridTitle>
+                </GridTitleContainer>
+                <FormBoxWrap border={true}>
+                  <FormBox>
+                    <tbody>
+                      <tr>
+                        <th>지시일</th>
+                        <td>
+                          <Input
+                            name="recdt"
+                            type="text"
+                            value={
+                              para.recdt == undefined
+                                ? ""
+                                : dateformat2(para.recdt)
+                            }
+                            className="readonly"
+                          />
+                        </td>
+                        <th>지시자</th>
+                        <td>
+                          <Input
+                            name="insert_userid"
+                            type="text"
+                            value={
+                              para.insert_userid == undefined
+                                ? ""
+                                : usersData.find(
+                                    (items: any) =>
+                                      items.user_id == para.insert_userid
+                                  ) == undefined
+                                ? ""
+                                : usersData.find(
+                                    (items: any) =>
+                                      items.user_id == para.insert_userid
+                                  )?.user_name
+                            }
+                            className="readonly"
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>완료예정일</th>
+                        <td>
+                          <Input
+                            name="finexpdt"
+                            type="text"
+                            value={
+                              para.finexpdt == undefined
+                                ? ""
+                                : dateformat2(para.finexpdt)
+                            }
+                            className="readonly"
+                          />
+                        </td>
+                        <th>업무분류</th>
+                        <td>
+                          <Input
+                            name="groupcd"
+                            type="text"
+                            value={
+                              para.groupcd == undefined
+                                ? ""
+                                : para.insert_userid == undefined
+                                ? ""
+                                : WorkTypeItems.find(
+                                    (items: any) =>
+                                      items.sub_code == para.groupcd
+                                  ) == undefined
+                                ? ""
+                                : WorkTypeItems.find(
+                                    (items: any) =>
+                                      items.sub_code == para.groupcd
+                                  )?.code_name
+                            }
+                            className="readonly"
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>처리담당자</th>
+                        <td>
+                          <Input
+                            name="person"
+                            type="text"
+                            value={
+                              para.person == undefined
+                                ? ""
+                                : usersData.find(
+                                    (items: any) => items.user_id == para.person
+                                  ) == undefined
+                                ? ""
+                                : usersData.find(
+                                    (items: any) => items.user_id == para.person
+                                  )?.user_name
+                            }
+                            className="readonly"
+                          />
+                        </td>
+                        <th>예상시간</th>
+                        <td>
+                          <Input
+                            name="expect_time"
+                            type="text"
+                            value={
+                              para.expect_time == undefined
+                                ? ""
+                                : para.expect_time
+                            }
+                            className="readonly"
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>내용</th>
+                        <td colSpan={3}>
+                          <TextArea
+                            value={
+                              para.contents == undefined ? "" : para.contents
+                            }
+                            name="contents"
+                            rows={10}
+                            className="readonly"
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>비고</th>
+                        <td colSpan={3}>
+                          <TextArea
+                            value={para.remark == undefined ? "" : para.remark}
+                            name="remark"
+                            rows={5}
+                            className="readonly"
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th style={{ width: "5%" }}>첨부파일</th>
+                        <td colSpan={3}>
+                          <Input
+                            name="attach_exists"
+                            type="text"
+                            value={""}
+                            className="readonly"
+                          />
+                          {para.attach_exists != undefined ? (
+                            para.attach_exists == "Y" ? (
+                              <div>
+                                <ButtonCenterGridInput>
+                                  <span className="k-icon k-i-file k-icon-lg"></span>
+                                </ButtonCenterGridInput>
+                                <ButtonInGridInput>
+                                  <Button
+                                    onClick={onAttWndClick}
+                                    icon="more-horizontal"
+                                    fillMode="flat"
+                                  />
+                                </ButtonInGridInput>
+                              </div>
+                            ) : (
+                              <ButtonInGridInput>
+                                <Button
+                                  onClick={onAttWndClick}
+                                  icon="more-horizontal"
+                                  fillMode="flat"
+                                />
+                              </ButtonInGridInput>
+                            )
+                          ) : (
+                            <ButtonInGridInput>
+                              <Button
+                                onClick={onAttWndClick}
+                                icon="more-horizontal"
+                                fillMode="flat"
+                              />
+                            </ButtonInGridInput>
+                          )}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </FormBox>
+                </FormBoxWrap>
+              </GridContainer>
+              <GridContainer width={"60%"}>
+                <TabStrip
+                  style={{
+                    width: "100%",
+                    height: "530px",
+                  }}
+                  selected={tabSelected}
+                  onSelect={handleSelectTab}
+                >
+                  <TabStripTab title="불량 등록">
+                    <GridContainer>
+                      <GridTitleContainer>
+                        <GridTitle>불량 정보</GridTitle>
+                      </GridTitleContainer>
+                      <Grid
+                        style={{ height: "420px" }}
+                        data={process(
+                          mainDataResult.data.map((row) => ({
+                            ...row,
+                            badcd: ErrorItems.find(
+                              (items: any) => items.sub_code == row.badcd
+                            )?.code_name,
+                            [SELECTED_FIELD]: selectedState[idGetter(row)],
+                          })),
+                          mainDataState
+                        )}
+                        {...mainDataState}
+                        onDataStateChange={onMainDataStateChange}
+                        //선택 기능
+                        dataItemKey={DATA_ITEM_KEY}
+                        selectedField={SELECTED_FIELD}
+                        selectable={{
+                          enabled: true,
+                          mode: "single",
+                        }}
+                        onSelectionChange={onSelectionChange}
+                        //스크롤 조회 기능
+                        fixedScroll={true}
+                        total={mainDataResult.total}
+                        //정렬기능
+                        sortable={true}
+                        onSortChange={onMainSortChange}
+                        //컬럼순서조정
+                        reorderable={true}
+                        //컬럼너비조정
+                        resizable={true}
+                        onItemChange={onItemChange}
+                        cellRender={customCellRender}
+                        rowRender={customRowRender}
+                        editField={EDIT_FIELD}
+                      >
+                        <GridColumn field="rowstatus" title=" " width="50px" />
+                        <GridColumn
+                          field="is_checked"
+                          title=" "
+                          width="45px"
+                          headerCell={CustomCheckBoxCell2}
+                          cell={CheckBoxCell}
+                        />
+                        <GridColumn
+                          field="baddt"
+                          title="불량일"
+                          width={120}
+                          footerCell={mainTotalFooterCell}
+                          cell={DateCell}
+                        />
+                        <GridColumn
+                          field="badcd"
+                          title="불량코드"
+                          width={150}
+                        />
+                        <GridColumn field="remark" title="비고" width={400} />
+                      </Grid>
+                    </GridContainer>
+                  </TabStripTab>
+                  <TabStripTab title="불량 등록 내역">
+                    <GridContainer>
+                      <GridTitleContainer>
+                        <GridTitle>불량 정보</GridTitle>
+                        <ButtonContainer>
+                          <Button
+                            onClick={onRemoveClick}
+                            fillMode="outline"
+                            themeColor={"primary"}
+                            icon="delete"
+                          >
+                            선택 자료 삭제
+                          </Button>
+                        </ButtonContainer>
+                      </GridTitleContainer>
+                      <Grid
+                        style={{ height: "420px" }}
+                        data={process(
+                          mainDataResult2.data.map((row) => ({
+                            ...row,
+                            badcd: ErrorItems.find(
+                              (items: any) => items.sub_code == row.badcd
+                            )?.code_name,
+                            insert_userid: usersData.find(
+                              (items: any) => items.user_id == row.insert_userid
+                            )?.user_name,
+                            [SELECTED_FIELD]: selectedState2[idGetter2(row)],
+                          })),
+                          mainDataState2
+                        )}
+                        {...mainDataState2}
+                        onDataStateChange={onMainDataStateChange2}
+                        //선택 기능
+                        dataItemKey={DATA_ITEM_KEY2}
+                        selectedField={SELECTED_FIELD}
+                        selectable={{
+                          enabled: true,
+                          mode: "single",
+                        }}
+                        onSelectionChange={onSelectionChange2}
+                        //스크롤 조회 기능
+                        fixedScroll={true}
+                        total={mainDataResult2.total}
+                        //정렬기능
+                        sortable={true}
+                        onSortChange={onMainSortChange2}
+                        //컬럼순서조정
+                        reorderable={true}
+                        //컬럼너비조정
+                        resizable={true}
+                        onItemChange={onItemChange2}
+                        cellRender={customCellRender2}
+                        rowRender={customRowRender2}
+                        editField={EDIT_FIELD}
+                      >
+                        <GridColumn field="rowstatus" title=" " width="50px" />
+                        <GridColumn
+                          field="is_checked"
+                          title=" "
+                          width="45px"
+                          headerCell={CustomCheckBoxCell}
+                          cell={CheckBoxCell}
+                        />
+                        <GridColumn
+                          field="baddt"
+                          title="불량일"
+                          width={120}
+                          footerCell={mainTotalFooterCell2}
+                          cell={DateCell}
+                        />
+                        <GridColumn
+                          field="badcd"
+                          title="불량코드"
+                          width={150}
+                        />
+                        <GridColumn field="remark" title="비고" width={300} />
+                        <GridColumn
+                          field="insert_userid"
+                          title="등록자"
+                          width={100}
+                        />
+                      </Grid>
+                    </GridContainer>
+                  </TabStripTab>
+                </TabStrip>
+              </GridContainer>
+            </GridContainerWrap>
+          </>
+        )}
+        <BottomContainer className="BottomContainer">
           <ButtonContainer>
             <Button themeColor={"primary"} onClick={onSave}>
               확인
