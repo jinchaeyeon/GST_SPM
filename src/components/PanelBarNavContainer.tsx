@@ -117,6 +117,10 @@ const paths = [
     path: "/ProjectMonitoring",
     index: ".13",
   },
+  {
+    path: "/Promotion",
+    index: ".14",
+  },
 ];
 
 // 탭 닫기 핸들러 함수
@@ -778,6 +782,7 @@ const PanelBarNavContainer = (props: any) => {
                   title={"프로젝트 모니터링"}
                   route="/ProjectMonitoring"
                 />
+                <PanelBarItem title={"제품홍보"} route="/Promotion" />
               </PanelBar>
             ) : (
               <PanelBar
@@ -798,6 +803,7 @@ const PanelBarNavContainer = (props: any) => {
                   route="/ProjectSchedule"
                 />
                 <PanelBarItem title={"FAQ 자주묻는질문"} route="/FAQ" />
+                {/* <PanelBarItem title={"제품홍보"} route="/Promotion" /> */}
               </PanelBar>
             )}
           </Gnv>

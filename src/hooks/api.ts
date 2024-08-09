@@ -106,6 +106,11 @@ const domain: any = {
     url: "api/spm/:attached",
   },
 
+  "html-query": { action: "get", url: "api/data/html-doc" },
+  "html-save": { action: "post", url: "api/data/:folder" },
+  "html-download": { action: "get", url: "api/data/html-doc/file" },
+  "html-delete": { action: "delete", url: "api/data/html-doc/file" },
+
   // word doc 다운로드
   "doc-download": {
     action: "get",

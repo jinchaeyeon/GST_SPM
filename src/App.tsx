@@ -21,6 +21,7 @@ import MeetingView from "./routes/MeetingView";
 import Notice from "./routes/Notice";
 import ProjectMonitoring from "./routes/ProjectMonitoring";
 import ProjectSchedule from "./routes/ProjectSchedule";
+import Promotion from "./routes/Promotion";
 import QnA from "./routes/QnA";
 
 import SharedDocumentManagement from "./routes/SharedDocumentManagement";
@@ -543,6 +544,7 @@ const AppInner: React.FC = () => {
                   />
                   <AuthRoute path="/QnA" component={QnA} exact />
                   <AuthRoute path="/FAQ" component={FAQ} exact />
+                  <AuthRoute path="/Promotion" component={Promotion} exact />
                   <AuthRoute
                     path="/ProjectMonitoring"
                     component={ProjectMonitoring}

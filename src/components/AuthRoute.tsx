@@ -41,7 +41,8 @@ function AuthRoute({ component, ...rest }: RouteProps) {
       link == "SharedDocumentManagement" ||
       link == "SharedDocumentView" ||
       link == "FAQ" ||
-      link == "ProjectMonitoring"
+      link == "ProjectMonitoring" ||
+      link == "Promotion"
     ) {
       return false;
     } else {

@@ -340,6 +340,13 @@ const App = () => {
     setMainDataState(event.dataState);
   };
 
+  function useQuery() {
+    return new URLSearchParams(useLocation().search);
+  }
+
+  const query = useQuery();
+  const qnaTitle = query.get("title");
+
   //메인 그리드 선택 이벤트 => 디테일 그리드 조회
   const onSelectionChange = (event: GridSelectionChangeEvent) => {
     const newSelectedState = getSelectedState({
@@ -903,8 +910,19 @@ const App = () => {
       localStorage.getItem("accessToken")
     ) {
       pwInputRef.current.focus();
+    } else {
+      if (!isAdmin) {
+        addData();
+        if (qnaTitle) {
+          const title =  "[제품문의] " + qnaTitle;
+          setDetailData((prev) => ({
+            ...prev,
+            title: title,
+          }));
+        }
+      }
     }
-  }, [isDataLocked, detailData]);
+  }, [isDataLocked, detailData, qnaTitle]);
 
   /* 푸시 알림 클릭시 이동 테스트 코드 */
   useEffect(() => {
