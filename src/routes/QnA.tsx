@@ -28,6 +28,9 @@ import React, {
 } from "react";
 import { useHistory, useLocation } from "react-router-dom";
 import { useRecoilState, useSetRecoilState } from "recoil";
+import SwiperCore from "swiper";
+import "swiper/css";
+import { Swiper, SwiperSlide } from "swiper/react";
 import {
   ButtonContainer,
   FilterBox,
@@ -54,21 +57,17 @@ import {
   toDate,
 } from "../components/CommonFunction";
 import { PAGE_SIZE, SELECTED_FIELD } from "../components/CommonString";
+import FilterContainer from "../components/FilterContainer";
 import RichEditor from "../components/RichEditor";
 import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
 import { useApi } from "../hooks/api";
 import {
   filterValueState,
-  isFilterheightstate,
   isLoading,
   loginResultState,
   titles,
 } from "../store/atoms";
 import { TEditorHandle } from "../store/types";
-import SwiperCore from "swiper";
-import "swiper/css";
-import { Swiper, SwiperSlide } from "swiper/react";
-import FilterContainer from "../components/FilterContainer";
 
 type TItem = {
   sub_code: string;
@@ -88,8 +87,8 @@ type TFilters = {
   findRowValue: string;
   pgNum: number;
   pgSize: number;
-  isFetch: boolean;
-  isReset: boolean;
+  isSearch: boolean;
+  isChecked: string;
 };
 
 const dateType = [
@@ -104,7 +103,11 @@ const isPublicListData = [
   { value: "N", label: "비공개" },
   { value: "All", label: "전체" },
 ];
-
+const isCheckedListData = [
+  { value: "Y", label: "확인" },
+  { value: "N", label: "미확인" },
+  { value: "%", label: "전체" },
+];
 const columns = [
   { field: "code_name", header: "이름", width: "200px" },
   { field: "sub_code", header: "코드", width: "200px" },
@@ -242,7 +245,7 @@ const App = () => {
       ...prev,
       pgNum: Math.floor(page.skip / initialPageState.take) + 1,
       findRowValue: "",
-      isFetch: true,
+      isSearch: true,
     }));
 
     setPage({
@@ -289,17 +292,24 @@ const App = () => {
     userName: "",
     contents: "",
     isPublic: "All",
-    status: [
-      { sub_code: "1", code_name: "대기" },
-      { sub_code: "2", code_name: "진행중" },
-      { sub_code: "4", code_name: "보류" },
-    ],
+    status: isAdmin
+      ? [
+          { sub_code: "1", code_name: "대기" },
+          { sub_code: "2", code_name: "진행중" },
+          { sub_code: "4", code_name: "보류" },
+        ]
+      : [
+          { sub_code: "1", code_name: "대기" },
+          { sub_code: "2", code_name: "진행중" },
+          { sub_code: "4", code_name: "보류" },
+          { sub_code: "8", code_name: "완료" },
+        ],
+    isChecked: "N",
     custnm: "",
     findRowValue: "",
     pgNum: 1,
     pgSize: PAGE_SIZE,
-    isFetch: true, // 조회여부 초기값
-    isReset: false, // 리셋여부 초기값
+    isSearch: true, // 조회여부 초기값
   });
 
   const search = () => {
@@ -310,8 +320,7 @@ const App = () => {
     setFilters((prev) => ({
       ...prev,
       pgNum: 1,
-      isFetch: true,
-      isReset: true,
+      isSearch: true,
     }));
     if (swiper && isMobile) {
       swiper.slideTo(0);
@@ -361,6 +370,9 @@ const App = () => {
     if (swiper && isMobile) {
       swiper.slideTo(1);
     }
+    const selectedIdx = event.startRowIndex;
+    const selectedRowData = event.dataItems[selectedIdx];
+    fetchDetail(selectedRowData[DATA_ITEM_KEY], selectedRowData.password);
   };
 
   const onMainSortChange = (e: any) => {
@@ -391,7 +403,9 @@ const App = () => {
         filters.userName
       }&contents=${filters.contents}&customerName=${filters.custnm}&isPublic=${
         filters.isPublic
-      }&status=${status}&page=${filters.pgNum}&pageSize=${filters.pgSize}`,
+      }&status=${status}&isChecked=${filters.isChecked}&page=${
+        filters.pgNum
+      }&pageSize=${filters.pgSize}`,
     };
 
     try {
@@ -440,8 +454,10 @@ const App = () => {
         });
         if (selectedRow != undefined) {
           setSelectedState({ [selectedRow[DATA_ITEM_KEY]]: true });
+          fetchDetail(selectedRow[DATA_ITEM_KEY], selectedRow.password);
         } else {
           setSelectedState({ [rows[0][DATA_ITEM_KEY]]: true });
+          fetchDetail(rows[0][DATA_ITEM_KEY], rows[0].password);
         }
       } else {
         // 결과 행이 0인 경우 데이터 리셋
@@ -455,74 +471,78 @@ const App = () => {
         setIsDataLocked(false);
       }
     }
+    setFilters((prev) => ({
+      ...prev,
+      pgNum:
+        data && data.hasOwnProperty("pageNumber")
+          ? data.pageNumber
+          : prev.pgNum,
+      isSearch: false,
+    }));
     setLoading(false);
   };
 
-  const fetchDetail = useCallback(
-    async (enteredPw: string = "") => {
-      let data: any;
-      setLoading(true);
+  const fetchDetail = async (mainDataId: string, enteredPw: string = "") => {
+    let data: any;
+    setLoading(true);
 
-      const bytes = require("utf8-bytes");
-      const convertedPassword = bytesToBase64(bytes(detailData.password));
+    const bytes = require("utf8-bytes");
+    const convertedPassword = bytesToBase64(bytes(detailData.password));
 
-      const mainDataId = Object.getOwnPropertyNames(selectedState)[0];
-      const para = {
-        id: mainDataId,
-        password: convertedPassword,
-      };
+    const para = {
+      id: mainDataId,
+      password: convertedPassword,
+    };
 
-      try {
-        data = await processApi<any>("qna-detail", para);
-      } catch (error: any) {
-        data = null;
-        console.log(
-          "It shoud be 'true' => " +
-            (error.message === "비밀번호를 확인해 주십시오.")
-        );
-        console.log(error);
-        if (error.message === "비밀번호를 확인해 주십시오.") {
-          setIsDataLocked(true);
-        }
+    try {
+      data = await processApi<any>("qna-detail", para);
+    } catch (error: any) {
+      data = null;
+      console.log(
+        "It shoud be 'true' => " +
+          (error.message === "비밀번호를 확인해 주십시오.")
+      );
+      console.log(error);
+      if (error.message === "비밀번호를 확인해 주십시오.") {
+        setIsDataLocked(true);
+      }
+    }
+
+    if (data && data.result.isSuccess === true) {
+      const questionDocument = data.questionDocument;
+      const answerDocument = data.answerDocument;
+      const rowCount = data.result.tables[0].RowCount;
+
+      if (rowCount) {
+        setIsDataLocked(false);
+        // 상세정보 데이터 세팅
+        const row = data.result.tables[0].Rows[0];
+        setDetailData((prev) => ({
+          ...row,
+          work_type: "U",
+          password: enteredPw,
+          is_lock: row.is_lock === "Y" ? true : false,
+          status: detailDataStatusListData.find(
+            (item: any) => item["sub_code"] === row.status
+          ),
+          request_date: toDate(row.request_date),
+          reception_date: dateformat2(row.reception_date),
+          be_finished_date: dateformat2(row.be_finished_date),
+        }));
       }
 
-      if (data && data.result.isSuccess === true) {
-        const questionDocument = data.questionDocument;
-        const answerDocument = data.answerDocument;
-        const rowCount = data.result.tables[0].RowCount;
+      setHtmlOnEditor({
+        questionDocument,
+        answerDocument,
+      });
+    } else {
+      console.log("[에러발생]");
+      console.log(data);
 
-        if (rowCount) {
-          setIsDataLocked(false);
-          // 상세정보 데이터 세팅
-          const row = data.result.tables[0].Rows[0];
-          setDetailData((prev) => ({
-            ...row,
-            work_type: "U",
-            password: enteredPw,
-            is_lock: row.is_lock === "Y" ? true : false,
-            status: detailDataStatusListData.find(
-              (item: any) => item["sub_code"] === row.status
-            ),
-            request_date: toDate(row.request_date),
-            reception_date: dateformat2(row.reception_date),
-            be_finished_date: dateformat2(row.be_finished_date),
-          }));
-        }
-
-        setHtmlOnEditor({
-          questionDocument,
-          answerDocument,
-        });
-      } else {
-        console.log("[에러발생]");
-        console.log(data);
-
-        resetDetailData();
-      }
-      setLoading(false);
-    },
-    [selectedState, setLoading, detailData, setIsDataLocked]
-  );
+      resetDetailData();
+    }
+    setLoading(false);
+  };
 
   const setHtmlOnEditor = ({
     questionDocument,
@@ -741,7 +761,7 @@ const App = () => {
       // 조회
       setFilters((prev) => ({
         ...prev,
-        isFetch: true,
+        isSearch: true,
         pgNum: 1,
         findRowValue: data.returnString,
       }));
@@ -814,7 +834,7 @@ const App = () => {
       alert("삭제되었습니다.");
       setFilters((prev) => ({
         ...prev,
-        isFetch: true,
+        isSearch: true,
       }));
     } else {
       console.log("[에러발생]");
@@ -836,7 +856,7 @@ const App = () => {
   useEffect(() => {
     if (
       filterValue.type !== "qna" &&
-      filters.isFetch &&
+      filters.isSearch &&
       localStorage.getItem("accessToken")
     ) {
       const _ = require("lodash");
@@ -845,9 +865,7 @@ const App = () => {
       // 기본값으로 세팅
       setFilters((prev) => ({
         ...prev,
-        isFetch: false,
-        isReset: false,
-        findRowValue: "",
+        isSearch: false,
       }));
 
       // 그리드 조회
@@ -865,31 +883,27 @@ const App = () => {
 
       setFilters((prev) => ({
         ...prev,
-        status: [
-          { sub_code: "1", code_name: "대기" },
-          { sub_code: "2", code_name: "진행중" },
-          { sub_code: "4", code_name: "보류" },
-        ],
+        status: isAdmin
+          ? [
+              { sub_code: "1", code_name: "대기" },
+              { sub_code: "2", code_name: "진행중" },
+              { sub_code: "4", code_name: "보류" },
+            ]
+          : [
+              { sub_code: "1", code_name: "대기" },
+              { sub_code: "2", code_name: "진행중" },
+              { sub_code: "4", code_name: "보류" },
+              { sub_code: "8", code_name: "완료" },
+            ],
         custnm: filterValue.dataItem.customer_name,
         fromDate: isExceedFromDate ? newFromDate : fromDate,
-        isFetch: true,
-        isReset: true,
+        isSearch: true,
         findRowValue: filterValue.dataItem[DATA_ITEM_KEY],
       }));
 
       setFilterValue({ type: null, dataItem: {} });
     }
   }, [filterValue]);
-
-  useEffect(() => {
-    if (localStorage.getItem("accessToken")) {
-      const mainDataId = Object.getOwnPropertyNames(selectedState)[0];
-
-      if (mainDataId) {
-        fetchDetail();
-      }
-    }
-  }, [selectedState]);
 
   useEffect(() => {
     // 미잠금시, 공개여부 공개로 설정
@@ -932,13 +946,19 @@ const App = () => {
         history.replace({}, "");
         setFilters((prev) => ({
           ...prev,
-          status: [
-            { sub_code: "1", code_name: "대기" },
-            { sub_code: "2", code_name: "진행중" },
-            { sub_code: "4", code_name: "보류" },
-            { sub_code: "8", code_name: "완료" },
-          ],
-          isFetch: true,
+          status: isAdmin
+            ? [
+                { sub_code: "1", code_name: "대기" },
+                { sub_code: "2", code_name: "진행중" },
+                { sub_code: "4", code_name: "보류" },
+              ]
+            : [
+                { sub_code: "1", code_name: "대기" },
+                { sub_code: "2", code_name: "진행중" },
+                { sub_code: "4", code_name: "보류" },
+                { sub_code: "8", code_name: "완료" },
+              ],
+          isSearch: true,
           findRowValue: queryParams.get("go") as string,
         }));
       }
@@ -964,7 +984,7 @@ const App = () => {
     e: React.KeyboardEvent<HTMLDivElement>
   ) => {
     if (e.key === "Enter") {
-      fetchDetail(detailData.password);
+      fetchDetail(detailData.document_id, detailData.password);
     }
   };
 
@@ -1053,7 +1073,7 @@ const App = () => {
       // 조회
       setFilters((prev) => ({
         ...prev,
-        isFetch: true,
+        isSearch: true,
         pgNum: 1,
         findRowValue: selectedRow.document_id,
       }));
@@ -1217,6 +1237,23 @@ const App = () => {
                       />
                     </td>
                   </tr>
+                  <tr>
+                    <th>고객사 확인 구분</th>
+                    <td>
+                      <RadioGroup
+                        name="isChecked"
+                        data={isCheckedListData}
+                        value={filters.isChecked}
+                        onChange={(e) =>
+                          setFilters((prev) => ({
+                            ...prev,
+                            isChecked: e.value,
+                          }))
+                        }
+                        layout="horizontal"
+                      />
+                    </td>
+                  </tr>
                 </tbody>
               </FilterBox>
             </FilterBoxWrap>
@@ -1359,7 +1396,9 @@ const App = () => {
                     />
                     <Button
                       themeColor={"primary"}
-                      onClick={() => fetchDetail(detailData.password)}
+                      onClick={() =>
+                        fetchDetail(detailData.document_id, detailData.password)
+                      }
                     >
                       확인
                     </Button>
@@ -1800,6 +1839,23 @@ const App = () => {
                           />
                         </td>
                       </tr>
+                      <tr>
+                        <th>고객사 확인 구분</th>
+                        <td>
+                          <RadioGroup
+                            name="isChecked"
+                            data={isCheckedListData}
+                            value={filters.isChecked}
+                            onChange={(e) =>
+                              setFilters((prev) => ({
+                                ...prev,
+                                isChecked: e.value,
+                              }))
+                            }
+                            layout="horizontal"
+                          />
+                        </td>
+                      </tr>
                     </tbody>
                   </FilterBox>
                 </FilterBoxWrap>
@@ -2166,7 +2222,9 @@ const App = () => {
                     />
                     <Button
                       themeColor={"primary"}
-                      onClick={() => fetchDetail(detailData.password)}
+                      onClick={() =>
+                        fetchDetail(detailData.document_id, detailData.password)
+                      }
                     >
                       확인
                     </Button>
