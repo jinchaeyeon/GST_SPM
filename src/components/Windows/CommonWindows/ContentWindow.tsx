@@ -1,7 +1,6 @@
 import { Button } from "@progress/kendo-react-buttons";
-import { Window, WindowMoveEvent } from "@progress/kendo-react-dialogs";
 import { Input, TextArea } from "@progress/kendo-react-inputs";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import {
   BottomContainer,
   ButtonContainer,
@@ -10,6 +9,8 @@ import {
   GridContainer,
 } from "../../../CommonStyled";
 import { IWindowPosition } from "../../../hooks/interfaces";
+import { getHeight, getWindowDeviceHeight } from "../../CommonFunction";
+import Window from "../WindowComponent/Window";
 
 type IWindow = {
   setVisible(t: boolean): void;
@@ -17,6 +18,9 @@ type IWindow = {
   content?: string;
   reload(title: string, content: string): void;
 };
+
+var height = 0;
+var height2 = 0;
 
 const ContentWindow = ({
   setVisible,
@@ -26,23 +30,33 @@ const ContentWindow = ({
 }: IWindow) => {
   let deviceWidth = window.innerWidth;
   let isMobile = deviceWidth <= 1200;
+  let deviceHeight = document.documentElement.clientHeight;
   const [position, setPosition] = useState<IWindowPosition>({
-    left: 300,
-    top: 100,
+    left: isMobile == true ? 0 : (deviceWidth - 500) / 2,
+    top: isMobile == true ? 0 : (deviceHeight - 500) / 2,
     width: isMobile == true ? deviceWidth : 500,
-    height: 500,
+    height: isMobile == true ? deviceHeight : 500,
   });
 
-  const handleMove = (event: WindowMoveEvent) => {
-    setPosition({ ...position, left: event.left, top: event.top });
-  };
-  const handleResize = (event: WindowMoveEvent) => {
-    setPosition({
-      left: event.left,
-      top: event.top,
-      width: event.width,
-      height: event.height,
-    });
+  const [mobileheight, setMobileHeight] = useState(0);
+  const [webheight, setWebHeight] = useState(0);
+
+  useLayoutEffect(() => {
+    height = getHeight(".k-window-titlebar");
+    height2 = getHeight(".BottomContainer");
+    setMobileHeight(
+      getWindowDeviceHeight(false, deviceHeight) - height - height2
+    );
+    setWebHeight(
+      getWindowDeviceHeight(false, position.height) - height - height2
+    );
+  }, []);
+
+  const onChangePostion = (position: any) => {
+    setPosition(position);
+    setWebHeight(
+      getWindowDeviceHeight(false, position.height) - height - height2
+    );
   };
 
   const onClose = () => {
@@ -79,15 +93,13 @@ const ContentWindow = ({
   return (
     <>
       <Window
-        title={"내용 수정"}
-        width={position.width}
-        height={position.height}
-        onMove={handleMove}
-        onResize={handleResize}
-        onClose={onClose}
-        modal={true}
+        titles={"내용 수정"}
+        positions={position}
+        Close={onClose}
+        onChangePostion={onChangePostion}
+        modals={true}
       >
-        <GridContainer height={`calc(100% - 50px)`}>
+        <GridContainer height={`${isMobile ? mobileheight : webheight}px`}>
           <FormBoxWrap>
             <FormBox>
               <tbody>
@@ -115,24 +127,24 @@ const ContentWindow = ({
                 </tr>
               </tbody>
             </FormBox>
-            <BottomContainer>
-          <ButtonContainer style={{ justifyContent: "space-between" }}>
-            <Button
-              themeColor={"primary"}
-              onClick={() => onSave()}
-              style={{ marginLeft: "10px" }}
-            >
-              확인
-            </Button>
-            <Button
-              themeColor={"primary"}
-              fillMode={"outline"}
-              onClick={onClose}
-            >
-              취소
-            </Button>
-          </ButtonContainer>
-        </BottomContainer>
+            <BottomContainer className="BottomContainer">
+              <ButtonContainer style={{ justifyContent: "space-between" }}>
+                <Button
+                  themeColor={"primary"}
+                  onClick={() => onSave()}
+                  style={{ marginLeft: "10px" }}
+                >
+                  확인
+                </Button>
+                <Button
+                  themeColor={"primary"}
+                  fillMode={"outline"}
+                  onClick={onClose}
+                >
+                  취소
+                </Button>
+              </ButtonContainer>
+            </BottomContainer>
           </FormBoxWrap>
         </GridContainer>
       </Window>

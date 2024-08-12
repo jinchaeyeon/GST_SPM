@@ -1,6 +1,4 @@
-import { useEffect, useState } from "react";
-import * as React from "react";
-import { Window, WindowMoveEvent } from "@progress/kendo-react-dialogs";
+import { useEffect, useLayoutEffect, useState } from "react";
 import {
   Grid,
   GridColumn,
@@ -26,15 +24,24 @@ import {
 import { Checkbox, Input } from "@progress/kendo-react-inputs";
 import { Button } from "@progress/kendo-react-buttons";
 import { IWindowPosition } from "../../../hooks/interfaces";
-import { getGridItemChangedData } from "../../CommonFunction";
+import {
+  getGridItemChangedData,
+  getHeight,
+  getWindowDeviceHeight,
+} from "../../CommonFunction";
 import { EDIT_FIELD, GAP, PAGE_SIZE, SELECTED_FIELD } from "../../CommonString";
-import { useSetRecoilState } from "recoil";
-import { isLoading } from "../../../store/atoms";
+import { useRecoilState, useSetRecoilState } from "recoil";
+import { isFilterHideState, isFilterHideState2, isLoading } from "../../../store/atoms";
 import { handleKeyPressSearch } from "../../CommonFunction";
 import { bytesToBase64 } from "byte-base64";
 import { TabStrip, TabStripTab } from "@progress/kendo-react-layout";
 import CheckBoxCell from "../../Cells/CheckBoxCell";
 import { CellRender, RowRender } from "../../Renderers/Renderers";
+import Window from "../WindowComponent/Window";
+import WindowFilterContainer from "../../WindowFilterContainer";
+import SwiperCore from "swiper";
+import "swiper/css";
+import { Swiper, SwiperSlide } from "swiper/react";
 
 type IKendoWindow = {
   setVisible(t: boolean): void;
@@ -51,16 +58,27 @@ FROM comCodeMaster WHERE group_code = 'BA011_GST'`;
 const itemlv31QueryStr = `SELECT sub_code, code_name
 FROM comCodeMaster WHERE group_code = 'BA012_GST'`;
 
+var index = 0;
+
+var height = 0;
+var height2 = 0;
+var height3 = 0;
+var height4 = 0;
+
 const KendoWindow = ({ setVisible, setData }: IKendoWindow) => {
   let deviceWidth = window.innerWidth;
+  let deviceHeight = document.documentElement.clientHeight;
   let isMobile = deviceWidth <= 1200;
   const [position, setPosition] = useState<IWindowPosition>({
-    left: 300,
-    top: 100,
+    left: isMobile == true ? 0 : (deviceWidth - 1200) / 2,
+    top: isMobile == true ? 0 : (deviceHeight - 800) / 2,
     width: isMobile == true ? deviceWidth : 1200,
-    height: 800,
+    height: isMobile == true ? deviceHeight : 800,
   });
-  const [tabSelected, setTabSelected] = React.useState(0);
+
+  const [tabSelected, setTabSelected] = useState(0);
+  const [isFilterHideStates, setIsFilterHideStates] =
+    useRecoilState(isFilterHideState);
   const handleSelectTab = (e: any) => {
     setTabSelected(e.selected);
 
@@ -77,6 +95,7 @@ const KendoWindow = ({ setVisible, setData }: IKendoWindow) => {
         isSearch: true,
       }));
     }
+    setIsFilterHideStates(true);
   };
   const setLoading = useSetRecoilState(isLoading);
 
@@ -98,19 +117,85 @@ const KendoWindow = ({ setVisible, setData }: IKendoWindow) => {
     }));
   };
 
-  const handleMove = (event: WindowMoveEvent) => {
-    setPosition({ ...position, left: event.left, top: event.top });
-  };
-  const handleResize = (event: WindowMoveEvent) => {
-    setPosition({
-      left: event.left,
-      top: event.top,
-      width: event.width,
-      height: event.height,
-    });
+  const [mobileheight, setMobileHeight] = useState(0);
+  const [mobileheight2, setMobileHeight2] = useState(0);
+  const [mobileheight3, setMobileHeight3] = useState(0);
+  const [webheight, setWebHeight] = useState(0);
+  const [webheight2, setWebHeight2] = useState(0);
+  const [webheight3, setWebHeight3] = useState(0);
+  const [swiper, setSwiper] = useState<SwiperCore>();
+  const [isFilterHideStates2, setisFilterHideStates2] =
+    useRecoilState(isFilterHideState2);
+
+  useLayoutEffect(() => {
+    height = getHeight(".k-window-titlebar");
+    height2 = getHeight(".WindowTitleContainer");
+    height3 = getHeight(".BottomContainer");
+    height4 = getHeight(".k-tabstrip-items-wrapper");
+    setMobileHeight(
+      getWindowDeviceHeight(true, deviceHeight) -
+        height -
+        height2 -
+        height3 -
+        height4 -
+        5
+    );
+    setMobileHeight2(
+      getWindowDeviceHeight(true, deviceHeight) -
+        height -
+        height2 -
+        height3 -
+        height4 -
+        5
+    );
+    setMobileHeight3(
+      getWindowDeviceHeight(true, deviceHeight) -
+        height -
+        height2 -
+        height3 -
+        height4 -
+        5
+    );
+    setWebHeight(
+      getWindowDeviceHeight(true, position.height) -
+        height -
+        height2 -
+        height3 -
+        height4 -
+        10
+    );
+    setWebHeight2(
+      getWindowDeviceHeight(true, position.height) -
+        height -
+        height2 -
+        height3 -
+        height4 -
+        10
+    );
+    setWebHeight3(
+      getWindowDeviceHeight(true, position.height) -
+        height -
+        height2 -
+        height3 -
+        height4 -
+        10
+    );
+  }, []);
+
+  const onChangePostion = (position: any) => {
+    setPosition(position);
+    setWebHeight(
+      getWindowDeviceHeight(true, position.height) -
+        height -
+        height2 -
+        height3 -
+        height4 -
+        10
+    );
   };
 
   const onClose = () => {
+    setisFilterHideStates2(true);
     setVisible(false);
   };
 
@@ -274,14 +359,14 @@ const KendoWindow = ({ setVisible, setData }: IKendoWindow) => {
         setMainDataResult((prev) => {
           return {
             data: rows,
-             total: totalRowCnt == -1 ? 0 : totalRowCnt,
+            total: totalRowCnt == -1 ? 0 : totalRowCnt,
           };
         });
       } else {
         setMainDataResult((prev) => {
           return {
             data: rows,
-             total: totalRowCnt == -1 ? 0 : totalRowCnt,
+            total: totalRowCnt == -1 ? 0 : totalRowCnt,
           };
         });
       }
@@ -349,7 +434,7 @@ const KendoWindow = ({ setVisible, setData }: IKendoWindow) => {
       setSubDataResult((prev) => {
         return {
           data: rows,
-           total: totalRowCnt == -1 ? 0 : totalRowCnt,
+          total: totalRowCnt == -1 ? 0 : totalRowCnt,
         };
       });
 
@@ -439,6 +524,9 @@ const KendoWindow = ({ setVisible, setData }: IKendoWindow) => {
         type: selectedRowData.type,
         isSearch: true,
       }));
+      if (isMobile && swiper) {
+        swiper.slideTo(1);
+      }
     }
   };
 
@@ -488,6 +576,9 @@ const KendoWindow = ({ setVisible, setData }: IKendoWindow) => {
       fetchMainGrid();
     } else {
       fetchSubGrid();
+      if (swiper) {
+        swiper.slideTo(0);
+      }
     }
   };
 
@@ -518,7 +609,7 @@ const KendoWindow = ({ setVisible, setData }: IKendoWindow) => {
     },
   ];
 
-  const [values, setValues] = React.useState<boolean>(false);
+  const [values, setValues] = useState<boolean>(false);
   const CustomCheckBoxCell = (props: GridHeaderCellProps) => {
     const changeCheck = () => {
       const newData = subDataResult.data.map((item) => ({
@@ -542,7 +633,7 @@ const KendoWindow = ({ setVisible, setData }: IKendoWindow) => {
     );
   };
 
-  const [values2, setValues2] = React.useState<boolean>(false);
+  const [values2, setValues2] = useState<boolean>(false);
   const CustomCheckBoxCell2 = (props: GridHeaderCellProps) => {
     const changeCheck = () => {
       const newData = mainDataResult.data.map((item) => ({
@@ -746,23 +837,20 @@ const KendoWindow = ({ setVisible, setData }: IKendoWindow) => {
 
   return (
     <Window
-      title={"ValueBox"}
-      width={position.width}
-      height={position.height}
-      onMove={handleMove}
-      onResize={handleResize}
-      onClose={onClose}
-      modal={true}
+      titles={"ValueBox"}
+      positions={position}
+      Close={onClose}
+      onChangePostion={onChangePostion}
+      modals={true}
     >
-      <TitleContainer>
-        <Title />
+      <TitleContainer className="WindowTitleContainer">
         <ButtonContainer>
           <Button onClick={() => search()} icon="search" themeColor={"primary"}>
             조회
           </Button>
         </ButtonContainer>
       </TitleContainer>
-      <FilterBoxWrap>
+      <WindowFilterContainer>
         <FilterBox onKeyPress={(e) => handleKeyPressSearch(e, search)}>
           <tbody>
             <tr>
@@ -789,16 +877,16 @@ const KendoWindow = ({ setVisible, setData }: IKendoWindow) => {
             </tr>
           </tbody>
         </FilterBox>
-      </FilterBoxWrap>
+      </WindowFilterContainer>
       <TabStrip
         style={{ width: "100%" }}
         selected={tabSelected}
         onSelect={handleSelectTab}
       >
         <TabStripTab title="Value Items">
-          <GridContainer height="calc(100% - 260px)">
+          <GridContainer>
             <Grid
-              style={{ height: "45vh" }}
+              style={{ height: isMobile ? mobileheight : webheight }}
               data={process(
                 mainDataResult.data.map((row) => ({
                   ...row,
@@ -851,110 +939,216 @@ const KendoWindow = ({ setVisible, setData }: IKendoWindow) => {
                 footerCell={mainTotalFooterCell}
               />
               <GridColumn field="name" title="이름" width="200px" />
-              <GridColumn field="remark" title="비고" width="290px" />
+              <GridColumn field="remark" title="비고" />
             </Grid>
           </GridContainer>
         </TabStripTab>
         <TabStripTab title="C# Services">
-          <GridContainerWrap>
-            <GridContainer width="30%" height="calc(100% - 260px)">
-              <Grid
-                style={{ height: "45vh" }}
-                data={process(
-                  mainDataResult.data.map((row) => ({
-                    ...row,
-                    [SELECTED_FIELD]: selectedState[idGetter(row)], //선택된 데이터
-                  })),
-                  mainDataState
-                )}
-                onDataStateChange={onMainDataStateChange}
-                {...mainDataState}
-                //선택 기능
-                dataItemKey={DATA_ITEM_KEY}
-                selectedField={SELECTED_FIELD}
-                selectable={{
-                  enabled: true,
-                  mode: "single",
-                }}
-                onSelectionChange={onMainSelectionChange}
-                //스크롤 조회 기능
-                fixedScroll={true}
-                total={mainDataResult.total}
-                //정렬기능
-                sortable={true}
-                onSortChange={onMainSortChange}
-                //컬럼순서조정
-                reorderable={true}
-                //컬럼너비조정
-                resizable={true}
-              >
-                <GridColumn
-                  field="code"
-                  title="서비스"
-                  width="320px"
-                  footerCell={mainTotalFooterCell}
-                />
-              </Grid>
-            </GridContainer>
-            <GridContainer
-              width={`calc(70% - ${GAP}px)`}
-              height="calc(100% - 240px)"
+          {isMobile ? (
+            <Swiper
+              onSwiper={(swiper) => {
+                setSwiper(swiper);
+              }}
+              onActiveIndexChange={(swiper) => {
+                index = swiper.activeIndex;
+              }}
             >
-              <Grid
-                style={{ height: "47vh" }}
-                data={process(
-                  subDataResult.data.map((row) => ({
-                    ...row,
-                    [SELECTED_FIELD]: subSelectedState[idGetter2(row)], //선택된 데이터
-                  })),
-                  subDataState
-                )}
-                onDataStateChange={onSubDataStateChange}
-                {...subDataState}
-                //선택 기능
-                dataItemKey={DATA_ITEM_KEY2}
-                selectedField={SELECTED_FIELD}
-                selectable={{
-                  enabled: true,
-                  mode: "single",
-                }}
-                onSelectionChange={onSubSelectionChange}
-                //스크롤 조회 기능
-                fixedScroll={true}
-                total={subDataResult.total}
-                //정렬기능
-                sortable={true}
-                onSortChange={onSubSortChange}
-                //컬럼순서조정
-                reorderable={true}
-                //컬럼너비조정
-                resizable={true}
-                onItemChange={onSubItemChange}
-                cellRender={customCellRender2}
-                rowRender={customRowRender2}
-                editField={EDIT_FIELD}
-              >
-                <GridColumn
-                  field="chk"
-                  title=" "
-                  width="45px"
-                  headerCell={CustomCheckBoxCell}
-                  cell={CheckBoxCell}
-                />
-                <GridColumn
-                  field="code"
-                  title="코드"
-                  width="200px"
-                  footerCell={subTotalFooterCell}
-                />
-                <GridColumn field="name" title="이름" width="300px" />
-                <GridColumn field="remark" title="비고" width="300px" />
-              </Grid>
-            </GridContainer>
-          </GridContainerWrap>
+              <SwiperSlide key={0}>
+                <GridContainer width="100%">
+                  <Grid
+                    style={{ height: mobileheight2 }}
+                    data={process(
+                      mainDataResult.data.map((row) => ({
+                        ...row,
+                        [SELECTED_FIELD]: selectedState[idGetter(row)], //선택된 데이터
+                      })),
+                      mainDataState
+                    )}
+                    onDataStateChange={onMainDataStateChange}
+                    {...mainDataState}
+                    //선택 기능
+                    dataItemKey={DATA_ITEM_KEY}
+                    selectedField={SELECTED_FIELD}
+                    selectable={{
+                      enabled: true,
+                      mode: "single",
+                    }}
+                    onSelectionChange={onMainSelectionChange}
+                    //스크롤 조회 기능
+                    fixedScroll={true}
+                    total={mainDataResult.total}
+                    //정렬기능
+                    sortable={true}
+                    onSortChange={onMainSortChange}
+                    //컬럼순서조정
+                    reorderable={true}
+                    //컬럼너비조정
+                    resizable={true}
+                  >
+                    <GridColumn
+                      field="code"
+                      title="서비스"
+                      width="320px"
+                      footerCell={mainTotalFooterCell}
+                    />
+                  </Grid>
+                </GridContainer>
+              </SwiperSlide>
+              <SwiperSlide key={1}>
+                <GridContainer width={"100%"}>
+                  <Grid
+                    style={{ height: mobileheight3 }}
+                    data={process(
+                      subDataResult.data.map((row) => ({
+                        ...row,
+                        [SELECTED_FIELD]: subSelectedState[idGetter2(row)], //선택된 데이터
+                      })),
+                      subDataState
+                    )}
+                    onDataStateChange={onSubDataStateChange}
+                    {...subDataState}
+                    //선택 기능
+                    dataItemKey={DATA_ITEM_KEY2}
+                    selectedField={SELECTED_FIELD}
+                    selectable={{
+                      enabled: true,
+                      mode: "single",
+                    }}
+                    onSelectionChange={onSubSelectionChange}
+                    //스크롤 조회 기능
+                    fixedScroll={true}
+                    total={subDataResult.total}
+                    //정렬기능
+                    sortable={true}
+                    onSortChange={onSubSortChange}
+                    //컬럼순서조정
+                    reorderable={true}
+                    //컬럼너비조정
+                    resizable={true}
+                    onItemChange={onSubItemChange}
+                    cellRender={customCellRender2}
+                    rowRender={customRowRender2}
+                    editField={EDIT_FIELD}
+                  >
+                    <GridColumn
+                      field="chk"
+                      title=" "
+                      width="45px"
+                      headerCell={CustomCheckBoxCell}
+                      cell={CheckBoxCell}
+                    />
+                    <GridColumn
+                      field="code"
+                      title="코드"
+                      width="200px"
+                      footerCell={subTotalFooterCell}
+                    />
+                    <GridColumn field="name" title="이름" width="300px" />
+                    <GridColumn field="remark" title="비고" width="300px" />
+                  </Grid>
+                </GridContainer>
+              </SwiperSlide>
+            </Swiper>
+          ) : (
+            <>
+              <GridContainerWrap>
+                <GridContainer width="30%">
+                  <Grid
+                    style={{ height: webheight2 }}
+                    data={process(
+                      mainDataResult.data.map((row) => ({
+                        ...row,
+                        [SELECTED_FIELD]: selectedState[idGetter(row)], //선택된 데이터
+                      })),
+                      mainDataState
+                    )}
+                    onDataStateChange={onMainDataStateChange}
+                    {...mainDataState}
+                    //선택 기능
+                    dataItemKey={DATA_ITEM_KEY}
+                    selectedField={SELECTED_FIELD}
+                    selectable={{
+                      enabled: true,
+                      mode: "single",
+                    }}
+                    onSelectionChange={onMainSelectionChange}
+                    //스크롤 조회 기능
+                    fixedScroll={true}
+                    total={mainDataResult.total}
+                    //정렬기능
+                    sortable={true}
+                    onSortChange={onMainSortChange}
+                    //컬럼순서조정
+                    reorderable={true}
+                    //컬럼너비조정
+                    resizable={true}
+                  >
+                    <GridColumn
+                      field="code"
+                      title="서비스"
+                      width="320px"
+                      footerCell={mainTotalFooterCell}
+                    />
+                  </Grid>
+                </GridContainer>
+                <GridContainer width={`calc(70% - ${GAP}px)`}>
+                  <Grid
+                    style={{ height: webheight3 }}
+                    data={process(
+                      subDataResult.data.map((row) => ({
+                        ...row,
+                        [SELECTED_FIELD]: subSelectedState[idGetter2(row)], //선택된 데이터
+                      })),
+                      subDataState
+                    )}
+                    onDataStateChange={onSubDataStateChange}
+                    {...subDataState}
+                    //선택 기능
+                    dataItemKey={DATA_ITEM_KEY2}
+                    selectedField={SELECTED_FIELD}
+                    selectable={{
+                      enabled: true,
+                      mode: "single",
+                    }}
+                    onSelectionChange={onSubSelectionChange}
+                    //스크롤 조회 기능
+                    fixedScroll={true}
+                    total={subDataResult.total}
+                    //정렬기능
+                    sortable={true}
+                    onSortChange={onSubSortChange}
+                    //컬럼순서조정
+                    reorderable={true}
+                    //컬럼너비조정
+                    resizable={true}
+                    onItemChange={onSubItemChange}
+                    cellRender={customCellRender2}
+                    rowRender={customRowRender2}
+                    editField={EDIT_FIELD}
+                  >
+                    <GridColumn
+                      field="chk"
+                      title=" "
+                      width="45px"
+                      headerCell={CustomCheckBoxCell}
+                      cell={CheckBoxCell}
+                    />
+                    <GridColumn
+                      field="code"
+                      title="코드"
+                      width="200px"
+                      footerCell={subTotalFooterCell}
+                    />
+                    <GridColumn field="name" title="이름" width="300px" />
+                    <GridColumn field="remark" title="비고" width="300px" />
+                  </Grid>
+                </GridContainer>
+              </GridContainerWrap>
+            </>
+          )}
         </TabStripTab>
       </TabStrip>
-      <BottomContainer>
+      <BottomContainer className="BottomContainer">
         <ButtonContainer>
           <Button themeColor={"primary"} onClick={onConfirmClick}>
             확인

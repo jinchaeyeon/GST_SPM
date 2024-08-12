@@ -1,6 +1,5 @@
 import { DataResult, State, getter, process } from "@progress/kendo-data-query";
 import { Button } from "@progress/kendo-react-buttons";
-import { Window, WindowMoveEvent } from "@progress/kendo-react-dialogs";
 import {
   Grid,
   GridCellProps,
@@ -11,7 +10,14 @@ import {
   getSelectedState,
 } from "@progress/kendo-react-grid";
 import { bytesToBase64 } from "byte-base64";
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { useLocation } from "react-router-dom";
 import { useRecoilState, useSetRecoilState } from "recoil";
 import { v4 as uuidv4 } from "uuid";
@@ -41,6 +47,8 @@ import {
   convertDateToStr,
   extractDownloadFilename,
   getGridItemChangedData,
+  getHeight,
+  getWindowDeviceHeight,
 } from "../../CommonFunction";
 import { EDIT_FIELD, SELECTED_FIELD } from "../../CommonString";
 import { CellRender, RowRender } from "../../Renderers/Renderers";
@@ -48,6 +56,10 @@ import RequiredHeader from "../../RequiredHeader";
 import RichEditor from "../../RichEditor";
 import ErrorWindow from "./ErrorWindow";
 import PopUpAttachmentsWindow from "./PopUpAttachmentsWindow";
+import Window from "../WindowComponent/Window";
+import SwiperCore from "swiper";
+import "swiper/css";
+import { Swiper, SwiperSlide } from "swiper/react";
 
 type IKendoWindow = {
   setVisible(t: boolean): void;
@@ -283,6 +295,13 @@ const FilesCell = (props: GridCellProps) => {
 
 let temp = 0;
 let deletedRows: any[] = [];
+
+var index = 0;
+var height = 0;
+var height2 = 0;
+var height3 = 0;
+var height4 = 0;
+
 const KendoWindow = ({
   setVisible,
   para,
@@ -292,12 +311,56 @@ const KendoWindow = ({
 }: IKendoWindow) => {
   let deviceWidth = window.innerWidth;
   let isMobile = deviceWidth <= 1200;
+  let deviceHeight = document.documentElement.clientHeight;
   const [position, setPosition] = useState<IWindowPosition>({
-    left: 300,
-    top: 100,
-    width: isMobile == true ? deviceWidth : 1600,
-    height: 900,
+    left: isMobile == true ? 0 : (deviceWidth - 1400) / 2,
+    top: isMobile == true ? 0 : (deviceHeight - 900) / 2,
+    width: isMobile == true ? deviceWidth : 1400,
+    height: isMobile == true ? deviceHeight : 900,
   });
+
+  const [mobileheight, setMobileHeight] = useState(0);
+  const [mobileheight2, setMobileHeight2] = useState(0);
+  const [webheight, setWebHeight] = useState(0);
+  const [webheight2, setWebHeight2] = useState(0);
+
+  const [swiper, setSwiper] = useState<SwiperCore>();
+
+  useLayoutEffect(() => {
+    height = getHeight(".k-window-titlebar");
+    height2 = getHeight(".BottomContainer");
+    height3 = getHeight(".ButtonContainer");
+    height4 = getHeight(".ButtonContainer2");
+    setMobileHeight(
+      getWindowDeviceHeight(false, position.height) - height - height2 - height3 - 10
+    );
+    setMobileHeight2(
+      getWindowDeviceHeight(false, position.height) - height - height2 - height4 - 10
+    );
+    setWebHeight(
+      (getWindowDeviceHeight(false, position.height) - height - height2) / 2 -
+        height3 -
+        15
+    );
+    setWebHeight2(
+      (getWindowDeviceHeight(false, position.height) - height - height2) / 2 -
+        height4
+    );
+  }, []);
+
+  const onChangePostion = (position: any) => {
+    setPosition(position);
+    setWebHeight(
+      (getWindowDeviceHeight(false, position.height) - height - height2) / 2 -
+        height3 -
+        15
+    );
+    setWebHeight2(
+      (getWindowDeviceHeight(false, position.height) - height - height2) / 2 -
+        height4
+    );
+  };
+
   const idGetter = getter(DATA_ITEM_KEY);
   const [loginResult] = useRecoilState(loginResultState);
   const userId = loginResult ? loginResult.userId : "";
@@ -486,18 +549,6 @@ const KendoWindow = ({
   };
 
   const setLoading = useSetRecoilState(isLoading);
-
-  const handleMove = (event: WindowMoveEvent) => {
-    setPosition({ ...position, left: event.left, top: event.top });
-  };
-  const handleResize = (event: WindowMoveEvent) => {
-    setPosition({
-      left: event.left,
-      top: event.top,
-      width: event.width,
-      height: event.height,
-    });
-  };
 
   const removeHTML = () => {
     setLoading(true);
@@ -1304,7 +1355,7 @@ const KendoWindow = ({
   };
 
   const onConfirmClick = async () => {
-    if(!navigator.onLine) {
+    if (!navigator.onLine) {
       alert("네트워크 연결상태를 확인해주세요.");
       setLoading(false);
       return false;
@@ -2041,219 +2092,474 @@ const KendoWindow = ({
 
   return (
     <Window
-      title={"업무지시 작성"}
-      width={position.width}
-      height={position.height}
-      onMove={handleMove}
-      onResize={handleResize}
-      onClose={onClose}
-      modal={modal}
+      titles={"업무지시 작성"}
+      positions={position}
+      Close={onClose}
+      modals={modal}
+      onChangePostion={onChangePostion}
     >
-      <GridContainer height={`calc(100% - 60px)`}>
-        <GridTitleContainer>
-          <GridTitle>업무지시</GridTitle>
-          <ButtonContainer>
-            <Button
-              onClick={onErrorWndClick}
-              themeColor={"primary"}
-              icon="gear"
-            >
-              불량 팝업
-            </Button>
-            <Button
-              onClick={onAddClick}
-              themeColor={"primary"}
-              icon="plus"
-              title="행 추가"
-            ></Button>
-            <Button
-              onClick={onRemoveClick}
-              fillMode="outline"
-              themeColor={"primary"}
-              icon="minus"
-              title="행 삭제"
-            ></Button>
-          </ButtonContainer>
-        </GridTitleContainer>
-        <FilesContext.Provider
-          value={{
-            attdatnum,
-            attach_exists,
-            fileList,
-            savenmList,
-            setAttdatnum,
-            setAttach_exists,
-            setFileList,
-            setSavenmList,
-            mainDataState,
-            setMainDataState,
-            // fetchGrid,
+      {isMobile ? (
+        <Swiper
+          onSwiper={(swiper) => {
+            setSwiper(swiper);
+          }}
+          onActiveIndexChange={(swiper) => {
+            index = swiper.activeIndex;
           }}
         >
-          <WorkTypeContext.Provider value={{ WorkTypeItems: WorkTypeItems }}>
-            <ValueCodeContext.Provider
-              value={{ valuecodeItems: valuecodeItems }}
-            >
-              <UserContext.Provider value={{ usersData: usersData }}>
-                <Grid
-                  style={{ height: `60%` }}
-                  data={process(
-                    mainDataResult.data.map((row) => ({
-                      ...row,
-                      insert_userid: usersData.find(
-                        (items: any) => items.user_id == row.insert_userid
-                      )?.user_name,
-                      [SELECTED_FIELD]: selectedState[idGetter(row)],
-                    })),
-                    mainDataState
-                  )}
-                  {...mainDataState}
-                  onDataStateChange={onMainDataStateChange}
-                  //선택 기능
-                  dataItemKey={DATA_ITEM_KEY}
-                  selectedField={SELECTED_FIELD}
-                  selectable={{
-                    enabled: true,
-                    mode: "single",
+          <SwiperSlide key={0}>
+            <GridTitleContainer className="ButtonContainer">
+              <GridTitle>
+                업무지시
+                <Button
+                  themeColor={"primary"}
+                  fillMode={"flat"}
+                  icon={"chevron-right"}
+                  onClick={() => {
+                    if (swiper) {
+                      swiper.slideTo(1);
+                    }
                   }}
-                  onSelectionChange={onSelectionChange}
-                  //스크롤 조회 기능
-                  fixedScroll={true}
-                  total={mainDataResult.total}
-                  //정렬기능
-                  sortable={true}
-                  onSortChange={onMainSortChange}
-                  //컬럼순서조정
-                  reorderable={true}
-                  //컬럼너비조정
-                  resizable={true}
-                  onItemChange={onItemChange}
-                  cellRender={customCellRender}
-                  rowRender={customRowRender}
-                  editField={EDIT_FIELD}
+                ></Button>
+              </GridTitle>
+              <ButtonContainer>
+                <Button
+                  onClick={onErrorWndClick}
+                  themeColor={"primary"}
+                  icon="gear"
                 >
-                  <GridColumn field="rowstatus" title=" " width="45px" />
-                  <GridColumn
-                    field="is_urgent"
-                    title="긴급"
-                    width={80}
-                    cell={UrgentCell}
-                  />
-                  <GridColumn
-                    field="groupcd"
-                    title="업무분류"
-                    width={120}
-                    cell={WorkTypeCodeCell}
-                  />
-                  <GridColumn
-                    field="value_code3"
-                    title="Value 구분"
-                    width={120}
-                    cell={ValueCodeCell}
-                  />
-                  <GridColumn
-                    field="person"
-                    title="처리담당자"
-                    headerCell={RequiredHeader}
-                    width={120}
-                    cell={UserCell}
-                  />
-                  <GridColumn
-                    field="finexpdt"
-                    title="완료예정일"
-                    cell={DateCell}
-                    headerCell={RequiredHeader}
-                    width={120}
-                  />
-                  <GridColumn
-                    field="exphh"
-                    title="예상(H)"
-                    width={80}
-                    cell={NumberCell}
-                  />
-                  <GridColumn
-                    field="expmm"
-                    title="예상(M)"
-                    width={80}
-                    cell={NumberCell}
-                  />
-                  <GridColumn
-                    field="attdatnum"
-                    title="첨부"
-                    width={120}
-                    cell={FilesCell}
-                  />
-                  <GridColumn field="remark" title="비고" width={300} />
-                  <GridColumn
-                    field="finyn"
-                    title="완료"
-                    width={100}
-                    cell={CheckBoxReadOnlyCell}
-                  />
-                  <GridColumn
-                    field="recdt"
-                    title="지시일"
-                    width={120}
-                    cell={DateCell}
-                    headerCell={RequiredHeader}
-                  />
-                  <GridColumn
-                    field="indicator"
-                    title="지시자"
-                    width={120}
-                    headerCell={RequiredHeader}
-                    cell={UserCell}
-                  />
-                  <GridColumn field="docunum" title="지시번호" width={200} />
-                  <GridColumn
-                    field="insert_userid"
-                    title="등록자"
-                    width={120}
-                  />
-                  <GridColumn field="ref_key" title="참조번호1" width={200} />
-                  <GridColumn
-                    field="ref_seq"
-                    title="참조번호2"
-                    width={120}
-                    cell={NumberCell}
-                  />
-                  <GridColumn
-                    field="is_defective"
-                    title="불량"
-                    width={80}
-                    cell={defectiveCell}
-                  />
-                  <GridColumn
-                    field="check_yn"
-                    title="확인"
-                    width={80}
-                    cell={Check_ynCell}
-                  />
-                </Grid>
-              </UserContext.Provider>
-            </ValueCodeContext.Provider>
-          </WorkTypeContext.Provider>
-        </FilesContext.Provider>
-        <ButtonContainer>
-          <Button
-            icon={"file-word"}
-            name="meeting"
-            onClick={downloadDoc}
-            themeColor={"primary"}
-            fillMode={"outline"}
-            style={{ marginTop: "5px" }}
+                  불량 팝업
+                </Button>
+                <Button
+                  onClick={onAddClick}
+                  themeColor={"primary"}
+                  icon="plus"
+                  title="행 추가"
+                ></Button>
+                <Button
+                  onClick={onRemoveClick}
+                  fillMode="outline"
+                  themeColor={"primary"}
+                  icon="minus"
+                  title="행 삭제"
+                ></Button>
+              </ButtonContainer>
+            </GridTitleContainer>
+            <FilesContext.Provider
+              value={{
+                attdatnum,
+                attach_exists,
+                fileList,
+                savenmList,
+                setAttdatnum,
+                setAttach_exists,
+                setFileList,
+                setSavenmList,
+                mainDataState,
+                setMainDataState,
+                // fetchGrid,
+              }}
+            >
+              <WorkTypeContext.Provider
+                value={{ WorkTypeItems: WorkTypeItems }}
+              >
+                <ValueCodeContext.Provider
+                  value={{ valuecodeItems: valuecodeItems }}
+                >
+                  <UserContext.Provider value={{ usersData: usersData }}>
+                    <Grid
+                      style={{ height: isMobile ? mobileheight : webheight }}
+                      data={process(
+                        mainDataResult.data.map((row) => ({
+                          ...row,
+                          insert_userid: usersData.find(
+                            (items: any) => items.user_id == row.insert_userid
+                          )?.user_name,
+                          [SELECTED_FIELD]: selectedState[idGetter(row)],
+                        })),
+                        mainDataState
+                      )}
+                      {...mainDataState}
+                      onDataStateChange={onMainDataStateChange}
+                      //선택 기능
+                      dataItemKey={DATA_ITEM_KEY}
+                      selectedField={SELECTED_FIELD}
+                      selectable={{
+                        enabled: true,
+                        mode: "single",
+                      }}
+                      onSelectionChange={onSelectionChange}
+                      //스크롤 조회 기능
+                      fixedScroll={true}
+                      total={mainDataResult.total}
+                      //정렬기능
+                      sortable={true}
+                      onSortChange={onMainSortChange}
+                      //컬럼순서조정
+                      reorderable={true}
+                      //컬럼너비조정
+                      resizable={true}
+                      onItemChange={onItemChange}
+                      cellRender={customCellRender}
+                      rowRender={customRowRender}
+                      editField={EDIT_FIELD}
+                    >
+                      <GridColumn field="rowstatus" title=" " width="45px" />
+                      <GridColumn
+                        field="is_urgent"
+                        title="긴급"
+                        width={80}
+                        cell={UrgentCell}
+                      />
+                      <GridColumn
+                        field="groupcd"
+                        title="업무분류"
+                        width={120}
+                        cell={WorkTypeCodeCell}
+                      />
+                      <GridColumn
+                        field="value_code3"
+                        title="Value 구분"
+                        width={120}
+                        cell={ValueCodeCell}
+                      />
+                      <GridColumn
+                        field="person"
+                        title="처리담당자"
+                        headerCell={RequiredHeader}
+                        width={120}
+                        cell={UserCell}
+                      />
+                      <GridColumn
+                        field="finexpdt"
+                        title="완료예정일"
+                        cell={DateCell}
+                        headerCell={RequiredHeader}
+                        width={120}
+                      />
+                      <GridColumn
+                        field="exphh"
+                        title="예상(H)"
+                        width={80}
+                        cell={NumberCell}
+                      />
+                      <GridColumn
+                        field="expmm"
+                        title="예상(M)"
+                        width={80}
+                        cell={NumberCell}
+                      />
+                      <GridColumn
+                        field="attdatnum"
+                        title="첨부"
+                        width={120}
+                        cell={FilesCell}
+                      />
+                      <GridColumn field="remark" title="비고" width={300} />
+                      <GridColumn
+                        field="finyn"
+                        title="완료"
+                        width={100}
+                        cell={CheckBoxReadOnlyCell}
+                      />
+                      <GridColumn
+                        field="recdt"
+                        title="지시일"
+                        width={120}
+                        cell={DateCell}
+                        headerCell={RequiredHeader}
+                      />
+                      <GridColumn
+                        field="indicator"
+                        title="지시자"
+                        width={120}
+                        headerCell={RequiredHeader}
+                        cell={UserCell}
+                      />
+                      <GridColumn
+                        field="docunum"
+                        title="지시번호"
+                        width={200}
+                      />
+                      <GridColumn
+                        field="insert_userid"
+                        title="등록자"
+                        width={120}
+                      />
+                      <GridColumn
+                        field="ref_key"
+                        title="참조번호1"
+                        width={200}
+                      />
+                      <GridColumn
+                        field="ref_seq"
+                        title="참조번호2"
+                        width={120}
+                        cell={NumberCell}
+                      />
+                      <GridColumn
+                        field="is_defective"
+                        title="불량"
+                        width={80}
+                        cell={defectiveCell}
+                      />
+                      <GridColumn
+                        field="check_yn"
+                        title="확인"
+                        width={80}
+                        cell={Check_ynCell}
+                      />
+                    </Grid>
+                  </UserContext.Provider>
+                </ValueCodeContext.Provider>
+              </WorkTypeContext.Provider>
+            </FilesContext.Provider>
+          </SwiperSlide>
+          <SwiperSlide key={1}>
+            <ButtonContainer
+              className="ButtonContainer2"
+              style={{ justifyContent: "space-between" }}
+            >
+              <Button
+                themeColor={"primary"}
+                fillMode={"flat"}
+                icon={"chevron-left"}
+                onClick={() => {
+                  if (swiper) {
+                    swiper.slideTo(0);
+                  }
+                }}
+              ></Button>
+              <Button
+                icon={"file-word"}
+                name="meeting"
+                onClick={downloadDoc}
+                themeColor={"primary"}
+                fillMode={"outline"}
+                style={{ marginTop: "5px" }}
+              >
+                다운로드
+              </Button>
+            </ButtonContainer>
+            <div style={{ height: isMobile ? mobileheight2 : webheight2 }}>
+              <RichEditor
+                id="refEditor"
+                ref={refEditorRef}
+                key={Object.getOwnPropertyNames(selectedState)[0]}
+                change={onChanges}
+              />
+            </div>
+          </SwiperSlide>
+        </Swiper>
+      ) : (
+        <>
+          <GridTitleContainer className="ButtonContainer">
+            <GridTitle>업무지시</GridTitle>
+            <ButtonContainer>
+              <Button
+                onClick={onErrorWndClick}
+                themeColor={"primary"}
+                icon="gear"
+              >
+                불량 팝업
+              </Button>
+              <Button
+                onClick={onAddClick}
+                themeColor={"primary"}
+                icon="plus"
+                title="행 추가"
+              ></Button>
+              <Button
+                onClick={onRemoveClick}
+                fillMode="outline"
+                themeColor={"primary"}
+                icon="minus"
+                title="행 삭제"
+              ></Button>
+            </ButtonContainer>
+          </GridTitleContainer>
+          <FilesContext.Provider
+            value={{
+              attdatnum,
+              attach_exists,
+              fileList,
+              savenmList,
+              setAttdatnum,
+              setAttach_exists,
+              setFileList,
+              setSavenmList,
+              mainDataState,
+              setMainDataState,
+              // fetchGrid,
+            }}
           >
-            다운로드
-          </Button>
-        </ButtonContainer>
-        <RichEditor
-          id="refEditor"
-          ref={refEditorRef}
-          key={Object.getOwnPropertyNames(selectedState)[0]}
-          change={onChanges}
-        />
-      </GridContainer>
-      <BottomContainer>
+            <WorkTypeContext.Provider value={{ WorkTypeItems: WorkTypeItems }}>
+              <ValueCodeContext.Provider
+                value={{ valuecodeItems: valuecodeItems }}
+              >
+                <UserContext.Provider value={{ usersData: usersData }}>
+                  <Grid
+                    style={{ height: isMobile ? mobileheight : webheight }}
+                    data={process(
+                      mainDataResult.data.map((row) => ({
+                        ...row,
+                        insert_userid: usersData.find(
+                          (items: any) => items.user_id == row.insert_userid
+                        )?.user_name,
+                        [SELECTED_FIELD]: selectedState[idGetter(row)],
+                      })),
+                      mainDataState
+                    )}
+                    {...mainDataState}
+                    onDataStateChange={onMainDataStateChange}
+                    //선택 기능
+                    dataItemKey={DATA_ITEM_KEY}
+                    selectedField={SELECTED_FIELD}
+                    selectable={{
+                      enabled: true,
+                      mode: "single",
+                    }}
+                    onSelectionChange={onSelectionChange}
+                    //스크롤 조회 기능
+                    fixedScroll={true}
+                    total={mainDataResult.total}
+                    //정렬기능
+                    sortable={true}
+                    onSortChange={onMainSortChange}
+                    //컬럼순서조정
+                    reorderable={true}
+                    //컬럼너비조정
+                    resizable={true}
+                    onItemChange={onItemChange}
+                    cellRender={customCellRender}
+                    rowRender={customRowRender}
+                    editField={EDIT_FIELD}
+                  >
+                    <GridColumn field="rowstatus" title=" " width="45px" />
+                    <GridColumn
+                      field="is_urgent"
+                      title="긴급"
+                      width={80}
+                      cell={UrgentCell}
+                    />
+                    <GridColumn
+                      field="groupcd"
+                      title="업무분류"
+                      width={120}
+                      cell={WorkTypeCodeCell}
+                    />
+                    <GridColumn
+                      field="value_code3"
+                      title="Value 구분"
+                      width={120}
+                      cell={ValueCodeCell}
+                    />
+                    <GridColumn
+                      field="person"
+                      title="처리담당자"
+                      headerCell={RequiredHeader}
+                      width={120}
+                      cell={UserCell}
+                    />
+                    <GridColumn
+                      field="finexpdt"
+                      title="완료예정일"
+                      cell={DateCell}
+                      headerCell={RequiredHeader}
+                      width={120}
+                    />
+                    <GridColumn
+                      field="exphh"
+                      title="예상(H)"
+                      width={80}
+                      cell={NumberCell}
+                    />
+                    <GridColumn
+                      field="expmm"
+                      title="예상(M)"
+                      width={80}
+                      cell={NumberCell}
+                    />
+                    <GridColumn
+                      field="attdatnum"
+                      title="첨부"
+                      width={120}
+                      cell={FilesCell}
+                    />
+                    <GridColumn field="remark" title="비고" width={300} />
+                    <GridColumn
+                      field="finyn"
+                      title="완료"
+                      width={100}
+                      cell={CheckBoxReadOnlyCell}
+                    />
+                    <GridColumn
+                      field="recdt"
+                      title="지시일"
+                      width={120}
+                      cell={DateCell}
+                      headerCell={RequiredHeader}
+                    />
+                    <GridColumn
+                      field="indicator"
+                      title="지시자"
+                      width={120}
+                      headerCell={RequiredHeader}
+                      cell={UserCell}
+                    />
+                    <GridColumn field="docunum" title="지시번호" width={200} />
+                    <GridColumn
+                      field="insert_userid"
+                      title="등록자"
+                      width={120}
+                    />
+                    <GridColumn field="ref_key" title="참조번호1" width={200} />
+                    <GridColumn
+                      field="ref_seq"
+                      title="참조번호2"
+                      width={120}
+                      cell={NumberCell}
+                    />
+                    <GridColumn
+                      field="is_defective"
+                      title="불량"
+                      width={80}
+                      cell={defectiveCell}
+                    />
+                    <GridColumn
+                      field="check_yn"
+                      title="확인"
+                      width={80}
+                      cell={Check_ynCell}
+                    />
+                  </Grid>
+                </UserContext.Provider>
+              </ValueCodeContext.Provider>
+            </WorkTypeContext.Provider>
+          </FilesContext.Provider>
+          <ButtonContainer className="ButtonContainer2">
+            <Button
+              icon={"file-word"}
+              name="meeting"
+              onClick={downloadDoc}
+              themeColor={"primary"}
+              fillMode={"outline"}
+              style={{ marginTop: "5px" }}
+            >
+              다운로드
+            </Button>
+          </ButtonContainer>
+          <div style={{ height: isMobile ? mobileheight2 : webheight2 }}>
+            <RichEditor
+              id="refEditor"
+              ref={refEditorRef}
+              key={Object.getOwnPropertyNames(selectedState)[0]}
+              change={onChanges}
+            />
+          </div>
+        </>
+      )}
+      <BottomContainer className="BottomContainer">
         <ButtonContainer>
           <Button themeColor={"primary"} onClick={onConfirmClick}>
             확인

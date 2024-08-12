@@ -102,7 +102,7 @@ const KendoWindow = ({ setVisible, para, reload2 }: TKendoWindow) => {
   let deviceHeight = document.documentElement.clientHeight;
   let isMobile = deviceWidth <= 1200;
   const [position, setPosition] = useState<IWindowPosition>({
-    left: isMobile == true ? 0 : 150,
+    left: isMobile == true ? 0 : (deviceWidth - 1500) / 2,
     top: 0,
     width: isMobile == true ? deviceWidth : 1500,
     height: isMobile == true ? deviceHeight : 900,
@@ -114,6 +114,8 @@ const KendoWindow = ({ setVisible, para, reload2 }: TKendoWindow) => {
   const [mobileheight2, setMobileHeight2] = useState(0);
   const [mobileheight3, setMobileHeight3] = useState(0);
 
+  const [tabSelected, setTabSelected] = useState(0);
+  
   useLayoutEffect(() => {
     requestAnimationFrame(() => {
       paperHeight = getWindowDeviceHeight(false, deviceHeight) - 64; //dialog높이
@@ -142,7 +144,7 @@ const KendoWindow = ({ setVisible, para, reload2 }: TKendoWindow) => {
           height7
       );
     });
-  }, []);
+  }, [tabSelected]);
 
   const onClose = () => {
     setVisible(false);
@@ -247,7 +249,6 @@ const KendoWindow = ({ setVisible, para, reload2 }: TKendoWindow) => {
     setAttachmentsWindowVisible(true);
   };
 
-  const [tabSelected, setTabSelected] = useState(0);
   const handleSelectTab = (e: any) => {
     setTabSelected(e.selected);
   };

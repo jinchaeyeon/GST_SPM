@@ -3276,6 +3276,8 @@ const App = () => {
     }
 
     setAllTabSelected(e.selected);
+
+    setIsFilterHideStates(true);
   };
 
   const onAddClick2 = () => {

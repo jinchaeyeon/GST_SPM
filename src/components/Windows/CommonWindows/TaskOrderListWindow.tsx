@@ -1,6 +1,4 @@
-import { useEffect, useState } from "react";
-import * as React from "react";
-import { Window, WindowMoveEvent } from "@progress/kendo-react-dialogs";
+import { useEffect, useLayoutEffect, useState } from "react";
 import {
   GridDataStateChangeEvent,
   getSelectedState,
@@ -18,6 +16,8 @@ import {
 import { Button } from "@progress/kendo-react-buttons";
 import { IWindowPosition } from "../../../hooks/interfaces";
 import {
+  getHeight,
+  getWindowDeviceHeight,
   UseParaPc,
 } from "../../CommonFunction";
 import {
@@ -32,6 +32,7 @@ import { Iparameters } from "../../../store/types";
 import DateCell from "../../Cells/DateCell";
 import { bytesToBase64 } from "byte-base64";
 import CheckBoxReadOnlyCell from "../../Cells/CheckBoxReadOnlyCell";
+import Window from "../WindowComponent/Window";
 
 type IKendoWindow = {
   setVisible(t: boolean): void;
@@ -97,14 +98,18 @@ const usersQueryStr = `SELECT user_id, user_name + (CASE WHEN rtrchk = 'Y' THEN 
 
 const DATA_ITEM_KEY = "num";
 
+var height = 0;
+var height2 = 0;
+
 const KendoWindow = ({ setVisible, para, modal }: IKendoWindow) => {
-  let deviceWidth = window.innerWidth;
+  let deviceWidth = document.documentElement.clientWidth;
+  let deviceHeight = document.documentElement.clientHeight;
   let isMobile = deviceWidth <= 1200;
   const [position, setPosition] = useState<IWindowPosition>({
-    left: 300,
-    top: 100,
+    left: isMobile == true ? 0 : (deviceWidth - 740) / 2,
+    top: isMobile == true ? 0 : (deviceHeight - 500) / 2,
     width: isMobile == true ? deviceWidth : 740,
-    height: 500,
+    height: isMobile == true ? deviceHeight : 500,
   });
   const idGetter = getter(DATA_ITEM_KEY);
   const [loginResult] = useRecoilState(loginResultState);
@@ -114,16 +119,25 @@ const KendoWindow = ({ setVisible, para, modal }: IKendoWindow) => {
 
   const setLoading = useSetRecoilState(isLoading);
 
-  const handleMove = (event: WindowMoveEvent) => {
-    setPosition({ ...position, left: event.left, top: event.top });
-  };
-  const handleResize = (event: WindowMoveEvent) => {
-    setPosition({
-      left: event.left,
-      top: event.top,
-      width: event.width,
-      height: event.height,
-    });
+  const [mobileheight, setMobileHeight] = useState(0);
+  const [webheight, setWebHeight] = useState(0);
+
+  useLayoutEffect(() => {
+    height = getHeight(".k-window-titlebar"); //공통 해더
+    height2 = getHeight(".BottomContainer"); //하단 버튼부분
+    setMobileHeight(
+      getWindowDeviceHeight(false, deviceHeight) - height - height2
+    );
+    setWebHeight(
+      getWindowDeviceHeight(false, position.height) - height - height2
+    );
+  }, []);
+
+  const onChangePostion = (position: any) => {
+    setPosition(position);
+    setWebHeight(
+      getWindowDeviceHeight(false, position.height) - height - height2
+    );
   };
 
   const onClose = () => {
@@ -288,15 +302,13 @@ const KendoWindow = ({ setVisible, para, modal }: IKendoWindow) => {
 
   return (
     <Window
-      title={"지시 내역"}
-      width={position.width}
-      height={position.height}
-      onMove={handleMove}
-      onResize={handleResize}
-      onClose={onClose}
-      modal={modal}
+      titles={"지시 내역"}
+      positions={position}
+      Close={onClose}
+      onChangePostion={onChangePostion}
+      modals={modal}
     >
-      <GridContainer height={`calc(100% - 60px)`}>
+      <GridContainer height={`${isMobile? mobileheight : webheight}px`}>
         <Grid
           style={{ height: `100%` }}
           data={process(
@@ -371,7 +383,7 @@ const KendoWindow = ({ setVisible, para, modal }: IKendoWindow) => {
           />
         </Grid>
       </GridContainer>
-      <BottomContainer>
+      <BottomContainer className="BottomContainer">
         <ButtonContainer>
           <Button themeColor={"primary"} fillMode={"outline"} onClick={onClose}>
             닫기

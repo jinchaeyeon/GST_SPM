@@ -77,7 +77,7 @@ const KendoWindow = ({ setVisible, workType, setData, para, modal = false }: IKe
         height2 -
         height3
     );
-  }, [webheight]);
+  }, []);
 
   const onChangePostion = (position: any) => {
     setPosition(position);

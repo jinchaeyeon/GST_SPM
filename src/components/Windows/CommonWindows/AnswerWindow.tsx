@@ -84,8 +84,8 @@ const SignWindow = ({ setVisible, para, reload, modal = false }: IWindow) => {
     setWebHeight(
       getWindowDeviceHeight(false, position.height) -
         height -
-        height2 -
         height3 -
+        height4 -
         height6 -
         40
     );
@@ -122,7 +122,7 @@ const SignWindow = ({ setVisible, para, reload, modal = false }: IWindow) => {
         height6 -
         40
     );
-  }, [position.height, webheight]);
+  }, []);
 
   const onClose = () => {
     setFileList([]);

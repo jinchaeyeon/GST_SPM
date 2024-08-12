@@ -403,17 +403,7 @@ const KendoWindow = ({ setVisible, setData, modal = false }: IKendoWindow) => {
         height7 +
         2
     );
-  }, [
-    tabSelected,
-    position.height,
-    webheight,
-    webheight2,
-    webheight3,
-    webheight4,
-    webheight5,
-    webheight6,
-    webheight7,
-  ]);
+  }, [tabSelected]);
 
   const onChangePostion = (position: any) => {
     setPosition(position);
@@ -486,6 +476,7 @@ const KendoWindow = ({ setVisible, setData, modal = false }: IKendoWindow) => {
   };
 
   const onClose = () => {
+    setisFilterHideStates2(true);
     setVisible(false);
   };
 
@@ -1074,9 +1065,11 @@ const KendoWindow = ({ setVisible, setData, modal = false }: IKendoWindow) => {
         isSearch: true,
       }));
     }
-    if (isMobile && swiper) {
-      swiper.slideTo(0);
-      setisFilterHideStates2(true);
+    if (tabSelected == 0 || tabSelected == 2) {
+      if (isMobile && swiper) {
+        swiper.slideTo(0);
+        setisFilterHideStates2(true);
+      }
     }
   };
 
@@ -1177,6 +1170,9 @@ const KendoWindow = ({ setVisible, setData, modal = false }: IKendoWindow) => {
     const selectedRowData = event.dataItems[selectedIdx];
 
     fetchDocument("Meeting", selectedRowData.document_id);
+    if (isMobile && swiper) {
+      swiper.slideTo(1);
+    }
   };
 
   const fetchDocument = async (type: string, ref_key: string, key?: any) => {
@@ -2529,7 +2525,7 @@ const KendoWindow = ({ setVisible, setData, modal = false }: IKendoWindow) => {
                   <GridTitle>프로젝트 상세 항목 리스트</GridTitle>
                 </GridTitleContainer>
                 <Grid
-                  style={{ height: mobileheight3 }}
+                  style={{ height: isMobile ? mobileheight3 : webheight4 }}
                   data={process(
                     mainDataResult2.data.map((row) => ({
                       ...row,
@@ -2875,7 +2871,7 @@ const KendoWindow = ({ setVisible, setData, modal = false }: IKendoWindow) => {
                 <GridContainer>
                   <GridTitleContainer className="ButtonContainer2">
                     <GridTitle>
-                      회의록 요구사항 리스트{" "}
+                      회의록 요구사항 리스트
                       <Button
                         themeColor={"primary"}
                         fillMode={"flat"}
