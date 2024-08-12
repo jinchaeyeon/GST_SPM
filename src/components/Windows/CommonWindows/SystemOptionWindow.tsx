@@ -1,6 +1,4 @@
-import { useEffect, useState } from "react";
-import * as React from "react";
-import { Window, WindowMoveEvent } from "@progress/kendo-react-dialogs";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { useApi } from "../../../hooks/api";
 import {
   BottomContainer,
@@ -14,39 +12,64 @@ import {
   FormRenderProps,
 } from "@progress/kendo-react-form";
 import { FormCheckBox, FormNumericTextBox } from "../../Editors";
-import { validator, getYn, getBooleanFromYn } from "../../CommonFunction";
+import {
+  validator,
+  getYn,
+  getBooleanFromYn,
+  getHeight,
+  getWindowDeviceHeight,
+} from "../../CommonFunction";
 import { Button } from "@progress/kendo-react-buttons";
 import { IWindowPosition } from "../../../hooks/interfaces";
+import Window from "../WindowComponent/Window";
 
 type TKendoWindow = {
   setVisible(t: boolean): void;
 };
 
+var height = 0;
+var height2 = 0;
+var height3 = 0;
+
 const KendoWindow = ({ setVisible }: TKendoWindow) => {
+  let deviceWidth = window.innerWidth;
+  let deviceHeight = document.documentElement.clientHeight;
+  let isMobile = deviceWidth <= 1200;
+
   const [position, setPosition] = useState<IWindowPosition>({
-    left: 300,
-    top: 100,
-    width: 350,
-    height: 520,
+    left: isMobile == true ? 0 : (deviceWidth - 350) / 2,
+    top: isMobile == true ? 0 : (deviceHeight - 520) / 2,
+    width: isMobile == true ? deviceWidth : 350,
+    height: isMobile == true ? deviceHeight : 520,
   });
 
-  const handleMove = (event: WindowMoveEvent) => {
-    setPosition({ ...position, left: event.left, top: event.top });
-  };
-  const handleResize = (event: WindowMoveEvent) => {
-    setPosition({
-      left: event.left,
-      top: event.top,
-      width: event.width,
-      height: event.height,
-    });
+  const [mobileheight, setMobileHeight] = useState(0);
+  const [webheight, setWebHeight] = useState(0);
+
+  useLayoutEffect(() => {
+    height = getHeight(".k-window-titlebar");
+    height2 = getHeight(".WindowTitleContainer");
+    height3 = getHeight(".BottomContainer");
+    setMobileHeight(
+      getWindowDeviceHeight(true, deviceHeight) - height - height2 - height3
+    );
+    setWebHeight(
+      getWindowDeviceHeight(true, position.height) - height - height2 - height3
+    );
+  }, [webheight]);
+
+  const onChangePostion = (position: any) => {
+    setPosition(position);
+    setWebHeight(
+      getWindowDeviceHeight(true, position.height) - height - height2 - height3
+    );
   };
 
   const onClose = () => {
     setVisible(false);
   };
 
-  const [formKey, setFormKey] = React.useState(1);
+  const [formKey, setFormKey] = useState(1);
   const resetForm = () => {
     setFormKey(formKey + 1);
   };
@@ -186,12 +209,11 @@ const KendoWindow = ({ setVisible }: TKendoWindow) => {
 
   return (
     <Window
-      title={"시스템 옵션 (관리자)"}
-      width={position.width}
-      height={position.height}
-      onMove={handleMove}
-      onResize={handleResize}
-      onClose={onClose}
+      titles={"시스템 옵션 (관리자)"}
+      positions={position}
+      Close={onClose}
+      modals={true}
+      onChangePostion={onChangePostion}
     >
       <Form
         onSubmit={handleSubmit}
@@ -208,7 +230,11 @@ const KendoWindow = ({ setVisible }: TKendoWindow) => {
           notifyBeforePeriodDays: initialVal.notifyBeforePeriodDays,
         }}
         render={(formRenderProps: FormRenderProps) => (
-          <FormElement horizontal={true} className="sys-opt-wnd-form-elem">
+          <FormElement
+            horizontal={true}
+            className="sys-opt-wnd-form-elem"
+            style={{ height: webheight }}
+          >
             <fieldset className={"k-form-fieldset"}>
               <button
                 id="valueChanged"
@@ -289,16 +315,16 @@ const KendoWindow = ({ setVisible }: TKendoWindow) => {
                 />
               </FieldWrap>
             </fieldset>
-            <BottomContainer>
-              <ButtonContainer>
-                <Button type={"submit"} themeColor={"primary"} icon="save">
-                  저장
-                </Button>
-              </ButtonContainer>
-            </BottomContainer>
           </FormElement>
         )}
       />
+      <BottomContainer className="BottomContainer">
+        <ButtonContainer>
+          <Button type={"submit"} themeColor={"primary"} icon="save">
+            저장
+          </Button>
+        </ButtonContainer>
+      </BottomContainer>
     </Window>
   );
 };

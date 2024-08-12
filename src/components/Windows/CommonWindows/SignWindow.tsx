@@ -1,18 +1,20 @@
-import { useEffect, useState, useCallback, useRef } from "react";
-import * as React from "react";
-import { Window, WindowMoveEvent } from "@progress/kendo-react-dialogs";
+import { DataResult, getter, process, State } from "@progress/kendo-data-query";
+import { Button } from "@progress/kendo-react-buttons";
 import {
+  getSelectedState,
   Grid,
   GridColumn,
-  GridFooterCellProps,
-  GridSelectionChangeEvent,
-  getSelectedState,
   GridDataStateChangeEvent,
+  GridFooterCellProps,
   GridItemChangeEvent,
-  GridPageChangeEvent,
+  GridSelectionChangeEvent,
 } from "@progress/kendo-react-grid";
-import { DataResult, getter, process, State } from "@progress/kendo-data-query";
-import { useApi } from "../../../hooks/api";
+import { SignatureChangeEvent } from "@progress/kendo-react-inputs";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useRecoilState, useSetRecoilState } from "recoil";
+import SwiperCore from "swiper";
+import "swiper/css";
+import { Swiper, SwiperSlide } from "swiper/react";
 import {
   BottomContainer,
   ButtonContainer,
@@ -20,37 +22,32 @@ import {
   GridTitle,
   GridTitleContainer,
 } from "../../../CommonStyled";
-import { Iparameters } from "../../../store/types";
-import { Button } from "@progress/kendo-react-buttons";
-import {
-  UseBizComponent,
-  UseParaPc,
-  UseGetValueFromSessionItem,
-  UseMessages,
-} from "../../CommonFunction";
+import { useApi } from "../../../hooks/api";
 import { IWindowPosition } from "../../../hooks/interfaces";
-import {
-  PAGE_SIZE,
-  SELECTED_FIELD,
-  EDIT_FIELD,
-  COM_CODE_DEFAULT_VALUE,
-} from "../../CommonString";
-import {
-  getGridItemChangedData,
-  getQueryFromBizComponent,
-} from "../../CommonFunction";
-import { CellRender, RowRender } from "../../Renderers/Renderers";
-import { bytesToBase64 } from "byte-base64";
-import { useRecoilState, useSetRecoilState } from "recoil";
 import { isLoading, loginResultState } from "../../../store/atoms";
-import Sign from "../../Sign/Sign";
-import { SignatureChangeEvent } from "@progress/kendo-react-inputs";
-import RequiredHeader from "../../RequiredHeader";
+import { Iparameters } from "../../../store/types";
 import CheckBoxCell from "../../Cells/CheckBoxCell";
 import CheckBoxReadOnlyCell from "../../Cells/CheckBoxReadOnlyCell";
+import {
+  getGridItemChangedData,
+  getHeight,
+  getWindowDeviceHeight,
+  UseGetValueFromSessionItem,
+  UseParaPc,
+} from "../../CommonFunction";
+import { EDIT_FIELD, PAGE_SIZE, SELECTED_FIELD } from "../../CommonString";
+import { CellRender, RowRender } from "../../Renderers/Renderers";
+import RequiredHeader from "../../RequiredHeader";
+import Sign from "../../Sign/Sign";
+import Window from "../WindowComponent/Window";
 
 let deletedMainRows: any[] = [];
 let temp = 0;
+
+var index = 0;
+
+var height3 = 0;
+var height6 = 0;
 
 type IWindow = {
   setVisible(t: boolean): void;
@@ -72,29 +69,53 @@ const SignWindow = ({ setVisible, reference_key }: IWindow) => {
   const isAdmin = role === "ADMIN";
 
   let deviceWidth = window.innerWidth;
+  let deviceHeight = document.documentElement.clientHeight;
   let isMobile = deviceWidth <= 1200;
+
   const [position, setPosition] = useState<IWindowPosition>({
-    left: 300,
-    top: 100,
+    left: isMobile == true ? 0 : (deviceWidth - 1050) / 2,
+    top: isMobile == true ? 0 : (deviceHeight - 800) / 2,
     width: isMobile == true ? deviceWidth : 1050,
-    height: 800,
+    height: isMobile == true ? deviceHeight : 800,
   });
+
   const DATA_ITEM_KEY = "num";
   const idGetter = getter(DATA_ITEM_KEY);
   const [selectedState, setSelectedState] = useState<{
     [id: string]: boolean | number[];
   }>({});
 
-  const handleMove = (event: WindowMoveEvent) => {
-    setPosition({ ...position, left: event.left, top: event.top });
-  };
-  const handleResize = (event: WindowMoveEvent) => {
-    setPosition({
-      left: event.left,
-      top: event.top,
-      width: event.width,
-      height: event.height,
-    });
+  const [mobileheight, setMobileHeight] = useState(0);
+  const [mobileheight2, setMobileHeight2] = useState(0);
+  const [webheight, setWebHeight] = useState(0);
+  const [webheight2, setWebHeight2] = useState(0);
+  const [swiper, setSwiper] = useState<SwiperCore>();
+
+  useLayoutEffect(() => {
+    height3 = getHeight(".k-window-titlebar");
+    height6 = getHeight(".BottomContainer");
+    setMobileHeight(
+      getWindowDeviceHeight(false, deviceHeight) - height3 - height6
+    );
+    setMobileHeight2(
+      getWindowDeviceHeight(false, deviceHeight) - height3 - height6
+    );
+    setWebHeight(
+      (getWindowDeviceHeight(false, position.height) - height3 - height6) / 2
+    );
+    setWebHeight2(
+      (getWindowDeviceHeight(false, position.height) - height3 - height6) / 2
+    );
+  }, [position.height, webheight, webheight2]);
+
+  const onChangePostion = (position: any) => {
+    setPosition(position);
+    setWebHeight(
+      (getWindowDeviceHeight(false, position.height) - height3 - height6) / 2
+    );
+    setWebHeight2(
+      (getWindowDeviceHeight(false, position.height) - height3 - height6) / 2
+    );
   };
 
   const onClose = () => {
@@ -168,8 +189,7 @@ const SignWindow = ({ setVisible, reference_key }: IWindow) => {
         if (gridRef.current) {
           const findRowIndex = rows.findIndex(
             (row: any) =>
-              row.reference_key + "_" + row.seq ==
-              filters.find_row_value
+              row.reference_key + "_" + row.seq == filters.find_row_value
           );
           targetRowIndex = findRowIndex;
         }
@@ -182,7 +202,7 @@ const SignWindow = ({ setVisible, reference_key }: IWindow) => {
       setMainDataResult((prev) => {
         return {
           data: rows,
-           total: totalRowCnt == -1 ? 0 : totalRowCnt,
+          total: totalRowCnt == -1 ? 0 : totalRowCnt,
         };
       });
       if (totalRowCnt > 0) {
@@ -191,8 +211,7 @@ const SignWindow = ({ setVisible, reference_key }: IWindow) => {
             ? rows[0]
             : rows.find(
                 (row: any) =>
-                  row.reference_key + "_" + row.seq ==
-                  filters.find_row_value
+                  row.reference_key + "_" + row.seq == filters.find_row_value
               );
 
         if (selectedRow != undefined) {
@@ -469,7 +488,6 @@ const SignWindow = ({ setVisible, reference_key }: IWindow) => {
   };
 
   const onAddClick = () => {
-
     mainDataResult.data.map((item) => {
       if (item.num > temp) {
         temp = item.num;
@@ -498,25 +516,24 @@ const SignWindow = ({ setVisible, reference_key }: IWindow) => {
   };
 
   const onSave = async () => {
-    if(!navigator.onLine) {
+    if (!navigator.onLine) {
       alert("네트워크 연결상태를 확인해주세요.");
       setLoading(false);
       return false;
     }
-    
+
     const dataItem = mainDataResult.data.filter((item: any) => {
-      return (
-        (item.rowstatus === "N") &&
-        item.rowstatus !== undefined
-      );
+      return item.rowstatus === "N" && item.rowstatus !== undefined;
     });
     const dataItem2 = mainDataResult.data.filter((item: any) => {
-      return (
-        (item.rowstatus === "U") &&
-        item.rowstatus !== undefined
-      );
+      return item.rowstatus === "U" && item.rowstatus !== undefined;
     });
-    if (dataItem.length === 0 && dataItem2.length === 0 && deletedMainRows.length === 0) return false;
+    if (
+      dataItem.length === 0 &&
+      dataItem2.length === 0 &&
+      deletedMainRows.length === 0
+    )
+      return false;
 
     //검증
     let valid = true;
@@ -583,10 +600,7 @@ const SignWindow = ({ setVisible, reference_key }: IWindow) => {
             )[0];
             setFilters((prev) => ({
               ...prev,
-              find_row_value:
-                datas != undefined
-                  ? data.returnString
-                  : "",
+              find_row_value: datas != undefined ? data.returnString : "",
               pgNum: prev.pgNum,
               isSearch: true,
             }));
@@ -644,10 +658,7 @@ const SignWindow = ({ setVisible, reference_key }: IWindow) => {
           )[0];
           setFilters((prev) => ({
             ...prev,
-            find_row_value:
-              datas != undefined
-                ? data.returnString
-                : "",
+            find_row_value: datas != undefined ? data.returnString : "",
             isSearch: true,
           }));
         }
@@ -701,10 +712,7 @@ const SignWindow = ({ setVisible, reference_key }: IWindow) => {
           )[0];
           setFilters((prev) => ({
             ...prev,
-            find_row_value:
-              datas != undefined
-                ? data.returnString
-                : "",
+            find_row_value: datas != undefined ? data.returnString : "",
             isSearch: true,
           }));
         }
@@ -717,138 +725,324 @@ const SignWindow = ({ setVisible, reference_key }: IWindow) => {
 
   return (
     <Window
-      title={"미팅 참석자 등록"}
-      width={position.width}
-      height={position.height}
-      onMove={handleMove}
-      onResize={handleResize}
-      onClose={onClose}
-      modal={true}
+      titles={"미팅 참석자 등록"}
+      positions={position}
+      Close={onClose}
+      modals={true}
+      onChangePostion={onChangePostion}
     >
-      <GridContainer height={`calc(50% - ${leftOverHeight}px)`}>
-        <GridTitleContainer>
-          <GridTitle>참석자</GridTitle>
-          <ButtonContainer>
-            <Button
-              onClick={onAddClick}
-              themeColor={"primary"}
-              icon="plus"
-              title="행 추가"
-            ></Button>
-            <Button
-              onClick={onDeleteClick}
-              fillMode="outline"
-              themeColor={"primary"}
-              icon="minus"
-              title="행 삭제"
-            ></Button>
-          </ButtonContainer>
-        </GridTitleContainer>
-        <Grid
-          style={{ height: "100%"}}
-          data={process(
-            mainDataResult.data.map((row) => ({
-              ...row,
-              [SELECTED_FIELD]: selectedState[idGetter(row)], //선택된 데이터
-            })),
-            mainDataState
-          )}
-          onDataStateChange={onMainDataStateChange}
-          {...mainDataState}
-          //선택 기능
-          dataItemKey={DATA_ITEM_KEY}
-          selectedField={SELECTED_FIELD}
-          selectable={{
-            enabled: true,
-            mode: "single",
+      {isMobile ? (
+        <Swiper
+          onSwiper={(swiper) => {
+            setSwiper(swiper);
           }}
-          onSelectionChange={onMainSelectionChange}
-          //스크롤 조회기능
-          fixedScroll={true}
-          total={mainDataResult.total}
-          ref={gridRef}
-          //정렬기능
-          sortable={true}
-          onSortChange={onMainSortChange}
-          //컬럼순서조정
-          reorderable={true}
-          //컬럼너비조정
-          resizable={true}
-          //더블클릭
-          onItemChange={onMainItemChange3}
-          cellRender={customCellRender3}
-          rowRender={customRowRender3}
-          editField={EDIT_FIELD}
+          onActiveIndexChange={(swiper) => {
+            index = swiper.activeIndex;
+          }}
         >
-          <GridColumn field="rowstatus" title=" " width="48px" />
-          <GridColumn
-            field="part"
-            title="소속 및 부서"
-            width="250px"
-            footerCell={mainTotalFooterCell}
-          />
-          <GridColumn
-            field="name"
-            title="이름"
-            width="200px"
-            headerCell={RequiredHeader}
-          />
-          <GridColumn field="remarks" title="비고" width="350px" />
-          <GridColumn
-            field="is_lock"
-            title="수정 잠금"
-            width="150px"
-            cell={isAdmin ? CheckBoxCell : CheckBoxReadOnlyCell}
-          />
-        </Grid>
-      </GridContainer>
-      <GridContainer height={`calc(50% - ${leftOverHeight}px)`}>
-        <GridTitleContainer>
-          <GridTitle>서명란</GridTitle>
-        </GridTitleContainer>
-        <Sign
-          value={
-            mainDataResult.data.filter(
-              (item) => item.num == Object.getOwnPropertyNames(selectedState)[0]
-            )[0] == undefined
-              ? ""
-              : mainDataResult.data.filter(
-                  (item) =>
-                    item.num == Object.getOwnPropertyNames(selectedState)[0]
-                )[0].signature
-          }
-          disabled={
-            mainDataResult.data.filter(
-              (item) => item.num == Object.getOwnPropertyNames(selectedState)[0]
-            )[0] == undefined
-              ? true
-              : mainDataResult.data.filter(
-                  (item) =>
-                    item.num == Object.getOwnPropertyNames(selectedState)[0]
-                )[0].is_lock == "Y" ||
+          <SwiperSlide key={0}>
+            <GridContainer height={`${mobileheight}px`}>
+              <GridTitleContainer>
+                <GridTitle>
+                  참석자
+                  <Button
+                    themeColor={"primary"}
+                    fillMode={"flat"}
+                    icon={"chevron-right"}
+                    onClick={() => {
+                      if (swiper) {
+                        swiper.slideTo(1);
+                      }
+                    }}
+                  ></Button>
+                </GridTitle>
+                <ButtonContainer>
+                  <Button
+                    onClick={onAddClick}
+                    themeColor={"primary"}
+                    icon="plus"
+                    title="행 추가"
+                  ></Button>
+                  <Button
+                    onClick={onDeleteClick}
+                    fillMode="outline"
+                    themeColor={"primary"}
+                    icon="minus"
+                    title="행 삭제"
+                  ></Button>
+                </ButtonContainer>
+              </GridTitleContainer>
+              <Grid
+                style={{ height: "100%" }}
+                data={process(
+                  mainDataResult.data.map((row) => ({
+                    ...row,
+                    [SELECTED_FIELD]: selectedState[idGetter(row)], //선택된 데이터
+                  })),
+                  mainDataState
+                )}
+                onDataStateChange={onMainDataStateChange}
+                {...mainDataState}
+                //선택 기능
+                dataItemKey={DATA_ITEM_KEY}
+                selectedField={SELECTED_FIELD}
+                selectable={{
+                  enabled: true,
+                  mode: "single",
+                }}
+                onSelectionChange={onMainSelectionChange}
+                //스크롤 조회기능
+                fixedScroll={true}
+                total={mainDataResult.total}
+                ref={gridRef}
+                //정렬기능
+                sortable={true}
+                onSortChange={onMainSortChange}
+                //컬럼순서조정
+                reorderable={true}
+                //컬럼너비조정
+                resizable={true}
+                //더블클릭
+                onItemChange={onMainItemChange3}
+                cellRender={customCellRender3}
+                rowRender={customRowRender3}
+                editField={EDIT_FIELD}
+              >
+                <GridColumn field="rowstatus" title=" " width="48px" />
+                <GridColumn
+                  field="part"
+                  title="소속 및 부서"
+                  width="250px"
+                  footerCell={mainTotalFooterCell}
+                />
+                <GridColumn
+                  field="name"
+                  title="이름"
+                  width="200px"
+                  headerCell={RequiredHeader}
+                />
+                <GridColumn field="remarks" title="비고" width="350px" />
+                <GridColumn
+                  field="is_lock"
+                  title="수정 잠금"
+                  width="150px"
+                  cell={isAdmin ? CheckBoxCell : CheckBoxReadOnlyCell}
+                />
+              </Grid>
+            </GridContainer>
+          </SwiperSlide>
+          <SwiperSlide key={1}>
+            <GridContainer height={`${mobileheight2}px`}>
+              <GridTitleContainer>
+                <GridTitle>
+                  <Button
+                    themeColor={"primary"}
+                    fillMode={"flat"}
+                    icon={"chevron-left"}
+                    onClick={() => {
+                      if (swiper) {
+                        swiper.slideTo(0);
+                      }
+                    }}
+                  ></Button>
+                  서명란
+                </GridTitle>
+              </GridTitleContainer>
+              <Sign
+                value={
+                  mainDataResult.data.filter(
+                    (item) =>
+                      item.num == Object.getOwnPropertyNames(selectedState)[0]
+                  )[0] == undefined
+                    ? ""
+                    : mainDataResult.data.filter(
+                        (item) =>
+                          item.num ==
+                          Object.getOwnPropertyNames(selectedState)[0]
+                      )[0].signature
+                }
+                disabled={
+                  mainDataResult.data.filter(
+                    (item) =>
+                      item.num == Object.getOwnPropertyNames(selectedState)[0]
+                  )[0] == undefined
+                    ? true
+                    : mainDataResult.data.filter(
+                        (item) =>
+                          item.num ==
+                          Object.getOwnPropertyNames(selectedState)[0]
+                      )[0].is_lock == "Y" ||
+                      mainDataResult.data.filter(
+                        (item) =>
+                          item.num ==
+                          Object.getOwnPropertyNames(selectedState)[0]
+                      )[0].is_lock == true
+                    ? true
+                    : false
+                }
+                onChange={changeSign}
+              />
+            </GridContainer>
+          </SwiperSlide>
+        </Swiper>
+      ) : (
+        <>
+          <GridContainer height={`${webheight}px`}>
+            <GridTitleContainer>
+              <GridTitle>참석자</GridTitle>
+              <ButtonContainer>
+                <Button
+                  onClick={onAddClick}
+                  themeColor={"primary"}
+                  icon="plus"
+                  title="행 추가"
+                ></Button>
+                <Button
+                  onClick={onDeleteClick}
+                  fillMode="outline"
+                  themeColor={"primary"}
+                  icon="minus"
+                  title="행 삭제"
+                ></Button>
+              </ButtonContainer>
+            </GridTitleContainer>
+            <Grid
+              style={{ height: "100%" }}
+              data={process(
+                mainDataResult.data.map((row) => ({
+                  ...row,
+                  [SELECTED_FIELD]: selectedState[idGetter(row)], //선택된 데이터
+                })),
+                mainDataState
+              )}
+              onDataStateChange={onMainDataStateChange}
+              {...mainDataState}
+              //선택 기능
+              dataItemKey={DATA_ITEM_KEY}
+              selectedField={SELECTED_FIELD}
+              selectable={{
+                enabled: true,
+                mode: "single",
+              }}
+              onSelectionChange={onMainSelectionChange}
+              //스크롤 조회기능
+              fixedScroll={true}
+              total={mainDataResult.total}
+              ref={gridRef}
+              //정렬기능
+              sortable={true}
+              onSortChange={onMainSortChange}
+              //컬럼순서조정
+              reorderable={true}
+              //컬럼너비조정
+              resizable={true}
+              //더블클릭
+              onItemChange={onMainItemChange3}
+              cellRender={customCellRender3}
+              rowRender={customRowRender3}
+              editField={EDIT_FIELD}
+            >
+              <GridColumn field="rowstatus" title=" " width="48px" />
+              <GridColumn
+                field="part"
+                title="소속 및 부서"
+                width="250px"
+                footerCell={mainTotalFooterCell}
+              />
+              <GridColumn
+                field="name"
+                title="이름"
+                width="200px"
+                headerCell={RequiredHeader}
+              />
+              <GridColumn field="remarks" title="비고" width="350px" />
+              <GridColumn
+                field="is_lock"
+                title="수정 잠금"
+                width="150px"
+                cell={isAdmin ? CheckBoxCell : CheckBoxReadOnlyCell}
+              />
+            </Grid>
+          </GridContainer>
+          <GridContainer height={`${webheight2}px`}>
+            <GridTitleContainer>
+              <GridTitle>서명란</GridTitle>
+            </GridTitleContainer>
+            <Sign
+              value={
                 mainDataResult.data.filter(
                   (item) =>
                     item.num == Object.getOwnPropertyNames(selectedState)[0]
-                )[0].is_lock == true
-              ? true
-              : false
-          }
-          onChange={changeSign}
-        />
-      </GridContainer>
-      <BottomContainer>
-        <div style={{float: "left", paddingTop: "10px", width: "70%"}}>
-          ※ 회의(교육) 내용의 보다 정확한 보관 및 기록을 위하여 녹음되고 있음을 안내드립니다.
+                )[0] == undefined
+                  ? ""
+                  : mainDataResult.data.filter(
+                      (item) =>
+                        item.num == Object.getOwnPropertyNames(selectedState)[0]
+                    )[0].signature
+              }
+              disabled={
+                mainDataResult.data.filter(
+                  (item) =>
+                    item.num == Object.getOwnPropertyNames(selectedState)[0]
+                )[0] == undefined
+                  ? true
+                  : mainDataResult.data.filter(
+                      (item) =>
+                        item.num == Object.getOwnPropertyNames(selectedState)[0]
+                    )[0].is_lock == "Y" ||
+                    mainDataResult.data.filter(
+                      (item) =>
+                        item.num == Object.getOwnPropertyNames(selectedState)[0]
+                    )[0].is_lock == true
+                  ? true
+                  : false
+              }
+              onChange={changeSign}
+            />
+          </GridContainer>
+        </>
+      )}
+      <BottomContainer
+        className="BottomContainer"
+        style={
+          isMobile
+            ? {
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+              }
+            : undefined
+        }
+      >
+        <div
+          style={{
+            float: "left",
+            paddingTop: "10px",
+            width: isMobile ? " 100%" : "70%",
+          }}
+        >
+          ※ 회의(교육) 내용의 보다 정확한 보관 및 기록을 위하여 녹음되고 있음을
+          안내드립니다.
         </div>
-        <div>
-        <ButtonContainer>
-          <Button themeColor={"primary"} onClick={onSave}>
-            확인
-          </Button>
-          <Button themeColor={"primary"} fillMode={"outline"} onClick={onClose}>
-            닫기
-          </Button>
-        </ButtonContainer>
+        <div
+          style={
+            isMobile
+              ? { float: "right", marginTop: "auto", width: "100%" }
+              : undefined
+          }
+        >
+          <ButtonContainer>
+            <Button themeColor={"primary"} onClick={onSave}>
+              확인
+            </Button>
+            <Button
+              themeColor={"primary"}
+              fillMode={"outline"}
+              onClick={onClose}
+            >
+              닫기
+            </Button>
+          </ButtonContainer>
         </div>
       </BottomContainer>
     </Window>
