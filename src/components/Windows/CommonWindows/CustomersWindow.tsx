@@ -82,7 +82,7 @@ const KendoWindow = ({ setVisible, workType, setData, para, modal = false }: IKe
   const onChangePostion = (position: any) => {
     setPosition(position);
     setWebHeight(
-      getWindowDeviceHeight(false, position.height) -
+      getWindowDeviceHeight(true, position.height) -
         height -
         height2 -
         height3

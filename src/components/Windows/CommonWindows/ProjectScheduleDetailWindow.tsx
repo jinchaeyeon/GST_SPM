@@ -1,14 +1,10 @@
 import { FilterDescriptor, filterBy } from "@progress/kendo-data-query";
 import { Button } from "@progress/kendo-react-buttons";
 import { DatePicker } from "@progress/kendo-react-dateinputs";
-import { Window, WindowMoveEvent } from "@progress/kendo-react-dialogs";
-import {
-  ComboBoxFilterChangeEvent
-} from "@progress/kendo-react-dropdowns";
+import { ComboBoxFilterChangeEvent } from "@progress/kendo-react-dropdowns";
 import { Input, NumericTextBox, TextArea } from "@progress/kendo-react-inputs";
 import { bytesToBase64 } from "byte-base64";
-import * as React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { useRecoilState, useSetRecoilState } from "recoil";
 import {
   BottomContainer,
@@ -29,9 +25,12 @@ import {
   UseParaPc,
   convertDateToStrWithTime2,
   getCodeFromValue,
+  getHeight,
+  getWindowDeviceHeight,
   projectItemQueryStr,
   usersQueryStr,
 } from "../../CommonFunction";
+import Window from "../WindowComponent/Window";
 
 type IKendoWindow = {
   setVisible(t: boolean): void;
@@ -70,13 +69,41 @@ const defaultDetailData = {
   appointment_label: "0",
 };
 
+var height = 0;
+var height2 = 0;
+
 const KendoWindow = ({ setVisible, data, reload }: IKendoWindow) => {
+  let deviceWidth = window.innerWidth;
+  let deviceHeight = document.documentElement.clientHeight;
+  let isMobile = deviceWidth <= 1200;
+
   const [position, setPosition] = useState<IWindowPosition>({
-    left: 300,
-    top: 100,
-    width: 600,
-    height: 350,
+    left: isMobile == true ? 0 : (deviceWidth - 600) / 2,
+    top: isMobile == true ? 0 : (deviceHeight - 350) / 2,
+    width: isMobile == true ? deviceWidth : 600,
+    height: isMobile == true ? deviceHeight : 350,
   });
+
+  const [mobileheight, setMobileHeight] = useState(0);
+  const [webheight, setWebHeight] = useState(0);
+
+  useLayoutEffect(() => {
+    height = getHeight(".k-window-titlebar");
+    height2 = getHeight(".BottomContainer");
+    setMobileHeight(
+      getWindowDeviceHeight(false, deviceHeight) - height - height2 - 15
+    );
+    setWebHeight(
+      getWindowDeviceHeight(false, position.height) - height - height2 - 15
+    );
+  }, [webheight]);
+
+  const onChangePostion = (position: any) => {
+    setPosition(position);
+    setWebHeight(
+      getWindowDeviceHeight(false, position.height) - height - height2
+    );
+  };
   const processApi = useApi();
   const [pc, setPc] = useState("");
   UseParaPc(setPc);
@@ -116,18 +143,6 @@ const KendoWindow = ({ setVisible, data, reload }: IKendoWindow) => {
       ...prev,
       [name]: value,
     }));
-  };
-
-  const handleMove = (event: WindowMoveEvent) => {
-    setPosition({ ...position, left: event.left, top: event.top });
-  };
-  const handleResize = (event: WindowMoveEvent) => {
-    setPosition({
-      left: event.left,
-      top: event.top,
-      width: event.width,
-      height: event.height,
-    });
   };
 
   const onClose = () => {
@@ -231,9 +246,8 @@ const KendoWindow = ({ setVisible, data, reload }: IKendoWindow) => {
 
   const [usersData, setUsersData] = useState([]);
   const [projectItems, setProjectItems] = useState([]);
-  const [userFilter, setUserFilter] = React.useState<FilterDescriptor>();
-  const [prjItemsFilter, setPrjItemsFilter] =
-    React.useState<FilterDescriptor>();
+  const [userFilter, setUserFilter] = useState<FilterDescriptor>();
+  const [prjItemsFilter, setPrjItemsFilter] = useState<FilterDescriptor>();
   const handleUserFilterChange = (event: ComboBoxFilterChangeEvent) => {
     if (event) {
       setUserFilter(event.filter);
@@ -302,15 +316,13 @@ const KendoWindow = ({ setVisible, data, reload }: IKendoWindow) => {
 
   return (
     <Window
-      title={"일정 입력"}
-      width={position.width}
-      height={position.height}
-      onMove={handleMove}
-      onResize={handleResize}
-      onClose={onClose}
-      modal={true}
+      titles={"일정 입력"}
+      positions={position}
+      Close={onClose}
+      modals={true}
+      onChangePostion={onChangePostion}
     >
-      <FormBoxWrap>
+      <FormBoxWrap style={{ height: isMobile? mobileheight : webheight }}>
         <FormBox>
           <tbody>
             <tr>
@@ -407,7 +419,7 @@ const KendoWindow = ({ setVisible, data, reload }: IKendoWindow) => {
           </tbody>
         </FormBox>
       </FormBoxWrap>
-      <BottomContainer>
+      <BottomContainer className="BottomContainer">
         <ButtonContainer>
           <Button themeColor={"primary"} onClick={onConfirmClick}>
             확인

@@ -1,13 +1,10 @@
 import { FilterDescriptor, filterBy } from "@progress/kendo-data-query";
 import { Button } from "@progress/kendo-react-buttons";
 import { DatePicker } from "@progress/kendo-react-dateinputs";
-import { Window, WindowMoveEvent } from "@progress/kendo-react-dialogs";
-import {
-  ComboBoxFilterChangeEvent
-} from "@progress/kendo-react-dropdowns";
+import { ComboBoxFilterChangeEvent } from "@progress/kendo-react-dropdowns";
 import { Input } from "@progress/kendo-react-inputs";
 import { bytesToBase64 } from "byte-base64";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useRecoilState, useSetRecoilState } from "recoil";
 import {
@@ -31,10 +28,20 @@ import {
 } from "../../../store/columns/common-columns";
 import { TEditorHandle } from "../../../store/types";
 import CustomMultiColumnComboBox from "../../ComboBoxes/CustomMultiColumnComboBox";
-import { UseParaPc, convertDateToStr, toDate } from "../../CommonFunction";
+import {
+  UseParaPc,
+  convertDateToStr,
+  getHeight,
+  getWindowDeviceHeight,
+  toDate,
+} from "../../CommonFunction";
 import RichEditor from "../../RichEditor";
 import CustomersWindow from "./CustomersWindow";
 import PopUpAttachmentsWindow from "./PopUpAttachmentsWindow";
+import Window from "../WindowComponent/Window";
+import SwiperCore from "swiper";
+import "swiper/css";
+import { Swiper, SwiperSlide } from "swiper/react";
 
 type IKendoWindow = {
   setVisible(t: boolean): void;
@@ -58,6 +65,15 @@ where group_code ='BA012_GST'`;
 
 const usersQueryStr = `SELECT user_id, user_name + (CASE WHEN rtrchk = 'Y' THEN '-퇴' ELSE '' END) as user_name FROM sysUserMaster ORDER BY (CASE WHEN rtrchk = 'Y' THEN 2 ELSE 1 END), user_id`;
 
+var index = 0;
+
+var height = 0;
+var height2 = 0;
+var height3 = 0;
+var height4 = 0;
+var height5 = 0;
+var height6 = 0;
+
 const KendoWindow = ({
   setVisible,
   reload,
@@ -72,30 +88,66 @@ const KendoWindow = ({
   UseParaPc(setPc);
   const setLoading = useSetRecoilState(isLoading);
   let deviceWidth = window.innerWidth;
+  let deviceHeight = document.documentElement.clientHeight;
   let isMobile = deviceWidth <= 1200;
   const [position, setPosition] = useState<IWindowPosition>({
-    left: 300,
-    top: 100,
+    left: isMobile == true ? 0 : (deviceWidth - 1200) / 2,
+    top: isMobile == true ? 0 : (deviceHeight - 900) / 2,
     width: isMobile == true ? deviceWidth : 1200,
-    height: 900,
+    height: isMobile == true ? deviceHeight : 900,
   });
+
+  const [mobileheight, setMobileHeight] = useState(0);
+  const [mobileheight2, setMobileHeight2] = useState(0);
+  const [webheight, setWebHeight] = useState(0);
+  const [swiper, setSwiper] = useState<SwiperCore>();
+
+  useLayoutEffect(() => {
+    height = getHeight(".ButtonContainer");
+    height2 = getHeight(".ButtonContainer2");
+    height3 = getHeight(".k-window-titlebar");
+    height4 = getHeight(".FormBox");
+    height5 = getHeight(".FormBoxWrap2");
+    height6 = getHeight(".BottomContainer");
+    setMobileHeight(
+      getWindowDeviceHeight(false, deviceHeight) -
+        height -
+        height3 -
+        height6 -
+        15
+    );
+    setMobileHeight2(
+      getWindowDeviceHeight(false, deviceHeight) - height3 - height6
+    );
+    setWebHeight(
+      getWindowDeviceHeight(false, position.height) -
+        height -
+        height3 -
+        height4 -
+        height6 -
+        35
+    );
+  }, [position.height, webheight]);
+
+  const onChangePostion = (position: any) => {
+    setPosition(position);
+    setWebHeight(
+      getWindowDeviceHeight(false, position.height) -
+        height -
+        height2 -
+        height3 -
+        height4 -
+        height5 -
+        height6
+    );
+  };
+
   const [fileList, setFileList] = useState<FileList | any[]>([]);
   const [savenmList, setSavenmList] = useState<string[]>([]);
   const [fileList2, setFileList2] = useState<FileList | any[]>([]);
   const [savenmList2, setSavenmList2] = useState<string[]>([]);
   const location = useLocation();
   const pathname = location.pathname.replace("/", "");
-  const handleMove = (event: WindowMoveEvent) => {
-    setPosition({ ...position, left: event.left, top: event.top });
-  };
-  const handleResize = (event: WindowMoveEvent) => {
-    setPosition({
-      left: event.left,
-      top: event.top,
-      width: event.width,
-      height: event.height,
-    });
-  };
 
   const onClose = () => {
     setFileList([]);
@@ -735,228 +787,494 @@ const KendoWindow = ({
 
   return (
     <Window
-      title={"접수 내용 작성"}
-      width={position.width}
-      height={position.height}
-      onMove={handleMove}
-      onResize={handleResize}
-      onClose={onClose}
-      modal={modal}
+      titles={"접수 내용 작성"}
+      positions={position}
+      Close={onClose}
+      modals={modal}
+      onChangePostion={onChangePostion}
     >
-      <GridTitleContainer>
-        <GridTitle>접수 기본정보</GridTitle>
-      </GridTitleContainer>
-      <FormBoxWrap border={true}>
-        <FormBox>
-          <tbody>
-            <tr>
-              <th>업체코드</th>
-              <td>
-                <div className="filter-item-wrap">
-                  <Input
-                    name="custcd"
-                    value={Information.custcd}
-                    className="readonly"
-                  />
+      {isMobile ? (
+        <Swiper
+          onSwiper={(swiper) => {
+            setSwiper(swiper);
+          }}
+          onActiveIndexChange={(swiper) => {
+            index = swiper.activeIndex;
+          }}
+        >
+          <SwiperSlide key={0}>
+            <GridTitleContainer className="ButtonContainer">
+              <GridTitle>
+                접수 기본정보
+                <Button
+                  themeColor={"primary"}
+                  fillMode={"flat"}
+                  icon={"chevron-right"}
+                  onClick={() => {
+                    if (swiper) {
+                      swiper.slideTo(1);
+                    }
+                  }}
+                ></Button>
+              </GridTitle>
+            </GridTitleContainer>
+            <FormBoxWrap
+              border={true}
+              style={{ height: mobileheight, overflow: "auto" }}
+            >
+              <FormBox className="FormBox">
+                <tbody>
+                  <tr>
+                    <th>업체코드</th>
+                    <td>
+                      <div className="filter-item-wrap">
+                        <Input
+                          name="custcd"
+                          value={Information.custcd}
+                          className="readonly"
+                        />
+                        <Button
+                          icon="more-horizontal"
+                          fillMode={"flat"}
+                          onClick={() => setCustWindowVisible(true)}
+                        />
+                      </div>
+                    </td>
+                    <th>업체명</th>
+                    <td colSpan={3}>
+                      <CustomMultiColumnComboBox
+                        name="custnm"
+                        data={
+                          filter ? filterBy(custListData, filter) : custListData
+                        }
+                        value={Information.custnm}
+                        columns={custTypeColumns}
+                        textField={"custnm"}
+                        onChange={filterComboBoxChange}
+                        filterable={true}
+                        onFilterChange={handleFilterChange}
+                        className="required"
+                      />
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>고객명</th>
+                    <td>
+                      <Input
+                        name="user_name"
+                        type="text"
+                        value={Information.user_name}
+                        className="required"
+                        onChange={filterInputChange}
+                      />
+                    </td>
+                    <th>연락처</th>
+                    <td colSpan={3}>
+                      <Input
+                        name="user_tel"
+                        type="text"
+                        value={Information.user_tel}
+                        onChange={filterInputChange}
+                      />
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>요청일</th>
+                    <td>
+                      <DatePicker
+                        name="request_date"
+                        value={Information.request_date}
+                        onChange={filterInputChange}
+                        format="yyyy-MM-dd"
+                        className="required"
+                        placeholder=""
+                      />
+                    </td>
+                    <th>접수일</th>
+                    <td>
+                      <DatePicker
+                        name="reception_date"
+                        value={Information.reception_date}
+                        onChange={filterInputChange}
+                        format="yyyy-MM-dd"
+                        className="required"
+                        placeholder=""
+                      />
+                    </td>
+                    <th>접수구분</th>
+                    <td>
+                      <CustomMultiColumnComboBox
+                        name="reception_type"
+                        data={
+                          filter2
+                            ? filterBy(receptionTypeData, filter2)
+                            : receptionTypeData
+                        }
+                        value={Information.reception_type}
+                        columns={dataTypeColumns}
+                        textField={"code_name"}
+                        onChange={filterComboBoxChange}
+                        filterable={true}
+                        onFilterChange={handleFilterChange2}
+                        className="required"
+                      />
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>접수자</th>
+                    <td>
+                      <CustomMultiColumnComboBox
+                        name="reception_person"
+                        data={
+                          filter3 ? filterBy(usersData, filter3) : usersData
+                        }
+                        value={Information.reception_person}
+                        columns={userColumns}
+                        textField={"user_name"}
+                        onChange={filterComboBoxChange}
+                        filterable={true}
+                        onFilterChange={handleFilterChange3}
+                        className="required"
+                      />
+                    </td>
+                    <th>Value 구분</th>
+                    <td>
+                      <CustomMultiColumnComboBox
+                        name="value_code3"
+                        data={
+                          filter4
+                            ? filterBy(valuecodeItems, filter4)
+                            : valuecodeItems
+                        }
+                        value={Information.value_code3}
+                        columns={dataTypeColumns2}
+                        textField={"code_name"}
+                        onChange={filterComboBoxChange}
+                        filterable={true}
+                        onFilterChange={handleFilterChange4}
+                      />
+                    </td>
+                    <th>접수소요시간</th>
+                    <td>
+                      <Input
+                        name="reception_time"
+                        type="number"
+                        value={Information.reception_time}
+                        onChange={filterInputChange}
+                      />
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>완료예정일</th>
+                    <td>
+                      <DatePicker
+                        name="be_finished_date"
+                        value={Information.be_finished_date}
+                        onChange={filterInputChange}
+                        format="yyyy-MM-dd"
+                        placeholder=""
+                      />
+                    </td>
+                    <th>접수첨부자료</th>
+                    <td colSpan={3}>
+                      <Input
+                        name="attach_files"
+                        type="text"
+                        value={Information.attach_files}
+                        className="readonly"
+                      />
+                      <ButtonInGridInput>
+                        <Button
+                          onClick={onAttWndClick}
+                          icon="more-horizontal"
+                          fillMode="flat"
+                        />
+                      </ButtonInGridInput>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>제목</th>
+                    <td colSpan={5}>
+                      <Input
+                        name="title"
+                        type="text"
+                        value={Information.title}
+                        onChange={filterInputChange}
+                        className="required"
+                      />
+                    </td>
+                  </tr>
+                </tbody>
+              </FormBox>
+            </FormBoxWrap>
+          </SwiperSlide>
+          <SwiperSlide key={1}>
+            <GridContainer height={`${mobileheight2}px`}>
+              <GridTitleContainer className="ButtonContainer2">
+                <GridTitle>
                   <Button
-                    icon="more-horizontal"
+                    themeColor={"primary"}
                     fillMode={"flat"}
-                    onClick={() => setCustWindowVisible(true)}
-                  />
-                </div>
-              </td>
-              <th>업체명</th>
-              <td colSpan={3}>
-                <CustomMultiColumnComboBox
-                  name="custnm"
-                  data={filter ? filterBy(custListData, filter) : custListData}
-                  value={Information.custnm}
-                  columns={custTypeColumns}
-                  textField={"custnm"}
-                  onChange={filterComboBoxChange}
-                  filterable={true}
-                  onFilterChange={handleFilterChange}
-                  className="required"
-                />
-              </td>
-            </tr>
-            <tr>
-              <th>고객명</th>
-              <td>
-                <Input
-                  name="user_name"
-                  type="text"
-                  value={Information.user_name}
-                  className="required"
-                  onChange={filterInputChange}
-                />
-              </td>
-              <th>연락처</th>
-              <td colSpan={3}>
-                <Input
-                  name="user_tel"
-                  type="text"
-                  value={Information.user_tel}
-                  onChange={filterInputChange}
-                />
-              </td>
-            </tr>
-            <tr>
-              <th>요청일</th>
-              <td>
-                <DatePicker
-                  name="request_date"
-                  value={Information.request_date}
-                  onChange={filterInputChange}
-                  format="yyyy-MM-dd"
-                  className="required"
-                  placeholder=""
-                />
-              </td>
-              <th>접수일</th>
-              <td>
-                <DatePicker
-                  name="reception_date"
-                  value={Information.reception_date}
-                  onChange={filterInputChange}
-                  format="yyyy-MM-dd"
-                  className="required"
-                  placeholder=""
-                />
-              </td>
-              <th>접수구분</th>
-              <td>
-                <CustomMultiColumnComboBox
-                  name="reception_type"
-                  data={
-                    filter2
-                      ? filterBy(receptionTypeData, filter2)
-                      : receptionTypeData
-                  }
-                  value={Information.reception_type}
-                  columns={dataTypeColumns}
-                  textField={"code_name"}
-                  onChange={filterComboBoxChange}
-                  filterable={true}
-                  onFilterChange={handleFilterChange2}
-                  className="required"
-                />
-              </td>
-            </tr>
-            <tr>
-              <th>접수자</th>
-              <td>
-                <CustomMultiColumnComboBox
-                  name="reception_person"
-                  data={filter3 ? filterBy(usersData, filter3) : usersData}
-                  value={Information.reception_person}
-                  columns={userColumns}
-                  textField={"user_name"}
-                  onChange={filterComboBoxChange}
-                  filterable={true}
-                  onFilterChange={handleFilterChange3}
-                  className="required"
-                />
-              </td>
-              <th>Value 구분</th>
-              <td>
-                <CustomMultiColumnComboBox
-                  name="value_code3"
-                  data={
-                    filter4 ? filterBy(valuecodeItems, filter4) : valuecodeItems
-                  }
-                  value={Information.value_code3}
-                  columns={dataTypeColumns2}
-                  textField={"code_name"}
-                  onChange={filterComboBoxChange}
-                  filterable={true}
-                  onFilterChange={handleFilterChange4}
-                />
-              </td>
-              <th>접수소요시간</th>
-              <td>
-                <Input
-                  name="reception_time"
-                  type="number"
-                  value={Information.reception_time}
-                  onChange={filterInputChange}
-                />
-              </td>
-            </tr>
-            <tr>
-              <th>완료예정일</th>
-              <td>
-                <DatePicker
-                  name="be_finished_date"
-                  value={Information.be_finished_date}
-                  onChange={filterInputChange}
-                  format="yyyy-MM-dd"
-                  placeholder=""
-                />
-              </td>
-              <th>접수첨부자료</th>
-              <td colSpan={3}>
-                <Input
-                  name="attach_files"
-                  type="text"
-                  value={Information.attach_files}
-                  className="readonly"
-                />
-                <ButtonInGridInput>
-                  <Button
-                    onClick={onAttWndClick}
-                    icon="more-horizontal"
-                    fillMode="flat"
-                  />
-                </ButtonInGridInput>
-              </td>
-            </tr>
-            <tr>
-              <th>제목</th>
-              <td colSpan={5}>
-                <Input
-                  name="title"
-                  type="text"
-                  value={Information.title}
-                  onChange={filterInputChange}
-                  className="required"
-                />
-              </td>
-            </tr>
-          </tbody>
-        </FormBox>
-      </FormBoxWrap>
-      <GridContainer height={isMobile ? "80vh" : "55%"}>
-        <GridTitleContainer>
-          <GridTitle>내용</GridTitle>
-        </GridTitleContainer>
-        <RichEditor id="refEditor" ref={refEditorRef} />
-        <FormBoxWrap border={true}>
-          <FormBox>
-            <tbody>
-              <tr>
-                <th style={{ width: "5%" }}>파일첨부</th>
-                <td colSpan={5}>
-                  <Input
-                    name="files"
-                    type="text"
-                    value={Information.files}
-                    className="readonly"
-                  />
-                  <ButtonInGridInput>
-                    <Button
-                      onClick={onAttWndClick2}
-                      icon="more-horizontal"
-                      fillMode="flat"
+                    icon={"chevron-left"}
+                    onClick={() => {
+                      if (swiper) {
+                        swiper.slideTo(0);
+                      }
+                    }}
+                  ></Button>
+                  내용
+                </GridTitle>
+              </GridTitleContainer>
+              <RichEditor id="refEditor" ref={refEditorRef} />
+              <FormBoxWrap border={true} className="FormBoxWrap2">
+                <FormBox>
+                  <tbody>
+                    <tr>
+                      <th style={{ width: "5%" }}>파일첨부</th>
+                      <td colSpan={5}>
+                        <Input
+                          name="files"
+                          type="text"
+                          value={Information.files}
+                          className="readonly"
+                        />
+                        <ButtonInGridInput>
+                          <Button
+                            onClick={onAttWndClick2}
+                            icon="more-horizontal"
+                            fillMode="flat"
+                          />
+                        </ButtonInGridInput>
+                      </td>
+                    </tr>
+                  </tbody>
+                </FormBox>
+              </FormBoxWrap>
+            </GridContainer>
+          </SwiperSlide>
+        </Swiper>
+      ) : (
+        <>
+          <GridTitleContainer className="ButtonContainer">
+            <GridTitle>접수 기본정보</GridTitle>
+          </GridTitleContainer>
+          <FormBoxWrap border={true}>
+            <FormBox className="FormBox">
+              <tbody>
+                <tr>
+                  <th>업체코드</th>
+                  <td>
+                    <div className="filter-item-wrap">
+                      <Input
+                        name="custcd"
+                        value={Information.custcd}
+                        className="readonly"
+                      />
+                      <Button
+                        icon="more-horizontal"
+                        fillMode={"flat"}
+                        onClick={() => setCustWindowVisible(true)}
+                      />
+                    </div>
+                  </td>
+                  <th>업체명</th>
+                  <td colSpan={3}>
+                    <CustomMultiColumnComboBox
+                      name="custnm"
+                      data={
+                        filter ? filterBy(custListData, filter) : custListData
+                      }
+                      value={Information.custnm}
+                      columns={custTypeColumns}
+                      textField={"custnm"}
+                      onChange={filterComboBoxChange}
+                      filterable={true}
+                      onFilterChange={handleFilterChange}
+                      className="required"
                     />
-                  </ButtonInGridInput>
-                </td>
-              </tr>
-            </tbody>
-          </FormBox>
-        </FormBoxWrap>
-      </GridContainer>
-      <BottomContainer>
+                  </td>
+                </tr>
+                <tr>
+                  <th>고객명</th>
+                  <td>
+                    <Input
+                      name="user_name"
+                      type="text"
+                      value={Information.user_name}
+                      className="required"
+                      onChange={filterInputChange}
+                    />
+                  </td>
+                  <th>연락처</th>
+                  <td colSpan={3}>
+                    <Input
+                      name="user_tel"
+                      type="text"
+                      value={Information.user_tel}
+                      onChange={filterInputChange}
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <th>요청일</th>
+                  <td>
+                    <DatePicker
+                      name="request_date"
+                      value={Information.request_date}
+                      onChange={filterInputChange}
+                      format="yyyy-MM-dd"
+                      className="required"
+                      placeholder=""
+                    />
+                  </td>
+                  <th>접수일</th>
+                  <td>
+                    <DatePicker
+                      name="reception_date"
+                      value={Information.reception_date}
+                      onChange={filterInputChange}
+                      format="yyyy-MM-dd"
+                      className="required"
+                      placeholder=""
+                    />
+                  </td>
+                  <th>접수구분</th>
+                  <td>
+                    <CustomMultiColumnComboBox
+                      name="reception_type"
+                      data={
+                        filter2
+                          ? filterBy(receptionTypeData, filter2)
+                          : receptionTypeData
+                      }
+                      value={Information.reception_type}
+                      columns={dataTypeColumns}
+                      textField={"code_name"}
+                      onChange={filterComboBoxChange}
+                      filterable={true}
+                      onFilterChange={handleFilterChange2}
+                      className="required"
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <th>접수자</th>
+                  <td>
+                    <CustomMultiColumnComboBox
+                      name="reception_person"
+                      data={filter3 ? filterBy(usersData, filter3) : usersData}
+                      value={Information.reception_person}
+                      columns={userColumns}
+                      textField={"user_name"}
+                      onChange={filterComboBoxChange}
+                      filterable={true}
+                      onFilterChange={handleFilterChange3}
+                      className="required"
+                    />
+                  </td>
+                  <th>Value 구분</th>
+                  <td>
+                    <CustomMultiColumnComboBox
+                      name="value_code3"
+                      data={
+                        filter4
+                          ? filterBy(valuecodeItems, filter4)
+                          : valuecodeItems
+                      }
+                      value={Information.value_code3}
+                      columns={dataTypeColumns2}
+                      textField={"code_name"}
+                      onChange={filterComboBoxChange}
+                      filterable={true}
+                      onFilterChange={handleFilterChange4}
+                    />
+                  </td>
+                  <th>접수소요시간</th>
+                  <td>
+                    <Input
+                      name="reception_time"
+                      type="number"
+                      value={Information.reception_time}
+                      onChange={filterInputChange}
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <th>완료예정일</th>
+                  <td>
+                    <DatePicker
+                      name="be_finished_date"
+                      value={Information.be_finished_date}
+                      onChange={filterInputChange}
+                      format="yyyy-MM-dd"
+                      placeholder=""
+                    />
+                  </td>
+                  <th>접수첨부자료</th>
+                  <td colSpan={3}>
+                    <Input
+                      name="attach_files"
+                      type="text"
+                      value={Information.attach_files}
+                      className="readonly"
+                    />
+                    <ButtonInGridInput>
+                      <Button
+                        onClick={onAttWndClick}
+                        icon="more-horizontal"
+                        fillMode="flat"
+                      />
+                    </ButtonInGridInput>
+                  </td>
+                </tr>
+                <tr>
+                  <th>제목</th>
+                  <td colSpan={5}>
+                    <Input
+                      name="title"
+                      type="text"
+                      value={Information.title}
+                      onChange={filterInputChange}
+                      className="required"
+                    />
+                  </td>
+                </tr>
+              </tbody>
+            </FormBox>
+          </FormBoxWrap>
+          <GridContainer height={`${webheight}px`}>
+            <GridTitleContainer className="ButtonContainer2">
+              <GridTitle>내용</GridTitle>
+            </GridTitleContainer>
+            <RichEditor id="refEditor" ref={refEditorRef} />
+            <FormBoxWrap border={true} className="FormBoxWrap2">
+              <FormBox>
+                <tbody>
+                  <tr>
+                    <th style={{ width: "5%" }}>파일첨부</th>
+                    <td colSpan={5}>
+                      <Input
+                        name="files"
+                        type="text"
+                        value={Information.files}
+                        className="readonly"
+                      />
+                      <ButtonInGridInput>
+                        <Button
+                          onClick={onAttWndClick2}
+                          icon="more-horizontal"
+                          fillMode="flat"
+                        />
+                      </ButtonInGridInput>
+                    </td>
+                  </tr>
+                </tbody>
+              </FormBox>
+            </FormBoxWrap>
+          </GridContainer>
+        </>
+      )}
+      <BottomContainer className="BottomContainer">
         <ButtonContainer>
           <Button themeColor={"primary"} onClick={onConfirmClick}>
             확인
