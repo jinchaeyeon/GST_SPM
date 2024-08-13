@@ -490,7 +490,7 @@ const Promotion = () => {
             <Box display="flex" justifyContent="center" p={2}>
               <Stack spacing={2}>
                 <Pagination
-                  count={Math.ceil(mainDataResult.total / 8)}
+                  count={Math.ceil(mainDataResult.total / 12)}
                   showFirstButton
                   showLastButton
                   onChange={handlePageChange}
