@@ -107,7 +107,7 @@ import {
   isFilterHideState,
   isLoading,
   loginResultState,
-  titles
+  titles,
 } from "../store/atoms";
 import {
   custTypeColumns,
@@ -353,6 +353,7 @@ const App = () => {
   const [filter6, setFilter6] = React.useState<FilterDescriptor>();
   const [filter7, setFilter7] = React.useState<FilterDescriptor>();
   const [filter8, setFilter8] = React.useState<FilterDescriptor>();
+  const [filter9, setFilter9] = React.useState<FilterDescriptor>();
 
   const handleFilterChange = (event: ComboBoxFilterChangeEvent) => {
     if (event) {
@@ -392,6 +393,11 @@ const App = () => {
   const handleFilterChange8 = (event: ComboBoxFilterChangeEvent) => {
     if (event) {
       setFilter8(event.filter);
+    }
+  };
+  const handleFilterChange9 = (event: ComboBoxFilterChangeEvent) => {
+    if (event) {
+      setFilter9(event.filter);
     }
   };
   const [workType, setWorkType] = useState("N");
@@ -513,6 +519,11 @@ const App = () => {
         ...prev,
         [name]: value,
         custcd: value == null ? "" : value.custcd,
+      }));
+    } else if (name === "lvl") {
+      setInformation((prev) => ({
+        ...prev,
+        [name]: value.sub_code,
       }));
     } else {
       setInformation((prev) => ({
@@ -763,6 +774,7 @@ const App = () => {
     recdt: null,
     remark: "",
     revperson: "",
+    lvl: "",
   });
 
   //그리드 데이터 조회
@@ -909,6 +921,7 @@ const App = () => {
               : null,
             remark: selectedRow.remark,
             revperson: selectedRow.revperson,
+            lvl: selectedRow.lvl,
           });
           setPage(initialPageState);
           setSubFilters((prev) => ({
@@ -983,6 +996,7 @@ const App = () => {
               : null,
             remark: rows[0].remark,
             revperson: rows[0].revperson,
+            lvl: rows[0].lvl,
           });
           setPage(initialPageState);
           setSubFilters((prev) => ({
@@ -1031,6 +1045,7 @@ const App = () => {
           recdt: new Date(),
           remark: "",
           revperson: "",
+          lvl: "",
         });
         const newDataState = processWithGroups([], group);
         setResultState(newDataState);
@@ -1574,6 +1589,7 @@ const App = () => {
         : null,
       remark: selectedRowData.remark,
       revperson: selectedRowData.revperson,
+      lvl: selectedRowData.lvl,
     });
 
     const selectedRowData2 = mainDataResult.data.filter(
@@ -1756,6 +1772,7 @@ const App = () => {
       recdt: new Date(),
       remark: "",
       revperson: "",
+      lvl: "",
     });
     setSubDataTotal(0);
     const newDataState = processWithGroups([], group);
@@ -2363,6 +2380,7 @@ const App = () => {
               ? "N"
               : information.progress_status,
           revperson: information.revperson,
+          lvl: information.lvl,
 
           row_status: rowsArr.row_status.join("|"),
           devmngseq_s: rowsArr.devmngseq_s.join("|"),
@@ -2430,6 +2448,7 @@ const App = () => {
     finchkdt: "",
     progress_status: "",
     revperson: "",
+    lvl: "",
 
     row_status: "",
     devmngseq_s: "",
@@ -2498,6 +2517,7 @@ const App = () => {
       "@p_finchkdt": paraData.finchkdt,
       "@p_progress_status": paraData.progress_status,
       "@p_revperson": paraData.revperson,
+      "@p_lvl": paraData.lvl,
 
       "@p_row_status": paraData.row_status,
       "@p_devmngseq_s": paraData.devmngseq_s,
@@ -2582,6 +2602,7 @@ const App = () => {
       "@p_finchkdt": "",
       "@p_progress_status": "",
       "@p_revperson": "",
+      "@p_lvl": "",
 
       "@p_row_status": "",
       "@p_devmngseq_s": "",
@@ -2753,6 +2774,7 @@ const App = () => {
         finchkdt: "",
         progress_status: "",
         revperson: "",
+        lvl: "",
 
         row_status: "",
         devmngseq_s: "",
@@ -3257,6 +3279,7 @@ const App = () => {
             : null,
           remark: selectedRowData.remark,
           revperson: selectedRowData.revperson,
+          lvl: selectedRowData.lvl,
         });
 
         const selectedRowData2 = mainDataResult.data.filter(
@@ -4248,6 +4271,24 @@ const App = () => {
                               className="required"
                             />
                           </td>
+                          <th>난이도</th>
+                          <td>
+                            <CustomMultiColumnComboBox
+                              name="lvl"
+                              data={
+                                filter9 ? filterBy(lvlItems, filter9) : lvlItems
+                              }
+                              value={lvlItems.find(
+                                (item: any) =>
+                                  item["sub_code"] == information.lvl
+                              )}
+                              columns={dataTypeColumns}
+                              textField={"code_name"}
+                              onChange={ComboBoxChange}
+                              filterable={true}
+                              onFilterChange={handleFilterChange9}
+                            />
+                          </td>
                           <th style={labelStyle}>사업완료일(AS포함)</th>
                           <td>
                             <DatePicker
@@ -4613,6 +4654,23 @@ const App = () => {
                           onChange={InputChange}
                           placeholder=""
                           className="required"
+                        />
+                      </td>
+                      <th>난이도</th>
+                      <td>
+                        <CustomMultiColumnComboBox
+                          name="lvl"
+                          data={
+                            filter9 ? filterBy(lvlItems, filter9) : lvlItems
+                          }
+                          value={lvlItems.find(
+                            (item: any) => item["sub_code"] == information.lvl
+                          )}
+                          columns={dataTypeColumns}
+                          textField={"code_name"}
+                          onChange={ComboBoxChange}
+                          filterable={true}
+                          onFilterChange={handleFilterChange9}
                         />
                       </td>
                     </tr>
