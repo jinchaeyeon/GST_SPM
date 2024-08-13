@@ -103,6 +103,7 @@ const KendoWindow = ({
         height4 - 5
     );
   }, []);
+
   const onChangePosition = (position: any) => {
     setPosition(position);
     setWebHeight(
@@ -598,7 +599,7 @@ const KendoWindow = ({
         style={{
           height:
             !permission || (permission && permission.upload)
-              ? "490px"
+              ? webheight
               : !isMobile 
               ? webheight 
               : mobileheight,

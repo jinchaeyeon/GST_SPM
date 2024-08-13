@@ -85,10 +85,11 @@ const KendoWindow = ({
   savenmLists = [],
 }: IKendoWindow) => {
   let deviceWidth = window.innerWidth;
+  let deviceHeight = document.documentElement.clientHeight;
   let isMobile = deviceWidth <= 1200;
   const [position, setPosition] = useState<IWindowPosition>({
-    left: isMobile == true ? 0 : 350,
-    top: isMobile == true ? 0 : 50,
+    left: isMobile == true ? 0 : (deviceWidth - 1200) / 2,
+    top: isMobile == true ? 0 : (deviceHeight - 800) / 2,
     width: isMobile == true ? deviceWidth : 1200,
     height: isMobile == true ? window.innerHeight : 800,
   });
