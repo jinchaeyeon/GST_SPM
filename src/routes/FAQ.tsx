@@ -161,7 +161,6 @@ const App = () => {
   const [mobileheight3, setMobileHeight3] = useState(0);
   const [webheight, setWebHeight] = useState(0);
   const [webheight2, setWebHeight2] = useState(0);
-  const [webheight3, setWebHeight3] = useState(0);
   let editorContent: any = editorRef.current?.getContent();
   useLayoutEffect(() => {
     height = getHeight(".ButtonContainer");
@@ -176,33 +175,29 @@ const App = () => {
       setIsMobile(deviceWidth <= 1200);
       setMobileHeight(getDeviceHeight(true) - height - height6);
       setMobileHeight2(getDeviceHeight(true) - height2 - height6);
-      setMobileHeight3(getDeviceHeight(true) - height3 - height5 - height6 + 18);
+      setMobileHeight3(
+        getDeviceHeight(true) - height3 - height5 - height6 + 18
+      );
 
       setWebHeight(getDeviceHeight(true) - height - height2 - height6);
-      setWebHeight2(
-        getDeviceHeight(true) -
-          height -
-          height3 -
-          height4 -
-          height5 -
-          height6 +
-          18
-      );
+      setWebHeight2(getDeviceHeight(true) - height - height6 + 5);
     };
     handleWindowResize();
     window.addEventListener("resize", handleWindowResize);
     return () => {
       window.removeEventListener("resize", handleWindowResize);
     };
-  }, [webheight, webheight2, webheight3]);
+  }, [webheight, webheight2]);
+  console.log(webheight, webheight2);
   useEffect(() => {
-    if(isMobile == true && deviceWidth <= 1200 && editorRef.current != null) {
+    if (isMobile == true && deviceWidth <= 1200 && editorRef.current != null) {
       setHtmlOnEditor(editorContent);
     }
-    if(isMobile == false && deviceWidth > 1200 && editorRef.current != null) {
+    if (isMobile == false && deviceWidth > 1200 && editorRef.current != null) {
       setHtmlOnEditor(editorContent);
     }
-  }, [isMobile])
+  }, [isMobile]);
+
   const idGetter = getter(DATA_ITEM_KEY);
 
   const [mainDataState, setMainDataState] = useState<State>({
@@ -280,7 +275,7 @@ const App = () => {
     }));
     if (swiper && isMobile) {
       swiper.slideTo(0);
-		}
+    }
   };
 
   useEffect(() => {
@@ -351,7 +346,7 @@ const App = () => {
     setSavenmList([]);
     if (swiper && isMobile) {
       swiper.slideTo(1);
-		}
+    }
   };
 
   const onMainSortChange = (e: any) => {
@@ -669,7 +664,7 @@ const App = () => {
 
   // 저장
   const saveFAQ = useCallback(async () => {
-    if(!navigator.onLine) {
+    if (!navigator.onLine) {
       alert("네트워크 연결상태를 확인해주세요.");
       setLoading(false);
       return false;
@@ -1101,7 +1096,7 @@ const App = () => {
                       }
                     }}
                   ></Button>
-                  기본정보
+                  상세정보
                   <Button
                     themeColor={"primary"}
                     fillMode={"flat"}
@@ -1134,85 +1129,89 @@ const App = () => {
                         />
                       </td>
                     </tr>
-                    <tr>
-                      <th>작성자</th>
-                      <td>
-                        <Input
-                          name="user_id"
-                          type="text"
-                          value={detailData.user_id}
-                          onChange={detailDataInputChange}
-                          className={"readonly"}
-                          readOnly={true}
-                        />
-                      </td>
-                      <th>작성일자</th>
-                      <td>
-                        {isAdmin ? (
-                          <DatePicker
-                            name="write_date"
-                            value={detailData.write_date}
-                            format="yyyy-MM-dd"
-                            onChange={detailDataInputChange}
-                            className={"required"}
-                            placeholder=""
-                          />
-                        ) : (
-                          <Input
-                            name="write_date"
-                            type="text"
-                            value={dateformat2(
-                              convertDateToStr(detailData.write_date)
+                    {isAdmin && (
+                      <>
+                        <tr>
+                          <th>작성자</th>
+                          <td>
+                            <Input
+                              name="user_id"
+                              type="text"
+                              value={detailData.user_id}
+                              onChange={detailDataInputChange}
+                              className={"readonly"}
+                              readOnly={true}
+                            />
+                          </td>
+                          <th>작성일자</th>
+                          <td>
+                            {isAdmin ? (
+                              <DatePicker
+                                name="write_date"
+                                value={detailData.write_date}
+                                format="yyyy-MM-dd"
+                                onChange={detailDataInputChange}
+                                className={"required"}
+                                placeholder=""
+                              />
+                            ) : (
+                              <Input
+                                name="write_date"
+                                type="text"
+                                value={dateformat2(
+                                  convertDateToStr(detailData.write_date)
+                                )}
+                                onChange={detailDataInputChange}
+                                className={!isAdmin ? "readonly" : "required"}
+                                readOnly={!isAdmin}
+                              />
                             )}
-                            onChange={detailDataInputChange}
-                            className={!isAdmin ? "readonly" : "required"}
-                            readOnly={!isAdmin}
-                          />
-                        )}
-                      </td>
-                      <th>구분</th>
-                      <td>
-                        {isAdmin ? (
-                          <CustomMultiColumnComboBox
-                            name="type"
-                            data={
-                              typeFilter
-                                ? filterBy(typesData, typeFilter)
-                                : typesData
-                            }
-                            value={detailData.type}
-                            columns={dataTypeColumns}
-                            textField={"code_name"}
-                            onChange={DetailComboBoxChange}
-                            className="required"
-                            filterable={true}
-                            onFilterChange={handleFilterChange}
-                            clearButton={false}
-                          />
-                        ) : (
-                          <Input
-                            name="type"
-                            type="text"
-                            value={detailData.type.code_name}
-                            onChange={detailDataInputChange}
-                            className={!isAdmin ? "readonly" : "required"}
-                            readOnly={!isAdmin}
-                          />
-                        )}
-                      </td>
-                    </tr>
-                    <tr>
-                      <th>비고</th>
-                      <td colSpan={5}>
-                        <Input
-                          name="remark"
-                          value={detailData.remark}
-                          onChange={detailDataInputChange}
-                          readOnly={!isAdmin}
-                          className={!isAdmin ? "readonly" : ""}
-                        />
-                      </td>
-                    </tr>
+                          </td>
+                          <th>구분</th>
+                          <td>
+                            {isAdmin ? (
+                              <CustomMultiColumnComboBox
+                                name="type"
+                                data={
+                                  typeFilter
+                                    ? filterBy(typesData, typeFilter)
+                                    : typesData
+                                }
+                                value={detailData.type}
+                                columns={dataTypeColumns}
+                                textField={"code_name"}
+                                onChange={DetailComboBoxChange}
+                                className="required"
+                                filterable={true}
+                                onFilterChange={handleFilterChange}
+                                clearButton={false}
+                              />
+                            ) : (
+                              <Input
+                                name="type"
+                                type="text"
+                                value={detailData.type.code_name}
+                                onChange={detailDataInputChange}
+                                className={!isAdmin ? "readonly" : "required"}
+                                readOnly={!isAdmin}
+                              />
+                            )}
+                          </td>
+                        </tr>
+                        <tr>
+                          <th>비고</th>
+                          <td colSpan={5}>
+                            <Input
+                              name="remark"
+                              value={detailData.remark}
+                              onChange={detailDataInputChange}
+                              readOnly={!isAdmin}
+                              className={!isAdmin ? "readonly" : ""}
+                            />
+                          </td>
+                        </tr>
+                      </>
+                    )}
                   </tbody>
                 </FormBox>
               </FormBoxWrap>
@@ -1332,7 +1331,10 @@ const App = () => {
                 />
               </Grid>
             </GridContainer>
-            <GridContainer width={`calc(64% - ${GAP}px)`}>
+            <GridContainer
+              width={`calc(64% - ${GAP}px)`}
+              height={`${webheight2}px`}
+            >
               <GridTitleContainer className="ButtonContainer3">
                 <GridTitle>상세정보</GridTitle>
               </GridTitleContainer>
@@ -1340,7 +1342,7 @@ const App = () => {
                 <FormBox>
                   <tbody>
                     <tr>
-                      <th>제목</th>
+                      <th style={!isAdmin ? { width: "5%" } : {}}>제목</th>
                       <td colSpan={5}>
                         <Input
                           name="title"
@@ -1352,91 +1354,95 @@ const App = () => {
                         />
                       </td>
                     </tr>
-                    <tr>
-                      <th>작성자</th>
-                      <td>
-                        <Input
-                          name="user_id"
-                          type="text"
-                          value={detailData.user_id}
-                          onChange={detailDataInputChange}
-                          className={"readonly"}
-                          readOnly={true}
-                        />
-                      </td>
-                      <th>작성일자</th>
-                      <td>
-                        {isAdmin ? (
-                          <DatePicker
-                            name="write_date"
-                            value={detailData.write_date}
-                            format="yyyy-MM-dd"
-                            onChange={detailDataInputChange}
-                            className={"required"}
-                            placeholder=""
-                          />
-                        ) : (
-                          <Input
-                            name="write_date"
-                            type="text"
-                            value={dateformat2(
-                              convertDateToStr(detailData.write_date)
+                    {isAdmin && (
+                      <>
+                        <tr>
+                          <th>작성자</th>
+                          <td>
+                            <Input
+                              name="user_id"
+                              type="text"
+                              value={detailData.user_id}
+                              onChange={detailDataInputChange}
+                              className={"readonly"}
+                              readOnly={true}
+                            />
+                          </td>
+                          <th>작성일자</th>
+                          <td>
+                            {isAdmin ? (
+                              <DatePicker
+                                name="write_date"
+                                value={detailData.write_date}
+                                format="yyyy-MM-dd"
+                                onChange={detailDataInputChange}
+                                className={"required"}
+                                placeholder=""
+                              />
+                            ) : (
+                              <Input
+                                name="write_date"
+                                type="text"
+                                value={dateformat2(
+                                  convertDateToStr(detailData.write_date)
+                                )}
+                                onChange={detailDataInputChange}
+                                className={!isAdmin ? "readonly" : "required"}
+                                readOnly={!isAdmin}
+                              />
                             )}
-                            onChange={detailDataInputChange}
-                            className={!isAdmin ? "readonly" : "required"}
-                            readOnly={!isAdmin}
-                          />
-                        )}
-                      </td>
-                      <th>구분</th>
-                      <td>
-                        {isAdmin ? (
-                          <CustomMultiColumnComboBox
-                            name="type"
-                            data={
-                              typeFilter
-                                ? filterBy(typesData, typeFilter)
-                                : typesData
-                            }
-                            value={detailData.type}
-                            columns={dataTypeColumns}
-                            textField={"code_name"}
-                            onChange={DetailComboBoxChange}
-                            className="required"
-                            filterable={true}
-                            onFilterChange={handleFilterChange}
-                            clearButton={false}
-                          />
-                        ) : (
-                          <Input
-                            name="type"
-                            type="text"
-                            value={detailData.type.code_name}
-                            onChange={detailDataInputChange}
-                            className={!isAdmin ? "readonly" : "required"}
-                            readOnly={!isAdmin}
-                          />
-                        )}
-                      </td>
-                    </tr>
-                    <tr>
-                      <th>비고</th>
-                      <td colSpan={5}>
-                        <Input
-                          name="remark"
-                          value={detailData.remark}
-                          onChange={detailDataInputChange}
-                          readOnly={!isAdmin}
-                          className={!isAdmin ? "readonly" : ""}
-                        />
-                      </td>
-                    </tr>
+                          </td>
+                          <th>구분</th>
+                          <td>
+                            {isAdmin ? (
+                              <CustomMultiColumnComboBox
+                                name="type"
+                                data={
+                                  typeFilter
+                                    ? filterBy(typesData, typeFilter)
+                                    : typesData
+                                }
+                                value={detailData.type}
+                                columns={dataTypeColumns}
+                                textField={"code_name"}
+                                onChange={DetailComboBoxChange}
+                                className="required"
+                                filterable={true}
+                                onFilterChange={handleFilterChange}
+                                clearButton={false}
+                              />
+                            ) : (
+                              <Input
+                                name="type"
+                                type="text"
+                                value={detailData.type.code_name}
+                                onChange={detailDataInputChange}
+                                className={!isAdmin ? "readonly" : "required"}
+                                readOnly={!isAdmin}
+                              />
+                            )}
+                          </td>
+                        </tr>
+                        <tr>
+                          <th>비고</th>
+                          <td colSpan={5}>
+                            <Input
+                              name="remark"
+                              value={detailData.remark}
+                              onChange={detailDataInputChange}
+                              readOnly={!isAdmin}
+                              className={!isAdmin ? "readonly" : ""}
+                            />
+                          </td>
+                        </tr>
+                      </>
+                    )}
                   </tbody>
                 </FormBox>
               </FormBoxWrap>
-              <div style={{ height: webheight2 }}>
-                <RichEditor id="editor" ref={editorRef} hideTools={!isAdmin} />
-              </div>
+
+              <RichEditor id="editor" ref={editorRef} hideTools={!isAdmin} />
+
               <FormBoxWrap
                 border
                 style={{
