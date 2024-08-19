@@ -188,7 +188,7 @@ const App = () => {
       window.removeEventListener("resize", handleWindowResize);
     };
   }, [webheight, webheight2]);
-  console.log(webheight, webheight2);
+
   useEffect(() => {
     if (isMobile == true && deviceWidth <= 1200 && editorRef.current != null) {
       setHtmlOnEditor(editorContent);
