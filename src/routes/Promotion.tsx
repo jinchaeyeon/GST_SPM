@@ -11,7 +11,7 @@ import {
   Grid,
   Pagination,
   Stack,
-  Typography
+  Typography,
 } from "@mui/material";
 import { DataResult, process, State } from "@progress/kendo-data-query";
 import { bytesToBase64 } from "byte-base64";
@@ -56,8 +56,8 @@ const Promotion = () => {
       height = getHeight(".TitleContainer");
       height2 = getHeight(".ButtonContainer2");
       setWebHeight(getDeviceHeight(false) - height - height2 + 35);
-      height3 = (getDeviceHeight(false) - 400)/3;
-      height4 = (getDeviceHeight(false) - 400)/2;
+      height3 = (getDeviceHeight(false) - 400) / 3;
+      height4 = (getDeviceHeight(false) - 400) / 2;
     };
 
     const handleWindowResize = () => {
@@ -487,7 +487,9 @@ const Promotion = () => {
               bottom: 30,
               width: "100%",
               zIndex: 100,
+              display: "flex",
               justifyContent: "center",
+              transform: "translateX(-110px)",
             }}
           >
             <Box display="flex" justifyContent="center" p={2}>
@@ -512,7 +514,7 @@ const Promotion = () => {
           onClick={handleAddNewProduct}
           sx={{
             position: "fixed",
-            bottom: 50,
+            bottom: 40,
             right: 40,
             backgroundColor: "#7a76ce",
             "&:hover": {
