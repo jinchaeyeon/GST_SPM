@@ -9,13 +9,14 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import { DataResult, process, State } from "@progress/kendo-data-query";
 import { Button } from "@progress/kendo-react-buttons";
+import { Dialog } from "@progress/kendo-react-dialogs";
 import { ComboBoxChangeEvent } from "@progress/kendo-react-dropdowns";
+import { Buffer } from "buffer";
 import { bytesToBase64 } from "byte-base64";
-import { FilterDescriptor } from "devextreme/data";
 import {
   createContext,
-  useCallback,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -37,8 +38,6 @@ import {
 import { GAP } from "../../CommonString";
 import RichEditor from "../../RichEditor";
 import Window from "../WindowComponent/Window";
-import { Buffer } from "buffer";
-import { DataResult, process, State } from "@progress/kendo-data-query";
 import { removeBeforeUnloadListener } from "../../PanelBarNavContainer";
 
 type IWindow = {
@@ -142,12 +141,12 @@ const PromotionWindow = ({ setVisible, datas, modal = false }: IWindow) => {
       getWindowDeviceHeight(false, position.height) - height - height2
     );
   }, [webheight, webheight2, webheight3]);
-  
+
   const [position, setPosition] = useState<IWindowPosition>({
-    left: isMobile == true ? 0 : (deviceWidth - 950) / 2,
-    top: isMobile == true ? 0 : (deviceHeight - 650) / 2,
-    width: isMobile == true ? deviceWidth : 950,
-    height: isMobile == true ? deviceHeight : 650,
+    left: isMobile == true ? 0 : (deviceWidth - 1250) / 2,
+    top: isMobile == true ? 0 : (deviceHeight - 680) / 2,
+    width: isMobile == true ? deviceWidth : 1250,
+    height: isMobile == true ? deviceHeight : 680,
   });
 
   const onChangePostion = (position: any) => {
@@ -320,6 +319,8 @@ const PromotionWindow = ({ setVisible, datas, modal = false }: IWindow) => {
       if (editorRef.current) {
         editorRef.current.setHtml(reference);
       }
+      // Edior에 HTML & CSS 세팅
+      setHtmlOnEditor(reference);
     }
     setLoading(false);
   };
@@ -463,6 +464,7 @@ const PromotionWindow = ({ setVisible, datas, modal = false }: IWindow) => {
 
   // 문의하기
   const onLink = () => {
+    removeBeforeUnloadListener();
     const origin = window.location.origin;
     window.location.href = origin + `/QnA?title=${datas.title}`;
   };
@@ -673,6 +675,18 @@ const PromotionWindow = ({ setVisible, datas, modal = false }: IWindow) => {
     }));
   };
 
+  const [openDialog, setOpenDialog] = useState(false);
+
+  const handleImageClick = () => {
+    setOpenDialog(true);
+  };
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+  };
+
+  const [positions, setPositions] = useState({ top: "50%", left: "50%" });
+
   return (
     <Window
       titles={"상세정보"}
@@ -683,7 +697,7 @@ const PromotionWindow = ({ setVisible, datas, modal = false }: IWindow) => {
     >
       <GridContainerWrap>
         <GridContainer
-          width="30%"
+          width="38%"
           style={{
             display: "flex",
             flexDirection: "column",
@@ -698,7 +712,7 @@ const PromotionWindow = ({ setVisible, datas, modal = false }: IWindow) => {
                   component="div"
                   fontWeight={600}
                   sx={{
-                    fontSize: "13px",
+                    fontSize: "15px",
                     color: "#6a68ba",
                   }}
                 >
@@ -778,15 +792,17 @@ const PromotionWindow = ({ setVisible, datas, modal = false }: IWindow) => {
                   component="img"
                   src={Information.image}
                   alt={Information.title}
+                  onClick={handleImageClick}
                   sx={{
                     borderRadius: 1,
                     width: "auto",
                     height: "auto",
                     maxWidth: "100%",
                     flexShrink: 0,
+                    cursor: "pointer",
                   }}
                 />
-                {isAdmin && (
+                {isAdmin ? (
                   <Box display={"flex"} justifyContent={"center"} gap={1}>
                     <Button
                       style={{ margin: "10px 0" }}
@@ -817,12 +833,80 @@ const PromotionWindow = ({ setVisible, datas, modal = false }: IWindow) => {
                       이미지 삭제
                     </Button>
                   </Box>
+                ) : (
+                  <Box
+                    mt={2}
+                    display="flex"
+                    flexWrap="wrap"
+                    minHeight="40px"
+                    style={{
+                      width: "100%",
+                      justifyContent: "flex-start",
+                    }}
+                  >
+                    {Information.tagnames
+                      .filter((hashtag) => hashtag.rowstatus !== "D")
+                      .slice(0, 5)
+                      .map((hashtag, index) => (
+                        <Chip
+                          key={hashtag.seq}
+                          label={"#" + hashtag.name}
+                          onDelete={
+                            isAdmin
+                              ? () => handleDeleteHashtag(hashtag)
+                              : undefined
+                          }
+                          style={{
+                            color: "#7a76ce",
+                            backgroundColor: "#f0ecfc",
+                            marginRight: "4px",
+                          }}
+                        />
+                      ))}
+                    {Information.tagnames.filter(
+                      (hashtag) => hashtag.rowstatus !== "D"
+                    ).length < 5 &&
+                      isAdmin && (
+                        <Box
+                          display="flex"
+                          alignItems="center"
+                          style={{
+                            marginLeft:
+                              Information.tagnames.length > 0 ? 10 : 0,
+                            marginRight: "5px",
+                          }}
+                        >
+                          <Typography
+                            variant="body1"
+                            color={"#a0a0a0"}
+                            mr={0.2}
+                          >
+                            #
+                          </Typography>
+                          <TextField
+                            variant="standard"
+                            size="small"
+                            placeholder="태그입력"
+                            value={newHashtag}
+                            onChange={(e) => setNewHashtag(e.target.value)}
+                            onKeyDown={handleAddHashtag}
+                            InputProps={{
+                              disableUnderline: true,
+                              style: {
+                                fontSize: "12px",
+                                paddingTop: "3px",
+                              },
+                            }}
+                          />
+                        </Box>
+                      )}
+                  </Box>
                 )}
               </Box>
             </>
           ) : (
             <>
-              {isAdmin && (
+              {isAdmin ? (
                 <>
                   <Box
                     height={200}
@@ -862,6 +946,69 @@ const PromotionWindow = ({ setVisible, datas, modal = false }: IWindow) => {
                     }}
                   />
                 </>
+              ) : (
+                <Box
+                  mt={2}
+                  display="flex"
+                  flexWrap="wrap"
+                  minHeight="40px"
+                  style={{
+                    width: "100%",
+                    justifyContent: "flex-start",
+                  }}
+                >
+                  {Information.tagnames
+                    .filter((hashtag) => hashtag.rowstatus !== "D")
+                    .slice(0, 5)
+                    .map((hashtag, index) => (
+                      <Chip
+                        key={hashtag.seq}
+                        label={"#" + hashtag.name}
+                        onDelete={
+                          isAdmin
+                            ? () => handleDeleteHashtag(hashtag)
+                            : undefined
+                        }
+                        style={{
+                          color: "#7a76ce",
+                          backgroundColor: "#f0ecfc",
+                          marginRight: "4px",
+                        }}
+                      />
+                    ))}
+                  {Information.tagnames.filter(
+                    (hashtag) => hashtag.rowstatus !== "D"
+                  ).length < 5 &&
+                    isAdmin && (
+                      <Box
+                        display="flex"
+                        alignItems="center"
+                        style={{
+                          marginLeft: Information.tagnames.length > 0 ? 10 : 0,
+                          marginRight: "5px",
+                        }}
+                      >
+                        <Typography variant="body1" color={"#a0a0a0"} mr={0.2}>
+                          #
+                        </Typography>
+                        <TextField
+                          variant="standard"
+                          size="small"
+                          placeholder="태그입력"
+                          value={newHashtag}
+                          onChange={(e) => setNewHashtag(e.target.value)}
+                          onKeyDown={handleAddHashtag}
+                          InputProps={{
+                            disableUnderline: true,
+                            style: {
+                              fontSize: "12px",
+                              paddingTop: "3px",
+                            },
+                          }}
+                        />
+                      </Box>
+                    )}
+                </Box>
               )}
             </>
           )}
@@ -913,7 +1060,7 @@ const PromotionWindow = ({ setVisible, datas, modal = false }: IWindow) => {
           )}
         </GridContainer>
         <GridContainer
-          width={`calc(70% - ${GAP}px)`}
+          width={`calc(62% - ${GAP}px)`}
           style={{ height: webheight }}
         >
           {isAdmin && (
@@ -992,64 +1139,112 @@ const PromotionWindow = ({ setVisible, datas, modal = false }: IWindow) => {
             </Box>
           )}
           <RichEditor id="editor" ref={editorRef} hideTools={!isAdmin} />
-          <Box
-            mt={2}
-            display="flex"
-            flexWrap="wrap"
-            alignItems="center"
-            minHeight="40px"
-          >
-            {Information.tagnames
-              .filter((hashtag) => hashtag.rowstatus !== "D")
-              .slice(0, 5)
-              .map((hashtag, index) => (
-                <Chip
-                  key={hashtag.seq}
-                  label={"#" + hashtag.name}
-                  onDelete={
-                    isAdmin ? () => handleDeleteHashtag(hashtag) : undefined
-                  }
-                  style={{
-                    color: "#7a76ce",
-                    backgroundColor: "#f0ecfc",
-                    marginRight: "2px",
-                  }}
-                />
-              ))}
-            {Information.tagnames.filter((hashtag) => hashtag.rowstatus !== "D")
-              .length < 5 &&
-              isAdmin && (
-                <Box
-                  display="flex"
-                  alignItems="center"
-                  style={{
-                    marginLeft: Information.tagnames.length > 0 ? 10 : 0,
-                    marginRight: "5px",
-                  }}
-                >
-                  <Typography variant="body1" color={"#a0a0a0"} mr={0.2}>
-                    #
-                  </Typography>
-                  <TextField
-                    variant="standard"
-                    size="small"
-                    placeholder="태그입력"
-                    value={newHashtag}
-                    onChange={(e) => setNewHashtag(e.target.value)}
-                    onKeyDown={handleAddHashtag}
-                    InputProps={{
-                      disableUnderline: true,
-                      style: {
-                        fontSize: "12px",
-                        paddingTop: "3px",
-                      },
+          {isAdmin && (
+            <Box
+              mt={2}
+              display="flex"
+              flexWrap="wrap"
+              alignItems="center"
+              minHeight="40px"
+            >
+              {Information.tagnames
+                .filter((hashtag) => hashtag.rowstatus !== "D")
+                .slice(0, 5)
+                .map((hashtag, index) => (
+                  <Chip
+                    key={hashtag.seq}
+                    label={"#" + hashtag.name}
+                    onDelete={
+                      isAdmin ? () => handleDeleteHashtag(hashtag) : undefined
+                    }
+                    style={{
+                      color: "#7a76ce",
+                      backgroundColor: "#f0ecfc",
+                      marginRight: "2px",
                     }}
                   />
-                </Box>
-              )}
-          </Box>
+                ))}
+              {Information.tagnames.filter(
+                (hashtag) => hashtag.rowstatus !== "D"
+              ).length < 5 &&
+                isAdmin && (
+                  <Box
+                    display="flex"
+                    alignItems="center"
+                    style={{
+                      marginLeft: Information.tagnames.length > 0 ? 10 : 0,
+                      marginRight: "5px",
+                    }}
+                  >
+                    <Typography variant="body1" color={"#a0a0a0"} mr={0.2}>
+                      #
+                    </Typography>
+                    <TextField
+                      variant="standard"
+                      size="small"
+                      placeholder="태그입력"
+                      value={newHashtag}
+                      onChange={(e) => setNewHashtag(e.target.value)}
+                      onKeyDown={handleAddHashtag}
+                      InputProps={{
+                        disableUnderline: true,
+                        style: {
+                          fontSize: "12px",
+                          paddingTop: "3px",
+                        },
+                      }}
+                    />
+                  </Box>
+                )}
+            </Box>
+          )}
         </GridContainer>
       </GridContainerWrap>
+      {/* 이미지 원본 크기로 보기 */}
+      {openDialog && (
+         <div
+         style={{
+           position: "fixed",
+           top: 0,
+           left: 0,
+           width: "100vw",
+           height: "100vh",
+           backgroundColor: "rgba(0, 0, 0, 0.5)", // 반투명 검은색 배경
+           display: "flex",
+           alignItems: "center",
+           justifyContent: "center",
+         }}
+       >
+        <Dialog
+          onClose={handleCloseDialog}
+          style={{
+            width: "auto",
+            height: "auto",
+            transform: "translate(-50%, -50%)", // translate를 사용해 정확히 중앙에 위치
+            position: "fixed", // 고정된 위치로 설정
+            top: positions.top,
+            left: positions.left,
+          }}
+        >
+          <img
+            src={Information.image}
+            alt="원본 이미지"
+            style={{
+              maxWidth: "90vw",
+              maxHeight: "95vh",
+              display: "block",
+              margin: "0 auto",
+            }}
+            onClick={handleCloseDialog} // 이미지 클릭 시 다이얼로그 닫기
+          />
+          {/* <DialogActionsBar>
+            <button className="k-button" onClick={handleCloseDialog}>
+              닫기
+            </button>
+          </DialogActionsBar> */}
+        </Dialog>
+        </div>
+      )}
     </Window>
   );
 };
