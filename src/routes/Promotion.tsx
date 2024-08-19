@@ -25,6 +25,8 @@ import { Iparameters } from "../store/types";
 
 var height = 0;
 var height2 = 0;
+var height3 = 0;
+var height4 = 0;
 
 const Promotion = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 1200);
@@ -54,6 +56,8 @@ const Promotion = () => {
       height = getHeight(".TitleContainer");
       height2 = getHeight(".ButtonContainer2");
       setWebHeight(getDeviceHeight(false) - height - height2 + 35);
+      height3 = (getDeviceHeight(false) - 400)/3;
+      height4 = (getDeviceHeight(false) - 400)/2;
     };
 
     const handleWindowResize = () => {
@@ -332,7 +336,7 @@ const Promotion = () => {
                     {item.thumbnail ? (
                       <CardMedia
                         component="img"
-                        height={130}
+                        height={height3}
                         image={item.thumbnail}
                         alt={item.title}
                         sx={{
@@ -342,7 +346,7 @@ const Promotion = () => {
                       />
                     ) : (
                       <Box
-                        height={130}
+                        height={height3}
                         display="flex"
                         alignItems="center"
                         justifyContent="center"
@@ -479,10 +483,11 @@ const Promotion = () => {
           <div
             className="ButtonContainer2"
             style={{
-              position: "sticky",
-              bottom: 0,
+              position: "fixed",
+              bottom: 30,
               width: "100%",
               zIndex: 100,
+              justifyContent: "center",
             }}
           >
             <Box display="flex" justifyContent="center" p={2}>

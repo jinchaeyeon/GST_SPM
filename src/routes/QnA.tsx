@@ -345,6 +345,8 @@ const App = () => {
   const [attachmentsWindowVisibleA, setAttachmentsWindowVisibleA] =
     useState<boolean>(false);
 
+  const [isTitleSet, setIsTitleSet] = useState(true);
+
   const onMainDataStateChange = (event: GridDataStateChangeEvent) => {
     setMainDataState(event.dataState);
   };
@@ -469,6 +471,15 @@ const App = () => {
           answerDocument: "",
         });
         setIsDataLocked(false);
+        if (qnaTitle && isTitleSet) {
+          addData();
+          const title = "[제품문의] " + qnaTitle;
+          setDetailData((prev) => ({
+            ...prev,
+            title: title,
+          }));
+          setIsTitleSet(false);
+        }
       }
     }
     setFilters((prev) => ({
@@ -481,8 +492,7 @@ const App = () => {
     }));
     setLoading(false);
   };
-  const [isTitleSet, setIsTitleSet] = useState(true); 
-  
+
   const fetchDetail = async (mainDataId: string, enteredPw: string = "") => {
     let data: any;
     setLoading(true);
@@ -508,8 +518,7 @@ const App = () => {
         setIsDataLocked(true);
       }
     }
-
-    if (data && data.result.isSuccess === true) {
+   if (data && data.result.isSuccess === true) {
       const questionDocument = data.questionDocument;
       const answerDocument = data.answerDocument;
       const rowCount = data.result.tables[0].RowCount;

@@ -144,9 +144,9 @@ const PromotionWindow = ({ setVisible, datas, modal = false }: IWindow) => {
 
   const [position, setPosition] = useState<IWindowPosition>({
     left: isMobile == true ? 0 : (deviceWidth - 1250) / 2,
-    top: isMobile == true ? 0 : (deviceHeight - 680) / 2,
+    top: isMobile == true ? 0 : (deviceHeight - 670) / 2,
     width: isMobile == true ? deviceWidth : 1250,
-    height: isMobile == true ? deviceHeight : 680,
+    height: isMobile == true ? deviceHeight : 670,
   });
 
   const onChangePostion = (position: any) => {
@@ -181,8 +181,8 @@ const PromotionWindow = ({ setVisible, datas, modal = false }: IWindow) => {
   const setHtmlOnEditor = (content: string) => {
     if (editorRef.current) {
       if (!isAdmin) editorRef.current.updateEditable(true);
-      editorRef.current.setHtml(content);
       if (!isAdmin) editorRef.current.updateEditable(false);
+      editorRef.current.setHtml(content);
     }
   };
 
@@ -374,6 +374,7 @@ const PromotionWindow = ({ setVisible, datas, modal = false }: IWindow) => {
         tagnames: [],
         type: "",
       });
+      setHtmlOnEditor("");
     }
   }, [datas]);
 
@@ -381,7 +382,7 @@ const PromotionWindow = ({ setVisible, datas, modal = false }: IWindow) => {
     if (datas?.document_id) {
       fetchDetail();
       fetchDetail2();
-    }
+    }   
   }, [filters]);
 
   // 저장
@@ -842,6 +843,7 @@ const PromotionWindow = ({ setVisible, datas, modal = false }: IWindow) => {
                     style={{
                       width: "100%",
                       justifyContent: "flex-start",
+                      gap: "4px",
                     }}
                   >
                     {Information.tagnames
@@ -859,7 +861,6 @@ const PromotionWindow = ({ setVisible, datas, modal = false }: IWindow) => {
                           style={{
                             color: "#7a76ce",
                             backgroundColor: "#f0ecfc",
-                            marginRight: "4px",
                           }}
                         />
                       ))}
@@ -917,7 +918,7 @@ const PromotionWindow = ({ setVisible, datas, modal = false }: IWindow) => {
                     // bgcolor="#d3d3d3"
                     border="1px solid #e0e0e0"
                     borderRadius={1}
-                    width="100%"
+                    minWidth="100%"
                     mt={1.3}
                   >
                     <ImageIcon style={{ marginRight: "8px", color: "gray" }} />
@@ -955,6 +956,7 @@ const PromotionWindow = ({ setVisible, datas, modal = false }: IWindow) => {
                   style={{
                     width: "100%",
                     justifyContent: "flex-start",
+                    gap: "4px",
                   }}
                 >
                   {Information.tagnames
@@ -972,7 +974,6 @@ const PromotionWindow = ({ setVisible, datas, modal = false }: IWindow) => {
                         style={{
                           color: "#7a76ce",
                           backgroundColor: "#f0ecfc",
-                          marginRight: "4px",
                         }}
                       />
                     ))}
@@ -1090,6 +1091,8 @@ const PromotionWindow = ({ setVisible, datas, modal = false }: IWindow) => {
                   sx: {
                     height: "35px",
                     margin: "10px 10px 10px 5px",
+                    fontFamily: "Noto Sans KR",
+                    fontSize: "15px"
                   },
                 }}
                 sx={{
@@ -1202,47 +1205,47 @@ const PromotionWindow = ({ setVisible, datas, modal = false }: IWindow) => {
       </GridContainerWrap>
       {/* 이미지 원본 크기로 보기 */}
       {openDialog && (
-         <div
-         style={{
-           position: "fixed",
-           top: 0,
-           left: 0,
-           width: "100vw",
-           height: "100vh",
-           backgroundColor: "rgba(0, 0, 0, 0.5)", // 반투명 검은색 배경
-           display: "flex",
-           alignItems: "center",
-           justifyContent: "center",
-         }}
-       >
-        <Dialog
-          onClose={handleCloseDialog}
+        <div
           style={{
-            width: "auto",
-            height: "auto",
-            transform: "translate(-50%, -50%)", // translate를 사용해 정확히 중앙에 위치
-            position: "fixed", // 고정된 위치로 설정
-            top: positions.top,
-            left: positions.left,
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            backgroundColor: "rgba(0, 0, 0, 0.5)", // 반투명 검은색 배경
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}
         >
-          <img
-            src={Information.image}
-            alt="원본 이미지"
+          <Dialog
+            onClose={handleCloseDialog}
             style={{
-              maxWidth: "90vw",
-              maxHeight: "95vh",
-              display: "block",
-              margin: "0 auto",
+              width: "auto",
+              height: "auto",
+              transform: "translate(-50%, -50%)", // translate를 사용해 정확히 중앙에 위치
+              position: "fixed", // 고정된 위치로 설정
+              top: positions.top,
+              left: positions.left,
             }}
-            onClick={handleCloseDialog} // 이미지 클릭 시 다이얼로그 닫기
-          />
-          {/* <DialogActionsBar>
+          >
+            <img
+              src={Information.image}
+              alt="원본 이미지"
+              style={{
+                maxWidth: "90vw",
+                maxHeight: "95vh",
+                display: "block",
+                margin: "0 auto",
+              }}
+              onClick={handleCloseDialog} // 이미지 클릭 시 다이얼로그 닫기
+            />
+            {/* <DialogActionsBar>
             <button className="k-button" onClick={handleCloseDialog}>
               닫기
             </button>
           </DialogActionsBar> */}
-        </Dialog>
+          </Dialog>
         </div>
       )}
     </Window>
