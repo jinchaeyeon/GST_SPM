@@ -1,29 +1,27 @@
+import AddIcon from "@mui/icons-material/Add";
+import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import {
   Box,
   Card,
   CardContent,
   CardMedia,
-  Chip,
   Container,
   Fab,
   Grid,
   Pagination,
   Stack,
-  Typography,
+  Typography
 } from "@mui/material";
-import { Key, useEffect, useLayoutEffect, useState } from "react";
+import { DataResult, process, State } from "@progress/kendo-data-query";
+import { bytesToBase64 } from "byte-base64";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { useRecoilState, useSetRecoilState } from "recoil";
 import { getDeviceHeight, getHeight } from "../components/CommonFunction";
 import PromotionWindow from "../components/Windows/CommonWindows/PromotionWindow";
-import { isLoading, loginResultState, titles } from "../store/atoms";
-import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
-import AddIcon from "@mui/icons-material/Add";
-import { bytesToBase64 } from "byte-base64";
 import { useApi } from "../hooks/api";
-import { DataResult, process, State } from "@progress/kendo-data-query";
+import { isLoading, loginResultState, titles } from "../store/atoms";
 import { Iparameters } from "../store/types";
-import styled from "styled-components";
 
 var height = 0;
 var height2 = 0;
