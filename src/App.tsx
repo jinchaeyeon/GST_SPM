@@ -83,6 +83,7 @@ import Reception_Answer from "./routes/Reception_Answer";
 import Record from "./routes/Record";
 import Task_Order from "./routes/Task_Order";
 import koMessages from "./store/cultures/ko.json";
+import ReceptionistWindow from "./components/Windows/CommonWindows/ReceptionistWindow";
 load(
   likelySubtags,
   currencyData,
@@ -282,6 +283,8 @@ const AppInner: React.FC = () => {
   const [title, setTitle] = useRecoilState(titles);
   const [changePasswordWindowVisible, setChangePasswordWindowVisible] =
     useState<boolean>(false);
+  const [receptionistWindowVisible, setReceptionistWindowVisible] =
+    useState<boolean>(false);
   const history = useHistory();
   let deviceWidth = window.innerWidth;
   let isMobile = deviceWidth <= 1200;
@@ -395,6 +398,9 @@ const AppInner: React.FC = () => {
     {
       title: "알림 구독 해제",
     },
+    // loginResult ? loginResult.role === "ADMIN" && {
+    //   title: "접수 담당업체 설정",
+    // } : "",
     {
       title: "비밀번호 변경",
     },
@@ -413,6 +419,8 @@ const AppInner: React.FC = () => {
       callApi("subscribe");
     } else if (title == "알림 구독 해제") {
       callApi("unsubscribe");
+    } else if (title == "접수 담당업체 설정") {
+      setReceptionistWindowVisible(true);
     }
   };
 
@@ -589,6 +597,10 @@ const AppInner: React.FC = () => {
       {changePasswordWindowVisible && (
         <ChangePasswordWindow setVisible={setChangePasswordWindowVisible} />
       )}
+      {receptionistWindowVisible && (
+        <ReceptionistWindow setVisible={setReceptionistWindowVisible} />
+      )}
+
     </>
   );
   //}
