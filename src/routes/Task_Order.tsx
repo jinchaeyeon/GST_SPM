@@ -2436,10 +2436,6 @@ const App = () => {
         );
       }
     }
-
-    if (swiper && isMobile) {
-      swiper.slideTo(1);
-    }
   };
 
   useEffect(() => {
