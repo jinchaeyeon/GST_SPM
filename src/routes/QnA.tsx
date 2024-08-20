@@ -304,7 +304,7 @@ const App = () => {
           { sub_code: "4", code_name: "보류" },
           { sub_code: "8", code_name: "완료" },
         ],
-    isChecked: "N",
+    isChecked: "%",
     custnm: "",
     findRowValue: "",
     pgNum: 1,
