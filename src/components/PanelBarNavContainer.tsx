@@ -45,6 +45,7 @@ import ChangePasswordWindow from "./Windows/CommonWindows/ChangePasswordWindow";
 import SystemOptionWindow from "./Windows/CommonWindows/SystemOptionWindow";
 import UserOptionsWindow from "./Windows/CommonWindows/UserOptionsWindow";
 import jwt_decode from "jwt-decode";
+import ReceptionistWindow from "./Windows/CommonWindows/ReceptionistWindow";
 
 interface DecodedToken {
   exp: number;
@@ -355,6 +356,8 @@ const PanelBarNavContainer = (props: any) => {
     useState<boolean>(false);
   const [systemOptionWindowWindowVisible, setSystemOptionWindowVisible] =
     useState<boolean>(false);
+  const [receptionistWindowVisible, setReceptionistWindowVisible] =
+    useState<boolean>(false);
   const onSelect = (event: PanelBarSelectEventArguments) => {
     const { route, className = "" } = event.target.props;
     if (navigator.onLine) {
@@ -541,7 +544,7 @@ const PanelBarNavContainer = (props: any) => {
         logout();
       }
     }
-    
+
     const handleUnload = () => {
       // unsavedAttadatnums가 있으면 삭제처리
       if (unsavedAttadatnums.attdatnums.length > 0) {
@@ -641,6 +644,9 @@ const PanelBarNavContainer = (props: any) => {
     {
       title: "알림 구독 해제",
     },
+    // isAdmin && {
+    //   title: "접수 담당업체 설정",
+    // },
     {
       title: "비밀번호 변경",
     },
@@ -659,6 +665,8 @@ const PanelBarNavContainer = (props: any) => {
       callApi("subscribe");
     } else if (title == "알림 구독 해제") {
       callApi("unsubscribe");
+    } else if (title == "접수 담당업체 설정") {
+      setReceptionistWindowVisible(true);
     }
   };
 
@@ -863,6 +871,9 @@ const PanelBarNavContainer = (props: any) => {
         )}
         {systemOptionWindowWindowVisible && (
           <SystemOptionWindow setVisible={setSystemOptionWindowVisible} />
+        )}
+        {receptionistWindowVisible && (
+          <ReceptionistWindow setVisible={setReceptionistWindowVisible} />
         )}
 
         <Loading />

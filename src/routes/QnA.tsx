@@ -304,7 +304,7 @@ const App = () => {
           { sub_code: "4", code_name: "보류" },
           { sub_code: "8", code_name: "완료" },
         ],
-    isChecked: "N",
+    isChecked: "%",
     custnm: "",
     findRowValue: "",
     pgNum: 1,
@@ -344,6 +344,8 @@ const App = () => {
 
   const [attachmentsWindowVisibleA, setAttachmentsWindowVisibleA] =
     useState<boolean>(false);
+
+  const [isTitleSet, setIsTitleSet] = useState(true);
 
   const onMainDataStateChange = (event: GridDataStateChangeEvent) => {
     setMainDataState(event.dataState);
@@ -469,6 +471,15 @@ const App = () => {
           answerDocument: "",
         });
         setIsDataLocked(false);
+        if (qnaTitle && isTitleSet) {
+          addData();
+          const title = "[제품문의] " + qnaTitle;
+          setDetailData((prev) => ({
+            ...prev,
+            title: title,
+          }));
+          setIsTitleSet(false);
+        }
       }
     }
     setFilters((prev) => ({
@@ -507,13 +518,19 @@ const App = () => {
         setIsDataLocked(true);
       }
     }
-
-    if (data && data.result.isSuccess === true) {
+   if (data && data.result.isSuccess === true) {
       const questionDocument = data.questionDocument;
       const answerDocument = data.answerDocument;
       const rowCount = data.result.tables[0].RowCount;
-
-      if (rowCount) {
+      if (qnaTitle && isTitleSet) {
+        addData();
+        const title = "[제품문의] " + qnaTitle;
+        setDetailData((prev) => ({
+          ...prev,
+          title: title,
+        }));
+        setIsTitleSet(false);
+      } else if (rowCount) {
         setIsDataLocked(false);
         // 상세정보 데이터 세팅
         const row = data.result.tables[0].Rows[0];
@@ -529,12 +546,11 @@ const App = () => {
           reception_date: dateformat2(row.reception_date),
           be_finished_date: dateformat2(row.be_finished_date),
         }));
+        setHtmlOnEditor({
+          questionDocument,
+          answerDocument,
+        });
       }
-
-      setHtmlOnEditor({
-        questionDocument,
-        answerDocument,
-      });
     } else {
       console.log("[에러발생]");
       console.log(data);
@@ -924,19 +940,8 @@ const App = () => {
       localStorage.getItem("accessToken")
     ) {
       pwInputRef.current.focus();
-    } else {
-      if (!isAdmin) {
-        addData();
-        if (qnaTitle) {
-          const title =  "[제품문의] " + qnaTitle;
-          setDetailData((prev) => ({
-            ...prev,
-            title: title,
-          }));
-        }
-      }
     }
-  }, [isDataLocked, detailData, qnaTitle]);
+  }, [isDataLocked, detailData]);
 
   /* 푸시 알림 클릭시 이동 테스트 코드 */
   useEffect(() => {
