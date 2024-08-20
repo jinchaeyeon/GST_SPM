@@ -10,6 +10,7 @@ import {
   Fab,
   Grid,
   Pagination,
+  PaginationItem,
   Stack,
   Typography,
 } from "@mui/material";
@@ -22,11 +23,14 @@ import PromotionWindow from "../components/Windows/CommonWindows/PromotionWindow
 import { useApi } from "../hooks/api";
 import { isLoading, loginResultState, titles } from "../store/atoms";
 import { Iparameters } from "../store/types";
+import { Title, TitleContainer } from "../CommonStyled";
 
 var height = 0;
 var height2 = 0;
 var height3 = 0;
 var height4 = 0;
+
+var count = 1;
 
 const Promotion = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 1200);
@@ -57,7 +61,7 @@ const Promotion = () => {
       height2 = getHeight(".ButtonContainer2");
       setWebHeight(getDeviceHeight(false) - height - height2 + 35);
       height3 = (getDeviceHeight(false) - 400) / 3;
-      height4 = (getDeviceHeight(false) - 400) / 2;
+      height4 = (getDeviceHeight(false) - 290 - height) / 2;
     };
 
     const handleWindowResize = () => {
@@ -89,7 +93,7 @@ const Promotion = () => {
     documentId: "",
     findRowValue: "",
     pgNum: 1,
-    pgSize: 12,
+    pgSize: isMobile ? 2 : 12,
     isSearch: false,
   });
 
@@ -101,7 +105,18 @@ const Promotion = () => {
       setFilters((prev) => ({ ...prev, find_row_value: "", isSearch: false })); // 한번만 조회되도록
       fetchMainGrid(deepCopiedFilters);
     }
+    count = Math.ceil(mainDataResult.total / (isMobile ? 2 : 12));
   }, [filters]);
+
+  useEffect(() => {
+    setFilters((prev) => ({
+      ...prev,
+      pgNum: 1,
+      pgSize: isMobile ? 2 : 12,
+      isSearch: true,
+    }));
+    setPage(1);
+  }, [isMobile]);
 
   // 구분 조회
   const fetchTypes = async () => {
@@ -270,270 +285,302 @@ const Promotion = () => {
   };
 
   return (
-    <Box
-      display="flex"
-      overflow="hidden"
-      style={{ userSelect: "none" }}
-      width="100%"
-    >
-      {/* <Box width="15%">
-        <GridTitleContainer>
-          <GridTitle>조회조건</GridTitle>
-        </GridTitleContainer>
-        <FilterContainer>
-          <FilterBox>
-            <tbody>
-              <tr>
-                <th>example</th>
-                <td>
-                  <Input name="example" type="text" value={[]} />
-                </td>
-              </tr>
-              <tr>
-                <th>example</th>
-                <td>
-                  <Input name="example" type="text" value={[]} />
-                </td>
-              </tr>
-              <tr>
-                <th>example</th>
-                <td>
-                  <Input name="example" type="text" value={[]} />
-                </td>
-              </tr>
-            </tbody>
-          </FilterBox>
-        </FilterContainer>
-      </Box> */}
-      <Box flexGrow={1} overflow="auto">
-        <Container maxWidth={false}>
-          <Grid container spacing={2.5} p={2} minHeight={webHeight}>
-            {mainDataResult.data.map((item) => (
-              <Grid
-                item
-                xs={12}
-                sm={6}
-                md={4}
-                lg={3}
-                mt={0.5}
-                key={item.document_id}
-              >
-                <Card
-                  onClick={() => handleCardClick(item)}
-                  sx={{
-                    borderRadius: 2,
-                    padding: "10px 10px 0 10px",
-                    boxShadow: "0 4px 10px rgba(0, 0, 0, 0.15)",
-                    transition: "0.7s",
-                    "&:hover": {
-                      boxShadow: "0 8px 20px rgba(0, 0, 0, 0.3)",
-                      cursor: "pointer",
-                      transform: "translateY(-3px)",
-                    },
-                  }}
+    <>
+      {isMobile && (
+        <TitleContainer className="TitleContainer">
+          <Title>제품홍보</Title>
+        </TitleContainer>
+      )}
+      <Box
+        display="flex"
+        overflow="hidden"
+        style={{ userSelect: "none" }}
+        width="100%"
+      >
+        {/* 조회조건 주석 - 추후에 사용 */}
+        {/* <Box width="15%">
+      <GridTitleContainer>
+        <GridTitle>조회조건</GridTitle>
+      </GridTitleContainer>
+      <FilterContainer>
+        <FilterBox>
+          <tbody>
+            <tr>
+              <th>example</th>
+              <td>
+                <Input name="example" type="text" value={[]} />
+              </td>
+            </tr>
+            <tr>
+              <th>example</th>
+              <td>
+                <Input name="example" type="text" value={[]} />
+              </td>
+            </tr>
+            <tr>
+              <th>example</th>
+              <td>
+                <Input name="example" type="text" value={[]} />
+              </td>
+            </tr>
+          </tbody>
+        </FilterBox>
+      </FilterContainer>
+    </Box> */}
+        <Box flexGrow={1} overflow="auto">
+          <Container maxWidth={false}>
+            <Grid
+              container
+              spacing={2.5}
+              p={isMobile ? 0 : 2}
+              minHeight={webHeight}
+            >
+              {mainDataResult.data.map((item) => (
+                <Grid
+                  item
+                  xs={12}
+                  sm={12}
+                  md={12}
+                  lg={3}
+                  mt={0.5}
+                  key={item.document_id}
                 >
-                  <Box position="relative">
-                    {item.thumbnail ? (
-                      <CardMedia
-                        component="img"
-                        height={height3}
-                        image={item.thumbnail}
-                        alt={item.title}
-                        sx={{
-                          borderRadius: 1,
-                          objectFit: "cover",
-                        }}
-                      />
-                    ) : (
-                      <Box
-                        height={height3}
-                        display="flex"
-                        alignItems="center"
-                        justifyContent="center"
-                        bgcolor="lightgray"
-                        borderRadius={1}
-                        width="100%"
-                      >
-                        <ImageOutlinedIcon
-                          style={{ marginRight: "8px", color: "gray" }}
+                  <Card
+                    onClick={() => handleCardClick(item)}
+                    sx={{
+                      borderRadius: 2,
+                      padding: "10px 10px 0 10px",
+                      boxShadow: "0 4px 10px rgba(0, 0, 0, 0.15)",
+                      transition: "0.7s",
+                      "&:hover": {
+                        boxShadow: "0 8px 20px rgba(0, 0, 0, 0.3)",
+                        cursor: "pointer",
+                        transform: "translateY(-3px)",
+                      },
+                    }}
+                  >
+                    <Box position="relative">
+                      {item.thumbnail ? (
+                        <CardMedia
+                          component="img"
+                          height={isMobile ? height4 : height3}
+                          image={item.thumbnail}
+                          alt={item.title}
+                          sx={{
+                            borderRadius: 1,
+                            objectFit: "cover",
+                          }}
                         />
-                        <Typography variant="body2" color="gray">
-                          이미지 준비 중
-                        </Typography>
-                      </Box>
-                    )}
-                    <Box
-                      position="absolute"
-                      top={0}
-                      left={0}
-                      display="flex"
-                      p={1}
-                    >
-                      {item.is_hot == "Y" && (
+                      ) : (
                         <Box
-                          bgcolor="#ef5350"
-                          color="white"
-                          p={1}
-                          borderRadius="8px"
-                          mr={1}
-                          fontWeight={"bold"}
-                          fontSize="12px"
-                          lineHeight="14px"
-                        >
-                          HOT
-                        </Box>
-                      )}
-                      {item.is_new == "Y" && (
-                        <Box
-                          bgcolor="#fbc02d"
-                          color="white"
-                          p={1}
-                          borderRadius="8px"
-                          fontWeight={"bold"}
-                          fontSize="12px"
-                          lineHeight="14px"
-                        >
-                          NEW
-                        </Box>
-                      )}
-                    </Box>
-                  </Box>
-                  <CardContent>
-                    <Box
-                      display="flex"
-                      justifyContent="space-between"
-                      alignItems="flex-start"
-                    >
-                      <Box display="flex" flexDirection="column">
-                        <Box
+                          height={isMobile ? height4 : height3}
                           display="flex"
-                          flexDirection="row"
                           alignItems="center"
-                          flexWrap="nowrap"
+                          justifyContent="center"
+                          bgcolor="lightgray"
+                          borderRadius={1}
+                          width="100%"
                         >
+                          <ImageOutlinedIcon
+                            style={{ marginRight: "8px", color: "gray" }}
+                          />
+                          <Typography variant="body2" color="gray">
+                            이미지 준비 중
+                          </Typography>
+                        </Box>
+                      )}
+                      <Box
+                        position="absolute"
+                        top={0}
+                        left={0}
+                        display="flex"
+                        p={1}
+                      >
+                        {item.is_hot == "Y" && (
+                          <Box
+                            bgcolor="#ef5350"
+                            color="white"
+                            p={1}
+                            borderRadius="8px"
+                            mr={1}
+                            fontWeight={"bold"}
+                            fontSize="12px"
+                            lineHeight="14px"
+                          >
+                            HOT
+                          </Box>
+                        )}
+                        {item.is_new == "Y" && (
+                          <Box
+                            bgcolor="#fbc02d"
+                            color="white"
+                            p={1}
+                            borderRadius="8px"
+                            fontWeight={"bold"}
+                            fontSize="12px"
+                            lineHeight="14px"
+                          >
+                            NEW
+                          </Box>
+                        )}
+                      </Box>
+                    </Box>
+                    <CardContent>
+                      <Box
+                        display="flex"
+                        justifyContent="space-between"
+                        alignItems="flex-start"
+                      >
+                        <Box display="flex" flexDirection="column">
+                          <Box
+                            display="flex"
+                            flexDirection="row"
+                            alignItems="center"
+                            flexWrap="nowrap"
+                          >
+                            <Typography
+                              component="div"
+                              fontWeight={600}
+                              sx={{
+                                fontSize: "13px",
+                                color: "#6a68ba",
+                              }}
+                            >
+                              {
+                                typesData.find(
+                                  (type) => type.sub_code === item.category
+                                )?.code_name
+                              }
+                            </Typography>
+                          </Box>
                           <Typography
                             component="div"
                             fontWeight={600}
-                            sx={{
-                              fontSize: "13px",
-                              color: "#6a68ba",
-                            }}
+                            sx={{ fontSize: "17px" }}
                           >
-                            {
-                              typesData.find(
-                                (type) => type.sub_code === item.category
-                              )?.code_name
-                            }
+                            {item.title}
                           </Typography>
                         </Box>
-                        <Typography
-                          component="div"
-                          fontWeight={600}
-                          sx={{ fontSize: "17px" }}
-                        >
-                          {item.title}
-                        </Typography>
-                      </Box>
 
-                      <Typography
-                        variant="body2"
-                        color={"gray"}
-                        sx={{ whiteSpace: "nowrap" }}
-                      >
-                        <VisibilityIcon
-                          style={{
-                            fontSize: "16px",
-                            verticalAlign: "middle",
-                            marginRight: "2px",
-                          }}
-                        />
-                        {item.max_seq == null ? 0 : item.max_seq}
-                      </Typography>
-                    </Box>
-                    {/* <Box
-                      mt={1}
-                      display="flex"
-                      flexWrap="wrap"
-                      gap={0.5}
-                      minHeight="25px"
-                    >
-                      {item.tagnames
-                        .split("|")
-                        .filter((hashtag: string) => hashtag.trim() !== "")
-                        .map((hashtag: string, index: any) => (
-                          <Chip
-                            key={index}
-                            label={"#" + hashtag}
-                            // onClick={() => handleHashtagClick(hashtag)}
-                            // variant="outlined"
-                            size="small"
+                        <Typography
+                          variant="body2"
+                          color={"gray"}
+                          sx={{ whiteSpace: "nowrap" }}
+                        >
+                          <VisibilityIcon
                             style={{
-                              color: "#7a76ce",
-                              backgroundColor: "#f0ecfc",
+                              fontSize: "16px",
+                              verticalAlign: "middle",
+                              marginRight: "2px",
                             }}
                           />
-                        ))}
-                    </Box> */}
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
+                          {item.max_seq == null ? 0 : item.max_seq}
+                        </Typography>
+                      </Box>
+                      {/* 해시태그 주석- 추후에 사용 */}
+                      {/* <Box
+              mt={1}
+              display="flex"
+              flexWrap="wrap"
+              gap={0.5}
+              minHeight="25px"
+            >
+              {item.tagnames
+                .split("|")
+                .filter((hashtag: string) => hashtag.trim() !== "")
+                .map((hashtag: string, index: any) => (
+                  <Chip
+                    key={index}
+                    label={"#" + hashtag}
+                    // onClick={() => handleHashtagClick(hashtag)}
+                    // variant="outlined"
+                    size="small"
+                    style={{
+                      color: "#7a76ce",
+                      backgroundColor: "#f0ecfc",
+                    }}
+                  />
+                ))}
+            </Box> */}
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          </Container>
           {/* 페이지네이션 버튼 */}
           <div
             className="ButtonContainer2"
             style={{
               position: "fixed",
-              bottom: 30,
+              bottom: isMobile ? 0 : 30,
               width: "100%",
               zIndex: 100,
               display: "flex",
               justifyContent: "center",
-              transform: "translateX(-110px)",
+              transform: isMobile ? undefined : "translateX(-90px)",
             }}
           >
             <Box display="flex" justifyContent="center" p={2}>
               <Stack spacing={2}>
                 <Pagination
-                  count={Math.ceil(mainDataResult.total / 12)}
+                  count={count}
                   showFirstButton
                   showLastButton
                   onChange={handlePageChange}
                   page={page}
+                  siblingCount={isMobile ? 0 : undefined}
+                  boundaryCount={isMobile ? 0 : undefined}
+                  renderItem={(item) => {
+                    if (isMobile) {
+                      // 모바일에서만 특정 로직 적용
+                      if (item.type === "page" && item.page === page) {
+                        return <PaginationItem {...item} />;
+                      }
+                      if (item.type === "previous" || item.type === "next") {
+                        return <PaginationItem {...item} />;
+                      }
+                      return null; // 나머지 항목은 렌더링하지 않음
+                    } else {
+                      // 비모바일에서는 기본 PaginationItem 반환
+                      return <PaginationItem {...item} />;
+                    }
+                  }}
+                  defaultPage={1}
                 />
               </Stack>
             </Box>
           </div>
-        </Container>
+        </Box>
+        {/* 신규 버튼 */}
+        {isAdmin && (
+          <Fab
+            color="primary"
+            aria-label="add"
+            onClick={handleAddNewProduct}
+            sx={{
+              position: "fixed",
+              bottom: 40,
+              right: 40,
+              backgroundColor: "#7a76ce",
+              "&:hover": {
+                backgroundColor: "#6a68ba",
+                boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.2)",
+              },
+            }}
+          >
+            <AddIcon />
+          </Fab>
+        )}
+        {promotionWindowVisible && (
+          <PromotionWindow
+            datas={selectedProduct}
+            setVisible={setPromotionWindowVisible}
+            modal={true}
+          />
+        )}
       </Box>
-      {/* 신규 버튼 */}
-      {isAdmin && (
-        <Fab
-          color="primary"
-          aria-label="add"
-          onClick={handleAddNewProduct}
-          sx={{
-            position: "fixed",
-            bottom: 40,
-            right: 40,
-            backgroundColor: "#7a76ce",
-            "&:hover": {
-              backgroundColor: "#6a68ba",
-              boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.2)",
-            },
-          }}
-        >
-          <AddIcon />
-        </Fab>
-      )}
-      {promotionWindowVisible && (
-        <PromotionWindow
-          datas={selectedProduct}
-          setVisible={setPromotionWindowVisible}
-          modal={true}
-        />
-      )}
-    </Box>
+    </>
   );
 };
 
