@@ -23,7 +23,14 @@ import {
   useState,
 } from "react";
 import { useRecoilState, useSetRecoilState } from "recoil";
-import { GridContainer, GridContainerWrap } from "../../../CommonStyled";
+import {
+  BottomContainer,
+  ButtonContainer,
+  GridContainer,
+  GridContainerWrap,
+  GridTitle,
+  GridTitleContainer,
+} from "../../../CommonStyled";
 import { useApi } from "../../../hooks/api";
 import { IWindowPosition } from "../../../hooks/interfaces";
 import { isLoading, loginResultState } from "../../../store/atoms";
@@ -39,6 +46,9 @@ import { GAP } from "../../CommonString";
 import RichEditor from "../../RichEditor";
 import Window from "../WindowComponent/Window";
 import { removeBeforeUnloadListener } from "../../PanelBarNavContainer";
+import SwiperCore from "swiper";
+import "swiper/css";
+import { Swiper, SwiperSlide } from "swiper/react";
 
 type IWindow = {
   setVisible(t: boolean): void;
@@ -109,6 +119,9 @@ const CustomTextField = styled(TextField)({
 
 var height = 0;
 var height2 = 0;
+var height3 = 0;
+var height4 = 0;
+var index = 0;
 
 const PromotionWindow = ({ setVisible, datas, modal = false }: IWindow) => {
   let deviceWidth = window.innerWidth;
@@ -116,6 +129,7 @@ const PromotionWindow = ({ setVisible, datas, modal = false }: IWindow) => {
   let isMobile = deviceWidth <= 1200;
   const setLoading = useSetRecoilState(isLoading);
   const [mobileheight, setMobileHeight] = useState(0);
+  const [mobileheight2, setMobileHeight2] = useState(0);
   const [webheight, setWebHeight] = useState(0);
   const [webheight2, setWebHeight2] = useState(0);
   const [webheight3, setWebHeight3] = useState(0);
@@ -125,13 +139,24 @@ const PromotionWindow = ({ setVisible, datas, modal = false }: IWindow) => {
   const [mainDataResult, setMainDataResult] = useState<DataResult>(
     process([], mainDataState)
   );
+  const [swiper, setSwiper] = useState<SwiperCore>();
 
   useLayoutEffect(() => {
+    console.log("***");
     height = getHeight(".k-window-titlebar"); //공통 해더
     height2 = getHeight(".ButtonContainer"); //하단 버튼부분
+    height3 = getHeight(".ButtonContainer2"); //태그높이
+    height4 = getHeight(".ButtonContainer3"); //스와이퍼버튼
 
     setMobileHeight(
-      getWindowDeviceHeight(false, deviceHeight) - height - height2
+      getWindowDeviceHeight(false, deviceHeight) -
+        height -
+        height2 -
+        height4 +
+        15
+    );
+    setMobileHeight2(
+      getWindowDeviceHeight(false, deviceHeight) - height - height2 - height4 - 5
     );
     setWebHeight(getWindowDeviceHeight(false, position.height) - height);
     setWebHeight2(
@@ -382,7 +407,7 @@ const PromotionWindow = ({ setVisible, datas, modal = false }: IWindow) => {
     if (datas?.document_id) {
       fetchDetail();
       fetchDetail2();
-    }   
+    }
   }, [filters]);
 
   // 저장
@@ -693,125 +718,838 @@ const PromotionWindow = ({ setVisible, datas, modal = false }: IWindow) => {
       titles={"상세정보"}
       positions={position}
       Close={onClose}
-      modals={false}
+      modals={true}
       onChangePostion={onChangePostion}
     >
-      <GridContainerWrap>
-        <GridContainer
-          width="38%"
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            // alignItems: "center",
-            height: webheight,
-          }}
-        >
-          {!isAdmin && (
-            <Box display="flex" mt={1} ml={0.2}>
-              <Box alignItems="flex-start" justifyContent="flex-start">
-                <Typography
-                  component="div"
-                  fontWeight={600}
-                  sx={{
+      {isMobile ? (
+        <>
+          <Swiper
+            onSwiper={(swiper) => {
+              setSwiper(swiper);
+            }}
+            onActiveIndexChange={(swiper) => {
+              index = swiper.activeIndex;
+            }}
+          >
+            <SwiperSlide key={0}>
+              <GridContainer
+                width="10%"
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  height: mobileheight,
+                }}
+              >
+                <GridTitleContainer>
+                  <GridTitle></GridTitle>
+                  <ButtonContainer className="ButtonContainer3">
+                    <Button
+                      themeColor={"primary"}
+                      fillMode={"flat"}
+                      icon={"chevron-right"}
+                      onClick={() => {
+                        if (swiper) {
+                          swiper.slideTo(1);
+                        }
+                      }}
+                    ></Button>
+                  </ButtonContainer>
+                </GridTitleContainer>
+                {!isAdmin && (
+                  <Box display="flex" mt={1} ml={0.2}>
+                    <Box alignItems="flex-start" justifyContent="flex-start">
+                      <Typography
+                        component="div"
+                        fontWeight={600}
+                        sx={{
+                          fontSize: "15px",
+                          color: "#6a68ba",
+                        }}
+                      >
+                        {
+                          typesData.find(
+                            (type) => type.sub_code === Information.type
+                          )?.code_name
+                        }
+                      </Typography>
+                      <Box
+                        display="flex"
+                        alignItems="center"
+                        flexDirection={"row"}
+                      >
+                        <Typography
+                          component="div"
+                          variant="h3"
+                          fontWeight={600}
+                          style={{
+                            fontSize: "22px",
+                            color: "#424242",
+                          }}
+                        >
+                          {Information.title}
+                        </Typography>
+                        <Box ml={0.5} display="flex">
+                          {Information.isHot && (
+                            <Box
+                              bgcolor="#ef5350"
+                              color="white"
+                              width="15px"
+                              height="15px"
+                              display="flex"
+                              alignItems="center"
+                              justifyContent="center"
+                              borderRadius="50%"
+                              mr={0.5}
+                              fontWeight="bold"
+                              fontSize="8px"
+                              lineHeight="14px"
+                            >
+                              H
+                            </Box>
+                          )}
+                          {Information.isNew && (
+                            <Box
+                              bgcolor="#fbc02d"
+                              color="white"
+                              width="15px"
+                              height="15px"
+                              display="flex"
+                              alignItems="center"
+                              justifyContent="center"
+                              borderRadius="50%"
+                              fontWeight="bold"
+                              fontSize="8px"
+                              lineHeight="14px"
+                            >
+                              N
+                            </Box>
+                          )}
+                        </Box>
+                      </Box>
+                    </Box>
+                  </Box>
+                )}
+                {Information.image != "" && Information.image != null ? (
+                  <>
+                    <Box
+                      sx={{
+                        height: webheight2,
+                        overflow: "auto",
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: "flex-start",
+                        alignItems: "center",
+                        mb: 1,
+                        mt: 1.3,
+                      }}
+                    >
+                      <Box
+                        component="img"
+                        src={Information.image}
+                        alt={Information.title}
+                        onClick={handleImageClick}
+                        sx={{
+                          borderRadius: 1,
+                          width: "auto",
+                          height: "auto",
+                          maxWidth: "100%",
+                          flexShrink: 0,
+                          cursor: "pointer",
+                        }}
+                      />
+                      {isAdmin ? (
+                        <Box display={"flex"} justifyContent={"center"} gap={1}>
+                          <Button
+                            style={{ margin: "10px 0" }}
+                            onClick={onAttWndClick2}
+                            fillMode="outline"
+                            themeColor={"primary"}
+                          >
+                            이미지 수정
+                          </Button>
+                          <input
+                            id="uploadAttachment2"
+                            style={{ display: "none" }}
+                            type="file"
+                            accept="image/*"
+                            // ref={excelInput2}
+                            onChange={(
+                              event: React.ChangeEvent<HTMLInputElement>
+                            ) => {
+                              getAttachmentsData(event.target.files);
+                            }}
+                          />
+                          <Button
+                            style={{ margin: "10px 0" }}
+                            onClick={onDeleteClick}
+                            fillMode="outline"
+                            themeColor={"primary"}
+                          >
+                            이미지 삭제
+                          </Button>
+                        </Box>
+                      ) : (
+                        <Box
+                          mt={2}
+                          display="flex"
+                          flexWrap="wrap"
+                          minHeight="40px"
+                          style={{
+                            width: "100%",
+                            justifyContent: "flex-start",
+                            gap: "4px",
+                          }}
+                        >
+                          {Information.tagnames
+                            .filter((hashtag) => hashtag.rowstatus !== "D")
+                            .slice(0, 5)
+                            .map((hashtag, index) => (
+                              <Chip
+                                key={hashtag.seq}
+                                label={"#" + hashtag.name}
+                                onDelete={
+                                  isAdmin
+                                    ? () => handleDeleteHashtag(hashtag)
+                                    : undefined
+                                }
+                                style={{
+                                  color: "#7a76ce",
+                                  backgroundColor: "#f0ecfc",
+                                }}
+                              />
+                            ))}
+                          {Information.tagnames.filter(
+                            (hashtag) => hashtag.rowstatus !== "D"
+                          ).length < 5 &&
+                            isAdmin && (
+                              <Box
+                                display="flex"
+                                alignItems="center"
+                                style={{
+                                  marginLeft:
+                                    Information.tagnames.length > 0 ? 10 : 0,
+                                  marginRight: "5px",
+                                }}
+                              >
+                                <Typography
+                                  variant="body1"
+                                  color={"#a0a0a0"}
+                                  mr={0.2}
+                                >
+                                  #
+                                </Typography>
+                                <TextField
+                                  variant="standard"
+                                  size="small"
+                                  placeholder="태그입력"
+                                  value={newHashtag}
+                                  onChange={(e) =>
+                                    setNewHashtag(e.target.value)
+                                  }
+                                  onKeyDown={handleAddHashtag}
+                                  InputProps={{
+                                    disableUnderline: true,
+                                    style: {
+                                      fontSize: "12px",
+                                      paddingTop: "3px",
+                                    },
+                                  }}
+                                />
+                              </Box>
+                            )}
+                        </Box>
+                      )}
+                    </Box>
+                  </>
+                ) : (
+                  <>
+                    {isAdmin ? (
+                      <>
+                        <Box
+                          height={200}
+                          display="flex"
+                          flexDirection={"column"}
+                          alignItems="center"
+                          justifyContent="center"
+                          // bgcolor="#d3d3d3"
+                          border="1px solid #e0e0e0"
+                          borderRadius={1}
+                          minWidth="100%"
+                          mt={1.3}
+                        >
+                          <ImageIcon
+                            style={{ marginRight: "8px", color: "gray" }}
+                          />
+                          <Typography variant="body2" color="gray">
+                            이미지 업로드는
+                          </Typography>
+                          <Typography variant="body2" color="gray">
+                            최대 1MB까지 가능합니다.
+                          </Typography>
+                        </Box>
+                        <Button
+                          onClick={onAttWndClick2}
+                          themeColor={"primary"}
+                          style={{ margin: "10px 0" }}
+                        >
+                          이미지 업로드
+                        </Button>
+                        <input
+                          id="uploadAttachment2"
+                          style={{ display: "none" }}
+                          type="file"
+                          accept="image/*"
+                          // ref={excelInput2}
+                          onChange={(
+                            event: React.ChangeEvent<HTMLInputElement>
+                          ) => {
+                            getAttachmentsData(event.target.files);
+                          }}
+                        />
+                      </>
+                    ) : (
+                      <Box
+                        mt={2}
+                        display="flex"
+                        flexWrap="wrap"
+                        minHeight="40px"
+                        style={{
+                          width: "100%",
+                          justifyContent: "flex-start",
+                          gap: "4px",
+                        }}
+                      >
+                        {Information.tagnames
+                          .filter((hashtag) => hashtag.rowstatus !== "D")
+                          .slice(0, 5)
+                          .map((hashtag, index) => (
+                            <Chip
+                              key={hashtag.seq}
+                              label={"#" + hashtag.name}
+                              onDelete={
+                                isAdmin
+                                  ? () => handleDeleteHashtag(hashtag)
+                                  : undefined
+                              }
+                              style={{
+                                color: "#7a76ce",
+                                backgroundColor: "#f0ecfc",
+                              }}
+                            />
+                          ))}
+                        {Information.tagnames.filter(
+                          (hashtag) => hashtag.rowstatus !== "D"
+                        ).length < 5 &&
+                          isAdmin && (
+                            <Box
+                              display="flex"
+                              alignItems="center"
+                              style={{
+                                marginLeft:
+                                  Information.tagnames.length > 0 ? 10 : 0,
+                                marginRight: "5px",
+                              }}
+                            >
+                              <Typography
+                                variant="body1"
+                                color={"#a0a0a0"}
+                                mr={0.2}
+                              >
+                                #
+                              </Typography>
+                              <TextField
+                                variant="standard"
+                                size="small"
+                                placeholder="태그입력"
+                                value={newHashtag}
+                                onChange={(e) => setNewHashtag(e.target.value)}
+                                onKeyDown={handleAddHashtag}
+                                InputProps={{
+                                  disableUnderline: true,
+                                  style: {
+                                    fontSize: "12px",
+                                    paddingTop: "3px",
+                                  },
+                                }}
+                              />
+                            </Box>
+                          )}
+                      </Box>
+                    )}
+                  </>
+                )}
+              </GridContainer>
+            </SwiperSlide>
+            <SwiperSlide key={1}>
+              <GridContainer width={"100%"} style={{ height: mobileheight2 }}>
+                <GridTitleContainer>
+                  <ButtonContainer className="ButtonContainer3">
+                    <Button
+                      themeColor={"primary"}
+                      fillMode={"flat"}
+                      icon={"chevron-left"}
+                      onClick={() => {
+                        if (swiper) {
+                          swiper.slideTo(0);
+                        }
+                      }}
+                    ></Button>
+                  </ButtonContainer>
+                </GridTitleContainer>
+                {isAdmin && (
+                  <>
+                    <Box display="flex">
+                      <CustomMultiColumnComboBox
+                        name="type"
+                        data={typesData}
+                        value={
+                          typesData.find(
+                            (item) => item.sub_code === Information.type
+                          ) || {}
+                        }
+                        columns={dataTypeColumns}
+                        textField={"code_name"}
+                        onChange={onComboBoxChange}
+                        // filterable={true}
+                        clearButton={false}
+                        style={{
+                          width: "170px",
+                          height: "35px",
+                          marginTop: "10px",
+                        }}
+                      />
+
+                      <FormGroup
+                        row
+                        sx={{
+                          flexGrow: 1,
+                          justifyContent: "flex-end", // 오른쪽 끝에 정렬
+                          alignItems: "center", // 세로 방향 중앙 정렬
+                          paddingTop: 1,
+                        }}
+                      >
+                        <FormControlLabel
+                          control={
+                            <SmallCheckbox
+                              checked={Information.isHot}
+                              onChange={onInputChange}
+                              name="isHot"
+                            />
+                          }
+                          label={
+                            <Typography
+                              variant="body2"
+                              sx={{ fontSize: "14px", marginLeft: 0 }}
+                            >
+                              HOT
+                            </Typography>
+                          }
+                          sx={{ marginRight: 1.5 }}
+                        />
+                        <FormControlLabel
+                          control={
+                            <SmallCheckbox
+                              checked={Information.isNew}
+                              onChange={onInputChange}
+                              name="isNew"
+                            />
+                          }
+                          label={
+                            <Typography
+                              variant="body2"
+                              sx={{ fontSize: "14px" }}
+                            >
+                              NEW
+                            </Typography>
+                          }
+                          sx={{ marginRight: 0 }}
+                        />
+                      </FormGroup>
+                    </Box>
+                    <CustomTextField
+                      name="title"
+                      type="text"
+                      value={Information.title}
+                      onChange={onInputChange}
+                      className={!isAdmin ? "readonly" : "required"}
+                      InputProps={{
+                        sx: {
+                          height: "35px",
+                          margin: "10px 0px 5px 0px",
+                          fontFamily: "Noto Sans KR",
+                          fontSize: "15px",
+                        },
+                      }}
+                      sx={{
+                        flex: 1,
+                        backgroundColor: "white",
+                      }}
+                      disabled={!isAdmin}
+                    />
+                  </>
+                )}
+                <RichEditor id="editor" ref={editorRef} hideTools={!isAdmin} />
+                {isAdmin && (
+                  <Box
+                    mt={2}
+                    display="flex"
+                    flexWrap="wrap"
+                    alignItems="center"
+                    minHeight="40px"
+                    gap={"4px"}
+                    className="ButtonContainer2"
+                  >
+                    {Information.tagnames
+                      .filter((hashtag) => hashtag.rowstatus !== "D")
+                      .slice(0, 5)
+                      .map((hashtag, index) => (
+                        <Chip
+                          key={hashtag.seq}
+                          label={"#" + hashtag.name}
+                          onDelete={
+                            isAdmin
+                              ? () => handleDeleteHashtag(hashtag)
+                              : undefined
+                          }
+                          style={{
+                            color: "#7a76ce",
+                            backgroundColor: "#f0ecfc",
+                            marginRight: "2px",
+                          }}
+                        />
+                      ))}
+                    {Information.tagnames.filter(
+                      (hashtag) => hashtag.rowstatus !== "D"
+                    ).length < 5 &&
+                      isAdmin && (
+                        <Box
+                          display="flex"
+                          alignItems="center"
+                          style={{
+                            marginLeft:
+                              Information.tagnames.length > 0 ? 10 : 0,
+                            marginRight: "5px",
+                          }}
+                        >
+                          <Typography
+                            variant="body1"
+                            color={"#a0a0a0"}
+                            mr={0.2}
+                          >
+                            #
+                          </Typography>
+                          <TextField
+                            variant="standard"
+                            size="small"
+                            placeholder="태그입력"
+                            value={newHashtag}
+                            onChange={(e) => setNewHashtag(e.target.value)}
+                            onKeyDown={handleAddHashtag}
+                            InputProps={{
+                              disableUnderline: true,
+                              style: {
+                                fontSize: "12px",
+                                paddingTop: "3px",
+                              },
+                            }}
+                          />
+                        </Box>
+                      )}
+                  </Box>
+                )}
+              </GridContainer>
+            </SwiperSlide>
+          </Swiper>
+          <BottomContainer className="BottomContainer">
+            {!isAdmin ? (
+              <div style={{ width: "100%" }} className="ButtonContainer">
+                <Button
+                  themeColor={"primary"}
+                  onClick={onLink}
+                  style={{
+                    width: "100%",
+                    height: "40px",
+                    // letterSpacing: "0.5em",
                     fontSize: "15px",
-                    color: "#6a68ba",
                   }}
                 >
-                  {
-                    typesData.find((type) => type.sub_code === Information.type)
-                      ?.code_name
-                  }
-                </Typography>
-                <Box display="flex" alignItems="center" flexDirection={"row"}>
+                  문의하기
+                </Button>
+              </div>
+            ) : (
+              <div
+                style={{ width: "100%", display: "flex", gap: GAP }}
+                className="ButtonContainer"
+              >
+                <Button
+                  themeColor={"primary"}
+                  onClick={onDelete}
+                  fillMode={"outline"}
+                  style={{
+                    height: "40px",
+                    fontSize: "15px",
+                    flex: 1,
+                  }}
+                >
+                  삭 제
+                </Button>
+                <Button
+                  themeColor={"primary"}
+                  onClick={onSave}
+                  style={{
+                    height: "40px",
+                    fontSize: "15px",
+                    flex: 1,
+                  }}
+                >
+                  저 장
+                </Button>
+              </div>
+            )}
+          </BottomContainer>
+        </>
+      ) : (
+        <GridContainerWrap>
+          <GridContainer
+            width="38%"
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              height: webheight,
+            }}
+          >
+            {!isAdmin && (
+              <Box display="flex" mt={1} ml={0.2}>
+                <Box alignItems="flex-start" justifyContent="flex-start">
                   <Typography
                     component="div"
-                    variant="h3"
                     fontWeight={600}
-                    style={{
-                      fontSize: "22px",
-                      color: "#424242",
+                    sx={{
+                      fontSize: "15px",
+                      color: "#6a68ba",
                     }}
                   >
-                    {Information.title}
+                    {
+                      typesData.find(
+                        (type) => type.sub_code === Information.type
+                      )?.code_name
+                    }
                   </Typography>
-                  <Box ml={0.5} display="flex">
-                    {Information.isHot && (
-                      <Box
-                        bgcolor="#ef5350"
-                        color="white"
-                        width="15px"
-                        height="15px"
-                        display="flex"
-                        alignItems="center"
-                        justifyContent="center"
-                        borderRadius="50%"
-                        mr={0.5}
-                        fontWeight="bold"
-                        fontSize="8px"
-                        lineHeight="14px"
-                      >
-                        H
-                      </Box>
-                    )}
-                    {Information.isNew && (
-                      <Box
-                        bgcolor="#fbc02d"
-                        color="white"
-                        width="15px"
-                        height="15px"
-                        display="flex"
-                        alignItems="center"
-                        justifyContent="center"
-                        borderRadius="50%"
-                        fontWeight="bold"
-                        fontSize="8px"
-                        lineHeight="14px"
-                      >
-                        N
-                      </Box>
-                    )}
+                  <Box display="flex" alignItems="center" flexDirection={"row"}>
+                    <Typography
+                      component="div"
+                      variant="h3"
+                      fontWeight={600}
+                      style={{
+                        fontSize: "22px",
+                        color: "#424242",
+                      }}
+                    >
+                      {Information.title}
+                    </Typography>
+                    <Box ml={0.5} display="flex">
+                      {Information.isHot && (
+                        <Box
+                          bgcolor="#ef5350"
+                          color="white"
+                          width="15px"
+                          height="15px"
+                          display="flex"
+                          alignItems="center"
+                          justifyContent="center"
+                          borderRadius="50%"
+                          mr={0.5}
+                          fontWeight="bold"
+                          fontSize="8px"
+                          lineHeight="14px"
+                        >
+                          H
+                        </Box>
+                      )}
+                      {Information.isNew && (
+                        <Box
+                          bgcolor="#fbc02d"
+                          color="white"
+                          width="15px"
+                          height="15px"
+                          display="flex"
+                          alignItems="center"
+                          justifyContent="center"
+                          borderRadius="50%"
+                          fontWeight="bold"
+                          fontSize="8px"
+                          lineHeight="14px"
+                        >
+                          N
+                        </Box>
+                      )}
+                    </Box>
                   </Box>
                 </Box>
               </Box>
-            </Box>
-          )}
-          {Information.image != "" && Information.image != null ? (
-            <>
-              <Box
-                sx={{
-                  height: webheight2,
-                  overflow: "auto",
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "flex-start",
-                  alignItems: "center",
-                  mb: 1,
-                  mt: 1.3,
-                }}
-              >
+            )}
+            {Information.image != "" && Information.image != null ? (
+              <>
                 <Box
-                  component="img"
-                  src={Information.image}
-                  alt={Information.title}
-                  onClick={handleImageClick}
                   sx={{
-                    borderRadius: 1,
-                    width: "auto",
-                    height: "auto",
-                    maxWidth: "100%",
-                    flexShrink: 0,
-                    cursor: "pointer",
+                    height: webheight2,
+                    overflow: "auto",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "flex-start",
+                    alignItems: "center",
+                    mb: 1,
+                    mt: 1.3,
                   }}
-                />
-                {isAdmin ? (
-                  <Box display={"flex"} justifyContent={"center"} gap={1}>
-                    <Button
-                      style={{ margin: "10px 0" }}
-                      onClick={onAttWndClick2}
-                      fillMode="outline"
-                      themeColor={"primary"}
+                >
+                  <Box
+                    component="img"
+                    src={Information.image}
+                    alt={Information.title}
+                    onClick={handleImageClick}
+                    sx={{
+                      borderRadius: 1,
+                      width: "auto",
+                      height: "auto",
+                      maxWidth: "100%",
+                      flexShrink: 0,
+                      cursor: "pointer",
+                    }}
+                  />
+                  {isAdmin ? (
+                    <Box display={"flex"} justifyContent={"center"} gap={1}>
+                      <Button
+                        style={{ margin: "10px 0" }}
+                        onClick={onAttWndClick2}
+                        fillMode="outline"
+                        themeColor={"primary"}
+                      >
+                        이미지 수정
+                      </Button>
+                      <input
+                        id="uploadAttachment2"
+                        style={{ display: "none" }}
+                        type="file"
+                        accept="image/*"
+                        // ref={excelInput2}
+                        onChange={(
+                          event: React.ChangeEvent<HTMLInputElement>
+                        ) => {
+                          getAttachmentsData(event.target.files);
+                        }}
+                      />
+                      <Button
+                        style={{ margin: "10px 0" }}
+                        onClick={onDeleteClick}
+                        fillMode="outline"
+                        themeColor={"primary"}
+                      >
+                        이미지 삭제
+                      </Button>
+                    </Box>
+                  ) : (
+                    <Box
+                      mt={2}
+                      display="flex"
+                      flexWrap="wrap"
+                      minHeight="40px"
+                      style={{
+                        width: "100%",
+                        justifyContent: "flex-start",
+                        gap: "4px",
+                      }}
                     >
-                      이미지 수정
+                      {Information.tagnames
+                        .filter((hashtag) => hashtag.rowstatus !== "D")
+                        .slice(0, 5)
+                        .map((hashtag, index) => (
+                          <Chip
+                            key={hashtag.seq}
+                            label={"#" + hashtag.name}
+                            onDelete={
+                              isAdmin
+                                ? () => handleDeleteHashtag(hashtag)
+                                : undefined
+                            }
+                            style={{
+                              color: "#7a76ce",
+                              backgroundColor: "#f0ecfc",
+                            }}
+                          />
+                        ))}
+                      {Information.tagnames.filter(
+                        (hashtag) => hashtag.rowstatus !== "D"
+                      ).length < 5 &&
+                        isAdmin && (
+                          <Box
+                            display="flex"
+                            alignItems="center"
+                            style={{
+                              marginLeft:
+                                Information.tagnames.length > 0 ? 10 : 0,
+                              marginRight: "5px",
+                            }}
+                          >
+                            <Typography
+                              variant="body1"
+                              color={"#a0a0a0"}
+                              mr={0.2}
+                            >
+                              #
+                            </Typography>
+                            <TextField
+                              variant="standard"
+                              size="small"
+                              placeholder="태그입력"
+                              value={newHashtag}
+                              onChange={(e) => setNewHashtag(e.target.value)}
+                              onKeyDown={handleAddHashtag}
+                              InputProps={{
+                                disableUnderline: true,
+                                style: {
+                                  fontSize: "12px",
+                                  paddingTop: "3px",
+                                },
+                              }}
+                            />
+                          </Box>
+                        )}
+                    </Box>
+                  )}
+                </Box>
+              </>
+            ) : (
+              <>
+                {isAdmin ? (
+                  <>
+                    <Box
+                      height={200}
+                      display="flex"
+                      flexDirection={"column"}
+                      alignItems="center"
+                      justifyContent="center"
+                      // bgcolor="#d3d3d3"
+                      border="1px solid #e0e0e0"
+                      borderRadius={1}
+                      minWidth="100%"
+                      mt={1.3}
+                    >
+                      <ImageIcon
+                        style={{ marginRight: "8px", color: "gray" }}
+                      />
+                      <Typography variant="body2" color="gray">
+                        이미지 업로드는
+                      </Typography>
+                      <Typography variant="body2" color="gray">
+                        최대 1MB까지 가능합니다.
+                      </Typography>
+                    </Box>
+                    <Button
+                      onClick={onAttWndClick2}
+                      themeColor={"primary"}
+                      style={{ margin: "10px 0" }}
+                    >
+                      이미지 업로드
                     </Button>
                     <input
                       id="uploadAttachment2"
@@ -825,15 +1563,7 @@ const PromotionWindow = ({ setVisible, datas, modal = false }: IWindow) => {
                         getAttachmentsData(event.target.files);
                       }}
                     />
-                    <Button
-                      style={{ margin: "10px 0" }}
-                      onClick={onDeleteClick}
-                      fillMode="outline"
-                      themeColor={"primary"}
-                    >
-                      이미지 삭제
-                    </Button>
-                  </Box>
+                  </>
                 ) : (
                   <Box
                     mt={2}
@@ -903,306 +1633,199 @@ const PromotionWindow = ({ setVisible, datas, modal = false }: IWindow) => {
                       )}
                   </Box>
                 )}
-              </Box>
-            </>
-          ) : (
-            <>
-              {isAdmin ? (
-                <>
-                  <Box
-                    height={200}
-                    display="flex"
-                    flexDirection={"column"}
-                    alignItems="center"
-                    justifyContent="center"
-                    // bgcolor="#d3d3d3"
-                    border="1px solid #e0e0e0"
-                    borderRadius={1}
-                    minWidth="100%"
-                    mt={1.3}
-                  >
-                    <ImageIcon style={{ marginRight: "8px", color: "gray" }} />
-                    <Typography variant="body2" color="gray">
-                      이미지 업로드는
-                    </Typography>
-                    <Typography variant="body2" color="gray">
-                      최대 1MB까지 가능합니다.
-                    </Typography>
-                  </Box>
-                  <Button
-                    onClick={onAttWndClick2}
-                    themeColor={"primary"}
-                    style={{ margin: "10px 0" }}
-                  >
-                    이미지 업로드
-                  </Button>
-                  <input
-                    id="uploadAttachment2"
-                    style={{ display: "none" }}
-                    type="file"
-                    accept="image/*"
-                    // ref={excelInput2}
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                      getAttachmentsData(event.target.files);
-                    }}
-                  />
-                </>
-              ) : (
-                <Box
-                  mt={2}
-                  display="flex"
-                  flexWrap="wrap"
-                  minHeight="40px"
+              </>
+            )}
+            <div style={{ flexGrow: 1 }} />
+            {!isAdmin ? (
+              <div style={{ width: "100%" }} className="ButtonContainer">
+                <Button
+                  themeColor={"primary"}
+                  onClick={onLink}
                   style={{
                     width: "100%",
-                    justifyContent: "flex-start",
-                    gap: "4px",
+                    height: "40px",
+                    // letterSpacing: "0.5em",
+                    fontSize: "15px",
                   }}
                 >
-                  {Information.tagnames
-                    .filter((hashtag) => hashtag.rowstatus !== "D")
-                    .slice(0, 5)
-                    .map((hashtag, index) => (
-                      <Chip
-                        key={hashtag.seq}
-                        label={"#" + hashtag.name}
-                        onDelete={
-                          isAdmin
-                            ? () => handleDeleteHashtag(hashtag)
-                            : undefined
-                        }
-                        style={{
-                          color: "#7a76ce",
-                          backgroundColor: "#f0ecfc",
-                        }}
-                      />
-                    ))}
-                  {Information.tagnames.filter(
-                    (hashtag) => hashtag.rowstatus !== "D"
-                  ).length < 5 &&
-                    isAdmin && (
-                      <Box
-                        display="flex"
-                        alignItems="center"
-                        style={{
-                          marginLeft: Information.tagnames.length > 0 ? 10 : 0,
-                          marginRight: "5px",
-                        }}
-                      >
-                        <Typography variant="body1" color={"#a0a0a0"} mr={0.2}>
-                          #
-                        </Typography>
-                        <TextField
-                          variant="standard"
-                          size="small"
-                          placeholder="태그입력"
-                          value={newHashtag}
-                          onChange={(e) => setNewHashtag(e.target.value)}
-                          onKeyDown={handleAddHashtag}
-                          InputProps={{
-                            disableUnderline: true,
-                            style: {
-                              fontSize: "12px",
-                              paddingTop: "3px",
-                            },
-                          }}
+                  문의하기
+                </Button>
+              </div>
+            ) : (
+              <div
+                style={{ width: "100%", display: "flex", gap: GAP }}
+                className="ButtonContainer"
+              >
+                <Button
+                  themeColor={"primary"}
+                  onClick={onDelete}
+                  fillMode={"outline"}
+                  style={{
+                    height: "40px",
+                    fontSize: "15px",
+                    flex: 1,
+                  }}
+                >
+                  삭 제
+                </Button>
+                <Button
+                  themeColor={"primary"}
+                  onClick={onSave}
+                  style={{
+                    height: "40px",
+                    fontSize: "15px",
+                    flex: 1,
+                  }}
+                >
+                  저 장
+                </Button>
+              </div>
+            )}
+          </GridContainer>
+          <GridContainer
+            width={`calc(62% - ${GAP}px)`}
+            style={{ height: webheight }}
+          >
+            {isAdmin && (
+              <Box display="flex">
+                <CustomMultiColumnComboBox
+                  name="type"
+                  data={typesData}
+                  value={
+                    typesData.find(
+                      (item) => item.sub_code === Information.type
+                    ) || {}
+                  }
+                  columns={dataTypeColumns}
+                  textField={"code_name"}
+                  onChange={onComboBoxChange}
+                  // filterable={true}
+                  clearButton={false}
+                  style={{ width: "170px", height: "35px", marginTop: "10px" }}
+                />
+                <CustomTextField
+                  name="title"
+                  type="text"
+                  value={Information.title}
+                  onChange={onInputChange}
+                  className={!isAdmin ? "readonly" : "required"}
+                  InputProps={{
+                    sx: {
+                      height: "35px",
+                      margin: "10px 10px 10px 5px",
+                      fontFamily: "Noto Sans KR",
+                      fontSize: "15px",
+                    },
+                  }}
+                  sx={{
+                    marginRight: 1,
+                    flex: 1,
+                    backgroundColor: "white",
+                  }}
+                  disabled={!isAdmin}
+                />
+                {isAdmin && (
+                  <FormGroup row>
+                    <FormControlLabel
+                      control={
+                        <SmallCheckbox
+                          checked={Information.isHot}
+                          onChange={onInputChange}
+                          name="isHot"
                         />
-                      </Box>
-                    )}
-                </Box>
-              )}
-            </>
-          )}
-          <div style={{ flexGrow: 1 }} />
-          {!isAdmin ? (
-            <div style={{ width: "100%" }} className="ButtonContainer">
-              <Button
-                themeColor={"primary"}
-                onClick={onLink}
-                style={{
-                  width: "100%",
-                  height: "40px",
-                  // letterSpacing: "0.5em",
-                  fontSize: "15px",
-                }}
+                      }
+                      label={
+                        <Typography
+                          variant="body2"
+                          sx={{ fontSize: "14px", marginLeft: 0 }}
+                        >
+                          HOT
+                        </Typography>
+                      }
+                      sx={{ marginRight: 1.5 }}
+                    />
+                    <FormControlLabel
+                      control={
+                        <SmallCheckbox
+                          checked={Information.isNew}
+                          onChange={onInputChange}
+                          name="isNew"
+                        />
+                      }
+                      label={
+                        <Typography variant="body2" sx={{ fontSize: "14px" }}>
+                          NEW
+                        </Typography>
+                      }
+                      sx={{ marginRight: 0 }}
+                    />
+                  </FormGroup>
+                )}
+              </Box>
+            )}
+            <RichEditor id="editor" ref={editorRef} hideTools={!isAdmin} />
+            {isAdmin && (
+              <Box
+                mt={2}
+                display="flex"
+                flexWrap="wrap"
+                alignItems="center"
+                minHeight="40px"
               >
-                문의하기
-              </Button>
-            </div>
-          ) : (
-            <div
-              style={{ width: "100%", display: "flex", gap: GAP }}
-              className="ButtonContainer"
-            >
-              <Button
-                themeColor={"primary"}
-                onClick={onDelete}
-                fillMode={"outline"}
-                style={{
-                  height: "40px",
-                  fontSize: "15px",
-                  flex: 1,
-                }}
-              >
-                삭 제
-              </Button>
-              <Button
-                themeColor={"primary"}
-                onClick={onSave}
-                style={{
-                  height: "40px",
-                  fontSize: "15px",
-                  flex: 1,
-                }}
-              >
-                저 장
-              </Button>
-            </div>
-          )}
-        </GridContainer>
-        <GridContainer
-          width={`calc(62% - ${GAP}px)`}
-          style={{ height: webheight }}
-        >
-          {isAdmin && (
-            <Box display="flex">
-              <CustomMultiColumnComboBox
-                name="type"
-                data={typesData}
-                value={
-                  typesData.find(
-                    (item) => item.sub_code === Information.type
-                  ) || {}
-                }
-                columns={dataTypeColumns}
-                textField={"code_name"}
-                onChange={onComboBoxChange}
-                // filterable={true}
-                clearButton={false}
-                style={{ width: "170px", height: "35px", marginTop: "10px" }}
-              />
-              <CustomTextField
-                name="title"
-                type="text"
-                value={Information.title}
-                onChange={onInputChange}
-                className={!isAdmin ? "readonly" : "required"}
-                InputProps={{
-                  sx: {
-                    height: "35px",
-                    margin: "10px 10px 10px 5px",
-                    fontFamily: "Noto Sans KR",
-                    fontSize: "15px"
-                  },
-                }}
-                sx={{
-                  marginRight: 1,
-                  flex: 1,
-                  backgroundColor: "white",
-                }}
-                disabled={!isAdmin}
-              />
-              {isAdmin && (
-                <FormGroup row>
-                  <FormControlLabel
-                    control={
-                      <SmallCheckbox
-                        checked={Information.isHot}
-                        onChange={onInputChange}
-                        name="isHot"
-                      />
-                    }
-                    label={
-                      <Typography
-                        variant="body2"
-                        sx={{ fontSize: "14px", marginLeft: 0 }}
-                      >
-                        HOT
-                      </Typography>
-                    }
-                    sx={{ marginRight: 1.5 }}
-                  />
-                  <FormControlLabel
-                    control={
-                      <SmallCheckbox
-                        checked={Information.isNew}
-                        onChange={onInputChange}
-                        name="isNew"
-                      />
-                    }
-                    label={
-                      <Typography variant="body2" sx={{ fontSize: "14px" }}>
-                        NEW
-                      </Typography>
-                    }
-                    sx={{ marginRight: 0 }}
-                  />
-                </FormGroup>
-              )}
-            </Box>
-          )}
-          <RichEditor id="editor" ref={editorRef} hideTools={!isAdmin} />
-          {isAdmin && (
-            <Box
-              mt={2}
-              display="flex"
-              flexWrap="wrap"
-              alignItems="center"
-              minHeight="40px"
-            >
-              {Information.tagnames
-                .filter((hashtag) => hashtag.rowstatus !== "D")
-                .slice(0, 5)
-                .map((hashtag, index) => (
-                  <Chip
-                    key={hashtag.seq}
-                    label={"#" + hashtag.name}
-                    onDelete={
-                      isAdmin ? () => handleDeleteHashtag(hashtag) : undefined
-                    }
-                    style={{
-                      color: "#7a76ce",
-                      backgroundColor: "#f0ecfc",
-                      marginRight: "2px",
-                    }}
-                  />
-                ))}
-              {Information.tagnames.filter(
-                (hashtag) => hashtag.rowstatus !== "D"
-              ).length < 5 &&
-                isAdmin && (
-                  <Box
-                    display="flex"
-                    alignItems="center"
-                    style={{
-                      marginLeft: Information.tagnames.length > 0 ? 10 : 0,
-                      marginRight: "5px",
-                    }}
-                  >
-                    <Typography variant="body1" color={"#a0a0a0"} mr={0.2}>
-                      #
-                    </Typography>
-                    <TextField
-                      variant="standard"
-                      size="small"
-                      placeholder="태그입력"
-                      value={newHashtag}
-                      onChange={(e) => setNewHashtag(e.target.value)}
-                      onKeyDown={handleAddHashtag}
-                      InputProps={{
-                        disableUnderline: true,
-                        style: {
-                          fontSize: "12px",
-                          paddingTop: "3px",
-                        },
+                {Information.tagnames
+                  .filter((hashtag) => hashtag.rowstatus !== "D")
+                  .slice(0, 5)
+                  .map((hashtag, index) => (
+                    <Chip
+                      key={hashtag.seq}
+                      label={"#" + hashtag.name}
+                      onDelete={
+                        isAdmin ? () => handleDeleteHashtag(hashtag) : undefined
+                      }
+                      style={{
+                        color: "#7a76ce",
+                        backgroundColor: "#f0ecfc",
+                        marginRight: "2px",
                       }}
                     />
-                  </Box>
-                )}
-            </Box>
-          )}
-        </GridContainer>
-      </GridContainerWrap>
+                  ))}
+                {Information.tagnames.filter(
+                  (hashtag) => hashtag.rowstatus !== "D"
+                ).length < 5 &&
+                  isAdmin && (
+                    <Box
+                      display="flex"
+                      alignItems="center"
+                      style={{
+                        marginLeft: Information.tagnames.length > 0 ? 10 : 0,
+                        marginRight: "5px",
+                      }}
+                    >
+                      <Typography variant="body1" color={"#a0a0a0"} mr={0.2}>
+                        #
+                      </Typography>
+                      <TextField
+                        variant="standard"
+                        size="small"
+                        placeholder="태그입력"
+                        value={newHashtag}
+                        onChange={(e) => setNewHashtag(e.target.value)}
+                        onKeyDown={handleAddHashtag}
+                        InputProps={{
+                          disableUnderline: true,
+                          style: {
+                            fontSize: "12px",
+                            paddingTop: "3px",
+                          },
+                        }}
+                      />
+                    </Box>
+                  )}
+              </Box>
+            )}
+          </GridContainer>
+        </GridContainerWrap>
+      )}
       {/* 이미지 원본 크기로 보기 */}
       {openDialog && (
         <div
