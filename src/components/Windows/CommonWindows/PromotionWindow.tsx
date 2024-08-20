@@ -142,7 +142,6 @@ const PromotionWindow = ({ setVisible, datas, modal = false }: IWindow) => {
   const [swiper, setSwiper] = useState<SwiperCore>();
 
   useLayoutEffect(() => {
-    console.log("***");
     height = getHeight(".k-window-titlebar"); //공통 해더
     height2 = getHeight(".ButtonContainer"); //하단 버튼부분
     height3 = getHeight(".ButtonContainer2"); //태그높이
