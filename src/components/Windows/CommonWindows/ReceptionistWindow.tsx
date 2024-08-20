@@ -55,6 +55,9 @@ import { bytesToBase64 } from "byte-base64";
 import { useRecoilState, useSetRecoilState } from "recoil";
 import { isLoading, loginResultState } from "../../../store/atoms";
 import { setGroupIds } from "@progress/kendo-react-data-tools";
+import SwiperCore from "swiper";
+import "swiper/css";
+import { Swiper, SwiperSlide } from "swiper/react";
 
 type IWindow = {
   setVisible(t: boolean): void;
@@ -63,6 +66,8 @@ type IWindow = {
 type TdataArr = {
   receptionist_code_s: string[];
 };
+
+var index = 0;
 
 var height = 0;
 var height2 = 0;
@@ -113,9 +118,12 @@ const ReceptionistWindow = ({ setVisible }: IWindow) => {
   let deviceHeight = document.documentElement.clientHeight;
   let isMobile = deviceWidth <= 1200;
   const [mobileheight, setMobileHeight] = useState(0);
+  const [mobileheight2, setMobileHeight2] = useState(0);
+  const [mobileheight3, setMobileHeight3] = useState(0);
   const [webheight, setWebHeight] = useState(0);
   const [webheight2, setWebHeight2] = useState(0);
   const [webheight3, setWebHeight3] = useState(0);
+  const [swiper, setSwiper] = useState<SwiperCore>();
   const [position, setPosition] = useState<IWindowPosition>({
     left: isMobile == true ? 0 : (deviceWidth - 950) / 2,
     top: isMobile == true ? 0 : (deviceHeight - 600) / 2,
@@ -129,7 +137,13 @@ const ReceptionistWindow = ({ setVisible }: IWindow) => {
     height4 = getHeight(".ButtonContainer2");
     height5 = getHeight(".ButtonContainer3");
     setMobileHeight(
-      getWindowDeviceHeight(false, deviceHeight) - height - height2 - 25
+      getWindowDeviceHeight(false, deviceHeight) - height - height2 - height3 - 5
+    );
+    setMobileHeight2(
+      getWindowDeviceHeight(false, deviceHeight) - height - height2 - height4 - 5
+    );
+    setMobileHeight3(
+      getWindowDeviceHeight(false, deviceHeight) - height - height2 - height5 - 5
     );
     setWebHeight(
       getWindowDeviceHeight(false, position.height) -
@@ -432,7 +446,7 @@ const ReceptionistWindow = ({ setVisible }: IWindow) => {
 
     setPageData2(currentPageData); // 현재 페이지 데이터 설정
 
-    if (currentPageData.length > 0) {
+    if (currentPageData.length > 0 && !Object.keys(selectedState2).length) {
       // 현재 페이지에서 첫 번째 항목을 선택 상태로 설정
       setSelectedState2({ [currentPageData[0][DATA_ITEM_KEY2]]: true });
     }
@@ -448,7 +462,7 @@ const ReceptionistWindow = ({ setVisible }: IWindow) => {
 
     setPageData3(currentPageData);
 
-    if (currentPageData.length > 0) {
+    if (currentPageData.length > 0 && !Object.keys(selectedState3).length) {
       setSelectedState3({ [currentPageData[0][DATA_ITEM_KEY3]]: true });
     }
   }, [page3, mainDataResult3.data, filter3]);
@@ -682,6 +696,10 @@ const ReceptionistWindow = ({ setVisible }: IWindow) => {
       data: prevData.data.map((item) => ({ ...item, chk: false })),
       total: prevData.total,
     }));
+
+    if (isMobile && swiper) {
+      swiper.slideTo(1);
+    }
   };
 
   // mainDataResult2가 업데이트되면 필터링을 수행
@@ -732,15 +750,6 @@ const ReceptionistWindow = ({ setVisible }: IWindow) => {
     const selectedRowData = event.dataItems[selectedIdx];
   };
 
-  const customRowRender3 = (tr: any, props: any) => (
-    <RowRender
-      originalProps={props}
-      tr={tr}
-      exitEdit={exitEdit}
-      editField={EDIT_FIELD}
-    />
-  );
-
   const customRowRender2 = (tr: any, props: any) => (
     <RowRender
       originalProps={props}
@@ -750,7 +759,16 @@ const ReceptionistWindow = ({ setVisible }: IWindow) => {
     />
   );
 
-  const customCellRender3 = (td: any, props: any) => (
+  const customRowRender3 = (tr: any, props: any) => (
+    <RowRender
+      originalProps={props}
+      tr={tr}
+      exitEdit={exitEdit}
+      editField={EDIT_FIELD}
+    />
+  );
+
+  const customCellRender2 = (td: any, props: any) => (
     <CellRender
       originalProps={props}
       td={td}
@@ -759,7 +777,7 @@ const ReceptionistWindow = ({ setVisible }: IWindow) => {
     />
   );
 
-  const customCellRender2 = (td: any, props: any) => (
+  const customCellRender3 = (td: any, props: any) => (
     <CellRender
       originalProps={props}
       td={td}
@@ -945,6 +963,10 @@ const ReceptionistWindow = ({ setVisible }: IWindow) => {
       total: updatedMainDataResult2Copy.length,
     });
     setValues(false);
+
+    if (swiper) {
+      swiper.slideTo(2);
+    }
   };
 
   const onRowDoubleClick2 = (e: GridRowDoubleClickEvent) => {
@@ -1032,6 +1054,10 @@ const ReceptionistWindow = ({ setVisible }: IWindow) => {
       total: updatedMainDataResult3.length,
     });
     setValues(false);
+
+    if (swiper) {
+      swiper.slideTo(2);
+    }
   };
 
   const handleButtonClick2 = () => {
@@ -1248,277 +1274,610 @@ const ReceptionistWindow = ({ setVisible }: IWindow) => {
       modals={false}
       onChangePostion={onChangePostion}
     >
-      <GridContainerWrap style={{ display: "flex", gap: GAP }}>
-        <GridContainer style={{ width: "25%" }}>
-          <GridTitleContainer className="ButtonContainer">
-            <GridTitle>사용자 리스트</GridTitle>
-          </GridTitleContainer>
-          <Grid
-            data={filterBy(
-              mainDataResult.data.map((row) => ({
-                ...row,
-                [SELECTED_FIELD]: !!selectedState[idGetter(row)],
-              })),
-              filter
-            )}
-            {...mainDataState}
-            onDataStateChange={onMainDataStateChange}
-            //선택 기능
-            dataItemKey={DATA_ITEM_KEY}
-            selectedField={SELECTED_FIELD}
-            selectable={{
-              enabled: true,
-              mode: "single",
-            }}
-            onSelectionChange={onMainSelectionChange}
-            //스크롤 조회 기능
-            // fixedScroll={true}
-            total={mainDataResult.total}
-            // skip={page.skip}
-            take={mainDataResult.total}
-            pageable={false}
-            // onPageChange={pageChange}
-            //원하는 행 위치로 스크롤 기능
-            ref={gridRef}
-            rowHeight={30}
-            //정렬기능
-            sortable={true}
-            onSortChange={onMainSortChange}
-            onItemChange={onMainItemChange}
-            //컬럼순서조정
-            reorderable={true}
-            //컬럼너비조정
-            resizable={true}
-            style={{ height: webheight }}
-            filterable={true}
-            filter={filter}
-            onFilterChange={(e: GridFilterChangeEvent) => {
-              setFilter(e.filter);
-              const filteredData = filterBy(mainDataResult.data, e.filter);
-              if (filteredData && filteredData.length > 0) {
-                const newSelectedState = { ...selectedState };
-                filteredData.forEach((item) => {
-                  if (selectedState[item[DATA_ITEM_KEY]]) {
-                    newSelectedState[item[DATA_ITEM_KEY]] = true;
+      {isMobile ? (
+        <Swiper
+          onSwiper={(swiper) => {
+            setSwiper(swiper);
+          }}
+          onActiveIndexChange={(swiper) => {
+            index = swiper.activeIndex;
+          }}
+        >
+          <SwiperSlide key={0}>
+            <GridContainer style={{ width: "100%" }}>
+              <GridTitleContainer className="ButtonContainer">
+                <GridTitle>
+                  사용자 리스트{" "}
+                  <Button
+                    themeColor={"primary"}
+                    fillMode={"flat"}
+                    icon={"chevron-right"}
+                    onClick={() => {
+                      if (swiper) {
+                        swiper.slideTo(1);
+                      }
+                    }}
+                  ></Button>
+                </GridTitle>
+              </GridTitleContainer>
+              <Grid
+                data={filterBy(
+                  mainDataResult.data.map((row) => ({
+                    ...row,
+                    [SELECTED_FIELD]: !!selectedState[idGetter(row)],
+                  })),
+                  filter
+                )}
+                {...mainDataState}
+                onDataStateChange={onMainDataStateChange}
+                //선택 기능
+                dataItemKey={DATA_ITEM_KEY}
+                selectedField={SELECTED_FIELD}
+                selectable={{
+                  enabled: true,
+                  mode: "single",
+                }}
+                onSelectionChange={onMainSelectionChange}
+                //스크롤 조회 기능
+                // fixedScroll={true}
+                total={mainDataResult.total}
+                // skip={page.skip}
+                take={mainDataResult.total}
+                pageable={false}
+                // onPageChange={pageChange}
+                //원하는 행 위치로 스크롤 기능
+                ref={gridRef}
+                rowHeight={30}
+                //정렬기능
+                sortable={true}
+                onSortChange={onMainSortChange}
+                onItemChange={onMainItemChange}
+                //컬럼순서조정
+                reorderable={true}
+                //컬럼너비조정
+                resizable={true}
+                style={{ height: mobileheight }}
+                filterable={true}
+                filter={filter}
+                onFilterChange={(e: GridFilterChangeEvent) => {
+                  setFilter(e.filter);
+                  const filteredData = filterBy(mainDataResult.data, e.filter);
+                  if (filteredData && filteredData.length > 0) {
+                    const newSelectedState = { ...selectedState };
+                    filteredData.forEach((item) => {
+                      if (selectedState[item[DATA_ITEM_KEY]]) {
+                        newSelectedState[item[DATA_ITEM_KEY]] = true;
+                      }
+                    });
+                    setSelectedState(newSelectedState);
                   }
-                });
-                setSelectedState(newSelectedState);
-              }
-            }}
-          >
-            <GridColumn
-              field="user_name"
-              title="사용자명"
-              footerCell={mainTotalFooterCell}
-            />
-          </Grid>
-        </GridContainer>
-        <GridContainer style={{ width: "35%" }}>
-          <GridTitleContainer className="ButtonContainer2">
-            <GridTitle>전체업체</GridTitle>
-            <Button
-              disabled={mainDataResult2.data.every((item) => !item.chk)}
-              icon="plus"
-              fillMode={"outline"}
-              themeColor={"primary"}
-              onClick={handleButtonClick}
-            />
-          </GridTitleContainer>
-          <Grid
-            data={process(
-              filterBy(
-                pageData2.map((row: any) => ({
-                  ...row,
-                  chk: row.chk,
-                  [SELECTED_FIELD]: !!selectedState2[idGetter2(row)],
-                })),
-                filter2
-              ),
-              mainDataState2
-            )}
-            {...mainDataState2}
-            onDataStateChange={onMainDataStateChange2}
-            //선택 기능
-            dataItemKey={DATA_ITEM_KEY2}
-            selectedField={SELECTED_FIELD}
-            selectable={{
-              enabled: true,
-              mode: "single",
-            }}
-            onSelectionChange={onMainSelectionChange2}
-            //스크롤 조회 기능
-            fixedScroll={true}
-            total={total2}
-            skip={page2.skip}
-            take={page2.take}
-            pageable={{ info: false }}
-            onPageChange={pageChange2}
-            //원하는 행 위치로 스크롤 기능
-            ref={gridRef2}
-            rowHeight={30}
-            onItemChange={onMainItemChange2}
-            cellRender={customCellRender2}
-            rowRender={customRowRender2}
-            editField={EDIT_FIELD}
-            //정렬기능
-            sortable={true}
-            onSortChange={onMainSortChange2}
-            //컬럼순서조정
-            reorderable={true}
-            //컬럼너비조정
-            resizable={true}
-            style={{ height: webheight2 }}
-            //더블클릭
-            onRowDoubleClick={onRowDoubleClick}
-            filterable={true}
-            filter={filter2}
-            onFilterChange={(e: GridFilterChangeEvent) => {
-              setFilter2(e.filter);
-              // 필터가 변경되었으므로 페이지를 첫 페이지로 이동 (skip을 0으로 설정)
-              setPage2((prev) => ({
-                ...prev,
-                skip: 0,
-              }));
-              // 필터링된 데이터 가져오기
-              const filteredData = filterBy(mainDataResult2.data, e.filter);
-              // 필터링된 데이터가 존재하면 첫 번째 항목을 선택 상태로 설정
-              if (filteredData && filteredData.length > 0) {
-                const newSelectedState = { ...selectedState2 };
-                filteredData.forEach((item) => {
-                  if (selectedState2[item[DATA_ITEM_KEY2]]) {
-                    newSelectedState[item[DATA_ITEM_KEY2]] = true;
+                }}
+              >
+                <GridColumn
+                  field="user_name"
+                  title="사용자명"
+                  footerCell={mainTotalFooterCell}
+                />
+              </Grid>
+            </GridContainer>
+          </SwiperSlide>
+          <SwiperSlide key={1}>
+            <GridContainer style={{ width: "100%" }}>
+              <GridTitleContainer className="ButtonContainer2">
+                <GridTitle>
+                  <Button
+                    themeColor={"primary"}
+                    fillMode={"flat"}
+                    icon={"chevron-left"}
+                    onClick={() => {
+                      if (swiper) {
+                        swiper.slideTo(0);
+                      }
+                    }}
+                  ></Button>
+                  전체업체{" "}
+                  <Button
+                    themeColor={"primary"}
+                    fillMode={"flat"}
+                    icon={"chevron-right"}
+                    onClick={() => {
+                      if (swiper) {
+                        swiper.slideTo(2);
+                      }
+                    }}
+                  ></Button>
+                </GridTitle>
+                <Button
+                  disabled={mainDataResult2.data.every((item) => !item.chk)}
+                  icon="plus"
+                  fillMode={"outline"}
+                  themeColor={"primary"}
+                  onClick={handleButtonClick}
+                />
+              </GridTitleContainer>
+              <Grid
+                data={process(
+                  filterBy(
+                    pageData2.map((row: any) => ({
+                      ...row,
+                      chk: row.chk,
+                      [SELECTED_FIELD]: !!selectedState2[idGetter2(row)],
+                    })),
+                    filter2
+                  ),
+                  mainDataState2
+                )}
+                {...mainDataState2}
+                onDataStateChange={onMainDataStateChange2}
+                //선택 기능
+                dataItemKey={DATA_ITEM_KEY2}
+                selectedField={SELECTED_FIELD}
+                selectable={{
+                  enabled: true,
+                  mode: "single",
+                }}
+                onSelectionChange={onMainSelectionChange2}
+                //스크롤 조회 기능
+                fixedScroll={true}
+                total={total2}
+                skip={page2.skip}
+                take={page2.take}
+                pageable={{ info: false }}
+                onPageChange={pageChange2}
+                //원하는 행 위치로 스크롤 기능
+                ref={gridRef2}
+                rowHeight={30}
+                onItemChange={onMainItemChange2}
+                cellRender={customCellRender2}
+                rowRender={customRowRender2}
+                editField={EDIT_FIELD}
+                //정렬기능
+                sortable={true}
+                onSortChange={onMainSortChange2}
+                //컬럼순서조정
+                reorderable={true}
+                //컬럼너비조정
+                resizable={true}
+                style={{ height: mobileheight2 }}
+                //더블클릭
+                onRowDoubleClick={onRowDoubleClick}
+                filterable={true}
+                filter={filter2}
+                onFilterChange={(e: GridFilterChangeEvent) => {
+                  setFilter2(e.filter);
+                  // 필터가 변경되었으므로 페이지를 첫 페이지로 이동 (skip을 0으로 설정)
+                  setPage2((prev) => ({
+                    ...prev,
+                    skip: 0,
+                  }));
+                  // 필터링된 데이터 가져오기
+                  const filteredData = filterBy(mainDataResult2.data, e.filter);
+                  // 필터링된 데이터가 존재하면 첫 번째 항목을 선택 상태로 설정
+                  if (filteredData && filteredData.length > 0) {
+                    const newSelectedState = { ...selectedState2 };
+                    filteredData.forEach((item) => {
+                      if (selectedState2[item[DATA_ITEM_KEY2]]) {
+                        newSelectedState[item[DATA_ITEM_KEY2]] = true;
+                      }
+                    });
+                    setSelectedState2(newSelectedState);
+                    setPageData2(filteredData.slice(0, page2.take));
+                  } else {
+                    setPageData2([]);
                   }
-                });
-                setSelectedState2(newSelectedState);
-                setPageData2(filteredData.slice(0, page2.take));
-              } else {
-                setPageData2([]);
-              }
-              setTotal2(filteredData.length);
-            }}
-          >
-            <GridColumn
-              field="chk"
-              title=" "
-              width="45px"
-              headerCell={CustomCheckBoxCell2}
-              cell={CheckBoxCell}
-              filterable={false}
-            />
-            <GridColumn
-              field="custnm"
-              title="업체명"
-              footerCell={mainTotalFooterCell2}
-            />
-          </Grid>
-        </GridContainer>
-        <GridContainer style={{ width: "35%" }}>
-          <GridTitleContainer className="ButtonContainer3">
-            <GridTitle>
-              지정업체{" "}
-              <Button
-                icon="refresh"
-                fillMode={"flat"}
-                themeColor={"primary"}
-                onClick={handleButtonClick3}
-              />
-            </GridTitle>
-            <ButtonContainer>
-              <Button
-                disabled={mainDataResult3.data.every((item) => !item.chk)}
-                icon="minus"
-                fillMode={"outline"}
-                themeColor={"primary"}
-                onClick={handleButtonClick2}
-              />
-            </ButtonContainer>
-          </GridTitleContainer>
-          <Grid
-            style={{
-              height: webheight3,
-            }}
-            data={process(
-              filterBy(
-                pageData3.map((row: any) => ({
-                  ...row,
-                  [SELECTED_FIELD]: selectedState3[idGetter3(row)],
-                })),
-                filter3
-              ),
-              mainDataState3
-            )}
-            {...mainDataState3}
-            onDataStateChange={onMainDataStateChange3}
-            //정렬기능
-            sortable={true}
-            onSortChange={onMainSortChange3}
-            dataItemKey={DATA_ITEM_KEY3}
-            selectedField={SELECTED_FIELD}
-            selectable={{
-              enabled: true,
-              mode: "single",
-            }}
-            onSelectionChange={onMainSelectionChange3}
-            //스크롤 조회 기능
-            fixedScroll={true}
-            total={mainDataResult3.total}
-            skip={page3.skip}
-            take={page3.take}
-            pageable={{ info: false }}
-            onPageChange={pageChange3}
-            //원하는 행 위치로 스크롤 기능
-            ref={gridRef3}
-            rowHeight={30}
-            onItemChange={onMainItemChange3}
-            cellRender={customCellRender3}
-            rowRender={customRowRender3}
-            editField={EDIT_FIELD}
-            //컬럼순서조정
-            reorderable={true}
-            //컬럼너비조정
-            resizable={true}
-            //더블클릭
-            onRowDoubleClick={onRowDoubleClick2}
-            filterable={true}
-            filter={filter3}
-            onFilterChange={(e: GridFilterChangeEvent) => {
-              setFilter3(e.filter);
-              setPage3((prev) => ({
-                ...prev,
-                skip: 0,
-              }));
-              const filteredData = filterBy(mainDataResult3.data, e.filter);
-              if (filteredData && filteredData.length > 0) {
-                const newSelectedState = { ...selectedState3 };
-                filteredData.forEach((item) => {
-                  if (selectedState3[item[DATA_ITEM_KEY3]]) {
-                    newSelectedState[item[DATA_ITEM_KEY3]] = true;
+                  setTotal2(filteredData.length);
+                }}
+              >
+                <GridColumn
+                  field="chk"
+                  title=" "
+                  width="45px"
+                  headerCell={CustomCheckBoxCell2}
+                  cell={CheckBoxCell}
+                  filterable={false}
+                />
+                <GridColumn
+                  field="custnm"
+                  title="업체명"
+                  footerCell={mainTotalFooterCell2}
+                />
+              </Grid>
+            </GridContainer>
+          </SwiperSlide>
+          <SwiperSlide key={2}>
+            <GridContainer style={{ width: "100%" }}>
+              <GridTitleContainer className="ButtonContainer3">
+                <GridTitle>
+                  <Button
+                    themeColor={"primary"}
+                    fillMode={"flat"}
+                    icon={"chevron-left"}
+                    onClick={() => {
+                      if (swiper) {
+                        swiper.slideTo(1);
+                      }
+                    }}
+                  ></Button>
+                  지정업체{" "}
+                  <Button
+                    icon="refresh"
+                    fillMode={"flat"}
+                    themeColor={"primary"}
+                    onClick={handleButtonClick3}
+                  />
+                </GridTitle>
+                <ButtonContainer>
+                  <Button
+                    disabled={mainDataResult3.data.every((item) => !item.chk)}
+                    icon="minus"
+                    fillMode={"outline"}
+                    themeColor={"primary"}
+                    onClick={handleButtonClick2}
+                  />
+                </ButtonContainer>
+              </GridTitleContainer>
+              <Grid
+                style={{
+                  height: mobileheight3,
+                }}
+                data={process(
+                  filterBy(
+                    pageData3.map((row: any) => ({
+                      ...row,
+                      [SELECTED_FIELD]: selectedState3[idGetter3(row)],
+                    })),
+                    filter3
+                  ),
+                  mainDataState3
+                )}
+                {...mainDataState3}
+                onDataStateChange={onMainDataStateChange3}
+                //정렬기능
+                sortable={true}
+                onSortChange={onMainSortChange3}
+                dataItemKey={DATA_ITEM_KEY3}
+                selectedField={SELECTED_FIELD}
+                selectable={{
+                  enabled: true,
+                  mode: "single",
+                }}
+                onSelectionChange={onMainSelectionChange3}
+                //스크롤 조회 기능
+                fixedScroll={true}
+                total={mainDataResult3.total}
+                skip={page3.skip}
+                take={page3.take}
+                pageable={{ info: false }}
+                onPageChange={pageChange3}
+                //원하는 행 위치로 스크롤 기능
+                ref={gridRef3}
+                rowHeight={30}
+                onItemChange={onMainItemChange3}
+                cellRender={customCellRender3}
+                rowRender={customRowRender3}
+                editField={EDIT_FIELD}
+                //컬럼순서조정
+                reorderable={true}
+                //컬럼너비조정
+                resizable={true}
+                //더블클릭
+                onRowDoubleClick={onRowDoubleClick2}
+                filterable={true}
+                filter={filter3}
+                onFilterChange={(e: GridFilterChangeEvent) => {
+                  setFilter3(e.filter);
+                  setPage3((prev) => ({
+                    ...prev,
+                    skip: 0,
+                  }));
+                  const filteredData = filterBy(mainDataResult3.data, e.filter);
+                  if (filteredData && filteredData.length > 0) {
+                    const newSelectedState = { ...selectedState3 };
+                    filteredData.forEach((item) => {
+                      if (selectedState3[item[DATA_ITEM_KEY3]]) {
+                        newSelectedState[item[DATA_ITEM_KEY3]] = true;
+                      }
+                    });
+                    setSelectedState3(newSelectedState);
+                    setPageData3(filteredData.slice(0, page3.take));
+                  } else {
+                    setPageData3([]);
                   }
-                });
-                setSelectedState3(newSelectedState);
-                setPageData3(filteredData.slice(0, page3.take));
-              } else {
-                setPageData3([]);
-              }
-              setTotal3(filteredData.length);
-            }}
-          >
-            <GridColumn
-              field="chk"
-              title=" "
-              width="45px"
-              headerCell={CustomCheckBoxCell3}
-              cell={CheckBoxCell}
-              filterable={false}
-            />
-            <GridColumn
-              field="customer_name"
-              title="업체명"
-              footerCell={mainTotalFooterCell3}
-            />
-          </Grid>
-        </GridContainer>
-      </GridContainerWrap>
+                  setTotal3(filteredData.length);
+                }}
+              >
+                <GridColumn
+                  field="chk"
+                  title=" "
+                  width="45px"
+                  headerCell={CustomCheckBoxCell3}
+                  cell={CheckBoxCell}
+                  filterable={false}
+                />
+                <GridColumn
+                  field="customer_name"
+                  title="업체명"
+                  footerCell={mainTotalFooterCell3}
+                />
+              </Grid>
+            </GridContainer>
+          </SwiperSlide>
+        </Swiper>
+      ) : (
+        <>
+          <GridContainerWrap style={{ display: "flex", gap: GAP }}>
+            <GridContainer style={{ width: "25%" }}>
+              <GridTitleContainer className="ButtonContainer">
+                <GridTitle>사용자 리스트</GridTitle>
+              </GridTitleContainer>
+              <Grid
+                data={filterBy(
+                  mainDataResult.data.map((row) => ({
+                    ...row,
+                    [SELECTED_FIELD]: !!selectedState[idGetter(row)],
+                  })),
+                  filter
+                )}
+                {...mainDataState}
+                onDataStateChange={onMainDataStateChange}
+                //선택 기능
+                dataItemKey={DATA_ITEM_KEY}
+                selectedField={SELECTED_FIELD}
+                selectable={{
+                  enabled: true,
+                  mode: "single",
+                }}
+                onSelectionChange={onMainSelectionChange}
+                //스크롤 조회 기능
+                // fixedScroll={true}
+                total={mainDataResult.total}
+                // skip={page.skip}
+                take={mainDataResult.total}
+                pageable={false}
+                // onPageChange={pageChange}
+                //원하는 행 위치로 스크롤 기능
+                ref={gridRef}
+                rowHeight={30}
+                //정렬기능
+                sortable={true}
+                onSortChange={onMainSortChange}
+                onItemChange={onMainItemChange}
+                //컬럼순서조정
+                reorderable={true}
+                //컬럼너비조정
+                resizable={true}
+                style={{ height: webheight }}
+                filterable={true}
+                filter={filter}
+                onFilterChange={(e: GridFilterChangeEvent) => {
+                  setFilter(e.filter);
+                  const filteredData = filterBy(mainDataResult.data, e.filter);
+                  if (filteredData && filteredData.length > 0) {
+                    const newSelectedState = { ...selectedState };
+                    filteredData.forEach((item) => {
+                      if (selectedState[item[DATA_ITEM_KEY]]) {
+                        newSelectedState[item[DATA_ITEM_KEY]] = true;
+                      }
+                    });
+                    setSelectedState(newSelectedState);
+                  }
+                }}
+              >
+                <GridColumn
+                  field="user_name"
+                  title="사용자명"
+                  footerCell={mainTotalFooterCell}
+                />
+              </Grid>
+            </GridContainer>
+            <GridContainer style={{ width: "35%" }}>
+              <GridTitleContainer className="ButtonContainer2">
+                <GridTitle>전체업체</GridTitle>
+                <Button
+                  disabled={mainDataResult2.data.every((item) => !item.chk)}
+                  icon="plus"
+                  fillMode={"outline"}
+                  themeColor={"primary"}
+                  onClick={handleButtonClick}
+                />
+              </GridTitleContainer>
+              <Grid
+                data={process(
+                  filterBy(
+                    pageData2.map((row: any) => ({
+                      ...row,
+                      chk: row.chk,
+                      [SELECTED_FIELD]: !!selectedState2[idGetter2(row)],
+                    })),
+                    filter2
+                  ),
+                  mainDataState2
+                )}
+                {...mainDataState2}
+                onDataStateChange={onMainDataStateChange2}
+                //선택 기능
+                dataItemKey={DATA_ITEM_KEY2}
+                selectedField={SELECTED_FIELD}
+                selectable={{
+                  enabled: true,
+                  mode: "single",
+                }}
+                onSelectionChange={onMainSelectionChange2}
+                //스크롤 조회 기능
+                fixedScroll={true}
+                total={total2}
+                skip={page2.skip}
+                take={page2.take}
+                pageable={{ info: false }}
+                onPageChange={pageChange2}
+                //원하는 행 위치로 스크롤 기능
+                ref={gridRef2}
+                rowHeight={30}
+                onItemChange={onMainItemChange2}
+                cellRender={customCellRender2}
+                rowRender={customRowRender2}
+                editField={EDIT_FIELD}
+                //정렬기능
+                sortable={true}
+                onSortChange={onMainSortChange2}
+                //컬럼순서조정
+                reorderable={true}
+                //컬럼너비조정
+                resizable={true}
+                style={{ height: webheight2 }}
+                //더블클릭
+                onRowDoubleClick={onRowDoubleClick}
+                filterable={true}
+                filter={filter2}
+                onFilterChange={(e: GridFilterChangeEvent) => {
+                  setFilter2(e.filter);
+                  // 필터가 변경되었으므로 페이지를 첫 페이지로 이동 (skip을 0으로 설정)
+                  setPage2((prev) => ({
+                    ...prev,
+                    skip: 0,
+                  }));
+                  // 필터링된 데이터 가져오기
+                  const filteredData = filterBy(mainDataResult2.data, e.filter);
+                  // 필터링된 데이터가 존재하면 첫 번째 항목을 선택 상태로 설정
+                  if (filteredData && filteredData.length > 0) {
+                    const newSelectedState = { ...selectedState2 };
+                    filteredData.forEach((item) => {
+                      if (selectedState2[item[DATA_ITEM_KEY2]]) {
+                        newSelectedState[item[DATA_ITEM_KEY2]] = true;
+                      }
+                    });
+                    setSelectedState2(newSelectedState);
+                    setPageData2(filteredData.slice(0, page2.take));
+                  } else {
+                    setPageData2([]);
+                  }
+                  setTotal2(filteredData.length);
+                }}
+              >
+                <GridColumn
+                  field="chk"
+                  title=" "
+                  width="45px"
+                  headerCell={CustomCheckBoxCell2}
+                  cell={CheckBoxCell}
+                  filterable={false}
+                />
+                <GridColumn
+                  field="custnm"
+                  title="업체명"
+                  footerCell={mainTotalFooterCell2}
+                />
+              </Grid>
+            </GridContainer>
+            <GridContainer style={{ width: "35%" }}>
+              <GridTitleContainer className="ButtonContainer3">
+                <GridTitle>
+                  지정업체{" "}
+                  <Button
+                    icon="refresh"
+                    fillMode={"flat"}
+                    themeColor={"primary"}
+                    onClick={handleButtonClick3}
+                  />
+                </GridTitle>
+                <ButtonContainer>
+                  <Button
+                    disabled={mainDataResult3.data.every((item) => !item.chk)}
+                    icon="minus"
+                    fillMode={"outline"}
+                    themeColor={"primary"}
+                    onClick={handleButtonClick2}
+                  />
+                </ButtonContainer>
+              </GridTitleContainer>
+              <Grid
+                style={{
+                  height: webheight3,
+                }}
+                data={process(
+                  filterBy(
+                    pageData3.map((row: any) => ({
+                      ...row,
+                      [SELECTED_FIELD]: selectedState3[idGetter3(row)],
+                    })),
+                    filter3
+                  ),
+                  mainDataState3
+                )}
+                {...mainDataState3}
+                onDataStateChange={onMainDataStateChange3}
+                //정렬기능
+                sortable={true}
+                onSortChange={onMainSortChange3}
+                dataItemKey={DATA_ITEM_KEY3}
+                selectedField={SELECTED_FIELD}
+                selectable={{
+                  enabled: true,
+                  mode: "single",
+                }}
+                onSelectionChange={onMainSelectionChange3}
+                //스크롤 조회 기능
+                fixedScroll={true}
+                total={mainDataResult3.total}
+                skip={page3.skip}
+                take={page3.take}
+                pageable={{ info: false }}
+                onPageChange={pageChange3}
+                //원하는 행 위치로 스크롤 기능
+                ref={gridRef3}
+                rowHeight={30}
+                onItemChange={onMainItemChange3}
+                cellRender={customCellRender3}
+                rowRender={customRowRender3}
+                editField={EDIT_FIELD}
+                //컬럼순서조정
+                reorderable={true}
+                //컬럼너비조정
+                resizable={true}
+                //더블클릭
+                onRowDoubleClick={onRowDoubleClick2}
+                filterable={true}
+                filter={filter3}
+                onFilterChange={(e: GridFilterChangeEvent) => {
+                  setFilter3(e.filter);
+                  setPage3((prev) => ({
+                    ...prev,
+                    skip: 0,
+                  }));
+                  const filteredData = filterBy(mainDataResult3.data, e.filter);
+                  if (filteredData && filteredData.length > 0) {
+                    const newSelectedState = { ...selectedState3 };
+                    filteredData.forEach((item) => {
+                      if (selectedState3[item[DATA_ITEM_KEY3]]) {
+                        newSelectedState[item[DATA_ITEM_KEY3]] = true;
+                      }
+                    });
+                    setSelectedState3(newSelectedState);
+                    setPageData3(filteredData.slice(0, page3.take));
+                  } else {
+                    setPageData3([]);
+                  }
+                  setTotal3(filteredData.length);
+                }}
+              >
+                <GridColumn
+                  field="chk"
+                  title=" "
+                  width="45px"
+                  headerCell={CustomCheckBoxCell3}
+                  cell={CheckBoxCell}
+                  filterable={false}
+                />
+                <GridColumn
+                  field="customer_name"
+                  title="업체명"
+                  footerCell={mainTotalFooterCell3}
+                />
+              </Grid>
+            </GridContainer>
+          </GridContainerWrap>
+        </>
+      )}
       <BottomContainer className="BottomContainer">
         <ButtonContainer>
           <Button
