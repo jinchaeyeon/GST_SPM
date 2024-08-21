@@ -4130,6 +4130,10 @@ const App = () => {
   };
 
   const onRemoveClick2 = async () => {
+    if(!window.confirm("삭제하시겠습니까?")) {
+      return false;
+    }
+    
     if (!navigator.onLine) {
       alert("네트워크 연결상태를 확인해주세요.");
       setLoading(false);
