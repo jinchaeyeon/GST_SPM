@@ -188,7 +188,9 @@ const App = () => {
   };
 
   const onMainScrollHandler = (event: GridEvent) => {
-    if (!filters.isFetch && chkScrollHandler(event, filters.pgNum, PAGE_SIZE))
+    if (!filters.isFetch && 
+      filters.pgNum * PAGE_SIZE < mainDataResult.total &&
+      chkScrollHandler(event, filters.pgNum, PAGE_SIZE))
       setFilters((prev) => ({
         ...prev,
         isFetch: true,
