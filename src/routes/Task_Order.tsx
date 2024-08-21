@@ -610,6 +610,7 @@ const App = () => {
   const [isVisibleDetail2, setIsVisableDetail2] = useState(true);
   const [isVisibleDetail3, setIsVisableDetail3] = useState(true);
   let editorContent: any = refEditorRef.current?.getContent();
+  let editorContent2: any = docEditorRef.current?.getContent();
   const [workType, setWorktype] = useState("N");
   useLayoutEffect(() => {
     height = getHeight(".ButtonContainer");
@@ -694,16 +695,16 @@ const App = () => {
     if (
       isMobile == true &&
       deviceWidth <= 1200 &&
-      refEditorRef.current != null
+      docEditorRef.current != null
     ) {
-      refEditorRef.current.setHtml(editorContent);
+      setHtmlOnEditor({ document: editorContent });
     }
     if (
       isMobile == false &&
       deviceWidth > 1200 &&
       refEditorRef.current != null
     ) {
-      refEditorRef.current.setHtml(editorContent);
+      refEditorRef.current.setHtml(editorContent2);
     }
   }, [isMobile]);
   const pathname = location.pathname.replace("/", "");
@@ -2254,8 +2255,12 @@ const App = () => {
           );
         }
       } else {
-        if (refEditorRef.current) {
-          refEditorRef.current.setHtml("");
+        if(isMobile) {
+          setHtmlOnEditor({ document: "" });
+        } else {
+          if (refEditorRef.current) {
+            refEditorRef.current.setHtml("");
+          }
         }
       }
     } else {
@@ -2295,21 +2300,26 @@ const App = () => {
       }
       if (data !== null) {
         if (tabSelected == 3) {
-          if (refEditorRef.current) {
+          if(isMobile) {
             const document = data.document;
-            if (
-              localStorage.getItem(key[DATA_ITEM_KEY4]) == undefined ||
-              localStorage.getItem(key[DATA_ITEM_KEY4]) == null
-            ) {
-              localStorage.setItem(key[DATA_ITEM_KEY4], key.contents);
-              localStorage.setItem(key[DATA_ITEM_KEY4] + "key", document);
-            } else {
-              localStorage.removeItem(key[DATA_ITEM_KEY4]);
-              localStorage.removeItem(key[DATA_ITEM_KEY4] + "key");
-              localStorage.setItem(key[DATA_ITEM_KEY4], key.contents);
-              localStorage.setItem(key[DATA_ITEM_KEY4] + "key", document);
+            setHtmlOnEditor({ document });
+          } else {
+            if (refEditorRef.current) {
+              const document = data.document;
+              if (
+                localStorage.getItem(key[DATA_ITEM_KEY4]) == undefined ||
+                localStorage.getItem(key[DATA_ITEM_KEY4]) == null
+              ) {
+                localStorage.setItem(key[DATA_ITEM_KEY4], key.contents);
+                localStorage.setItem(key[DATA_ITEM_KEY4] + "key", document);
+              } else {
+                localStorage.removeItem(key[DATA_ITEM_KEY4]);
+                localStorage.removeItem(key[DATA_ITEM_KEY4] + "key");
+                localStorage.setItem(key[DATA_ITEM_KEY4], key.contents);
+                localStorage.setItem(key[DATA_ITEM_KEY4] + "key", document);
+              }
+              refEditorRef.current.setHtml(document);
             }
-            refEditorRef.current.setHtml(document);
           }
         } else {
           const document = data.document;
@@ -4066,7 +4076,7 @@ const App = () => {
   };
 
   const onChanges = () => {
-    if (mainDataResult4.total > 0) {
+    if (mainDataResult4.total > 0 && !isMobile) {
       const currentRow = mainDataResult4.data.filter(
         (item) =>
           item[DATA_ITEM_KEY4] == Object.getOwnPropertyNames(selectedState4)[0]
@@ -7778,12 +7788,20 @@ const App = () => {
                       </ButtonContainer>
                     </GridTitleContainer>
                     <div style={{ height: mobileheight7 }}>
-                      <RichEditor
-                        id="refEditor"
-                        ref={refEditorRef}
-                        change={onChanges}
-                        key={Object.getOwnPropertyNames(selectedState4)[0]}
-                      />
+                      {isMobile ? (
+                        <RichEditor
+                          id="docEditorRef"
+                          ref={docEditorRef}
+                          hideTools
+                        />
+                      ) : (
+                        <RichEditor
+                          id="refEditor"
+                          ref={refEditorRef}
+                          change={onChanges}
+                          key={Object.getOwnPropertyNames(selectedState4)[0]}
+                        />
+                      )}
                     </div>
                   </GridContainer>
                 </SwiperSlide>
