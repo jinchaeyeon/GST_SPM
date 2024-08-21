@@ -289,7 +289,7 @@ const Badwindow = ({ workType, setVisible, setData, renum }: IWindow) => {
 
   //스크롤 핸들러 => 한번에 pageSize만큼 조회
   const onScrollHandler = (event: GridEvent) => {
-    if (chkScrollHandler(event, mainPgNum, PAGE_SIZE))
+    if (mainPgNum * PAGE_SIZE < mainDataResult.total && chkScrollHandler(event, mainPgNum, PAGE_SIZE))
       setMainPgNum((prev) => prev + 1);
   };
 

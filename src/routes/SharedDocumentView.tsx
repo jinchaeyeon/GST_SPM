@@ -157,7 +157,9 @@ const App = () => {
       setIsMobile(deviceWidth <= 1200);
       setMobileHeight(getDeviceHeight(true) - height - height6);
       setMobileHeight2(getDeviceHeight(true) - height2 - height6);
-      setMobileHeight3(getDeviceHeight(true) - height3 - height5 - height6 + 15);
+      setMobileHeight3(
+        getDeviceHeight(true) - height3 - height5 - height6 + 15
+      );
 
       setWebHeight(getDeviceHeight(true) - height - height2 - height6);
       setWebHeight2(
@@ -326,7 +328,11 @@ const App = () => {
   };
 
   const onMainScrollHandler = (event: GridEvent) => {
-    if (!filters.isFetch && chkScrollHandler(event, filters.pgNum, PAGE_SIZE))
+    if (
+      !filters.isFetch &&
+      filters.pgNum * PAGE_SIZE < mainDataResult.total &&
+      chkScrollHandler(event, filters.pgNum, PAGE_SIZE)
+    )
       setFilters((prev) => ({
         ...prev,
         isFetch: true,

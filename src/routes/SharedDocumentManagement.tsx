@@ -190,13 +190,13 @@ const App = () => {
   }, [webheight, webheight2, webheight3]);
 
   useEffect(() => {
-    if(isMobile == true && deviceWidth <= 1200 && editorRef.current != null) {
+    if (isMobile == true && deviceWidth <= 1200 && editorRef.current != null) {
       setHtmlOnEditor(editorContent);
     }
-    if(isMobile == false && deviceWidth > 1200 && editorRef.current != null) {
+    if (isMobile == false && deviceWidth > 1200 && editorRef.current != null) {
       setHtmlOnEditor(editorContent);
     }
-  }, [isMobile])
+  }, [isMobile]);
   const location = useLocation();
   const pathname = location.pathname.replace("/", "");
   const processApi = useApi();
@@ -395,7 +395,11 @@ const App = () => {
   };
 
   const onMainScrollHandler = (event: GridEvent) => {
-    if (!filters.isFetch && chkScrollHandler(event, filters.pgNum, PAGE_SIZE))
+    if (
+      !filters.isFetch &&
+      filters.pgNum * PAGE_SIZE < mainDataResult.total &&
+      chkScrollHandler(event, filters.pgNum, PAGE_SIZE)
+    )
       setFilters((prev) => ({
         ...prev,
         isFetch: true,
@@ -708,7 +712,7 @@ const App = () => {
     }
   };
   const saveSharedDocument = useCallback(async () => {
-    if(!navigator.onLine) {
+    if (!navigator.onLine) {
       alert("네트워크 연결상태를 확인해주세요.");
       setLoading(false);
       return false;

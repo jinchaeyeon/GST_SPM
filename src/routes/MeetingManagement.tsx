@@ -235,13 +235,21 @@ const App = () => {
     };
   }, [webheight, webheight2, webheight3]);
   useEffect(() => {
-    if(isMobile == true && deviceWidth <= 1200 && refEditorRef.current != null) {
+    if (
+      isMobile == true &&
+      deviceWidth <= 1200 &&
+      refEditorRef.current != null
+    ) {
       refEditorRef.current.setHtml(editorContent);
     }
-    if(isMobile == false && deviceWidth > 1200 && refEditorRef.current != null) {
+    if (
+      isMobile == false &&
+      deviceWidth > 1200 &&
+      refEditorRef.current != null
+    ) {
       refEditorRef.current.setHtml(editorContent);
     }
-  }, [isMobile])
+  }, [isMobile]);
   const pathname = location.pathname.replace("/", "");
   const history = useHistory();
   const [workType, setWorktype] = useState("U");
@@ -446,7 +454,11 @@ const App = () => {
   };
 
   const onMainScrollHandler = (event: GridEvent) => {
-    if (!filters.isFetch && chkScrollHandler(event, filters.pgNum, PAGE_SIZE))
+    if (
+      !filters.isFetch &&
+      filters.pgNum * PAGE_SIZE < mainDataResult.total &&
+      chkScrollHandler(event, filters.pgNum, PAGE_SIZE)
+    )
       setFilters((prev) => ({
         ...prev,
         isFetch: true,
@@ -456,7 +468,6 @@ const App = () => {
   const onMainSortChange = (e: any) => {
     setMainDataState((prev) => ({ ...prev, sort: e.sort }));
   };
-
 
   const currentDate = new Date();
   const fromDate = new Date(
@@ -743,7 +754,7 @@ const App = () => {
   };
 
   const saveMeeting = async () => {
-    if(!navigator.onLine) {
+    if (!navigator.onLine) {
       alert("네트워크 연결상태를 확인해주세요.");
       setLoading(false);
       return false;
@@ -1783,7 +1794,7 @@ const App = () => {
         <TitleContainer className="TitleContainer">
           {!isMobile ? "" : <Title>회의록 관리</Title>}
           <ButtonContainer style={{ rowGap: "5px" }}>
-            { isMobile && (
+            {isMobile && (
               <Button onClick={search} icon="search" themeColor={"primary"}>
                 조회
               </Button>
