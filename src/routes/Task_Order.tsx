@@ -1473,7 +1473,7 @@ const App = () => {
   const Check_ynCell = (props: GridCellProps) => {
     const data = props.dataItem;
     const changeCheck = async () => {
-      if (data.indicator == userId) {
+      if (data.indicator == userId || data.indicator == userName) {
         const checkQueryStr = `UPDATE CR005T SET finyn = '${
           data.check_yn == "N" || data.check_yn == ""
             ? "Y"
@@ -1516,7 +1516,7 @@ const App = () => {
       }
     };
 
-    return data.indicator == userId ? (
+    return data.indicator == userId || data.indicator == userName ? (
       data.check_yn == "Y" || data.check_yn == true ? (
         <td style={{ textAlign: "center" }} onClick={changeCheck}>
           <span
