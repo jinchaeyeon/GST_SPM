@@ -88,6 +88,7 @@ import RequiredHeader from "../components/RequiredHeader";
 import RichEditor from "../components/RichEditor";
 import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
 import ErrorWindow from "../components/Windows/CommonWindows/ErrorWindow";
+import TaskOrderAddWindow from "../components/Windows/CommonWindows/TaskOrderAddWindow";
 import TaskOrderDataWindow from "../components/Windows/CommonWindows/TaskOrderDataWindow";
 import TaskOrderWindow from "../components/Windows/CommonWindows/TaskOrderWindow";
 import { useApi } from "../hooks/api";
@@ -303,7 +304,8 @@ const FilesCell2 = (props: GridCellProps) => {
   } = useContext(FilesContext2);
   let isInEdit = field === dataItem.inEdit;
   const value = field && dataItem[field] ? dataItem[field] : "";
-
+  let deviceWidth = window.innerWidth;
+  const [isMobile, setIsMobile] = useState(deviceWidth <= 1200);
   const [attachmentsWindowVisible, setAttachmentsWindowVisible] =
     useState<boolean>(false);
 
@@ -369,7 +371,11 @@ const FilesCell2 = (props: GridCellProps) => {
           setVisible={setAttachmentsWindowVisible}
           setData={getAttachmentsData}
           para={dataItem.attdatnum}
-          permission={{ upload: true, download: true, delete: true }}
+          permission={{
+            upload: !isMobile ? true : false,
+            download: true,
+            delete: !isMobile ? true : false,
+          }}
           type={"task"}
           fileLists={dataItem.fileList}
           savenmLists={dataItem.savenmList}
@@ -604,6 +610,7 @@ const App = () => {
   const [isVisibleDetail2, setIsVisableDetail2] = useState(true);
   const [isVisibleDetail3, setIsVisableDetail3] = useState(true);
   let editorContent: any = refEditorRef.current?.getContent();
+  const [workType, setWorktype] = useState("N");
   useLayoutEffect(() => {
     height = getHeight(".ButtonContainer");
     height2 = getHeight(".ButtonContainer2");
@@ -684,13 +691,21 @@ const App = () => {
     isVisibleDetail2,
   ]);
   useEffect(() => {
-    if(isMobile == true && deviceWidth <= 1200 && refEditorRef.current != null) {
+    if (
+      isMobile == true &&
+      deviceWidth <= 1200 &&
+      refEditorRef.current != null
+    ) {
       refEditorRef.current.setHtml(editorContent);
     }
-    if(isMobile == false && deviceWidth > 1200 && refEditorRef.current != null) {
+    if (
+      isMobile == false &&
+      deviceWidth > 1200 &&
+      refEditorRef.current != null
+    ) {
       refEditorRef.current.setHtml(editorContent);
     }
-  }, [isMobile])
+  }, [isMobile]);
   const pathname = location.pathname.replace("/", "");
 
   useEffect(() => {
@@ -1519,7 +1534,7 @@ const App = () => {
   const UrgentCell = (props: GridCellProps) => {
     const data = props.dataItem;
     const changeCheck = async () => {
-      if (data.indicator == userId) {
+      if (data.indicator == userId || data.indicator == userName) {
         const urgentQueryStr = `UPDATE CR005T SET is_urgent = '${
           data.is_urgent == "N" || data.is_urgent == ""
             ? "Y"
@@ -1562,7 +1577,7 @@ const App = () => {
       }
     };
 
-    return data.indicator == userId ? (
+    return data.indicator == userId || data.indicator == userName ? (
       data.is_urgent == "Y" || data.is_urgent == true ? (
         <td style={{ textAlign: "center" }} onClick={changeCheck}>
           <span
@@ -1594,6 +1609,39 @@ const App = () => {
       )
     ) : (
       <td />
+    );
+  };
+
+  const TypeCell2 = (props: GridCellProps) => {
+    const {
+      ariaColumnIndex,
+      columnIndex,
+      dataItem,
+      field = "",
+      render,
+      onChange,
+      className = "",
+    } = props;
+
+    return (
+      <td
+        className={className}
+        aria-colindex={ariaColumnIndex}
+        data-grid-col-index={columnIndex}
+        style={{ position: "relative" }}
+      >
+        <div style={{ textAlign: "center", marginRight: "10px" }}>
+          {dataItem.ref_type == "접수" ? (
+            <span className="k-icon k-i-file k-icon-lg"></span>
+          ) : dataItem.ref_type == "프로젝트" ? (
+            <span className="k-icon k-i-folder k-icon-lg"></span>
+          ) : dataItem.ref_type == "회의록" ? (
+            <span className="k-icon k-i-comment k-icon-lg"></span>
+          ) : (
+            ""
+          )}
+        </div>
+      </td>
     );
   };
 
@@ -2136,7 +2184,6 @@ const App = () => {
     };
     try {
       data = await processApi<any>("procedure", parameters);
-      console.log("data", data);
     } catch (error) {
       data = null;
     }
@@ -2183,6 +2230,7 @@ const App = () => {
       });
 
       if (totalRowCnt > 0) {
+        setWorktype("U");
         const selectedRow =
           filters.findRowValue == ""
             ? rows[0]
@@ -2407,7 +2455,7 @@ const App = () => {
       selectedState: selectedState4,
       dataItemKey: DATA_ITEM_KEY4,
     });
-
+    setWorktype("U");
     const selectedIdx = event.startRowIndex;
     const selectedRowData = event.dataItems[selectedIdx];
     const parser = new DOMParser();
@@ -2638,6 +2686,8 @@ const App = () => {
     useState<boolean>(false);
   const [TaskOrderWindowVisible3, setTaskOrderWindowVisible3] =
     useState<boolean>(false);
+  const [TaskOrderADDWindowVisible, setTaskOrderADDWindowVisible] =
+    useState<boolean>(false);
   const onTaskOrderWndClick = () => {
     if (
       mainDataResult.data.filter(
@@ -2766,46 +2816,48 @@ const App = () => {
   );
 
   const enterEdit = (dataItem: any, field: string) => {
-    if (
-      field != "rowstatus" &&
-      field != "is_defective" &&
-      field != "finyn" &&
-      field != "docunum" &&
-      field != "insert_userid" &&
-      field != "ref_key" &&
-      field != "ref_seq" &&
-      field != "is_urgent"
-    ) {
-      const newData = mainDataResult4.data.map((item: { [x: string]: any }) =>
-        item[DATA_ITEM_KEY4] == dataItem[DATA_ITEM_KEY4]
-          ? {
-              ...item,
-              [EDIT_FIELD]: field,
-            }
-          : {
-              ...item,
-              [EDIT_FIELD]: undefined,
-            }
-      );
-      setTempResult((prev) => {
-        return {
-          data: newData,
-          total: prev.total,
-        };
-      });
-      setMainDataResult4((prev) => {
-        return {
-          data: newData,
-          total: prev.total,
-        };
-      });
-    } else {
-      setTempResult((prev) => {
-        return {
-          data: mainDataResult4.data,
-          total: prev.total,
-        };
-      });
+    if (!isMobile) {
+      if (
+        field != "rowstatus" &&
+        field != "is_defective" &&
+        field != "finyn" &&
+        field != "docunum" &&
+        field != "insert_userid" &&
+        field != "ref_key" &&
+        field != "ref_seq" &&
+        field != "is_urgent"
+      ) {
+        const newData = mainDataResult4.data.map((item: { [x: string]: any }) =>
+          item[DATA_ITEM_KEY4] == dataItem[DATA_ITEM_KEY4]
+            ? {
+                ...item,
+                [EDIT_FIELD]: field,
+              }
+            : {
+                ...item,
+                [EDIT_FIELD]: undefined,
+              }
+        );
+        setTempResult((prev) => {
+          return {
+            data: newData,
+            total: prev.total,
+          };
+        });
+        setMainDataResult4((prev) => {
+          return {
+            data: newData,
+            total: prev.total,
+          };
+        });
+      } else {
+        setTempResult((prev) => {
+          return {
+            data: mainDataResult4.data,
+            total: prev.total,
+          };
+        });
+      }
     }
   };
 
@@ -3258,12 +3310,12 @@ const App = () => {
   };
 
   const onConfirmClick = async () => {
-    if(!navigator.onLine) {
+    if (!navigator.onLine) {
       alert("네트워크 연결상태를 확인해주세요.");
       setLoading(false);
       return false;
     }
-    
+
     if (mainDataResult4.total > 0) {
       let editorContent: any = "";
       if (refEditorRef.current) {
@@ -4065,6 +4117,172 @@ const App = () => {
         };
       });
     }
+  };
+
+  const onRemoveClick2 = async () => {
+    if (!navigator.onLine) {
+      alert("네트워크 연결상태를 확인해주세요.");
+      setLoading(false);
+      return false;
+    }
+    let arrays: any = {};
+    let data: any;
+    const currentRow = mainDataResult4.data.filter(
+      (item) =>
+        item[DATA_ITEM_KEY4] == Object.getOwnPropertyNames(selectedState4)[0]
+    )[0];
+
+    let str = "";
+    let textContent = "";
+    const value = localStorage.getItem(currentRow.num + "key");
+    const text = localStorage.getItem(currentRow.num);
+    if (typeof value == "string") {
+      str = value; // ok
+    }
+    if (typeof text == "string") {
+      textContent = text; // ok
+    }
+    const bytes = require("utf8-bytes");
+    const convertedEditorContent = bytesToBase64(bytes(str)); //html
+    let guids = "";
+    if (
+      currentRow.guid == undefined ||
+      currentRow.guid == "" ||
+      currentRow.guid == null
+    ) {
+      guids = uuidv4();
+    } else {
+      guids = currentRow.guid;
+    }
+    arrays[guids] = convertedEditorContent;
+    if (
+      parseDate(convertDateToStr(currentRow.finexpdt)) == "" ||
+      parseDate(convertDateToStr(currentRow.recdt)) == "" ||
+      currentRow.person == "" ||
+      currentRow.indicator == ""
+    ) {
+      alert("필수항목을 채워주세요.");
+      return false;
+    }
+
+    if (currentRow.attdatnum != "") {
+      let data2: any;
+      try {
+        data2 = await processApi<any>("attachment-delete", {
+          attached:
+            "attachment?type=task&attachmentNumber=" +
+            currentRow.attdatnum +
+            "&id=",
+        });
+      } catch (error) {
+        data2 = null;
+      }
+    }
+
+    setLoading(true);
+
+    //추가, 수정 프로시저 파라미터
+    const paras = {
+      fileBytes: arrays,
+      procedureName: "pw6_sav_task_order",
+      pageNumber: 0,
+      pageSize: 0,
+      parameters: {
+        "@p_work_type": "save",
+        "@p_row_status": "D",
+        "@p_guid":
+          currentRow.guid == undefined ||
+          currentRow.guid == "" ||
+          currentRow.guid == null
+            ? uuidv4()
+            : currentRow.guid,
+        "@p_docunum": currentRow.docunum,
+        "@p_recdt": currentRow.recdt,
+        "@p_person": currentRow.person,
+        "@p_indicator": currentRow.indicator,
+        "@p_contents": currentRow.contents,
+        "@p_remark": currentRow.remark,
+        "@p_groupcd": currentRow.groupcd,
+        "@p_value_code3": currentRow.value_code3,
+        "@p_custcd": currentRow.custcd,
+        "@p_finexpdt": currentRow.finexpdt,
+        "@p_exphh": currentRow.exphh == "" ? 0 : currentRow.exphh,
+        "@p_expmm": currentRow.expmm == "" ? 0 : currentRow.expmm,
+        "@p_custperson": currentRow.custperson,
+        "@p_attdatnum": currentRow.attdatnum,
+        "@p_ref_type": currentRow.ref_type,
+        "@p_ref_key": currentRow.ref_key,
+        "@p_ref_seq": currentRow.ref_seq,
+        "@p_is_urgent":
+          currentRow.is_urgent == true
+            ? "Y"
+            : currentRow.is_urgent == false
+            ? "N"
+            : currentRow.is_urgent,
+        "@p_id": userId,
+        "@p_pc": pc,
+      },
+    };
+    try {
+      data = await processApi<any>("taskorder-save", paras);
+    } catch (error) {
+      data = null;
+    }
+    if (data != null) {
+      for (let key of Object.keys(localStorage)) {
+        if (
+          key != "passwordExpirationInfo" &&
+          key != "accessToken" &&
+          key != "loginResult" &&
+          key != "refreshToken" &&
+          key != "PopUpNotices" &&
+          key != "recoil-persist"
+        ) {
+          localStorage.removeItem(key);
+        }
+      }
+      setFileList([]);
+      setSavenmList([]);
+      setFilters((prev: any) => ({
+        ...prev,
+        findRowValue: "",
+        pgNum: prev.pgNum,
+        isSearch: true,
+      }));
+      deletedRows = [];
+    } else {
+      console.log("[오류 발생]");
+      console.log(data);
+    }
+    setLoading(false);
+  };
+
+  const onAddClick2 = () => {
+    setWorktype("N");
+    setTaskOrderADDWindowVisible(true);
+  };
+
+  const CommandCell = (props: GridCellProps) => {
+    const onEditClick = () => {
+      //요약정보 행 클릭, 디테일 팝업 창 오픈 (수정용)
+      const rowData = props.dataItem;
+      setSelectedState({ [rowData.num]: true });
+
+      setWorktype("U");
+      setTaskOrderADDWindowVisible(true);
+    };
+
+    return (
+      <td className="k-command-cell">
+        <Button
+          className="k-grid-edit-command"
+          themeColor={"primary"}
+          fillMode="outline"
+          onClick={onEditClick}
+          icon="edit"
+        ></Button>
+      </td>
+    );
   };
 
   return (
@@ -5874,18 +6092,6 @@ const App = () => {
           <TitleContainer className="TitleContainer">
             <Title>업무 지시</Title>
             <ButtonContainer>
-              {tabSelected == 3 ? (
-                <Button
-                  themeColor={"primary"}
-                  fillMode={"outline"}
-                  icon="save"
-                  onClick={onConfirmClick}
-                >
-                  저장
-                </Button>
-              ) : (
-                ""
-              )}
               <Button onClick={search} icon="search" themeColor={"primary"}>
                 조회
               </Button>
@@ -7328,13 +7534,6 @@ const App = () => {
                             }
                           }}
                         ></Button>
-                        {/* <br />
-                        (접수:
-                        <span className="k-icon k-i-file k-icon-lg"></span>,
-                        프로젝트:
-                        <span className="k-icon k-i-folder k-icon-lg"></span>,
-                        회의록:
-                        <span className="k-icon k-i-comment k-icon-lg"></span>) */}
                       </GridTitle>
                     </GridTitleContainer>
                     <ButtonContainer className="ButtonContainer2">
@@ -7346,239 +7545,209 @@ const App = () => {
                         불량 팝업
                       </Button>
                       <Button
-                        onClick={onAddClick}
-                        themeColor={"primary"}
-                        icon="plus"
-                        title="행 추가"
-                      ></Button>
-                      <Button
-                        onClick={onRemoveClick}
+                        onClick={onAddClick2}
                         fillMode="outline"
                         themeColor={"primary"}
-                        icon="minus"
-                        title="행 삭제"
-                      ></Button>
+                        icon="file-add"
+                      >
+                        생성
+                      </Button>
+                      <Button
+                        onClick={onRemoveClick2}
+                        fillMode="outline"
+                        themeColor={"primary"}
+                        icon="delete"
+                      >
+                        삭제
+                      </Button>
                     </ButtonContainer>
-                    <TypeContext.Provider
+                    <FilesContext2.Provider
                       value={{
-                        ref_type,
-                        custcd,
-                        ref_key,
-                        ref_seq,
-                        setRef_Type,
-                        setCustcd,
-                        setRef_key,
-                        setRef_seq,
+                        attdatnum,
+                        attach_exists,
+                        fileList,
+                        savenmList,
+                        setAttdatnum,
+                        setAttach_exists,
+                        setFileList,
+                        setSavenmList,
                         mainDataState4,
                         setMainDataState4,
+                        // fetchGrid,
                       }}
                     >
-                      <FilesContext2.Provider
-                        value={{
-                          attdatnum,
-                          attach_exists,
-                          fileList,
-                          savenmList,
-                          setAttdatnum,
-                          setAttach_exists,
-                          setFileList,
-                          setSavenmList,
-                          mainDataState4,
-                          setMainDataState4,
-                          // fetchGrid,
+                      <Grid
+                        style={{ height: mobileheight6 }}
+                        data={process(
+                          mainDataResult4.data.map((row) => ({
+                            ...row,
+                            insert_userid: usersData.find(
+                              (items: any) => items.user_id == row.insert_userid
+                            )?.user_name,
+                            custcd: custData.find(
+                              (items: any) => items.custcd == row.custcd
+                            )?.custnm,
+                            groupcd: WorkTypeItems.find(
+                              (items: any) => items.sub_code == row.groupcd
+                            )?.code_name,
+                            value_code3: valuecodeItems.find(
+                              (items: any) => items.sub_code == row.value_code3
+                            )?.code_name,
+                            person: usersData.find(
+                              (items: any) => items.user_id == row.person
+                            )?.user_name,
+                            indicator: usersData.find(
+                              (items: any) => items.user_id == row.person
+                            )?.user_name,
+                            [SELECTED_FIELD]: selectedState4[idGetter4(row)],
+                          })),
+                          mainDataState4
+                        )}
+                        {...mainDataState4}
+                        onDataStateChange={onMainDataStateChange4}
+                        //선택 기능
+                        dataItemKey={DATA_ITEM_KEY4}
+                        selectedField={SELECTED_FIELD}
+                        selectable={{
+                          enabled: true,
+                          mode: "single",
                         }}
+                        onSelectionChange={onSelectionChange4}
+                        //스크롤 조회 기능
+                        fixedScroll={true}
+                        total={mainDataResult4.total}
+                        skip={page4.skip}
+                        take={page4.take}
+                        pageable={true}
+                        onPageChange={pageChange4}
+                        //원하는 행 위치로 스크롤 기능
+                        ref={gridRef4}
+                        rowHeight={30}
+                        //정렬기능
+                        sortable={true}
+                        onSortChange={onMainSortChange4}
+                        //컬럼순서조정
+                        reorderable={true}
+                        //컬럼너비조정
+                        resizable={true}
+                        onItemChange={onItemChange}
+                        cellRender={customCellRender}
+                        rowRender={customRowRender}
+                        editField={EDIT_FIELD}
                       >
-                        <CustContext.Provider value={{ custData: custData }}>
-                          <WorkTypeContext.Provider
-                            value={{ WorkTypeItems: WorkTypeItems }}
-                          >
-                            <ValueCodeContext.Provider
-                              value={{ valuecodeItems: valuecodeItems }}
-                            >
-                              <UserContext.Provider
-                                value={{ usersData: usersData }}
-                              >
-                                <Grid
-                                  style={{ height: mobileheight6 }}
-                                  data={process(
-                                    mainDataResult4.data.map((row) => ({
-                                      ...row,
-                                      insert_userid: usersData.find(
-                                        (items: any) =>
-                                          items.user_id == row.insert_userid
-                                      )?.user_name,
-                                      [SELECTED_FIELD]:
-                                        selectedState4[idGetter4(row)],
-                                    })),
-                                    mainDataState4
-                                  )}
-                                  {...mainDataState4}
-                                  onDataStateChange={onMainDataStateChange4}
-                                  //선택 기능
-                                  dataItemKey={DATA_ITEM_KEY4}
-                                  selectedField={SELECTED_FIELD}
-                                  selectable={{
-                                    enabled: true,
-                                    mode: "single",
-                                  }}
-                                  onSelectionChange={onSelectionChange4}
-                                  //스크롤 조회 기능
-                                  fixedScroll={true}
-                                  total={mainDataResult4.total}
-                                  skip={page4.skip}
-                                  take={page4.take}
-                                  pageable={true}
-                                  onPageChange={pageChange4}
-                                  //원하는 행 위치로 스크롤 기능
-                                  ref={gridRef4}
-                                  rowHeight={30}
-                                  //정렬기능
-                                  sortable={true}
-                                  onSortChange={onMainSortChange4}
-                                  //컬럼순서조정
-                                  reorderable={true}
-                                  //컬럼너비조정
-                                  resizable={true}
-                                  onItemChange={onItemChange}
-                                  cellRender={customCellRender}
-                                  rowRender={customRowRender}
-                                  editField={EDIT_FIELD}
-                                >
-                                  <GridColumn
-                                    field="rowstatus"
-                                    title=" "
-                                    width="45px"
-                                  />
-                                  <GridColumn
-                                    field="is_urgent"
-                                    title="긴급"
-                                    width={80}
-                                    cell={UrgentCell}
-                                  />
-                                  <GridColumn
-                                    field="custcd"
-                                    title="업체"
-                                    width={120}
-                                    cell={CustCell}
-                                  />
-                                  <GridColumn
-                                    field="groupcd"
-                                    title="업무분류"
-                                    width={120}
-                                    cell={WorkTypeCodeCell}
-                                    footerCell={mainTotalFooterCell4}
-                                  />
-                                  <GridColumn
-                                    field="value_code3"
-                                    title="Value 구분"
-                                    width={120}
-                                    cell={ValueCodeCell}
-                                  />
-                                  <GridColumn
-                                    field="person"
-                                    title="처리담당자"
-                                    headerCell={RequiredHeader}
-                                    width={120}
-                                    cell={UserCell}
-                                  />
-                                  <GridColumn
-                                    field="finexpdt"
-                                    title="완료예정일"
-                                    cell={DateCell}
-                                    headerCell={RequiredHeader}
-                                    width={120}
-                                  />
-                                  <GridColumn
-                                    field="exphh"
-                                    title="예상(H)"
-                                    width={80}
-                                    cell={NumberCell}
-                                    footerCell={gridSumQtyFooterCell}
-                                  />
-                                  <GridColumn
-                                    field="expmm"
-                                    title="예상(M)"
-                                    width={80}
-                                    cell={NumberCell}
-                                    footerCell={gridSumQtyFooterCell}
-                                  />
-                                  <GridColumn
-                                    field="remark"
-                                    title="비고"
-                                    width={300}
-                                  />
-                                  <GridColumn
-                                    field="attdatnum"
-                                    title="첨부"
-                                    width={120}
-                                    cell={FilesCell2}
-                                  />
-                                  <GridColumn
-                                    field="recdt"
-                                    title="지시일"
-                                    width={120}
-                                    cell={DateCell}
-                                    headerCell={RequiredHeader}
-                                  />
-                                  <GridColumn
-                                    field="indicator"
-                                    title="지시자"
-                                    width={120}
-                                    headerCell={RequiredHeader}
-                                    cell={UserCell}
-                                  />
-                                  <GridColumn
-                                    field="docunum"
-                                    title="지시번호"
-                                    width={200}
-                                  />
-                                  <GridColumn
-                                    field="insert_userid"
-                                    title="등록자"
-                                    width={120}
-                                  />
-                                  <GridColumn
-                                    field="ref_key"
-                                    title="참조번호1"
-                                    width={200}
-                                  />
-                                  <GridColumn
-                                    field="ref_seq"
-                                    title="참조번호2"
-                                    width={120}
-                                    cell={NumberCell}
-                                  />
-                                  <GridColumn
-                                    field="finyn"
-                                    title="완료"
-                                    width={100}
-                                    cell={CheckBoxReadOnlyCell}
-                                  />
-                                  <GridColumn
-                                    field="is_defective"
-                                    title="불량"
-                                    width={80}
-                                    cell={defectiveCell}
-                                  />
-                                  <GridColumn
-                                    field="check_yn"
-                                    title="확인"
-                                    width={80}
-                                    cell={Check_ynCell}
-                                  />
-                                  <GridColumn
-                                    field="ref_type"
-                                    title="참조"
-                                    width={120}
-                                    cell={TypeCell}
-                                  />
-                                </Grid>
-                              </UserContext.Provider>
-                            </ValueCodeContext.Provider>
-                          </WorkTypeContext.Provider>
-                        </CustContext.Provider>
-                      </FilesContext2.Provider>
-                    </TypeContext.Provider>
+                        <GridColumn cell={CommandCell} width="50px" />
+                        <GridColumn
+                          field="is_urgent"
+                          title="긴급"
+                          width={80}
+                          cell={UrgentCell}
+                        />
+                        <GridColumn field="custcd" title="업체" width={120} />
+                        <GridColumn
+                          field="groupcd"
+                          title="업무분류"
+                          width={120}
+                          footerCell={mainTotalFooterCell4}
+                        />
+                        <GridColumn
+                          field="value_code3"
+                          title="Value 구분"
+                          width={120}
+                        />
+                        <GridColumn
+                          field="person"
+                          title="처리담당자"
+                          headerCell={RequiredHeader}
+                          width={120}
+                        />
+                        <GridColumn
+                          field="finexpdt"
+                          title="완료예정일"
+                          cell={DateCell}
+                          headerCell={RequiredHeader}
+                          width={120}
+                        />
+                        <GridColumn
+                          field="exphh"
+                          title="예상(H)"
+                          width={80}
+                          cell={NumberCell}
+                          footerCell={gridSumQtyFooterCell}
+                        />
+                        <GridColumn
+                          field="expmm"
+                          title="예상(M)"
+                          width={80}
+                          cell={NumberCell}
+                          footerCell={gridSumQtyFooterCell}
+                        />
+                        <GridColumn field="remark" title="비고" width={300} />
+                        <GridColumn
+                          field="attdatnum"
+                          title="첨부"
+                          width={120}
+                          cell={FilesCell2}
+                        />
+                        <GridColumn
+                          field="recdt"
+                          title="지시일"
+                          width={120}
+                          cell={DateCell}
+                          headerCell={RequiredHeader}
+                        />
+                        <GridColumn
+                          field="indicator"
+                          title="지시자"
+                          width={120}
+                          headerCell={RequiredHeader}
+                        />
+                        <GridColumn
+                          field="docunum"
+                          title="지시번호"
+                          width={200}
+                        />
+                        <GridColumn
+                          field="insert_userid"
+                          title="등록자"
+                          width={120}
+                        />
+                        <GridColumn
+                          field="ref_key"
+                          title="참조번호1"
+                          width={200}
+                        />
+                        <GridColumn
+                          field="ref_seq"
+                          title="참조번호2"
+                          width={120}
+                          cell={NumberCell}
+                        />
+                        <GridColumn
+                          field="finyn"
+                          title="완료"
+                          width={100}
+                          cell={CheckBoxReadOnlyCell}
+                        />
+                        <GridColumn
+                          field="is_defective"
+                          title="불량"
+                          width={80}
+                          cell={defectiveCell}
+                        />
+                        <GridColumn
+                          field="check_yn"
+                          title="확인"
+                          width={80}
+                          cell={Check_ynCell}
+                        />
+                        <GridColumn
+                          field="ref_type"
+                          title="참조"
+                          width={120}
+                          cell={TypeCell2}
+                        />
+                      </Grid>
+                    </FilesContext2.Provider>
                   </GridContainer>
                 </SwiperSlide>
                 <SwiperSlide key={1}>
@@ -7763,6 +7932,33 @@ const App = () => {
                 )[0]
           }
           reload2={() => onSetting()}
+        />
+      )}
+      {TaskOrderADDWindowVisible && (
+        <TaskOrderAddWindow
+          workType={workType}
+          setVisible={setTaskOrderADDWindowVisible}
+          para={
+            mainDataResult4.data.filter(
+              (item) =>
+                item[DATA_ITEM_KEY4] ==
+                Object.getOwnPropertyNames(selectedState4)[0]
+            )[0] == undefined
+              ? {}
+              : mainDataResult4.data.filter(
+                  (item) =>
+                    item[DATA_ITEM_KEY4] ==
+                    Object.getOwnPropertyNames(selectedState4)[0]
+                )[0]
+          }
+          reload={(str: any) => {
+            setFilters((prev) => ({
+              ...prev,
+              findRowValue: str,
+              isSearch: true,
+            }));
+          }}
+          modal={false}
         />
       )}
     </>

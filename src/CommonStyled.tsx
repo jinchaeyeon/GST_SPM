@@ -196,8 +196,8 @@ type TFormBoxWrap = {
   border?: boolean;
 };
 export const FormBoxWrap = styled.div<TFormBoxWrap>`
-  margin: 5px 0 10px;
   width: 100%;
+  overflow: auto;
   padding: 10px;
   border: ${(props) =>
     props.border ? "solid 1px rgba(0, 0, 0, 0.08);" : undefined};

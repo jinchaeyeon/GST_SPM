@@ -49,7 +49,7 @@ export const toDate2 = (date_str: string) => {
 
 //String타입 Date로 반환
 export const toDate = (date_str: string) => {
-  if (!date_str) return null;
+  if (!date_str) return new Date();
   var yyyyMMdd = String(date_str);
   var sYear = yyyyMMdd.substring(0, 4);
   var sMonth = yyyyMMdd.substring(4, 6);
