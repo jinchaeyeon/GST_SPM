@@ -161,6 +161,7 @@ const App = () => {
   const [mobileheight3, setMobileHeight3] = useState(0);
   const [webheight, setWebHeight] = useState(0);
   const [webheight2, setWebHeight2] = useState(0);
+  const [webheight3, setWebHeight3] = useState(0);
   let editorContent: any = editorRef.current?.getContent();
   useLayoutEffect(() => {
     height = getHeight(".ButtonContainer");
@@ -181,6 +182,9 @@ const App = () => {
 
       setWebHeight(getDeviceHeight(true) - height - height2 - height6);
       setWebHeight2(getDeviceHeight(true) - height - height6 + 5);
+      setWebHeight3(
+        getDeviceHeight(true) - height - height6 - height4 - height5 + 5
+      );
     };
     handleWindowResize();
     window.addEventListener("resize", handleWindowResize);
@@ -527,15 +531,11 @@ const App = () => {
         fetchUsers();
         // 상세정보 데이터 세팅
         const row = data.result.tables[0].Rows[0];
-        const userName: any = usersData.find(
-          (item: any) => item.user_id == row.user_id
-        ).user_name;
         setDetailData((prev) => ({
           ...row,
           work_type: "U",
           write_date: toDate(row.write_date),
           type: { sub_code: row.type, code_name: row.typenm },
-          user_id: userName,
         }));
         // Edior에 HTML & CSS 세팅
         setHtmlOnEditor(document);
@@ -1338,7 +1338,11 @@ const App = () => {
               <GridTitleContainer className="ButtonContainer3">
                 <GridTitle>상세정보</GridTitle>
               </GridTitleContainer>
-              <FormBoxWrap border className="FormBoxWrap">
+              <FormBoxWrap
+                border
+                className="FormBoxWrap"
+                style={{ marginTop: "5px" }}
+              >
                 <FormBox>
                   <tbody>
                     <tr>
@@ -1362,7 +1366,12 @@ const App = () => {
                             <Input
                               name="user_id"
                               type="text"
-                              value={detailData.user_id}
+                              value={
+                                usersData.find(
+                                  (item: any) =>
+                                    item.user_id == detailData.user_id
+                                )?.user_name
+                              }
                               onChange={detailDataInputChange}
                               className={"readonly"}
                               readOnly={true}
@@ -1440,9 +1449,9 @@ const App = () => {
                   </tbody>
                 </FormBox>
               </FormBoxWrap>
-
-              <RichEditor id="editor" ref={editorRef} hideTools={!isAdmin} />
-
+              <div style={{ height: webheight3 }}>
+                <RichEditor id="editor" ref={editorRef} hideTools={!isAdmin} />
+              </div>
               <FormBoxWrap
                 border
                 style={{
