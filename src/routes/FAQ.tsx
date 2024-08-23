@@ -183,7 +183,7 @@ const App = () => {
       setWebHeight(getDeviceHeight(true) - height - height2 - height6);
       setWebHeight2(getDeviceHeight(true) - height - height6 + 5);
       setWebHeight3(
-        getDeviceHeight(true) - height - height6 - height4 - height5 + 5
+        getDeviceHeight(true) - height - height6 - height4 - height5 - 5
       );
     };
     handleWindowResize();
@@ -191,7 +191,7 @@ const App = () => {
     return () => {
       window.removeEventListener("resize", handleWindowResize);
     };
-  }, [webheight, webheight2]);
+  }, [webheight, webheight2, webheight3]);
 
   useEffect(() => {
     if (isMobile == true && deviceWidth <= 1200 && editorRef.current != null) {
