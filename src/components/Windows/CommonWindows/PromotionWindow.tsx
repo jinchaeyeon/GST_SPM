@@ -54,6 +54,7 @@ type IWindow = {
   setVisible(t: boolean): void;
   datas: any;
   modal?: boolean;
+  visible? :boolean;
 };
 
 type TItemInfo = {
@@ -123,7 +124,7 @@ var height3 = 0;
 var height4 = 0;
 var index = 0;
 
-const PromotionWindow = ({ setVisible, datas, modal = false }: IWindow) => {
+const PromotionWindow = ({ setVisible, datas, modal = false, visible }: IWindow) => {
   let deviceWidth = window.innerWidth;
   let deviceHeight = document.documentElement.clientHeight;
   let isMobile = deviceWidth <= 1200;
@@ -229,6 +230,7 @@ const PromotionWindow = ({ setVisible, datas, modal = false }: IWindow) => {
   const onClose = () => {
     setVisible(false);
     // removeBeforeUnloadListener();
+    removeOverlay();
   };
 
   //조회조건 초기값
@@ -708,6 +710,30 @@ const PromotionWindow = ({ setVisible, datas, modal = false }: IWindow) => {
 
   const handleCloseDialog = () => {
     setOpenDialog(false);
+    removeOverlay();
+    if (visible) {
+      addOverlay();
+    }
+  };
+
+  useEffect(() => {
+    addOverlay();
+  }, []);
+
+  const removeOverlay = () => {
+    const overlays = document.querySelectorAll(".k-overlay");
+    overlays.forEach((overlay) => {
+      // 부모가 있는지 확인 후 제거
+      if (overlay.parentNode) {
+        overlay.remove();
+      }
+    });
+  };
+
+  const addOverlay = () => {
+    const overlayDiv = document.createElement("div");
+    overlayDiv.className = "k-overlay";
+    document.body.appendChild(overlayDiv);
   };
 
   const [positions, setPositions] = useState({ top: "50%", left: "50%" });
@@ -717,7 +743,7 @@ const PromotionWindow = ({ setVisible, datas, modal = false }: IWindow) => {
       titles={"상세정보"}
       positions={position}
       Close={onClose}
-      modals={true}
+      modals={false}
       onChangePostion={onChangePostion}
     >
       {isMobile ? (

@@ -577,6 +577,7 @@ const Promotion = () => {
             datas={selectedProduct}
             setVisible={setPromotionWindowVisible}
             modal={true}
+            visible={promotionWindowVisible}
           />
         )}
       </Box>
