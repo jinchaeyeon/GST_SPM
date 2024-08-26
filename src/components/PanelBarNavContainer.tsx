@@ -811,7 +811,9 @@ const PanelBarNavContainer = (props: any) => {
                   route="/ProjectSchedule"
                 />
                 <PanelBarItem title={"FAQ 자주묻는질문"} route="/FAQ" />
-                {/* <PanelBarItem title={"제품홍보"} route="/Promotion" /> */}
+                {userId == "10192" && (
+                  <PanelBarItem title={"제품홍보"} route="/Promotion" />
+                )}
               </PanelBar>
             )}
           </Gnv>

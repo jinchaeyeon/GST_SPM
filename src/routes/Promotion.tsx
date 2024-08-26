@@ -9,12 +9,21 @@ import {
   Container,
   Fab,
   Grid,
+  IconButton,
+  InputAdornment,
   Pagination,
   PaginationItem,
   Stack,
+  TextField,
+  Tooltip,
   Typography,
 } from "@mui/material";
-import { DataResult, process, State } from "@progress/kendo-data-query";
+import {
+  DataResult,
+  filterBy,
+  process,
+  State,
+} from "@progress/kendo-data-query";
 import { bytesToBase64 } from "byte-base64";
 import { useEffect, useLayoutEffect, useState } from "react";
 import { useRecoilState, useSetRecoilState } from "recoil";
@@ -23,18 +32,39 @@ import PromotionWindow from "../components/Windows/CommonWindows/PromotionWindow
 import { useApi } from "../hooks/api";
 import { isLoading, loginResultState, titles } from "../store/atoms";
 import { Iparameters } from "../store/types";
-import { Title, TitleContainer } from "../CommonStyled";
+import {
+  ButtonContainer,
+  FilterBox,
+  FilterBoxWrap,
+  GridTitle,
+  InfoTitle,
+  Title,
+  TitleContainer,
+} from "../CommonStyled";
+import SearchIcon from "@mui/icons-material/Search";
+import ClearIcon from "@mui/icons-material/Clear";
+import { Input, InputChangeEvent } from "@progress/kendo-react-inputs";
+import FilterListIcon from "@mui/icons-material/FilterList"; // 필터 아이콘 (세부 조건 아이콘)
+import FilterAltIcon from "@mui/icons-material/FilterAlt";
+import CloseIcon from "@mui/icons-material/Close";
+import { Button } from "@progress/kendo-react-buttons";
+import CustomMultiColumnComboBox from "../components/ComboBoxes/CustomMultiColumnComboBox";
+import { dataTypeColumns } from "../store/columns/common-columns";
+import {
+  ComboBoxChangeEvent,
+  ComboBoxFilterChangeEvent,
+} from "@progress/kendo-react-dropdowns";
+import { FilterDescriptor } from "devextreme/data";
 
 var height = 0;
 var height2 = 0;
 var height3 = 0;
 var height4 = 0;
 
-var count = 1;
-
 const Promotion = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 1200);
   const [webHeight, setWebHeight] = useState(0);
+  const [count, setCount] = useState(1);
   const processApi = useApi();
   const setLoading = useSetRecoilState(isLoading);
   const [loginResult] = useRecoilState(loginResultState);
@@ -44,7 +74,14 @@ const Promotion = () => {
   const [promotionWindowVisible, setPromotionWindowVisible] =
     useState<boolean>(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
-
+  const [typeFilterTop, setTypeFilterTop] = useState<FilterDescriptor>();
+  const handleFilterChangeTop = (event: ComboBoxFilterChangeEvent) => {
+    if (event) {
+      if (event.target.name == "category") {
+        setTypeFilterTop(event.filter);
+      }
+    }
+  };
   const [typesData, setTypesData] = useState<any[]>([]);
   const [mainDataState, setMainDataState] = useState<State>({
     sort: [],
@@ -97,6 +134,18 @@ const Promotion = () => {
     isSearch: false,
   });
 
+  const [information, setInformation] = useState({
+    work_type: "",
+    title: "",
+    category: "",
+    tagnames_s: "",
+    documentId: "",
+    findRowValue: "",
+    pgNum: 1,
+    pgSize: isMobile ? 2 : 12,
+    isSearch: false,
+  });
+
   //조회조건 사용자 옵션 디폴트 값 세팅 후 최초 한번만 실행
   useEffect(() => {
     if (filters.isSearch) {
@@ -105,7 +154,8 @@ const Promotion = () => {
       setFilters((prev) => ({ ...prev, find_row_value: "", isSearch: false })); // 한번만 조회되도록
       fetchMainGrid(deepCopiedFilters);
     }
-    count = Math.ceil(mainDataResult.total / (isMobile ? 2 : 12));
+    const calculatedCount = Math.ceil(mainDataResult.total / (isMobile ? 2 : 12));
+    setCount(calculatedCount);
   }, [filters]);
 
   useEffect(() => {
@@ -163,6 +213,7 @@ const Promotion = () => {
         "@p_document_id": filters.documentId,
         "@p_find_row_value": filters.findRowValue,
         "@p_id": userId,
+        "@p_is_open": isAdmin ? "" : "Y",
       },
     };
 
@@ -186,8 +237,7 @@ const Promotion = () => {
           total: TotalRowCount == -1 ? 0 : TotalRowCount,
         });
       } else {
-        console.log("[에러발생]");
-        console.log(data);
+        setMainDataResult(process([], mainDataState));
       }
       // 필터 isSearch false처리, pgNum 세팅
       setFilters((prev) => ({
@@ -284,6 +334,86 @@ const Promotion = () => {
     }));
   };
 
+  const handleTagClick = (tag: string) => {
+    setPromotionWindowVisible(false); // 모달 닫기
+    setFilters((prev) => ({
+      ...prev,
+      tagnames_s: tag,
+      pgNum: 1,
+      pgSize: isMobile ? 2 : 12,
+      isSearch: true,
+    }));
+    setInformation((prev) => ({
+      ...prev,
+      title: "#" + tag,
+    }));
+  };
+
+  const handleInputChange = (e: InputChangeEvent) => {
+    const { value, name }: any = e.target;
+    setInformation((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      setFilters((prev) => {
+        const isTag = information.title.startsWith("#");
+        return {
+          ...prev,
+          title: isTag ? "" : information.title,
+          tagnames_s: isTag ? information.title.slice(1) : "",
+          isSearch: true,
+        };
+      });
+    }
+  };
+
+  const handleClear = () => {
+    setInformation((prev) => ({
+      ...prev,
+      title: "",
+    }));
+  };
+
+  const [showDetails, setShowDetails] = useState(false);
+  const toggleDetails = () => {
+    setShowDetails((prev) => !prev);
+  };
+
+  const [placeholder, setPlaceholder] = useState("Search...");
+
+  const FilterComboBoxChange = (e: ComboBoxChangeEvent) => {
+    const { value } = e.target;
+    const name = e.target.props.name ?? "";
+    if (value && value.sub_code) {
+      setInformation((prev) => ({
+        ...prev,
+        [name]: value.sub_code,
+      }));
+    } else {
+      setInformation((prev) => ({
+        ...prev,
+        [name]: "",
+      }));
+    }
+  };
+
+  const search = () => {
+    setMainDataResult(process([], mainDataState));
+    // 그리드 재조회
+    setFilters((prev) => ({
+      ...prev,
+      category: information.category,
+      pgNum: 1,
+      pgGap: 0,
+      isSearch: true,
+    }));
+  };
+  console.log(mainDataResult)
+
   return (
     <>
       {isMobile && (
@@ -297,188 +427,283 @@ const Promotion = () => {
         style={{ userSelect: "none" }}
         width="100%"
       >
-        {/* 조회조건 주석 - 추후에 사용 */}
-        {/* <Box width="15%">
-      <GridTitleContainer>
-        <GridTitle>조회조건</GridTitle>
-      </GridTitleContainer>
-      <FilterContainer>
-        <FilterBox>
-          <tbody>
-            <tr>
-              <th>example</th>
-              <td>
-                <Input name="example" type="text" value={[]} />
-              </td>
-            </tr>
-            <tr>
-              <th>example</th>
-              <td>
-                <Input name="example" type="text" value={[]} />
-              </td>
-            </tr>
-            <tr>
-              <th>example</th>
-              <td>
-                <Input name="example" type="text" value={[]} />
-              </td>
-            </tr>
-          </tbody>
-        </FilterBox>
-      </FilterContainer>
-    </Box> */}
         <Box flexGrow={1} overflow="auto">
           <Container maxWidth={false}>
-            <Grid
-              container
-              spacing={2.5}
-              p={isMobile ? 0 : 2}
-              minHeight={webHeight}
-            >
-              {mainDataResult.data.map((item) => (
-                <Grid
-                  item
-                  xs={12}
-                  sm={12}
-                  md={12}
-                  lg={3}
-                  mt={0.5}
-                  key={item.document_id}
-                >
-                  <Card
-                    onClick={() => handleCardClick(item)}
-                    sx={{
-                      borderRadius: 2,
-                      padding: "10px 10px 0 10px",
-                      boxShadow: "0 4px 10px rgba(0, 0, 0, 0.15)",
-                      transition: "0.7s",
-                      "&:hover": {
-                        boxShadow: "0 8px 20px rgba(0, 0, 0, 0.3)",
-                        cursor: "pointer",
-                        transform: "translateY(-3px)",
-                      },
+            <Box>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  backgroundColor: "white",
+                  marginTop: "10px",
+                  marginLeft: "15px",
+                  padding: "8px 16px",
+                  borderRadius: showDetails ? "25px 25px 0 0" : "25px",
+                  // border: showDetails ? "2px 2px 0 0 solid #9d9acd" : "2px solid #9d9acd",
+                  boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.15)",
+                  maxWidth: "600px",
+                  width: "100%",
+                }}
+              >
+                <SearchIcon style={{ marginRight: "10px", color: "#7a76ce" }} />
+                <Input
+                  placeholder={placeholder}
+                  name="title"
+                  value={information.title}
+                  onChange={handleInputChange}
+                  style={{
+                    width: "100%",
+                    border: "none",
+                    outline: "none",
+                    boxShadow: "none",
+                  }}
+                  onFocus={() => setPlaceholder("")}
+                  onBlur={() => setPlaceholder("Search...")}
+                  onKeyPress={handleKeyPress}
+                />
+                {information.title != "" && (
+                  <CloseIcon
+                    onClick={handleClear}
+                    style={{
+                      color: "#b0b0b0",
+                      cursor: "pointer",
                     }}
+                  />
+                )}
+                <IconButton
+                  onClick={toggleDetails}
+                  style={{ marginLeft: "10px" }}
+                >
+                  <Tooltip title="상세조건" arrow>
+                    <FilterListIcon
+                      style={{ color: showDetails ? "#7a76ce" : "#b0b0b0" }}
+                    />
+                  </Tooltip>
+                </IconButton>
+              </div>
+
+              {showDetails && (
+                <div
+                  style={{
+                    backgroundColor: "white",
+                    padding: "20px",
+                    borderBottomLeftRadius: "25px",
+                    borderBottomRightRadius: "25px",
+                    boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.15)",
+                    maxWidth: "600px",
+                    width: "100%",
+                    marginTop: "0px",
+                    // borderTop: "1px solid #eee",
+                    marginLeft: "15px",
+                  }}
+                >
+                  {/* <GridTitle>상세조건</GridTitle> */}
+                  <FilterBoxWrap>
+                    <FilterBox>
+                      <tbody>
+                        <tr>
+                          <th>카테고리</th>
+                          <td>
+                            <CustomMultiColumnComboBox
+                              name="category"
+                              data={
+                                typeFilterTop
+                                  ? filterBy(typesData, typeFilterTop)
+                                  : typesData
+                              }
+                              value={
+                                typesData.find(
+                                  (item) =>
+                                    item.sub_code === information.category
+                                ) || {}
+                              }
+                              columns={dataTypeColumns}
+                              textField={"code_name"}
+                              onChange={FilterComboBoxChange}
+                              filterable={true}
+                              onFilterChange={handleFilterChangeTop}
+                              clearButton={true}
+                            />
+                          </td>
+                        </tr>
+                      </tbody>
+                    </FilterBox>
+                  </FilterBoxWrap>
+                  <ButtonContainer>
+                    <Button
+                      themeColor={"primary"}
+                      style={{ width: "100px" }}
+                      onClick={search}
+                    >
+                      검색
+                    </Button>
+                    <Button
+                      onClick={() => setShowDetails(false)}
+                      fillMode={"outline"}
+                      themeColor={"primary"}
+                      style={{ width: "100px" }}
+                    >
+                      닫기
+                    </Button>
+                  </ButtonContainer>
+                </div>
+              )}
+            </Box>
+            {mainDataResult.total == 0 ? (
+              <InfoTitle style={{ padding: "20px" }}>
+                조회 결과가 없습니다.
+              </InfoTitle>
+            ) : (
+              <Grid
+                container
+                spacing={2.5}
+                p={isMobile ? 0 : 2}
+                minHeight={webHeight}
+              >
+                {mainDataResult.data.map((item) => (
+                  <Grid
+                    item
+                    xs={12}
+                    sm={12}
+                    md={12}
+                    lg={3}
+                    mt={0.5}
+                    key={item.document_id}
                   >
-                    <Box position="relative">
-                      {item.thumbnail ? (
-                        <CardMedia
-                          component="img"
-                          height={isMobile ? height4 : height3}
-                          image={item.thumbnail}
-                          alt={item.title}
-                          sx={{
-                            borderRadius: 1,
-                            objectFit: "cover",
-                          }}
-                        />
-                      ) : (
-                        <Box
-                          height={isMobile ? height4 : height3}
-                          display="flex"
-                          alignItems="center"
-                          justifyContent="center"
-                          bgcolor="lightgray"
-                          borderRadius={1}
-                          width="100%"
-                        >
-                          <ImageOutlinedIcon
-                            style={{ marginRight: "8px", color: "gray" }}
+                    <Card
+                      onClick={() => handleCardClick(item)}
+                      sx={{
+                        borderRadius: 2,
+                        padding: "10px 10px 0 10px",
+                        boxShadow: "0 4px 10px rgba(0, 0, 0, 0.15)",
+                        transition: "0.7s",
+                        "&:hover": {
+                          boxShadow: "0 8px 20px rgba(0, 0, 0, 0.3)",
+                          cursor: "pointer",
+                          transform: "translateY(-3px)",
+                        },
+                      }}
+                    >
+                      <Box position="relative">
+                        {item.thumbnail ? (
+                          <CardMedia
+                            component="img"
+                            height={isMobile ? height4 : height3}
+                            image={item.thumbnail}
+                            alt={item.title}
+                            sx={{
+                              borderRadius: 1,
+                              objectFit: "cover",
+                            }}
                           />
-                          <Typography variant="body2" color="gray">
-                            이미지 준비 중
-                          </Typography>
-                        </Box>
-                      )}
-                      <Box
-                        position="absolute"
-                        top={0}
-                        left={0}
-                        display="flex"
-                        p={1}
-                      >
-                        {item.is_hot == "Y" && (
+                        ) : (
                           <Box
-                            bgcolor="#ef5350"
-                            color="white"
-                            p={1}
-                            borderRadius="8px"
-                            mr={1}
-                            fontWeight={"bold"}
-                            fontSize="12px"
-                            lineHeight="14px"
-                          >
-                            HOT
-                          </Box>
-                        )}
-                        {item.is_new == "Y" && (
-                          <Box
-                            bgcolor="#fbc02d"
-                            color="white"
-                            p={1}
-                            borderRadius="8px"
-                            fontWeight={"bold"}
-                            fontSize="12px"
-                            lineHeight="14px"
-                          >
-                            NEW
-                          </Box>
-                        )}
-                      </Box>
-                    </Box>
-                    <CardContent>
-                      <Box
-                        display="flex"
-                        justifyContent="space-between"
-                        alignItems="flex-start"
-                      >
-                        <Box display="flex" flexDirection="column">
-                          <Box
+                            height={isMobile ? height4 : height3}
                             display="flex"
-                            flexDirection="row"
                             alignItems="center"
-                            flexWrap="nowrap"
+                            justifyContent="center"
+                            bgcolor="lightgray"
+                            borderRadius={1}
+                            width="100%"
                           >
+                            <ImageOutlinedIcon
+                              style={{ marginRight: "8px", color: "gray" }}
+                            />
+                            <Typography variant="body2" color="gray">
+                              이미지 준비 중
+                            </Typography>
+                          </Box>
+                        )}
+                        <Box
+                          position="absolute"
+                          top={0}
+                          left={0}
+                          display="flex"
+                          p={1}
+                        >
+                          {item.is_hot == "Y" && (
+                            <Box
+                              bgcolor="#ef5350"
+                              color="white"
+                              p={1}
+                              borderRadius="8px"
+                              mr={1}
+                              fontWeight={"bold"}
+                              fontSize="12px"
+                              lineHeight="14px"
+                            >
+                              HOT
+                            </Box>
+                          )}
+                          {item.is_new == "Y" && (
+                            <Box
+                              bgcolor="#fbc02d"
+                              color="white"
+                              p={1}
+                              borderRadius="8px"
+                              fontWeight={"bold"}
+                              fontSize="12px"
+                              lineHeight="14px"
+                            >
+                              NEW
+                            </Box>
+                          )}
+                        </Box>
+                      </Box>
+                      <CardContent>
+                        <Box
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="flex-start"
+                        >
+                          <Box display="flex" flexDirection="column">
+                            <Box
+                              display="flex"
+                              flexDirection="row"
+                              alignItems="center"
+                              flexWrap="nowrap"
+                            >
+                              <Typography
+                                component="div"
+                                fontWeight={600}
+                                sx={{
+                                  fontSize: "13px",
+                                  color: "#6a68ba",
+                                }}
+                              >
+                                {
+                                  typesData.find(
+                                    (type) => type.sub_code === item.category
+                                  )?.code_name
+                                }
+                              </Typography>
+                            </Box>
                             <Typography
                               component="div"
                               fontWeight={600}
-                              sx={{
-                                fontSize: "13px",
-                                color: "#6a68ba",
-                              }}
+                              sx={{ fontSize: "17px" }}
                             >
-                              {
-                                typesData.find(
-                                  (type) => type.sub_code === item.category
-                                )?.code_name
-                              }
+                              {item.title}
                             </Typography>
                           </Box>
+
                           <Typography
-                            component="div"
-                            fontWeight={600}
-                            sx={{ fontSize: "17px" }}
+                            variant="body2"
+                            color={"gray"}
+                            sx={{ whiteSpace: "nowrap" }}
                           >
-                            {item.title}
+                            <VisibilityIcon
+                              style={{
+                                fontSize: "16px",
+                                verticalAlign: "middle",
+                                marginRight: "2px",
+                              }}
+                            />
+                            {item.max_seq == null ? 0 : item.max_seq}
                           </Typography>
                         </Box>
-
-                        <Typography
-                          variant="body2"
-                          color={"gray"}
-                          sx={{ whiteSpace: "nowrap" }}
-                        >
-                          <VisibilityIcon
-                            style={{
-                              fontSize: "16px",
-                              verticalAlign: "middle",
-                              marginRight: "2px",
-                            }}
-                          />
-                          {item.max_seq == null ? 0 : item.max_seq}
-                        </Typography>
-                      </Box>
-                      {/* 해시태그 주석- 추후에 사용 */}
-                      {/* <Box
+                        {/* 해시태그 주석- 추후에 사용 */}
+                        {/* <Box
               mt={1}
               display="flex"
               flexWrap="wrap"
@@ -502,23 +727,25 @@ const Promotion = () => {
                   />
                 ))}
             </Box> */}
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
+            )}
           </Container>
+
           {/* 페이지네이션 버튼 */}
           <div
             className="ButtonContainer2"
             style={{
-              position: "fixed",
+              // position: "fixed",
               bottom: isMobile ? 0 : 30,
               width: "100%",
               zIndex: 100,
               display: "flex",
               justifyContent: "center",
-              transform: isMobile ? undefined : "translateX(-90px)",
+              // transform: isMobile ? undefined : "translateX(-90px)",
             }}
           >
             <Box display="flex" justifyContent="center" p={2}>
@@ -552,6 +779,7 @@ const Promotion = () => {
             </Box>
           </div>
         </Box>
+
         {/* 신규 버튼 */}
         {isAdmin && (
           <Fab
@@ -578,6 +806,7 @@ const Promotion = () => {
             setVisible={setPromotionWindowVisible}
             modal={true}
             visible={promotionWindowVisible}
+            onTagClick={handleTagClick}
           />
         )}
       </Box>

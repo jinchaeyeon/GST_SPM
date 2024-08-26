@@ -6,6 +6,7 @@ import {
   Chip,
   FormControlLabel,
   FormGroup,
+  InputAdornment,
   TextField,
   Typography,
 } from "@mui/material";
@@ -54,7 +55,8 @@ type IWindow = {
   setVisible(t: boolean): void;
   datas: any;
   modal?: boolean;
-  visible? :boolean;
+  visible?: boolean;
+  onTagClick?: (tag: string) => void;
 };
 
 type TItemInfo = {
@@ -75,6 +77,7 @@ interface InformationType {
   image: string;
   isHot: boolean;
   isNew: boolean;
+  isOpen: boolean;
   tagnames: Hashtag[];
   type: string;
 }
@@ -124,7 +127,13 @@ var height3 = 0;
 var height4 = 0;
 var index = 0;
 
-const PromotionWindow = ({ setVisible, datas, modal = false, visible }: IWindow) => {
+const PromotionWindow = ({
+  setVisible,
+  datas,
+  modal = false,
+  visible,
+  onTagClick,
+}: IWindow) => {
   let deviceWidth = window.innerWidth;
   let deviceHeight = document.documentElement.clientHeight;
   let isMobile = deviceWidth <= 1200;
@@ -156,7 +165,11 @@ const PromotionWindow = ({ setVisible, datas, modal = false, visible }: IWindow)
         15
     );
     setMobileHeight2(
-      getWindowDeviceHeight(false, deviceHeight) - height - height2 - height4 - 5
+      getWindowDeviceHeight(false, deviceHeight) -
+        height -
+        height2 -
+        height4 -
+        5
     );
     setWebHeight(getWindowDeviceHeight(false, position.height) - height);
     setWebHeight2(
@@ -196,6 +209,7 @@ const PromotionWindow = ({ setVisible, datas, modal = false, visible }: IWindow)
     image: "",
     isHot: false,
     isNew: false,
+    isOpen: false,
     tagnames: [],
     type: "",
   });
@@ -262,6 +276,7 @@ const PromotionWindow = ({ setVisible, datas, modal = false, visible }: IWindow)
         "@p_document_id": filters.documentId,
         "@p_find_row_value": filters.findRowValue,
         "@p_id": userId,
+        "@p_is_open": isAdmin ? "" : "Y"
       },
     };
 
@@ -300,6 +315,7 @@ const PromotionWindow = ({ setVisible, datas, modal = false, visible }: IWindow)
           title: rows[0].title,
           isHot: rows[0].is_hot == "Y" ? true : false,
           isNew: rows[0].is_new == "Y" ? true : false,
+          isOpen: rows[0].is_open == "Y" ? true : false,
           type: rows[0].category,
           tagnames: fetchedTags,
         }));
@@ -397,6 +413,7 @@ const PromotionWindow = ({ setVisible, datas, modal = false, visible }: IWindow)
         image: "",
         isHot: false,
         isNew: false,
+        isOpen: false,
         tagnames: [],
         type: "",
       });
@@ -463,6 +480,7 @@ const PromotionWindow = ({ setVisible, datas, modal = false, visible }: IWindow)
         "@p_contents": extractTextFromHtmlContent(editorContent),
         "@p_is_new": Information.isNew == true ? "Y" : "N",
         "@p_is_hot": Information.isHot == true ? "Y" : "N",
+        "@p_is_open": Information.isOpen == true ? "Y" : "N",
         "@p_tags_s": tagNames,
         "@p_seq_s": tagSeqs,
         "@p_row_status_s": tagStatuses,
@@ -481,12 +499,12 @@ const PromotionWindow = ({ setVisible, datas, modal = false, visible }: IWindow)
     if (data && data.isSuccess === true) {
       alert("성공적으로 저장되었습니다.");
       setVisible(false);
+      removeOverlay();
     } else {
       console.log("[에러발생]");
       console.log(data);
     }
-    setLoading(false);
-    setVisible(false);
+    setLoading(false);  
   };
 
   // 문의하기
@@ -527,6 +545,7 @@ const PromotionWindow = ({ setVisible, datas, modal = false, visible }: IWindow)
         "@p_contents": extractTextFromHtmlContent(editorContent),
         "@p_is_new": Information.isNew == true ? "Y" : "N",
         "@p_is_hot": Information.isHot == true ? "Y" : "N",
+        "@p_is_open": Information.isOpen == true ? "Y" : "N",
         "@p_tags_s": "",
         "@p_seq_s": "",
         "@p_row_status_s": "",
@@ -1500,6 +1519,10 @@ const PromotionWindow = ({ setVisible, datas, modal = false, visible }: IWindow)
                               color: "#7a76ce",
                               backgroundColor: "#f0ecfc",
                             }}
+                            onClick={() => {
+                              removeOverlay();
+                              onTagClick?.(hashtag.name);
+                            }}
                           />
                         ))}
                       {Information.tagnames.filter(
@@ -1616,6 +1639,10 @@ const PromotionWindow = ({ setVisible, datas, modal = false, visible }: IWindow)
                           style={{
                             color: "#7a76ce",
                             backgroundColor: "#f0ecfc",
+                          }}
+                          onClick={() => {
+                            removeOverlay();
+                            onTagClick?.(hashtag.name);
                           }}
                         />
                       ))}
@@ -1741,6 +1768,21 @@ const PromotionWindow = ({ setVisible, datas, modal = false, visible }: IWindow)
                       fontFamily: "Noto Sans KR",
                       fontSize: "15px",
                     },
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <Button
+                          icon={Information.isOpen ? "unlock" : "lock"}
+                          themeColor={"primary"}
+                          fillMode={"flat"}
+                          onClick={() =>
+                            setInformation((prev) => ({
+                              ...prev,
+                              isOpen: !prev.isOpen,
+                            }))
+                          }
+                        />
+                      </InputAdornment>
+                    ),
                   }}
                   sx={{
                     marginRight: 1,
@@ -1749,6 +1791,7 @@ const PromotionWindow = ({ setVisible, datas, modal = false, visible }: IWindow)
                   }}
                   disabled={!isAdmin}
                 />
+
                 {isAdmin && (
                   <FormGroup row>
                     <FormControlLabel
