@@ -1,4 +1,5 @@
 import {
+  CompositeFilterDescriptor,
   DataResult,
   FilterDescriptor,
   GroupDescriptor,
@@ -18,7 +19,7 @@ import { DatePicker } from "@progress/kendo-react-dateinputs";
 import {
   ComboBoxFilterChangeEvent,
   MultiSelect,
-  MultiSelectChangeEvent,
+  MultiSelectChangeEvent
 } from "@progress/kendo-react-dropdowns";
 import {
   GRID_COL_INDEX_ATTRIBUTE,
@@ -27,6 +28,9 @@ import {
   GridColumn,
   GridDataStateChangeEvent,
   GridExpandChangeEvent,
+  GridFilterCellProps,
+  GridFilterChangeEvent,
+  GridFilterOperators,
   GridFooterCellProps,
   GridItemChangeEvent,
   GridPageChangeEvent,
@@ -34,7 +38,11 @@ import {
   GridSelectionChangeEvent,
   getSelectedState,
 } from "@progress/kendo-react-grid";
-import { Checkbox, Input, TextArea } from "@progress/kendo-react-inputs";
+import {
+  Checkbox,
+  Input,
+  TextArea
+} from "@progress/kendo-react-inputs";
 import { TabStrip, TabStripTab } from "@progress/kendo-react-layout";
 import { bytesToBase64 } from "byte-base64";
 import React, {
@@ -69,6 +77,7 @@ import CenterCell from "../components/Cells/CenterCell";
 import CheckBoxCell from "../components/Cells/CheckBoxCell";
 import ComboBoxCell from "../components/Cells/ComboBoxCell";
 import DateCell from "../components/Cells/DateCell";
+import { DropdownFilterCell } from "../components/Cells/DropdownFilterCell";
 import NumberCell from "../components/Cells/NumberCell";
 import ProgressCell from "../components/Cells/ProgressCell";
 import RadioGroupCell from "../components/Cells/RadioGroupCell";
@@ -122,6 +131,14 @@ import { Iparameters } from "../store/types";
 const DATA_ITEM_KEY = "devmngnum";
 const SUB_DATA_ITEM_KEY = "devmngseq";
 const SUB_DATA_ITEM_KEY2 = "idx";
+
+const initialFilter: CompositeFilterDescriptor = {
+  logic: "and",
+  filters: [
+    { field: "pgmid", operator: "contains", value: "" },
+    { field: "pgmnm", operator: "contains", value: "" },
+  ],
+};
 
 let targetRowIndex: null | number = null;
 let targetRowIndex2: null | number = null;
@@ -257,6 +274,13 @@ const UserCell = (props: GridCellProps) => {
 };
 const initialGroup: GroupDescriptor[] = [{ field: "group_menu_name" }];
 
+const filterOperators: GridFilterOperators = {
+  text: [{ text: "grid.filterContainsOperator", operator: "contains" }],
+  numeric: [{ text: "grid.filterEqOperator", operator: "eq" }],
+  date: [{ text: "grid.filterEqOperator", operator: "eq" }],
+  boolean: [{ text: "grid.filterEqOperator", operator: "eq" }],
+};
+
 var index = 0;
 
 var height = 0;
@@ -354,6 +378,7 @@ const App = () => {
   const [filter7, setFilter7] = React.useState<FilterDescriptor>();
   const [filter8, setFilter8] = React.useState<FilterDescriptor>();
   const [filter9, setFilter9] = React.useState<FilterDescriptor>();
+  const [filter10, setFilter10] = React.useState(initialFilter);
 
   const handleFilterChange = (event: ComboBoxFilterChangeEvent) => {
     if (event) {
@@ -3641,6 +3666,26 @@ const App = () => {
     ? { color: "#7a76ce", fontWeight: "bold" }
     : {};
 
+  const onFilterChange = (e: GridFilterChangeEvent) => {
+    setFilter10(e.filter);
+  };
+
+  const DevdivFilterCell: any = (props: GridFilterCellProps) => (
+    <DropdownFilterCell
+      {...props}
+      data={devdivItems}
+      defaultItem={{ sub_code: "", code_name: "" }}
+    />
+  );
+
+  const ValueCodeFilterCell: any = (props: GridFilterCellProps) => (
+    <DropdownFilterCell
+      {...props}
+      data={valuecodeItems}
+      defaultItem={{ sub_code: "", code_name: "" }}
+    />
+  );
+
   return (
     <>
       <TitleContainer className="TitleContainer">
@@ -5084,12 +5129,17 @@ const App = () => {
                         onExpandChange={onExpandChange}
                         expandField="expanded"
                         lockGroups={!isMobile}
+                        // filterable={true}
+                        // filter={filter10}
+                        // onFilterChange={onFilterChange}
+                        // filterOperators={filterOperators}
                       >
                         <GridColumn
                           field="rowstatus"
                           title=" "
                           width="45px"
                           locked={!isMobile}
+                          filterable={false}
                         />
                         <GridColumn
                           field="pgmid"
@@ -5097,132 +5147,157 @@ const App = () => {
                           width={120}
                           footerCell={subTotalFooterCell}
                           locked={!isMobile}
+                          filterable={false}
                         />
                         <GridColumn
                           field="pgmnm"
                           title="메뉴명"
                           width={150}
                           locked={!isMobile}
+                          filterable={false}
                         />
                         <GridColumn
                           field="devdiv"
                           title="개발구분"
                           width={120}
                           cell={DevdivCell}
+                          filterCell={DevdivFilterCell}
+                          filterable={false}
                         />
                         <GridColumn
                           field="value_code3"
                           title="Value 구분"
                           width={120}
                           cell={ValueCodeCell}
+                          filterCell={ValueCodeFilterCell}
+                          filterable={false}
                         />
                         <GridColumn
                           field="prgrate"
                           title="진행률"
                           width={100}
                           cell={ProgressCell}
+                          filter="numeric"
+                          filterable={false}
                         />
                         <GridColumn
                           field="listyn"
                           title="LIST포함여부"
                           width={180}
                           cell={ListRadioCell}
+                          filterable={false}
                         />
                         <GridColumn
                           field="lvl"
                           title="난이도"
                           width={120}
                           cell={LvlCell}
+                          filterable={false}
                         />
                         <GridColumn
                           field="stdscore"
                           title="개발표준점수"
                           width={100}
                           cell={NumberCell}
+                          filterable={false}
                         />
                         <GridColumn
                           field="modrate"
                           title="수정률"
                           width={100}
                           cell={NumberCell}
+                          filterable={false}
                         />
                         <GridColumn
                           field="fnscore"
                           title="기능점수"
                           width={100}
                           cell={NumberCell}
+                          filterable={false}
                         />
                         <GridColumn
                           field="indicator"
                           title="설계자"
                           width={120}
                           cell={UserCell}
+                          filterable={false}
                         />
                         <GridColumn
                           field="devperson"
                           title="개발담당자"
                           width={120}
                           cell={UserCell}
+                          filterable={false}
                         />
                         <GridColumn
                           field="DesignEstTime"
                           title="설계예정일"
                           width={120}
                           cell={DateCell}
+                          filterable={false}
                         />
                         <GridColumn
                           field="exptime"
                           title="개발예상시간"
                           width={100}
                           cell={NumberCell}
+                          filterable={false}
                         />
                         <GridColumn
                           field="DesignStartDate"
                           title="설계시작일"
                           width={120}
                           cell={DateCell}
+                          filterable={false}
                         />
                         <GridColumn
                           field="DesignEndDate"
                           title="설계사업완료일(AS포함)"
                           width={120}
                           cell={DateCell}
+                          filterable={false}
                         />
                         <GridColumn
                           field="devstrdt"
                           title="개발시작일"
                           width={120}
                           cell={DateCell}
+                          filterable={false}
                         />
                         <GridColumn
                           field="finexpdt"
                           title="완료예정일"
                           width={120}
                           cell={DateCell}
+                          filterable={false}
                         />
                         <GridColumn
                           field="findt"
                           title="사업완료일(AS포함)"
                           width={120}
                           cell={DateCell}
+                          filterable={false}
                         />
                         <GridColumn
                           field="chkperson"
                           title="확인담당자"
                           width={120}
                           cell={UserCell}
+                          filterable={false}
                         />
                         <GridColumn
                           field="chkdt"
                           title="확인일"
                           width={120}
                           cell={DateCell}
+                          filterable={false}
                         />
                         <GridColumn
                           field="useyn"
                           title="사용여부"
                           width={80}
                           cell={CustomCheckBoxCell5}
+                          filterable={false}
                         />
                         <GridColumn field="remark" title="비고" width={200} />
                         <GridColumn
@@ -5230,17 +5305,20 @@ const App = () => {
                           title="검수일자"
                           width={120}
                           cell={DateCell}
+                          filterable={false}
                         />
                         <GridColumn
                           field="CustPerson"
                           title="업체담당자"
                           width={120}
+                          filterable={false}
                         />
                         <GridColumn
                           field="CustSignyn"
                           title="업체사인"
                           width={80}
                           cell={CustomCheckBoxCell5}
+                          filterable={false}
                         />
                       </Grid>
                     </UserContext.Provider>
