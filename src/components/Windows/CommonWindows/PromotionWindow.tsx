@@ -563,6 +563,7 @@ const PromotionWindow = ({
     if (data && data.isSuccess === true) {
       alert("삭제되었습니다.");
       setVisible(false);
+      removeOverlay();
     } else {
       console.log("[에러발생]");
       console.log(data);
