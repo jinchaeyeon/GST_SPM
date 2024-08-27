@@ -196,27 +196,22 @@ const App = () => {
       setMobileHeight(getDeviceHeight(true) - height - height8);
       setMobileHeight2(getDeviceHeight(true) - height2 - height8);
       setMobileHeight3(
-        getDeviceHeight(true) - height8 - height4 - height7 + 15
+        getDeviceHeight(true) - height8 - height4 - height7
       );
       setMobileHeight4(
-        getDeviceHeight(true) - height8 - height3 - height5 + 15
+        getDeviceHeight(true) - height8 - height3 - height5
       );
       setMobileHeight5(getDeviceHeight(true) - height8);
       setWebHeight(getDeviceHeight(true) - height - height - height8);
       setWebHeight2(
-        (getDeviceHeight(false) - height2 - height6 - height8) / 2 -
-          height7 +
-          15
+        (getDeviceHeight(false) - height2 - height6 - height8) / 2 - height7
       );
       setWebHeight3(
         (getDeviceHeight(false) - height2 - height6 - height8) / 2 -
           height3 -
-          height5 +
-          15
+          height5
       );
-      setWebHeight4(
-        (getDeviceHeight(true) - height - height8) / 2 - height5 - 5
-      );
+      setWebHeight4((getDeviceHeight(true) - height - height8) / 2 - height5);
     };
     handleWindowResize();
     window.addEventListener("resize", handleWindowResize);
@@ -518,7 +513,7 @@ const App = () => {
         setIsDataLocked(true);
       }
     }
-   if (data && data.result.isSuccess === true) {
+    if (data && data.result.isSuccess === true) {
       const questionDocument = data.questionDocument;
       const answerDocument = data.answerDocument;
       const rowCount = data.result.tables[0].RowCount;

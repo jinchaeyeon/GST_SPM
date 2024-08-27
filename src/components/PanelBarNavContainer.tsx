@@ -881,13 +881,232 @@ const PanelBarNavContainer = (props: any) => {
         <Loading />
       </Wrapper>
       <Footer>
-        <div>{!isAdmin && "[업무시간] 평일 09:00-18:00"}</div>
-        <div className="default">
-          <div>
-            {userName}({userId})
+        <div
+          style={{
+            height: "80px",
+            clear: "both",
+            backgroundColor: "#333",
+            overflow: "hidden",
+            display: "flex",
+            // justifyContent: "space-evenly",
+            justifyContent: "center",
+            gap: "250px",
+            alignItems: "center",
+            width: "100%",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "flex-start" }}>
+            <img
+              src="국문가로형2.png"
+              alt="Footer Image"
+              style={{
+                height: "37px",
+                objectFit: "contain",
+              }}
+            />
           </div>
-          <div>{customerName}</div>
-          <div>{ip}</div>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              lineHeight: "1.6",
+              fontSize: "12px",
+              letterSpacing: "0",
+            }}
+          >
+            <address
+              style={{
+                fontStyle: "normal",
+                letterSpacing: "-.01em",
+                display: "flex",
+                gap: "10px",
+              }}
+            >
+              <a
+                style={{
+                  display: "inline-block",
+                  color: "#d5d5d5",
+                  cursor: "default",
+                }}
+              >
+                (주)지에스티
+              </a>
+              <a
+                style={{
+                  display: "inline-block",
+                  color: "#d5d5d5",
+                  cursor: "default",
+                }}
+              >
+                |
+              </a>
+              <a
+                style={{
+                  display: "inline-block",
+                  color: "#d5d5d5",
+                  cursor: "default",
+                }}
+              >
+                대표: 오준철
+              </a>
+              <a
+                style={{
+                  display: "inline-block",
+                  color: "#d5d5d5",
+                  cursor: "default",
+                }}
+              >
+                |
+              </a>
+              <a
+                style={{
+                  display: "inline-block",
+                  color: "#d5d5d5",
+                  cursor: "default",
+                }}
+              >
+                사업자등록번호: 606-86-08105
+              </a>
+              <a
+                style={{
+                  display: "inline-block",
+                  color: "#d5d5d5",
+                  cursor: "default",
+                }}
+              >
+                |
+              </a>
+              <a
+                style={{
+                  display: "inline-block",
+                  color: "#d5d5d5",
+                  cursor: "pointer",
+                }}
+                href="mailto:accounting@gsti.co.kr?Subject=%EB%AC%B8%EC%9D%98%ED%95%A9%EB%8B%88%EB%8B%A4"
+                target="_top"
+              >
+                Email: accounting@gsti.co.kr
+              </a>
+            </address>
+            <address
+              style={{
+                fontStyle: "normal",
+                letterSpacing: "-.01em",
+                display: "flex",
+                gap: "10px",
+              }}
+            >
+              <a
+                style={{
+                  display: "inline-block",
+                  color: "#d5d5d5",
+                  cursor: "pointer",
+                }}
+                href="tel:070-7017-7373"
+              >
+                전화번호: 070-7017-7373
+              </a>
+              <a
+                style={{
+                  display: "inline-block",
+                  color: "#d5d5d5",
+                  cursor: "default",
+                }}
+              >
+                |
+              </a>
+              <a
+                style={{
+                  display: "inline-block",
+                  color: "#d5d5d5",
+                  cursor: "default",
+                }}
+              >
+                팩스: 051-831-7372
+              </a>
+              <a
+                style={{
+                  display: "inline-block",
+                  color: "#d5d5d5",
+                  cursor: "default",
+                }}
+              >
+                |
+              </a>
+              <a
+                style={{
+                  display: "inline-block",
+                  color: "#d5d5d5",
+                }}
+              >
+                부산본사: 부산 북구 효열로 111, 부산지식산업센터 302호 (우)
+                46508
+              </a>
+            </address>
+            <address
+              style={{
+                fontStyle: "normal",
+                letterSpacing: "-.01em",
+                display: "flex",
+                gap: "10px",
+              }}
+            >
+              <a
+                style={{
+                  display: "inline-block",
+                  color: "#d5d5d5",
+                }}
+              >
+                © GST Co., Ltd. All rights reserved.
+              </a>
+            </address>
+          </div>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              lineHeight: "1.6",
+              fontSize: "12px",
+              alignItems: "flex-start",
+              height: "100%",
+              paddingTop: "11px",
+            }}
+          >
+            <address
+              style={{
+                fontStyle: "normal",
+                letterSpacing: "-.01em",
+                display: "flex",
+                gap: "10px",
+              }}
+            >
+              <a
+                style={{
+                  display: "inline-block",
+                  color: "#d5d5d5",
+                }}
+              >
+                업무시간
+              </a>
+            </address>
+            <address
+              style={{
+                fontStyle: "normal",
+                letterSpacing: "-.01em",
+                display: "flex",
+                gap: "10px",
+              }}
+            >
+              <a
+                style={{
+                  display: "inline-block",
+                  color: "#d5d5d5",
+                }}
+              >
+                평일 09:00-18:00
+              </a>
+            </address>
+          </div>
         </div>
       </Footer>
     </>

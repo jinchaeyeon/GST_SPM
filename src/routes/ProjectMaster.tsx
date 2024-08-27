@@ -3724,7 +3724,7 @@ const App = () => {
         </ButtonContainer>
       </TitleContainer>
       <TabStrip
-        style={{ width: "100%", height: !isMobile ? `85vh` : "" }}
+        style={{ width: "100%", height: "auto" }}
         selected={AlltabSelected}
         onSelect={handleSelectAllTab}
       >
@@ -5129,7 +5129,7 @@ const App = () => {
                         onExpandChange={onExpandChange}
                         expandField="expanded"
                         lockGroups={!isMobile}
-                        // filterable={true}
+                        // filterable={true} // TODO : 그리드 필터 제작중
                         // filter={filter10}
                         // onFilterChange={onFilterChange}
                         // filterOperators={filterOperators}

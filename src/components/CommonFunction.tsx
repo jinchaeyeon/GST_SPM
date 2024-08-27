@@ -1104,9 +1104,7 @@ export const getHeight = (className: string) => {
       : className == ".k-tabstrip-items-wrapper" ||
         className == ".k-window-titlebar"
       ? container?.clientHeight + 35
-      : className.includes("FormBoxWrap")
-      ? container.clientHeight + 15
-      : container.clientHeight;
+      : container?.clientHeight;
   } else {
     return 0;
   }
@@ -1135,13 +1133,13 @@ export const getDeviceHeight = (bool: boolean) => {
     if (isMobile) {
       return document.documentElement.clientHeight - 70;
     } else {
-      return document.documentElement.clientHeight - 110;
+      return document.documentElement.clientHeight - 110 - 50;
     }
   } else {
     if (isMobile) {
       return document.documentElement.clientHeight - 70 - height;
     } else {
-      return document.documentElement.clientHeight - 110 - height2;
+      return document.documentElement.clientHeight - 110 - height2 - 50;
     }
   }
 };

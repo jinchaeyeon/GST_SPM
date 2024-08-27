@@ -6,6 +6,7 @@ import {
   Card,
   CardContent,
   CardMedia,
+  Chip,
   Container,
   Fab,
   Grid,
@@ -26,7 +27,7 @@ import {
 } from "@progress/kendo-data-query";
 import { bytesToBase64 } from "byte-base64";
 import { useEffect, useLayoutEffect, useState } from "react";
-import { useRecoilState, useSetRecoilState } from "recoil";
+import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import { getDeviceHeight, getHeight } from "../components/CommonFunction";
 import PromotionWindow from "../components/Windows/CommonWindows/PromotionWindow";
 import { useApi } from "../hooks/api";
@@ -42,10 +43,8 @@ import {
   TitleContainer,
 } from "../CommonStyled";
 import SearchIcon from "@mui/icons-material/Search";
-import ClearIcon from "@mui/icons-material/Clear";
 import { Input, InputChangeEvent } from "@progress/kendo-react-inputs";
-import FilterListIcon from "@mui/icons-material/FilterList"; // 필터 아이콘 (세부 조건 아이콘)
-import FilterAltIcon from "@mui/icons-material/FilterAlt";
+import FilterListIcon from "@mui/icons-material/FilterList";
 import CloseIcon from "@mui/icons-material/Close";
 import { Button } from "@progress/kendo-react-buttons";
 import CustomMultiColumnComboBox from "../components/ComboBoxes/CustomMultiColumnComboBox";
@@ -60,6 +59,7 @@ var height = 0;
 var height2 = 0;
 var height3 = 0;
 var height4 = 0;
+var height5 = 0;
 
 const Promotion = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 1200);
@@ -67,6 +67,7 @@ const Promotion = () => {
   const [count, setCount] = useState(1);
   const processApi = useApi();
   const setLoading = useSetRecoilState(isLoading);
+  const isLoadingState = useRecoilValue(isLoading);
   const [loginResult] = useRecoilState(loginResultState);
   const isAdmin = loginResult && loginResult.role === "ADMIN";
   const userId = loginResult ? loginResult.userId : "";
@@ -78,7 +79,14 @@ const Promotion = () => {
   const handleFilterChangeTop = (event: ComboBoxFilterChangeEvent) => {
     if (event) {
       if (event.target.name == "category") {
-        setTypeFilterTop(event.filter);
+        const filterValue = event.filter.value.toLowerCase();
+        console.log(filterValue);
+        // 필터링 로직: 검색어가 포함된 데이터를 반환
+        const filteredData = typesData.filter((item) =>
+          item.code_name.toLowerCase().includes(filterValue)
+        );
+
+        setTypeFilterTop(filteredData); // 필터링된 데이터를 상태로 저장
       }
     }
   };
@@ -95,10 +103,11 @@ const Promotion = () => {
   useLayoutEffect(() => {
     const updateHeight = () => {
       height = getHeight(".TitleContainer");
+      height5 = getHeight(".ButtonContainer");
       height2 = getHeight(".ButtonContainer2");
-      setWebHeight(getDeviceHeight(false) - height - height2 + 35);
-      height3 = (getDeviceHeight(false) - 400) / 3;
-      height4 = (getDeviceHeight(false) - 290 - height) / 2;
+      setWebHeight(getDeviceHeight(false) - height5 - 30);
+      height3 = (getDeviceHeight(false) - 400 - height5) / 3;
+      height4 = (getDeviceHeight(false) - 290 - height - height5) / 2;
     };
 
     const handleWindowResize = () => {
@@ -132,6 +141,8 @@ const Promotion = () => {
     pgNum: 1,
     pgSize: isMobile ? 2 : 12,
     isSearch: false,
+    isHot: false,
+    isNew: false,
   });
 
   const [information, setInformation] = useState({
@@ -154,7 +165,9 @@ const Promotion = () => {
       setFilters((prev) => ({ ...prev, find_row_value: "", isSearch: false })); // 한번만 조회되도록
       fetchMainGrid(deepCopiedFilters);
     }
-    const calculatedCount = Math.ceil(mainDataResult.total / (isMobile ? 2 : 12));
+    const calculatedCount = Math.ceil(
+      mainDataResult.total / (isMobile ? 2 : 12)
+    );
     setCount(calculatedCount);
   }, [filters]);
 
@@ -365,6 +378,7 @@ const Promotion = () => {
           ...prev,
           title: isTag ? "" : information.title,
           tagnames_s: isTag ? information.title.slice(1) : "",
+          pgNum: 1,
           isSearch: true,
         };
       });
@@ -412,8 +426,14 @@ const Promotion = () => {
       isSearch: true,
     }));
   };
-  console.log(mainDataResult)
 
+  const handleChipClick = (type: "isHot" | "isNew") => {
+    setFilters((prev) => ({
+      ...prev,
+      [type]: !prev[type],
+    }));
+  };
+  console.log(filters.isHot);
   return (
     <>
       {isMobile && (
@@ -423,7 +443,7 @@ const Promotion = () => {
       )}
       <Box
         display="flex"
-        overflow="hidden"
+        // overflow="hidden"
         style={{ userSelect: "none" }}
         width="100%"
       >
@@ -431,6 +451,7 @@ const Promotion = () => {
           <Container maxWidth={false}>
             <Box>
               <div
+                className="ButtonContainer"
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -498,6 +519,47 @@ const Promotion = () => {
                   }}
                 >
                   {/* <GridTitle>상세조건</GridTitle> */}
+                  <Box display="flex" mb={1}>
+                    <Chip
+                      label="HOT"
+                      onClick={() => handleChipClick("isHot")}
+                      sx={{
+                        backgroundColor: filters.isHot ? "#ef5350" : "#fff",
+                        color: filters.isHot ? "white" : "#ef5350",
+                        borderRadius: "8px",
+                        fontWeight: "bold",
+                        fontSize: "12px",
+                        lineHeight: "14px",
+                        mr: 1,
+                        border: `1px solid ${
+                          filters.isHot ? "#ef5350" : "#ef5350"
+                        }`,
+                        cursor: "pointer", // 마우스 포인터 변경
+                        "&:hover": {
+                          backgroundColor: filters.isHot ? "#ef5350" : "#fff", // 배경색 유지
+                        },
+                      }}
+                    />
+                    <Chip
+                      label="NEW"
+                      onClick={() => handleChipClick("isNew")}
+                      sx={{
+                        backgroundColor: filters.isNew ? "#fbc02d" : "#fff",
+                        color: filters.isNew ? "white" : "#fbc02d",
+                        borderRadius: "8px",
+                        fontWeight: "bold",
+                        fontSize: "12px",
+                        lineHeight: "14px",
+                        border: `1px solid ${
+                          filters.isNew ? "#fbc02d" : "#fbc02d"
+                        }`,
+                        cursor: "pointer", // 마우스 포인터 변경
+                        "&:hover": {
+                          backgroundColor: filters.isNew ? "#fbc02d" : "#fff", // 배경색 유지
+                        },
+                      }}
+                    />
+                  </Box>
                   <FilterBoxWrap>
                     <FilterBox>
                       <tbody>
@@ -520,7 +582,7 @@ const Promotion = () => {
                               columns={dataTypeColumns}
                               textField={"code_name"}
                               onChange={FilterComboBoxChange}
-                              filterable={true}
+                              filterable={false}
                               onFilterChange={handleFilterChangeTop}
                               clearButton={true}
                             />
@@ -532,7 +594,7 @@ const Promotion = () => {
                   <ButtonContainer>
                     <Button
                       themeColor={"primary"}
-                      style={{ width: "100px" }}
+                      style={{ padding: "10px 30px" }}
                       onClick={search}
                     >
                       검색
@@ -541,7 +603,7 @@ const Promotion = () => {
                       onClick={() => setShowDetails(false)}
                       fillMode={"outline"}
                       themeColor={"primary"}
-                      style={{ width: "100px" }}
+                      style={{ padding: "10px 30px" }}
                     >
                       닫기
                     </Button>
@@ -551,14 +613,16 @@ const Promotion = () => {
             </Box>
             {mainDataResult.total == 0 ? (
               <InfoTitle style={{ padding: "20px" }}>
-                조회 결과가 없습니다.
+                {isLoadingState ? "" : "조회 결과가 없습니다."}
               </InfoTitle>
             ) : (
               <Grid
                 container
-                spacing={2.5}
-                p={isMobile ? 0 : 2}
+                spacing={isMobile? 1 : 2.5}
                 minHeight={webHeight}
+                style={{
+                  padding: "20px 20px 0 20px"
+                }}
               >
                 {mainDataResult.data.map((item) => (
                   <Grid
@@ -739,13 +803,11 @@ const Promotion = () => {
           <div
             className="ButtonContainer2"
             style={{
-              // position: "fixed",
-              bottom: isMobile ? 0 : 30,
+              // bottom: isMobile ? 0 : 50,
               width: "100%",
               zIndex: 100,
               display: "flex",
               justifyContent: "center",
-              // transform: isMobile ? undefined : "translateX(-90px)",
             }}
           >
             <Box display="flex" justifyContent="center" p={2}>
@@ -788,7 +850,7 @@ const Promotion = () => {
             onClick={handleAddNewProduct}
             sx={{
               position: "fixed",
-              bottom: 40,
+              bottom: isMobile? 20 : 100,
               right: 40,
               backgroundColor: "#7a76ce",
               "&:hover": {
