@@ -8,6 +8,17 @@ import {
 } from "@progress/kendo-data-query";
 import { Button } from "@progress/kendo-react-buttons";
 import {
+  Chart,
+  ChartCategoryAxis,
+  ChartCategoryAxisItem,
+  ChartLegend,
+  ChartSeries,
+  ChartSeriesItem,
+  ChartTooltip,
+  ChartValueAxis,
+  ChartValueAxisItem,
+} from "@progress/kendo-react-charts";
+import {
   ComboBoxFilterChangeEvent,
   MultiSelect,
   MultiSelectChangeEvent,
@@ -23,7 +34,7 @@ import {
   GridSelectionChangeEvent,
   getSelectedState,
 } from "@progress/kendo-react-grid";
-import { Input, RadioGroup } from "@progress/kendo-react-inputs";
+import { Checkbox, Input, RadioGroup } from "@progress/kendo-react-inputs";
 import {
   Splitter,
   SplitterOnChangeEvent,
@@ -558,6 +569,9 @@ var height4 = 0;
 var height5 = 0;
 var height6 = 0;
 var height7 = 0;
+var height8 = 0;
+var height9 = 0;
+var height10 = 0;
 
 const App = () => {
   const processApi = useApi();
@@ -595,6 +609,9 @@ const App = () => {
   const [mobileheight5, setMobileHeight5] = useState(0);
   const [mobileheight6, setMobileHeight6] = useState(0);
   const [mobileheight7, setMobileHeight7] = useState(0);
+  const [mobileheight8, setMobileHeight8] = useState(0);
+  const [mobileheight9, setMobileHeight9] = useState(0);
+  const [mobileheight10, setMobileHeight10] = useState(0);
   const [webheight, setWebHeight] = useState(0);
   const [webheight2, setWebHeight2] = useState(0);
   const [webheight3, setWebHeight3] = useState(0);
@@ -602,6 +619,9 @@ const App = () => {
   const [webheight5, setWebHeight5] = useState(0);
   const [webheight6, setWebHeight6] = useState(0);
   const [webheight7, setWebHeight7] = useState(0);
+  const [webheight8, setWebHeight8] = useState(0);
+  const [webheight9, setWebHeight9] = useState(0);
+  const [webheight10, setWebHeight10] = useState(0);
 
   const [tabSelected, setTabSelected] = useState(0);
   const [isFilterHideStates, setIsFilterHideStates] =
@@ -620,6 +640,9 @@ const App = () => {
     height5 = getHeight(".FormBoxWrap2");
     height6 = getHeight(".TitleContainer");
     height7 = getHeight(".k-tabstrip-items-wrapper");
+    height8 = getHeight(".ButtonContainer4");
+    height9 = getHeight(".ButtonContainer5");
+    height10 = getHeight(".ButtonContainer6");
 
     const handleWindowResize = () => {
       let deviceWidth = document.documentElement.clientWidth;
@@ -643,7 +666,9 @@ const App = () => {
         getDeviceHeight(true) - height - height2 - height6 - height7
       );
       setMobileHeight7(getDeviceHeight(true) - height3 - height6 - height7 - 2);
-
+      setMobileHeight8(getDeviceHeight(false) - height6 - height7 - height8);
+      setMobileHeight9(getDeviceHeight(false) - height6 - height7 - height9);
+      setMobileHeight10(getDeviceHeight(false) - height6 - height7 - height10);
       setWebHeight((getDeviceHeight(false) - height6 - height7) / 2 - height);
       setWebHeight2(
         isVisibleDetail
@@ -673,6 +698,11 @@ const App = () => {
       );
       setWebHeight6(getDeviceHeight(false) - height - height6 - height7 - 4);
       setWebHeight7(getDeviceHeight(false) - height2 - height6 - height7 - 4);
+      setWebHeight8((getDeviceHeight(false) - height6 - height7) / 2 - height8);
+      setWebHeight9((getDeviceHeight(false) - height6 - height7) / 2 - height9);
+      setWebHeight10(
+        (getDeviceHeight(false) - height6 - height7) / 2 - height10
+      );
     };
     handleWindowResize();
     window.addEventListener("resize", handleWindowResize);
@@ -687,6 +717,9 @@ const App = () => {
     webheight5,
     webheight6,
     webheight7,
+    webheight8,
+    webheight9,
+    webheight10,
     tabSelected,
     isVisibleDetail,
     isVisibleDetail2,
@@ -1047,7 +1080,7 @@ const App = () => {
         skip: 0,
         take: initialPageState.take,
       });
-    } else {
+    } else if (e.selected == 3) {
       setFilters((prevFilters) => ({
         ...prevFilters,
         workType: "task_order_all",
@@ -1082,11 +1115,20 @@ const App = () => {
         skip: 0,
         take: initialPageState.take,
       });
+    } else {
+      setFilters((prevFilters) => ({
+        ...prevFilters,
+        workType: "Chart",
+        pgSize: PAGE_SIZE,
+        pgNum: 1,
+        isSearch: true,
+      }));
     }
     setIsVisableDetail(true);
     setIsFilterHideStates(true);
   };
 
+  const [checked, setChecked] = useState(false);
   //조회조건 Input Change 함수 => 사용자가 Input에 입력한 값을 조회 파라미터로 세팅
   const filterInputChange = (e: any) => {
     const { value, name = "" } = e.target;
@@ -1233,6 +1275,18 @@ const App = () => {
   const [mainDataResult4, setMainDataResult4] = useState<DataResult>(
     process([], mainDataState4)
   );
+  const [allChartDataResult, setAllChartDataResult] = useState<any>({
+    person: [],
+    timeN: [],
+    timeY: [],
+    cnt: [],
+  });
+  const [allChartDataResult2, setAllChartDataResult2] = useState<any>({
+    person: [],
+    timeN: [],
+    timeY: [],
+    cnt: [],
+  });
   const [tempResult, setTempResult] = useState<DataResult>(
     process([], tempState)
   );
@@ -2255,7 +2309,7 @@ const App = () => {
           );
         }
       } else {
-        if(isMobile) {
+        if (isMobile) {
           setHtmlOnEditor({ document: "" });
         } else {
           if (refEditorRef.current) {
@@ -2279,6 +2333,98 @@ const App = () => {
     setLoading(false);
   };
 
+  //업무지시 그리드 데이터 조회
+  const fetchMainGrid5 = async (filters: any) => {
+    let data: any;
+    setLoading(true);
+    const from_date = new Date();
+    from_date.setFullYear(new Date().getFullYear() - 2);
+    //조회조건 파라미터
+    const parameters: Iparameters = {
+      procedureName: "pw6_sel_task_order",
+      pageNumber: filters.pgNum,
+      pageSize: 100,
+      parameters: {
+        "@p_work_type": filters.workType,
+        "@p_date_type": "",
+        "@p_from_date": convertDateToStr(from_date),
+        "@p_to_date": convertDateToStr(new Date()),
+        "@p_customer_code": "",
+        "@p_customer_name": "",
+        "@p_user_name": "",
+        "@p_contents": "",
+        "@p_reception_type": "",
+        "@p_value_code3": "",
+        "@p_pgmnm": "",
+        "@p_reception_person": "",
+        "@p_worker": "",
+        "@p_receptionist": "",
+        "@p_status": "",
+        "@p_check": checked == true ? "%" : "N",
+        "@p_ref_type": "",
+        "@p_ref_key": "",
+        "@p_ref_seq": 0,
+        "@p_find_row_value": "",
+      },
+    };
+    try {
+      data = await processApi<any>("procedure", parameters);
+    } catch (error) {
+      data = null;
+    }
+
+    if (data != null) {
+      const totalRowCnt = data.tables[0].TotalRowCount;
+      const rows = data.tables[0].Rows;
+      const rows2 = data.tables[1].Rows;
+      let person: any[] = [];
+      let timeN: any[] = [];
+      let timeY: any[] = [];
+      let cnt: any[] = [];
+      let person2: any[] = [];
+      let timeN2: any[] = [];
+      let timeY2: any[] = [];
+      let cnt2: any[] = [];
+      rows.map((item: any) => {
+        person.push(item.person);
+        timeN.push(item.timeN);
+        timeY.push(item.timeY);
+        cnt.push(item.cnt);
+      });
+      rows2.map((item: any) => {
+        person2.push(item.indicator);
+        timeN2.push(item.timeN);
+        timeY2.push(item.timeY);
+        cnt2.push(item.cnt);
+      });
+
+      setAllChartDataResult({
+        person: person,
+        timeN: timeN,
+        timeY: timeY,
+        cnt: cnt,
+      });
+      setAllChartDataResult2({
+        person: person2,
+        timeN: timeN2,
+        timeY: timeY2,
+        cnt: cnt2,
+      });
+    } else {
+      console.log("[오류 발생]");
+      console.log(data);
+    }
+    // 필터 isSearch false처리, pgNum 세팅
+    setFilters((prev) => ({
+      ...prev,
+      pgNum:
+        data && data.hasOwnProperty("pageNumber")
+          ? data.pageNumber
+          : prev.pgNum,
+      isSearch: false,
+    }));
+    setLoading(false);
+  };
   const fetchDocument = async (type: string, ref_key: string, key?: any) => {
     let data: any;
     setLoading(true);
@@ -2300,7 +2446,7 @@ const App = () => {
       }
       if (data !== null) {
         if (tabSelected == 3) {
-          if(isMobile) {
+          if (isMobile) {
             const document = data.document;
             setHtmlOnEditor({ document });
           } else {
@@ -2351,6 +2497,8 @@ const App = () => {
         fetchMainGrid3(deepCopiedFilters);
       } else if (tabSelected == 3) {
         fetchMainGrid4(deepCopiedFilters);
+      } else if (tabSelected == 4) {
+        fetchMainGrid5(deepCopiedFilters);
       }
     }
   }, [filters]);
@@ -4130,10 +4278,10 @@ const App = () => {
   };
 
   const onRemoveClick2 = async () => {
-    if(!window.confirm("삭제하시겠습니까?")) {
+    if (!window.confirm("삭제하시겠습니까?")) {
       return false;
     }
-    
+
     if (!navigator.onLine) {
       alert("네트워크 연결상태를 확인해주세요.");
       setLoading(false);
@@ -6098,6 +6246,114 @@ const App = () => {
                   </Splitter>
                 </GridContainerWrap>
               </TabStripTab>
+              <TabStripTab title="업무집계">
+                <GridContainer>
+                  <GridTitleContainer className="ButtonContainer4">
+                    <GridTitle
+                      style={{ display: "flex", alignItems: "center" }}
+                    >
+                      처리 담당자별 집계&nbsp;{" "}
+                      <div>
+                        <Checkbox
+                          value={checked}
+                          onClick={() => {
+                            setChecked(!checked);
+                            setFilters((prev: any) => ({
+                              ...prev,
+                              isSearch: true,
+                            }));
+                          }}
+                          label="퇴사자 포함"
+                        />
+                      </div>
+                    </GridTitle>
+                  </GridTitleContainer>
+                  <Chart style={{ height: webheight8 }}>
+                    <ChartLegend position="top" orientation="horizontal" />
+                    <ChartTooltip format="{0}" />
+                    <ChartCategoryAxis>
+                      <ChartCategoryAxisItem
+                        categories={allChartDataResult.person}
+                        axisCrossingValue={[
+                          allChartDataResult.person.length,
+                          0,
+                        ]}
+                      />
+                    </ChartCategoryAxis>
+                    <ChartSeries>
+                      <ChartSeriesItem
+                        type="column"
+                        stack={true}
+                        data={allChartDataResult.timeY}
+                        axis={"bar"}
+                        color={"#D1180B"}
+                      />
+                      <ChartSeriesItem
+                        type="column"
+                        data={allChartDataResult.timeN}
+                        axis={"bar"}
+                        color={"#03AC13"}
+                      />
+                      <ChartSeriesItem
+                        type="line"
+                        data={allChartDataResult.cnt}
+                        axis={"line"}
+                      />
+                    </ChartSeries>
+                    <ChartValueAxis>
+                      <ChartValueAxisItem key={1} name={"bar"} />
+                      <ChartValueAxisItem key={2} name={"line"} />
+                    </ChartValueAxis>
+                  </Chart>
+                </GridContainer>
+                <GridContainer>
+                  <GridTitleContainer className="ButtonContainer5">
+                    <GridTitle>지시 담당자별 집계</GridTitle>
+                  </GridTitleContainer>
+                  <Chart style={{ height: webheight9 }}>
+                    <ChartLegend position="top" orientation="horizontal" />
+                    <ChartTooltip format="{0}" />
+                    <ChartCategoryAxis>
+                      <ChartCategoryAxisItem
+                        categories={allChartDataResult2.person}
+                        axisCrossingValue={[
+                          allChartDataResult2.person.length,
+                          0,
+                        ]}
+                      />
+                    </ChartCategoryAxis>
+                    <ChartSeries>
+                      <ChartSeriesItem
+                        type="column"
+                        stack={true}
+                        data={allChartDataResult2.timeY}
+                        axis={"bar"}
+                        color={"#D1180B"}
+                      />
+                      <ChartSeriesItem
+                        type="column"
+                        data={allChartDataResult2.timeN}
+                        axis={"bar"}
+                        color={"#03AC13"}
+                      />
+                      <ChartSeriesItem
+                        type="line"
+                        data={allChartDataResult2.cnt}
+                        axis={"line"}
+                      />
+                    </ChartSeries>
+                    <ChartValueAxis>
+                      <ChartValueAxisItem key={1} name={"bar"} />
+                      <ChartValueAxisItem key={2} name={"line"} />
+                    </ChartValueAxis>
+                  </Chart>
+                </GridContainer>
+                <GridContainer>
+                  <GridTitleContainer className="ButtonContainer6">
+                    <GridTitle>담당 업무 건수</GridTitle>
+                  </GridTitleContainer>
+                </GridContainer>
+              </TabStripTab>
             </TabStrip>
           </GridContainerWrap>
         </>
@@ -7807,6 +8063,167 @@ const App = () => {
                         />
                       )}
                     </div>
+                  </GridContainer>
+                </SwiperSlide>
+              </Swiper>
+            </TabStripTab>
+            <TabStripTab title="업무집계">
+              <Swiper
+                onSwiper={(swiper) => {
+                  setSwiper(swiper);
+                }}
+                onActiveIndexChange={(swiper) => {
+                  index = swiper.activeIndex;
+                }}
+              >
+                <SwiperSlide key={0}>
+                  <GridContainer>
+                    <GridTitleContainer className="ButtonContainer4">
+                      <GridTitle
+                        style={{ display: "flex", alignItems: "center" }}
+                      >
+                        처리 담당자별 집계&nbsp;{" "}
+                        <div>
+                          <Checkbox
+                            value={checked}
+                            onClick={() => {
+                              setChecked(!checked);
+                              setFilters((prev: any) => ({
+                                ...prev,
+                                isSearch: true,
+                              }));
+                            }}
+                            label="퇴사자 포함"
+                          />
+                        </div>
+                      </GridTitle>
+                      <ButtonContainer>
+                        {" "}
+                        <Button
+                          themeColor={"primary"}
+                          fillMode={"flat"}
+                          icon={"chevron-right"}
+                          onClick={() => {
+                            if (swiper) {
+                              swiper.slideTo(1);
+                            }
+                          }}
+                        ></Button>
+                      </ButtonContainer>
+                    </GridTitleContainer>
+                    <Chart style={{ height: mobileheight8 }}>
+                      <ChartLegend position="top" orientation="horizontal" />
+                      <ChartTooltip format="{0}" />
+                      <ChartCategoryAxis>
+                        <ChartCategoryAxisItem
+                          categories={allChartDataResult.person}
+                          axisCrossingValue={[
+                            allChartDataResult.person.length,
+                            0,
+                          ]}
+                        />
+                      </ChartCategoryAxis>
+                      <ChartSeries>
+                        <ChartSeriesItem
+                          type="column"
+                          stack={true}
+                          data={allChartDataResult.timeY}
+                          axis={"bar"}
+                          color={"#D1180B"}
+                        />
+                        <ChartSeriesItem
+                          type="column"
+                          data={allChartDataResult.timeN}
+                          axis={"bar"}
+                          color={"#03AC13"}
+                        />
+                        <ChartSeriesItem
+                          type="line"
+                          data={allChartDataResult.cnt}
+                          axis={"line"}
+                        />
+                      </ChartSeries>
+                      <ChartValueAxis>
+                        <ChartValueAxisItem key={1} name={"bar"} />
+                        <ChartValueAxisItem key={2} name={"line"} />
+                      </ChartValueAxis>
+                    </Chart>
+                  </GridContainer>
+                </SwiperSlide>
+                <SwiperSlide key={1}>
+                  <GridContainer>
+                    <GridTitleContainer className="ButtonContainer5">
+                      <GridTitle>
+                        {" "}
+                        <Button
+                          themeColor={"primary"}
+                          fillMode={"flat"}
+                          icon={"chevron-left"}
+                          onClick={() => {
+                            if (swiper) {
+                              swiper.slideTo(0);
+                            }
+                          }}
+                        ></Button>
+                        지시 담당자별 집계
+                      </GridTitle>
+                      <ButtonContainer>
+                        <Button
+                          themeColor={"primary"}
+                          fillMode={"flat"}
+                          icon={"chevron-right"}
+                          onClick={() => {
+                            if (swiper) {
+                              swiper.slideTo(2);
+                            }
+                          }}
+                        ></Button>
+                      </ButtonContainer>
+                    </GridTitleContainer>
+                    <Chart style={{ height: mobileheight9 }}>
+                      <ChartLegend position="top" orientation="horizontal" />
+                      <ChartTooltip format="{0}" />
+                      <ChartCategoryAxis>
+                        <ChartCategoryAxisItem
+                          categories={allChartDataResult2.person}
+                          axisCrossingValue={[
+                            allChartDataResult2.person.length,
+                            0,
+                          ]}
+                        />
+                      </ChartCategoryAxis>
+                      <ChartSeries>
+                        <ChartSeriesItem
+                          type="column"
+                          stack={true}
+                          data={allChartDataResult2.timeY}
+                          axis={"bar"}
+                          color={"#D1180B"}
+                        />
+                        <ChartSeriesItem
+                          type="column"
+                          data={allChartDataResult2.timeN}
+                          axis={"bar"}
+                          color={"#03AC13"}
+                        />
+                        <ChartSeriesItem
+                          type="line"
+                          data={allChartDataResult2.cnt}
+                          axis={"line"}
+                        />
+                      </ChartSeries>
+                      <ChartValueAxis>
+                        <ChartValueAxisItem key={1} name={"bar"} />
+                        <ChartValueAxisItem key={2} name={"line"} />
+                      </ChartValueAxis>
+                    </Chart>
+                  </GridContainer>
+                </SwiperSlide>
+                <SwiperSlide key={2}>
+                  <GridContainer>
+                    <GridTitleContainer className="ButtonContainer6">
+                      <GridTitle>담당 업무 건수</GridTitle>
+                    </GridTitleContainer>
                   </GridContainer>
                 </SwiperSlide>
               </Swiper>
