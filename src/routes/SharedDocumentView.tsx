@@ -158,18 +158,17 @@ const App = () => {
       setMobileHeight(getDeviceHeight(true) - height - height6);
       setMobileHeight2(getDeviceHeight(true) - height2 - height6);
       setMobileHeight3(
-        getDeviceHeight(true) - height3 - height5 - height6 + 15
+        getDeviceHeight(true) - height3 - height5 - height6
       );
 
       setWebHeight(getDeviceHeight(true) - height - height2 - height6);
       setWebHeight2(
         getDeviceHeight(true) -
           height -
-          height3 -
+          height2 -
           height4 -
           height5 -
-          height6 -
-          12
+          height6
       );
     };
     handleWindowResize();

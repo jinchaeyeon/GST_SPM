@@ -59,6 +59,7 @@ var height = 0;
 var height2 = 0;
 var height3 = 0;
 var height4 = 0;
+var height5 = 0;
 
 const Promotion = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 1200);
@@ -102,10 +103,11 @@ const Promotion = () => {
   useLayoutEffect(() => {
     const updateHeight = () => {
       height = getHeight(".TitleContainer");
+      height5 = getHeight(".ButtonContainer");
       height2 = getHeight(".ButtonContainer2");
-      setWebHeight(getDeviceHeight(false) - height - height2 + 35);
-      height3 = (getDeviceHeight(false) - 400) / 3;
-      height4 = (getDeviceHeight(false) - 290 - height) / 2;
+      setWebHeight(getDeviceHeight(false) - height5 - 30);
+      height3 = (getDeviceHeight(false) - 400 - height5) / 3;
+      height4 = (getDeviceHeight(false) - 290 - height - height5) / 2;
     };
 
     const handleWindowResize = () => {
@@ -441,7 +443,7 @@ const Promotion = () => {
       )}
       <Box
         display="flex"
-        overflow="hidden"
+        // overflow="hidden"
         style={{ userSelect: "none" }}
         width="100%"
       >
@@ -449,6 +451,7 @@ const Promotion = () => {
           <Container maxWidth={false}>
             <Box>
               <div
+                className="ButtonContainer"
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -615,9 +618,11 @@ const Promotion = () => {
             ) : (
               <Grid
                 container
-                spacing={2.5}
-                p={isMobile ? 0 : 2}
+                spacing={isMobile? 1 : 2.5}
                 minHeight={webHeight}
+                style={{
+                  padding: "20px 20px 0 20px"
+                }}
               >
                 {mainDataResult.data.map((item) => (
                   <Grid
@@ -798,7 +803,7 @@ const Promotion = () => {
           <div
             className="ButtonContainer2"
             style={{
-              bottom: isMobile ? 0 : 30,
+              // bottom: isMobile ? 0 : 50,
               width: "100%",
               zIndex: 100,
               display: "flex",
@@ -845,7 +850,7 @@ const Promotion = () => {
             onClick={handleAddNewProduct}
             sx={{
               position: "fixed",
-              bottom: 40,
+              bottom: isMobile? 20 : 100,
               right: 40,
               backgroundColor: "#7a76ce",
               "&:hover": {

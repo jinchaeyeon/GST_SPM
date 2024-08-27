@@ -168,7 +168,7 @@ const App = () => {
       setMobileHeight(getDeviceHeight(true) - height2 - height7);
       setMobileHeight2(getDeviceHeight(true) - height3 - height7);
       setMobileHeight3(
-        getDeviceHeight(true) - height4 - height6 - height7 + 14
+        getDeviceHeight(true) - height4 - height6 - height7
       );
 
       setWebHeight(getDeviceHeight(true) - height - height2 - height7);
@@ -178,8 +178,7 @@ const App = () => {
           height3 -
           height5 -
           height6 -
-          height7 +
-          16
+          height7
       );
     };
     handleWindowResize();

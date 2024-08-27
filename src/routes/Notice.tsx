@@ -173,13 +173,13 @@ const App = () => {
       setMobileHeight(getDeviceHeight(true) - height2 - height8);
       setMobileHeight5(getDeviceHeight(true) - height9 - height8);
       setMobileHeight2(
-        getDeviceHeight(true) - height3 - height7 - height8 + 15
+        getDeviceHeight(true) - height3 - height7 - height8
       );
       setMobileHeight3(
-        (getDeviceHeight(true) - height - height8) / 2 - height4 - 5
+        (getDeviceHeight(true) - height - height8) / 2 - height4
       );
       setMobileHeight4(
-        (getDeviceHeight(true) - height - height8) / 2 - height5 - 5
+        (getDeviceHeight(true) - height - height8) / 2 - height5
       );
       setWebHeight(getDeviceHeight(true) - height - height2 - height8);
       setWebHeight2(
@@ -188,14 +188,13 @@ const App = () => {
           height3 -
           height6 -
           height7 -
-          height8 +
-          15
+          height8
       );
       setWebHeight3(
-        (getDeviceHeight(true) - height - height8) / 2 - height4 - 5
+        (getDeviceHeight(true) - height - height8) / 2 - height4
       );
       setWebHeight4(
-        (getDeviceHeight(true) - height - height8) / 2 - height5 - 5
+        (getDeviceHeight(true) - height - height8) / 2 - height5
       );
     };
     handleWindowResize();
