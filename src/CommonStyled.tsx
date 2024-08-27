@@ -767,7 +767,7 @@ export const Gnv = styled.div<TGnv>`
 
 export const Footer = styled.div`
   width: 100%;
-  height: 30px;
+  height: auto;
   position: fixed;
   bottom: 0;
   background-color: #656565;
