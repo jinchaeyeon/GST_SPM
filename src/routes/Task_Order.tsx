@@ -6285,24 +6285,40 @@ const App = () => {
                         type="column"
                         stack={true}
                         data={allChartDataResult.timeY}
+                        name={"긴급(H)"}
                         axis={"bar"}
-                        color={"#D1180B"}
+                        color={"#ff6358"}
                       />
                       <ChartSeriesItem
                         type="column"
                         data={allChartDataResult.timeN}
                         axis={"bar"}
-                        color={"#03AC13"}
+                        name={"완료(H)"}
+                        color={"#6cc56c"}
                       />
                       <ChartSeriesItem
                         type="line"
                         data={allChartDataResult.cnt}
                         axis={"line"}
+                        name={"건수"}
+                        color={"#7a76ce"}
                       />
                     </ChartSeries>
                     <ChartValueAxis>
-                      <ChartValueAxisItem key={1} name={"bar"} />
-                      <ChartValueAxisItem key={2} name={"line"} />
+                      <ChartValueAxisItem
+                        key={1}
+                        name={"bar"}
+                        title={{
+                          text: "시간",
+                        }}
+                      />
+                      <ChartValueAxisItem
+                        key={2}
+                        name={"line"}
+                        title={{
+                          text: "건",
+                        }}
+                      />
                     </ChartValueAxis>
                   </Chart>
                 </GridContainer>
@@ -6327,24 +6343,40 @@ const App = () => {
                         type="column"
                         stack={true}
                         data={allChartDataResult2.timeY}
+                        name={"긴급(H)"}
                         axis={"bar"}
-                        color={"#D1180B"}
+                        color={"#ff6358"}
                       />
                       <ChartSeriesItem
                         type="column"
                         data={allChartDataResult2.timeN}
                         axis={"bar"}
-                        color={"#03AC13"}
+                        name={"완료(H)"}
+                        color={"#6cc56c"}
                       />
                       <ChartSeriesItem
                         type="line"
                         data={allChartDataResult2.cnt}
                         axis={"line"}
+                        name={"건수"}
+                        color={"#7a76ce"}
                       />
                     </ChartSeries>
                     <ChartValueAxis>
-                      <ChartValueAxisItem key={1} name={"bar"} />
-                      <ChartValueAxisItem key={2} name={"line"} />
+                      <ChartValueAxisItem
+                        key={1}
+                        name={"bar"}
+                        title={{
+                          text: "시간",
+                        }}
+                      />
+                      <ChartValueAxisItem
+                        key={2}
+                        name={"line"}
+                        title={{
+                          text: "건",
+                        }}
+                      />
                     </ChartValueAxis>
                   </Chart>
                 </GridContainer>
@@ -8128,24 +8160,40 @@ const App = () => {
                           type="column"
                           stack={true}
                           data={allChartDataResult.timeY}
+                          name={"긴급(H)"}
                           axis={"bar"}
-                          color={"#D1180B"}
+                          color={"#ff6358"}
                         />
                         <ChartSeriesItem
                           type="column"
                           data={allChartDataResult.timeN}
                           axis={"bar"}
-                          color={"#03AC13"}
+                          name={"완료(H)"}
+                          color={"#6cc56c"}
                         />
                         <ChartSeriesItem
                           type="line"
                           data={allChartDataResult.cnt}
                           axis={"line"}
+                          name={"건수"}
+                          color={"#7a76ce"}
                         />
                       </ChartSeries>
                       <ChartValueAxis>
-                        <ChartValueAxisItem key={1} name={"bar"} />
-                        <ChartValueAxisItem key={2} name={"line"} />
+                        <ChartValueAxisItem
+                          key={1}
+                          name={"bar"}
+                          title={{
+                            text: "시간",
+                          }}
+                        />
+                        <ChartValueAxisItem
+                          key={2}
+                          name={"line"}
+                          title={{
+                            text: "건",
+                          }}
+                        />
                       </ChartValueAxis>
                     </Chart>
                   </GridContainer>
@@ -8197,24 +8245,40 @@ const App = () => {
                           type="column"
                           stack={true}
                           data={allChartDataResult2.timeY}
+                          name={"긴급(H)"}
                           axis={"bar"}
-                          color={"#D1180B"}
+                          color={"#ff6358"}
                         />
                         <ChartSeriesItem
                           type="column"
                           data={allChartDataResult2.timeN}
                           axis={"bar"}
-                          color={"#03AC13"}
+                          name={"완료(H)"}
+                          color={"#6cc56c"}
                         />
                         <ChartSeriesItem
                           type="line"
                           data={allChartDataResult2.cnt}
                           axis={"line"}
+                          name={"건수"}
+                          color={"#7a76ce"}
                         />
                       </ChartSeries>
                       <ChartValueAxis>
-                        <ChartValueAxisItem key={1} name={"bar"} />
-                        <ChartValueAxisItem key={2} name={"line"} />
+                        <ChartValueAxisItem
+                          key={1}
+                          name={"bar"}
+                          title={{
+                            text: "시간",
+                          }}
+                        />
+                        <ChartValueAxisItem
+                          key={2}
+                          name={"line"}
+                          title={{
+                            text: "건",
+                          }}
+                        />
                       </ChartValueAxis>
                     </Chart>
                   </GridContainer>
