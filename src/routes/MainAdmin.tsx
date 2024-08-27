@@ -263,7 +263,7 @@ const Main: React.FC = () => {
   }
 
   return (
-    <GridContainer style={{ paddingBottom: "20px", height: "95%" }}>
+    <GridContainer style={{ paddingBottom: "40px", height: "100%" }}>
       <TitleContainer
         style={{
           minHeight: "80px",

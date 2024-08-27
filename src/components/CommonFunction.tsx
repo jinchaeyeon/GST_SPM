@@ -1133,13 +1133,13 @@ export const getDeviceHeight = (bool: boolean) => {
     if (isMobile) {
       return document.documentElement.clientHeight - 70;
     } else {
-      return document.documentElement.clientHeight - 110 - 50;
+      return document.documentElement.clientHeight - 110 - 30;
     }
   } else {
     if (isMobile) {
       return document.documentElement.clientHeight - 70 - height;
     } else {
-      return document.documentElement.clientHeight - 110 - height2 - 50;
+      return document.documentElement.clientHeight - 110 - height2 - 30;
     }
   }
 };

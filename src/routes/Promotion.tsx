@@ -80,13 +80,10 @@ const Promotion = () => {
     if (event) {
       if (event.target.name == "category") {
         const filterValue = event.filter.value.toLowerCase();
-        console.log(filterValue);
-        // 필터링 로직: 검색어가 포함된 데이터를 반환
         const filteredData = typesData.filter((item) =>
           item.code_name.toLowerCase().includes(filterValue)
         );
-
-        setTypeFilterTop(filteredData); // 필터링된 데이터를 상태로 저장
+        setTypeFilterTop(filteredData); 
       }
     }
   };

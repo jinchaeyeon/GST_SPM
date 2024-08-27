@@ -883,14 +883,12 @@ const PanelBarNavContainer = (props: any) => {
       <Footer>
         <div
           style={{
-            height: "80px",
+            height: "60px",
             clear: "both",
             backgroundColor: "#333",
             overflow: "hidden",
             display: "flex",
-            // justifyContent: "space-evenly",
-            justifyContent: "center",
-            gap: "250px",
+            justifyContent: "space-between",
             alignItems: "center",
             width: "100%",
           }}
@@ -987,6 +985,23 @@ const PanelBarNavContainer = (props: any) => {
               >
                 Email: accounting@gsti.co.kr
               </a>
+              <a
+                style={{
+                  display: "inline-block",
+                  color: "#d5d5d5",
+                  cursor: "default",
+                }}
+              >
+                |
+              </a>
+              <a
+                style={{
+                  display: "inline-block",
+                  color: "#d5d5d5",
+                }}
+              >
+                업무시간: 평일 09:00-18:00
+              </a>
             </address>
             <address
               style={{
@@ -1043,6 +1058,15 @@ const PanelBarNavContainer = (props: any) => {
                 46508
               </a>
             </address>
+          </div>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              lineHeight: "1.6",
+              fontSize: "12px",
+            }}
+          >          
             <address
               style={{
                 fontStyle: "normal",
@@ -1058,52 +1082,6 @@ const PanelBarNavContainer = (props: any) => {
                 }}
               >
                 © GST Co., Ltd. All rights reserved.
-              </a>
-            </address>
-          </div>
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              lineHeight: "1.6",
-              fontSize: "12px",
-              alignItems: "flex-start",
-              height: "100%",
-              paddingTop: "11px",
-            }}
-          >
-            <address
-              style={{
-                fontStyle: "normal",
-                letterSpacing: "-.01em",
-                display: "flex",
-                gap: "10px",
-              }}
-            >
-              <a
-                style={{
-                  display: "inline-block",
-                  color: "#d5d5d5",
-                }}
-              >
-                업무시간
-              </a>
-            </address>
-            <address
-              style={{
-                fontStyle: "normal",
-                letterSpacing: "-.01em",
-                display: "flex",
-                gap: "10px",
-              }}
-            >
-              <a
-                style={{
-                  display: "inline-block",
-                  color: "#d5d5d5",
-                }}
-              >
-                평일 09:00-18:00
               </a>
             </address>
           </div>
