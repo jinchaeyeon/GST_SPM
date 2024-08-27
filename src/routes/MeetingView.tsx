@@ -50,7 +50,12 @@ import RichEditor from "../components/RichEditor";
 import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
 import SignWindow from "../components/Windows/CommonWindows/SignWindow";
 import { useApi } from "../hooks/api";
-import { filterValueState, isLoading, titles } from "../store/atoms";
+import {
+  filterValueState,
+  isLoading,
+  loginResultState,
+  titles,
+} from "../store/atoms";
 import { TEditorHandle } from "../store/types";
 
 const DATA_ITEM_KEY = "meetingnum";
@@ -68,7 +73,10 @@ const App = () => {
   const processApi = useApi();
   const setLoading = useSetRecoilState(isLoading);
   const [meetingnum, setMeetingnum] = useState(""); //Detail 조회조건
+  const [loginResult] = useRecoilState(loginResultState);
   const [filterValue, setFilterValue] = useRecoilState(filterValueState);
+  const role = loginResult ? loginResult.role : "";
+  const isAdmin = role === "ADMIN";
   const history = useHistory();
   const location = useLocation();
   const [attachmentsWindowVisible, setAttachmentsWindowVisible] =
@@ -188,9 +196,11 @@ const App = () => {
   };
 
   const onMainScrollHandler = (event: GridEvent) => {
-    if (!filters.isFetch && 
+    if (
+      !filters.isFetch &&
       filters.pgNum * PAGE_SIZE < mainDataResult.total &&
-      chkScrollHandler(event, filters.pgNum, PAGE_SIZE))
+      chkScrollHandler(event, filters.pgNum, PAGE_SIZE)
+    )
       setFilters((prev) => ({
         ...prev,
         isFetch: true,
@@ -517,28 +527,32 @@ const App = () => {
     if (mainDataResult.total == 0) {
       alert("데이터가 없습니다.");
     } else {
-     let windowObject = window.open('', "PrintWindow", "width=800, height=800, top=100, left=300, toolbars=no, scrollbars=no, status=no, resizale=no");
-     if(docEditorRef.current?.getContent() != undefined) {
-      windowObject?.document.writeln(docEditorRef.current?.getContent());
-     }
-     if(refEditorRef.current?.getContent() != undefined) {
-      windowObject?.document.writeln("<h1>참고자료</h1>");
-      windowObject?.document.writeln(refEditorRef.current?.getContent());
-     }
-     windowObject?.document.close();
-     windowObject?.focus();
-     windowObject?.print();
-     windowObject?.close();
+      let windowObject = window.open(
+        "",
+        "PrintWindow",
+        "width=800, height=800, top=100, left=300, toolbars=no, scrollbars=no, status=no, resizale=no"
+      );
+      if (docEditorRef.current?.getContent() != undefined) {
+        windowObject?.document.writeln(docEditorRef.current?.getContent());
+      }
+      if (refEditorRef.current?.getContent() != undefined) {
+        windowObject?.document.writeln("<h1>참고자료</h1>");
+        windowObject?.document.writeln(refEditorRef.current?.getContent());
+      }
+      windowObject?.document.close();
+      windowObject?.focus();
+      windowObject?.print();
+      windowObject?.close();
     }
     setLoading(false);
-  }
+  };
 
   return (
     <>
       <TitleContainer className="TitleContainer">
         {!isMobile ? "" : <Title>회의록 열람</Title>}
         <ButtonContainer>
-          { isMobile && (
+          {isMobile && (
             <Button onClick={search} icon="search" themeColor={"primary"}>
               조회
             </Button>
@@ -601,6 +615,24 @@ const App = () => {
                     />
                   </td>
                 </tr>
+                {isAdmin ? (
+                  <>
+                    {" "}
+                    <tr>
+                      <th>업체명</th>
+                      <td>
+                        <Input
+                          name="custnm"
+                          type="text"
+                          value={filters.custnm}
+                          onChange={filterInputChange}
+                        />
+                      </td>
+                    </tr>
+                  </>
+                ) : (
+                  ""
+                )}
               </tbody>
             </FilterBox>
           </FilterContainer>
@@ -886,6 +918,24 @@ const App = () => {
                           />
                         </td>
                       </tr>
+                      {isAdmin ? (
+                        <>
+                          {" "}
+                          <tr>
+                            <th>업체명</th>
+                            <td>
+                              <Input
+                                name="custnm"
+                                type="text"
+                                value={filters.custnm}
+                                onChange={filterInputChange}
+                              />
+                            </td>
+                          </tr>
+                        </>
+                      ) : (
+                        ""
+                      )}
                     </tbody>
                   </FilterBox>
                 </FilterContainer>
