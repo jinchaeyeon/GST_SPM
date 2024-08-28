@@ -54,6 +54,7 @@ import {
   ComboBoxFilterChangeEvent,
 } from "@progress/kendo-react-dropdowns";
 import { FilterDescriptor } from "devextreme/data";
+import { Icon } from "@progress/kendo-react-common";
 
 var height = 0;
 var height2 = 0;
@@ -83,7 +84,7 @@ const Promotion = () => {
         const filteredData = typesData.filter((item) =>
           item.code_name.toLowerCase().includes(filterValue)
         );
-        setTypeFilterTop(filteredData); 
+        setTypeFilterTop(filteredData);
       }
     }
   };
@@ -430,7 +431,7 @@ const Promotion = () => {
       [type]: !prev[type],
     }));
   };
-  console.log(filters.isHot);
+
   return (
     <>
       {isMobile && (
@@ -516,7 +517,7 @@ const Promotion = () => {
                   }}
                 >
                   {/* <GridTitle>상세조건</GridTitle> */}
-                  <Box display="flex" mb={1}>
+                  {/* <Box display="flex" mb={1}> // hot, new 검색 나중에 사용가능
                     <Chip
                       label="HOT"
                       onClick={() => handleChipClick("isHot")}
@@ -531,9 +532,9 @@ const Promotion = () => {
                         border: `1px solid ${
                           filters.isHot ? "#ef5350" : "#ef5350"
                         }`,
-                        cursor: "pointer", // 마우스 포인터 변경
+                        cursor: "pointer",
                         "&:hover": {
-                          backgroundColor: filters.isHot ? "#ef5350" : "#fff", // 배경색 유지
+                          backgroundColor: filters.isHot ? "#ef5350" : "#fff",
                         },
                       }}
                     />
@@ -550,13 +551,13 @@ const Promotion = () => {
                         border: `1px solid ${
                           filters.isNew ? "#fbc02d" : "#fbc02d"
                         }`,
-                        cursor: "pointer", // 마우스 포인터 변경
+                        cursor: "pointer",
                         "&:hover": {
-                          backgroundColor: filters.isNew ? "#fbc02d" : "#fff", // 배경색 유지
+                          backgroundColor: filters.isNew ? "#fbc02d" : "#fff",
                         },
                       }}
                     />
-                  </Box>
+                  </Box> */}
                   <FilterBoxWrap>
                     <FilterBox>
                       <tbody>
@@ -615,10 +616,10 @@ const Promotion = () => {
             ) : (
               <Grid
                 container
-                spacing={isMobile? 1 : 2.5}
+                spacing={isMobile ? 1 : 2.5}
                 minHeight={webHeight}
                 style={{
-                  padding: "20px 20px 0 20px"
+                  padding: "20px 20px 0 20px",
                 }}
               >
                 {mainDataResult.data.map((item) => (
@@ -744,6 +745,17 @@ const Promotion = () => {
                               fontWeight={600}
                               sx={{ fontSize: "17px" }}
                             >
+                              {item.is_open === "N" && (
+                                <Icon
+                                  name="lock" // 자물쇠 아이콘
+                                  style={{
+                                    color: "#6a68ba",
+                                    fontSize: "14px",
+                                    marginRight: "4px",
+                                    paddingBottom: "2px",
+                                  }}
+                                />
+                              )}
                               {item.title}
                             </Typography>
                           </Box>
@@ -847,7 +859,7 @@ const Promotion = () => {
             onClick={handleAddNewProduct}
             sx={{
               position: "fixed",
-              bottom: isMobile? 20 : 100,
+              bottom: isMobile ? 20 : 100,
               right: 40,
               backgroundColor: "#7a76ce",
               "&:hover": {

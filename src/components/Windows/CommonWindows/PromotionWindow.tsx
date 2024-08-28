@@ -50,6 +50,8 @@ import { removeBeforeUnloadListener } from "../../PanelBarNavContainer";
 import SwiperCore from "swiper";
 import "swiper/css";
 import { Swiper, SwiperSlide } from "swiper/react";
+import Watermark from "../../Watermark";
+// import Watermark from "@uiw/react-watermark";
 
 type IWindow = {
   setVisible(t: boolean): void;
@@ -276,7 +278,7 @@ const PromotionWindow = ({
         "@p_document_id": filters.documentId,
         "@p_find_row_value": filters.findRowValue,
         "@p_id": userId,
-        "@p_is_open": isAdmin ? "" : "Y"
+        "@p_is_open": isAdmin ? "" : "Y",
       },
     };
 
@@ -504,7 +506,7 @@ const PromotionWindow = ({
       console.log("[에러발생]");
       console.log(data);
     }
-    setLoading(false);  
+    setLoading(false);
   };
 
   // 문의하기
@@ -888,20 +890,25 @@ const PromotionWindow = ({
                         mt: 1.3,
                       }}
                     >
-                      <Box
-                        component="img"
-                        src={Information.image}
-                        alt={Information.title}
-                        onClick={handleImageClick}
-                        sx={{
-                          borderRadius: 1,
-                          width: "auto",
-                          height: "auto",
-                          maxWidth: "100%",
-                          flexShrink: 0,
-                          cursor: "pointer",
-                        }}
-                      />
+                      <Watermark
+                        text="© GST Co., Ltd. All rights reserved."
+                        fontSize={32}
+                      >
+                        <Box
+                          component="img"
+                          src={Information.image}
+                          alt={Information.title}
+                          onClick={handleImageClick}
+                          sx={{
+                            borderRadius: 1,
+                            width: "auto",
+                            height: "auto",
+                            maxWidth: "100%",
+                            flexShrink: 0,
+                            cursor: "pointer",
+                          }}
+                        />
+                      </Watermark>
                       {isAdmin ? (
                         <Box display={"flex"} justifyContent={"center"} gap={1}>
                           <Button
@@ -1447,20 +1454,25 @@ const PromotionWindow = ({
                     mt: 1.3,
                   }}
                 >
-                  <Box
-                    component="img"
-                    src={Information.image}
-                    alt={Information.title}
-                    onClick={handleImageClick}
-                    sx={{
-                      borderRadius: 1,
-                      width: "auto",
-                      height: "auto",
-                      maxWidth: "100%",
-                      flexShrink: 0,
-                      cursor: "pointer",
-                    }}
-                  />
+                  {/* <Watermark
+                    text="© GST Co., Ltd. All rights reserved."
+                    fontSize={16}
+                  > */}
+                    <Box
+                      component="img"
+                      src={Information.image}
+                      alt={Information.title}
+                      onClick={handleImageClick}
+                      sx={{
+                        borderRadius: 1,
+                        width: "auto",
+                        height: "auto",
+                        maxWidth: "100%",
+                        flexShrink: 0,
+                        cursor: "pointer",
+                      }}
+                    ></Box>
+                  {/* </Watermark> */}
                   {isAdmin ? (
                     <Box display={"flex"} justifyContent={"center"} gap={1}>
                       <Button
@@ -1832,7 +1844,12 @@ const PromotionWindow = ({
                 )}
               </Box>
             )}
-            <RichEditor id="editor" ref={editorRef} hideTools={!isAdmin} />
+            <Watermark
+              text="© GST Co., Ltd. All rights reserved."
+              fontSize={32}
+            >
+              <RichEditor id="editor" ref={editorRef} hideTools={!isAdmin} />
+            </Watermark>
             {isAdmin && (
               <Box
                 mt={2}
@@ -1904,7 +1921,7 @@ const PromotionWindow = ({
             left: 0,
             width: "100vw",
             height: "100vh",
-            backgroundColor: "rgba(0, 0, 0, 0.5)", // 반투명 검은색 배경
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -1915,23 +1932,33 @@ const PromotionWindow = ({
             style={{
               width: "auto",
               height: "auto",
-              transform: "translate(-50%, -50%)", // translate를 사용해 정확히 중앙에 위치
-              position: "fixed", // 고정된 위치로 설정
+              transform: "translate(-50%, -50%)",
+              position: "fixed",
               top: positions.top,
               left: positions.left,
             }}
           >
-            <img
-              src={Information.image}
-              alt="원본 이미지"
-              style={{
-                maxWidth: "90vw",
-                maxHeight: "95vh",
-                display: "block",
-                margin: "0 auto",
-              }}
-              onClick={handleCloseDialog} // 이미지 클릭 시 다이얼로그 닫기
-            />
+            {/* <Watermark
+             content={["GST SPM"]}
+             fontColor="rgba(128, 128, 128, 0.2)" // 회색 텍스트, 50% 투명도
+             fontSize={48} // 큰 워터마크 텍스트 크기
+             fontWeight={700} // 굵은 텍스트
+             gapX={10000} // 가로, 세로 간격을 크게 설정해 반복 방지
+             gapY={10000}
+            > */}
+            <Watermark text="© GST Co., Ltd. All rights reserved.">
+              <img
+                src={Information.image}
+                alt="원본 이미지"
+                style={{
+                  maxWidth: "90vw",
+                  maxHeight: "95vh",
+                  display: "block",
+                  margin: "0 auto",
+                }}
+                onClick={handleCloseDialog} // 이미지 클릭 시 다이얼로그 닫기
+              />
+            </Watermark>
             {/* <DialogActionsBar>
             <button className="k-button" onClick={handleCloseDialog}>
               닫기
