@@ -1454,25 +1454,29 @@ const PromotionWindow = ({
                     mt: 1.3,
                   }}
                 >
-                  {/* <Watermark
-                    text="© GST Co., Ltd. All rights reserved."
-                    fontSize={16}
-                  > */}
-                    <Box
-                      component="img"
-                      src={Information.image}
-                      alt={Information.title}
-                      onClick={handleImageClick}
-                      sx={{
-                        borderRadius: 1,
-                        width: "auto",
-                        height: "auto",
-                        maxWidth: "100%",
-                        flexShrink: 0,
-                        cursor: "pointer",
-                      }}
-                    ></Box>
-                  {/* </Watermark> */}
+                  <Box
+                    sx={{
+                      position: "relative",
+                      display: "inline-block",
+                    }}
+                  >
+                    <Watermark text="© GST Co., Ltd. All rights reserved.">
+                      <Box
+                        component="img"
+                        src={Information.image}
+                        alt={Information.title}
+                        onClick={handleImageClick}
+                        sx={{
+                          borderRadius: 1,
+                          width: "auto",
+                          height: "auto",
+                          maxWidth: "100%",
+                          flexShrink: 0,
+                          cursor: "pointer",
+                        }}
+                      ></Box>
+                    </Watermark>
+                  </Box>
                   {isAdmin ? (
                     <Box display={"flex"} justifyContent={"center"} gap={1}>
                       <Button
