@@ -117,6 +117,12 @@ import {
 } from "../store/columns/common-columns";
 import { Iparameters, TEditorHandle } from "../store/types";
 
+const labelVisual = (props: any) => {
+  if (parseInt(props.text) > 0) {
+    return props.createVisual();
+  }
+};
+
 const StatusContext = createContext<{
   statusListData: any[];
 }>({
@@ -1129,6 +1135,8 @@ const App = () => {
   };
 
   const [checked, setChecked] = useState(false);
+  const [visibles, setVisibles] = useState(true);
+
   //조회조건 Input Change 함수 => 사용자가 Input에 입력한 값을 조회 파라미터로 세팅
   const filterInputChange = (e: any) => {
     const { value, name = "" } = e.target;
@@ -6252,21 +6260,28 @@ const App = () => {
                     <GridTitle
                       style={{ display: "flex", alignItems: "center" }}
                     >
-                      처리 담당자별 집계&nbsp;{" "}
-                      <div>
-                        <Checkbox
-                          value={checked}
-                          onClick={() => {
-                            setChecked(!checked);
-                            setFilters((prev: any) => ({
-                              ...prev,
-                              isSearch: true,
-                            }));
-                          }}
-                          label="퇴사자 포함"
-                        />
-                      </div>
+                      처리 담당자별 집계
                     </GridTitle>
+                    <ButtonContainer>
+                      <Checkbox
+                        value={checked}
+                        onClick={() => {
+                          setChecked(!checked);
+                          setFilters((prev: any) => ({
+                            ...prev,
+                            isSearch: true,
+                          }));
+                        }}
+                        label="퇴사자 포함"
+                      />
+                      <Checkbox
+                        value={visibles}
+                        onClick={() => {
+                          setVisibles(!visibles);
+                        }}
+                        label="값 표시"
+                      />
+                    </ButtonContainer>
                   </GridTitleContainer>
                   <Chart style={{ height: webheight8 }}>
                     <ChartLegend position="top" orientation="horizontal" />
@@ -6288,6 +6303,13 @@ const App = () => {
                         name={"긴급(H)"}
                         axis={"bar"}
                         color={"#ff6358"}
+                        labels={{
+                          visible: visibles,
+                          position: "insideEnd",
+                          visual: labelVisual,
+                          background: "transparent",
+                          font: "bold 12px Arial, sans-serif",
+                        }}
                       />
                       <ChartSeriesItem
                         type="column"
@@ -6295,6 +6317,13 @@ const App = () => {
                         axis={"bar"}
                         name={"완료(H)"}
                         color={"#6cc56c"}
+                        labels={{
+                          visible: visibles,
+                          position: "insideEnd",
+                          visual: labelVisual,
+                          background: "transparent",
+                          font: "bold 12px Arial, sans-serif",
+                        }}
                       />
                       <ChartSeriesItem
                         type="line"
@@ -6302,6 +6331,12 @@ const App = () => {
                         axis={"line"}
                         name={"건수"}
                         color={"#7a76ce"}
+                        labels={{
+                          visible: visibles,
+                          visual: labelVisual,
+                          background: "transparent",
+                          font: "bold 12px Arial, sans-serif",
+                        }}
                       />
                     </ChartSeries>
                     <ChartValueAxis>
@@ -6346,6 +6381,13 @@ const App = () => {
                         name={"긴급(H)"}
                         axis={"bar"}
                         color={"#ff6358"}
+                        labels={{
+                          visible: visibles,
+                          position: "insideEnd",
+                          visual: labelVisual,
+                          background: "transparent",
+                          font: "bold 12px Arial, sans-serif",
+                        }}
                       />
                       <ChartSeriesItem
                         type="column"
@@ -6353,6 +6395,13 @@ const App = () => {
                         axis={"bar"}
                         name={"완료(H)"}
                         color={"#6cc56c"}
+                        labels={{
+                          visible: visibles,
+                          position: "insideEnd",
+                          visual: labelVisual,
+                          background: "transparent",
+                          font: "bold 12px Arial, sans-serif",
+                        }}
                       />
                       <ChartSeriesItem
                         type="line"
@@ -6360,6 +6409,12 @@ const App = () => {
                         axis={"line"}
                         name={"건수"}
                         color={"#7a76ce"}
+                        labels={{
+                          visible: visibles,
+                          visual: labelVisual,
+                          background: "transparent",
+                          font: "bold 12px Arial, sans-serif",
+                        }}
                       />
                     </ChartSeries>
                     <ChartValueAxis>
@@ -8114,23 +8169,27 @@ const App = () => {
                       <GridTitle
                         style={{ display: "flex", alignItems: "center" }}
                       >
-                        처리 담당자별 집계&nbsp;{" "}
-                        <div>
-                          <Checkbox
-                            value={checked}
-                            onClick={() => {
-                              setChecked(!checked);
-                              setFilters((prev: any) => ({
-                                ...prev,
-                                isSearch: true,
-                              }));
-                            }}
-                            label="퇴사자 포함"
-                          />
-                        </div>
+                        처리 담당자별 집계
                       </GridTitle>
                       <ButtonContainer>
-                        {" "}
+                        <Checkbox
+                          value={checked}
+                          onClick={() => {
+                            setChecked(!checked);
+                            setFilters((prev: any) => ({
+                              ...prev,
+                              isSearch: true,
+                            }));
+                          }}
+                          label="퇴사자 포함"
+                        />
+                        <Checkbox
+                          value={visibles}
+                          onClick={() => {
+                            setVisibles(!visibles);
+                          }}
+                          label="값 표시"
+                        />
                         <Button
                           themeColor={"primary"}
                           fillMode={"flat"}
@@ -8163,6 +8222,13 @@ const App = () => {
                           name={"긴급(H)"}
                           axis={"bar"}
                           color={"#ff6358"}
+                          labels={{
+                            visible: visibles,
+                            position: "insideEnd",
+                            visual: labelVisual,
+                            background: "transparent",
+                            font: "bold 12px Arial, sans-serif",
+                          }}
                         />
                         <ChartSeriesItem
                           type="column"
@@ -8170,6 +8236,13 @@ const App = () => {
                           axis={"bar"}
                           name={"완료(H)"}
                           color={"#6cc56c"}
+                          labels={{
+                            visible: visibles,
+                            position: "insideEnd",
+                            visual: labelVisual,
+                            background: "transparent",
+                            font: "bold 12px Arial, sans-serif",
+                          }}
                         />
                         <ChartSeriesItem
                           type="line"
@@ -8177,6 +8250,12 @@ const App = () => {
                           axis={"line"}
                           name={"건수"}
                           color={"#7a76ce"}
+                          labels={{
+                            visible: visibles,
+                            visual: labelVisual,
+                            background: "transparent",
+                            font: "bold 12px Arial, sans-serif",
+                          }}
                         />
                       </ChartSeries>
                       <ChartValueAxis>
@@ -8216,6 +8295,13 @@ const App = () => {
                         지시 담당자별 집계
                       </GridTitle>
                       <ButtonContainer>
+                        <Checkbox
+                          value={visibles}
+                          onClick={() => {
+                            setVisibles(!visibles);
+                          }}
+                          label="값 표시"
+                        />
                         <Button
                           themeColor={"primary"}
                           fillMode={"flat"}
@@ -8248,6 +8334,13 @@ const App = () => {
                           name={"긴급(H)"}
                           axis={"bar"}
                           color={"#ff6358"}
+                          labels={{
+                            visible: visibles,
+                            position: "insideEnd",
+                            visual: labelVisual,
+                            background: "transparent",
+                            font: "bold 12px Arial, sans-serif",
+                          }}
                         />
                         <ChartSeriesItem
                           type="column"
@@ -8255,6 +8348,13 @@ const App = () => {
                           axis={"bar"}
                           name={"완료(H)"}
                           color={"#6cc56c"}
+                          labels={{
+                            visible: visibles,
+                            position: "insideEnd",
+                            visual: labelVisual,
+                            background: "transparent",
+                            font: "bold 12px Arial, sans-serif",
+                          }}
                         />
                         <ChartSeriesItem
                           type="line"
@@ -8262,6 +8362,12 @@ const App = () => {
                           axis={"line"}
                           name={"건수"}
                           color={"#7a76ce"}
+                          labels={{
+                            visible: visibles,
+                            visual: labelVisual,
+                            background: "transparent",
+                            font: "bold 12px Arial, sans-serif",
+                          }}
                         />
                       </ChartSeries>
                       <ChartValueAxis>
