@@ -644,9 +644,9 @@ const PanelBarNavContainer = (props: any) => {
     {
       title: "알림 구독 해제",
     },
-    // isAdmin && {
-    //   title: "접수 담당업체 설정",
-    // },
+    isAdmin && {
+      title: "접수 담당업체 설정",
+    },
     {
       title: "비밀번호 변경",
     },
