@@ -556,10 +556,17 @@ const App = () => {
         custcd: value == null ? "" : value.custcd,
       }));
     } else if (name === "lvl") {
-      setInformation((prev) => ({
-        ...prev,
-        [name]: value.sub_code,
-      }));
+      if(value == null) {
+        setInformation((prev) => ({
+          ...prev,
+          [name]: "",
+        }));
+      } else {
+        setInformation((prev) => ({
+          ...prev,
+          [name]: value.sub_code,
+        }));
+      }
     } else {
       setInformation((prev) => ({
         ...prev,

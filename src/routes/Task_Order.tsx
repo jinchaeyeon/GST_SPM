@@ -1715,9 +1715,9 @@ const App = () => {
     currentDate.getDate()
   );
   const fromDate2 = new Date(
-    currentDate.getFullYear(),
+    currentDate.getFullYear() - 2,
     currentDate.getMonth(),
-    currentDate.getDate() - 14
+    currentDate.getDate()
   );
   type TFilters = {
     workType: string;
@@ -3206,7 +3206,7 @@ const App = () => {
       expmm: 0,
       find_key: "",
       findt: "",
-      finexpdt: "",
+      finexpdt: convertDateToStr(new Date()),
       finyn: "N",
       guid: guid,
       groupcd: "",
@@ -7954,7 +7954,7 @@ const App = () => {
                               (items: any) => items.user_id == row.person
                             )?.user_name,
                             indicator: usersData.find(
-                              (items: any) => items.user_id == row.person
+                              (items: any) => items.user_id == row.indicator
                             )?.user_name,
                             [SELECTED_FIELD]: selectedState4[idGetter4(row)],
                           })),
