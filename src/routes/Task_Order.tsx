@@ -1715,9 +1715,9 @@ const App = () => {
     currentDate.getDate()
   );
   const fromDate2 = new Date(
-    currentDate.getFullYear(),
+    currentDate.getFullYear() - 2,
     currentDate.getMonth(),
-    currentDate.getDate() - 14
+    currentDate.getDate()
   );
   type TFilters = {
     workType: string;
@@ -3206,7 +3206,7 @@ const App = () => {
       expmm: 0,
       find_key: "",
       findt: "",
-      finexpdt: "",
+      finexpdt: convertDateToStr(new Date()),
       finyn: "N",
       guid: guid,
       groupcd: "",

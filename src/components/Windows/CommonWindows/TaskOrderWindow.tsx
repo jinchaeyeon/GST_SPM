@@ -1151,7 +1151,7 @@ const KendoWindow = ({
       expmm: 0,
       find_key: para.find_key,
       findt: "",
-      finexpdt: "",
+      finexpdt: convertDateToStr(new Date()),
       finyn: "N",
       guid: guid,
       groupcd: "",
