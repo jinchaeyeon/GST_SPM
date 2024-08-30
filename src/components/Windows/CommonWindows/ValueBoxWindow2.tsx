@@ -568,7 +568,7 @@ const KendoWindow = ({ setVisible, reload }: IKendoWindow) => {
       "@p_finchkdt": "",
       "@p_progress_status": "",
       "@p_revperson": "",
-
+      "@p_lvl": "",
       "@p_row_status": paraData.row_status,
       "@p_devmngseq_s": "",
       "@p_pgmid_s": "",
