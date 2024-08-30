@@ -507,7 +507,7 @@ const App = () => {
       ? filters.status.filter((item: any) => item.code !== code)
       : [...filters.status, { code, name }];
 
-      setFilters((prev) => ({
+    setFilters((prev) => ({
       ...prev,
       status: updatedStatus,
     }));
@@ -556,7 +556,7 @@ const App = () => {
         custcd: value == null ? "" : value.custcd,
       }));
     } else if (name === "lvl") {
-      if(value == null) {
+      if (value == null) {
         setInformation((prev) => ({
           ...prev,
           [name]: "",
@@ -634,15 +634,15 @@ const App = () => {
   };
 
   const setValueBox = (data: any) => {
-    subDataResult.data.map((items) => {
-      if (items[SUB_DATA_ITEM_KEY] > temp) {
-        temp = items[SUB_DATA_ITEM_KEY];
-      }
-    });
+    let temp = subDataResult.data.reduce(
+      (max, item) => Math.max(max, item[SUB_DATA_ITEM_KEY]),
+      0
+    );
 
-    data.map((item: any) => {
-      let newDataItem = {
-        [SUB_DATA_ITEM_KEY]: ++temp,
+    const newItems = data.map((item: any) => {
+      temp += 1;
+      return {
+        [SUB_DATA_ITEM_KEY]: temp,
         pgmid: item.code,
         pgmnm: item.name,
         value_code3: item.itemlvl3,
@@ -678,26 +678,29 @@ const App = () => {
         groupId: "module",
         group_menu_name: "",
       };
-      const newResult = [newDataItem, ...subDataResult.data];
-      const newDataState = processWithGroups(newResult, group);
-      setSubDataTotal(subDataTotal + 1);
-      setResultState(newDataState);
-      setSelectedsubDataState({
-        [newDataItem[SUB_DATA_ITEM_KEY]]: true,
-      });
-
-      setSubDataResult((prev) => {
-        return {
-          data: newResult,
-          total: prev.total + 1,
-        };
-      });
-      setPage((prev) => ({
-        ...prev,
-        skip: 0,
-        take: prev.take + 1,
-      }));
     });
+
+    const newResult = [...newItems, ...subDataResult.data];
+    const newDataState = processWithGroups(newResult, group);
+
+    setSubDataTotal(subDataTotal + newItems.length);
+    setResultState(newDataState);
+
+    // 새로운 항목 중 첫 번째 항목을 선택하도록 설정
+    setSelectedsubDataState({
+      [newItems[0][SUB_DATA_ITEM_KEY]]: true,
+    });
+
+    setSubDataResult((prev) => ({
+      data: newResult,
+      total: prev.total + newItems.length,
+    }));
+
+    setPage((prev) => ({
+      ...prev,
+      skip: 0,
+      take: prev.take + newItems.length,
+    }));
   };
 
   const getAttachmentsData = (
