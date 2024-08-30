@@ -7954,7 +7954,7 @@ const App = () => {
                               (items: any) => items.user_id == row.person
                             )?.user_name,
                             indicator: usersData.find(
-                              (items: any) => items.user_id == row.person
+                              (items: any) => items.user_id == row.indicator
                             )?.user_name,
                             [SELECTED_FIELD]: selectedState4[idGetter4(row)],
                           })),
