@@ -19,7 +19,7 @@ import { DatePicker } from "@progress/kendo-react-dateinputs";
 import {
   ComboBoxFilterChangeEvent,
   MultiSelect,
-  MultiSelectChangeEvent
+  MultiSelectChangeEvent,
 } from "@progress/kendo-react-dropdowns";
 import {
   GRID_COL_INDEX_ATTRIBUTE,
@@ -38,11 +38,7 @@ import {
   GridSelectionChangeEvent,
   getSelectedState,
 } from "@progress/kendo-react-grid";
-import {
-  Checkbox,
-  Input,
-  TextArea
-} from "@progress/kendo-react-inputs";
+import { Checkbox, Input, TextArea } from "@progress/kendo-react-inputs";
 import { TabStrip, TabStripTab } from "@progress/kendo-react-layout";
 import { bytesToBase64 } from "byte-base64";
 import React, {
@@ -500,6 +496,20 @@ const App = () => {
     setFilters((prev) => ({
       ...prev,
       [name]: value,
+    }));
+  };
+
+  //조회조건 Input Change 함수 => 사용자가 Input에 입력한 값을 조회 파라미터로 세팅
+  const filterToggleButton = (code: string, name: string) => {
+    const isSelected = filters.status.some((item: any) => item.code === code);
+
+    const updatedStatus = isSelected
+      ? filters.status.filter((item: any) => item.code !== code)
+      : [...filters.status, { code, name }];
+
+      setFilters((prev) => ({
+      ...prev,
+      status: updatedStatus,
     }));
   };
 
@@ -3815,14 +3825,32 @@ const App = () => {
                     <tr>
                       <th>완료여부</th>
                       <td>
-                        <MultiSelect
-                          name="status"
-                          data={StatusData}
-                          onChange={filterMultiSelectChange}
-                          value={filters.status}
-                          textField="name"
-                          dataItemKey="code"
-                        />
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "center",
+                            gap: "10px",
+                          }}
+                        >
+                          <Button
+                            togglable={true}
+                            selected={filters.status.some(
+                              (item: any) => item.code === "Y"
+                            )}
+                            onClick={() => filterToggleButton("Y", "완료")}
+                          >
+                            완료{" "}
+                          </Button>
+                          <Button
+                            togglable={true}
+                            selected={filters.status.some(
+                              (item: any) => item.code === "N"
+                            )}
+                            onClick={() => filterToggleButton("N", "미완료")}
+                          >
+                            미완료
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                     <tr>
@@ -4073,14 +4101,32 @@ const App = () => {
                       <tr>
                         <th>완료여부</th>
                         <td>
-                          <MultiSelect
-                            name="status"
-                            data={StatusData}
-                            onChange={filterMultiSelectChange}
-                            value={filters.status}
-                            textField="name"
-                            dataItemKey="code"
-                          />
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "center",
+                              gap: "10px",
+                            }}
+                          >
+                            <Button
+                              togglable={true}
+                              selected={filters.status.some(
+                                (item: any) => item.code === "Y"
+                              )}
+                              onClick={() => filterToggleButton("Y", "완료")}
+                            >
+                              완료{" "}
+                            </Button>
+                            <Button
+                              togglable={true}
+                              selected={filters.status.some(
+                                (item: any) => item.code === "N"
+                              )}
+                              onClick={() => filterToggleButton("N", "미완료")}
+                            >
+                              미완료
+                            </Button>
+                          </div>
                         </td>
                       </tr>
                       <tr>
