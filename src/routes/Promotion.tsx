@@ -104,7 +104,7 @@ const Promotion = () => {
       height5 = getHeight(".ButtonContainer");
       height2 = getHeight(".ButtonContainer2");
       setWebHeight(getDeviceHeight(false) - height5 - 30);
-      height3 = (getDeviceHeight(false) - 400 - height5) / 3;
+      height3 = (getDeviceHeight(false) - 440 - height5) / 3;
       height4 = (getDeviceHeight(false) - 290 - height - height5) / 2;
     };
 
@@ -441,11 +441,11 @@ const Promotion = () => {
       )}
       <Box
         display="flex"
-        // overflow="hidden"
-        style={{ userSelect: "none" }}
+        flexDirection="column"
+        style={{ userSelect: "none", paddingBottom: "80px" }}
         width="100%"
       >
-        <Box flexGrow={1} overflow="auto">
+        <Box flexGrow={1} overflow="auto" sx={{ paddingBottom: "20px" }}>
           <Container maxWidth={false}>
             <Box>
               <div
@@ -713,37 +713,60 @@ const Promotion = () => {
                         </Box>
                       </Box>
                       <CardContent>
-                        <Box
-                          display="flex"
-                          justifyContent="space-between"
-                          alignItems="flex-start"
-                        >
-                          <Box display="flex" flexDirection="column">
-                            <Box
-                              display="flex"
-                              flexDirection="row"
-                              alignItems="center"
-                              flexWrap="nowrap"
-                            >
-                              <Typography
-                                component="div"
-                                fontWeight={600}
-                                sx={{
-                                  fontSize: "13px",
-                                  color: "#6a68ba",
-                                }}
-                              >
-                                {
-                                  typesData.find(
-                                    (type) => type.sub_code === item.category
-                                  )?.code_name
-                                }
-                              </Typography>
-                            </Box>
+                        <Box display="flex" flexDirection="column">
+                          <Box
+                            display="flex"
+                            flexDirection="row"
+                            alignItems="flex_start"
+                            flexWrap="nowrap"
+                            justifyContent="space-between"
+                            width={"100%"}
+                          >
                             <Typography
                               component="div"
                               fontWeight={600}
-                              sx={{ fontSize: "17px" }}
+                              sx={{
+                                fontSize: "13px",
+                                color: "#6a68ba",
+                              }}
+                            >
+                              {
+                                typesData.find(
+                                  (type) => type.sub_code === item.category
+                                )?.code_name
+                              }
+                            </Typography>
+                            <Typography
+                              variant="body2"
+                              color={"gray"}
+                              sx={{ whiteSpace: "nowrap" }}
+                            >
+                              <VisibilityIcon
+                                style={{
+                                  fontSize: "16px",
+                                  verticalAlign: "middle",
+                                  marginRight: "2px",
+                                }}
+                              />
+                              {item.max_seq == null ? 0 : item.max_seq}
+                            </Typography>
+                          </Box>
+                          <Box
+                            display="flex"
+                            alignItems="center"
+                            flexShrink={0}
+                          >
+                            <Typography
+                              component="div"
+                              fontWeight={600}
+                              sx={{
+                                fontSize: "17px",
+                                display: "block",
+                                maxWidth: "100%",
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis", // 잘린 부분에 줄임표 표시
+                              }}
                             >
                               {item.is_open === "N" && (
                                 <Icon
@@ -753,27 +776,13 @@ const Promotion = () => {
                                     fontSize: "14px",
                                     marginRight: "4px",
                                     paddingBottom: "2px",
+                                    flexShrink: 0,
                                   }}
                                 />
                               )}
                               {item.title}
                             </Typography>
                           </Box>
-
-                          <Typography
-                            variant="body2"
-                            color={"gray"}
-                            sx={{ whiteSpace: "nowrap" }}
-                          >
-                            <VisibilityIcon
-                              style={{
-                                fontSize: "16px",
-                                verticalAlign: "middle",
-                                marginRight: "2px",
-                              }}
-                            />
-                            {item.max_seq == null ? 0 : item.max_seq}
-                          </Typography>
                         </Box>
                         {/* 해시태그 주석- 추후에 사용 */}
                         {/* <Box
@@ -807,49 +816,52 @@ const Promotion = () => {
               </Grid>
             )}
           </Container>
-
-          {/* 페이지네이션 버튼 */}
-          <div
-            className="ButtonContainer2"
-            style={{
-              // bottom: isMobile ? 0 : 50,
-              width: "100%",
-              zIndex: 100,
-              display: "flex",
-              justifyContent: "center",
-            }}
-          >
-            <Box display="flex" justifyContent="center" p={2}>
-              <Stack spacing={2}>
-                <Pagination
-                  count={count}
-                  showFirstButton
-                  showLastButton
-                  onChange={handlePageChange}
-                  page={page}
-                  siblingCount={isMobile ? 0 : undefined}
-                  boundaryCount={isMobile ? 0 : undefined}
-                  renderItem={(item) => {
-                    if (isMobile) {
-                      // 모바일에서만 특정 로직 적용
-                      if (item.type === "page" && item.page === page) {
-                        return <PaginationItem {...item} />;
-                      }
-                      if (item.type === "previous" || item.type === "next") {
-                        return <PaginationItem {...item} />;
-                      }
-                      return null; // 나머지 항목은 렌더링하지 않음
-                    } else {
-                      // 비모바일에서는 기본 PaginationItem 반환
+        </Box>
+        {/* 페이지네이션 버튼 */}
+        <div
+          className="ButtonContainer2"
+          style={{
+            position: "sticky", // 스크롤 시 화면 하단에 고정
+            bottom: 0,
+            left: 0,
+            right: 0,
+            width: "100%",
+            zIndex: 100,
+            display: "flex",
+            justifyContent: "center",
+            marginTop: "-20px"
+          }}
+        >
+          <Box display="flex" justifyContent="center" p={2}>
+            <Stack spacing={2}>
+              <Pagination
+                count={count}
+                showFirstButton
+                showLastButton
+                onChange={handlePageChange}
+                page={page}
+                siblingCount={isMobile ? 0 : undefined}
+                boundaryCount={isMobile ? 0 : undefined}
+                renderItem={(item) => {
+                  if (isMobile) {
+                    // 모바일에서만 특정 로직 적용
+                    if (item.type === "page" && item.page === page) {
                       return <PaginationItem {...item} />;
                     }
-                  }}
-                  defaultPage={1}
-                />
-              </Stack>
-            </Box>
-          </div>
-        </Box>
+                    if (item.type === "previous" || item.type === "next") {
+                      return <PaginationItem {...item} />;
+                    }
+                    return null; // 나머지 항목은 렌더링하지 않음
+                  } else {
+                    // 비모바일에서는 기본 PaginationItem 반환
+                    return <PaginationItem {...item} />;
+                  }
+                }}
+                defaultPage={1}
+              />
+            </Stack>
+          </Box>
+        </div>
 
         {/* 신규 버튼 */}
         {isAdmin && (

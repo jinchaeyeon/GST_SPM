@@ -398,9 +398,9 @@ const AppInner: React.FC = () => {
     {
       title: "알림 구독 해제",
     },
-    // loginResult ? loginResult.role === "ADMIN" && {
-    //   title: "접수 담당업체 설정",
-    // } : "",
+    loginResult ? loginResult.role === "ADMIN" && {
+      title: "접수 담당업체 설정",
+    } : "",
     {
       title: "비밀번호 변경",
     },
