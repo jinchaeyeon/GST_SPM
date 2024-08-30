@@ -332,10 +332,18 @@ const KendoWindow = ({
     height3 = getHeight(".ButtonContainer");
     height4 = getHeight(".ButtonContainer2");
     setMobileHeight(
-      getWindowDeviceHeight(false, position.height) - height - height2 - height3 - 10
+      getWindowDeviceHeight(false, position.height) -
+        height -
+        height2 -
+        height3 -
+        10
     );
     setMobileHeight2(
-      getWindowDeviceHeight(false, position.height) - height - height2 - height4 - 10
+      getWindowDeviceHeight(false, position.height) -
+        height -
+        height2 -
+        height4 -
+        10
     );
     setWebHeight(
       (getWindowDeviceHeight(false, position.height) - height - height2) / 2 -
@@ -1151,7 +1159,7 @@ const KendoWindow = ({
       expmm: 0,
       find_key: para.find_key,
       findt: "",
-      finexpdt: "",
+      finexpdt: convertDateToStr(new Date()),
       finyn: "N",
       guid: guid,
       groupcd: "",
