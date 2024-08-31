@@ -27,6 +27,8 @@ import { useRecoilState, useSetRecoilState } from "recoil";
 import {
   BottomContainer,
   ButtonContainer,
+  FormBox,
+  FormBoxWrap,
   GridContainer,
   GridContainerWrap,
   GridTitle,
@@ -39,9 +41,14 @@ import { dataTypeColumns } from "../../../store/columns/common-columns";
 import { Iparameters, TEditorHandle } from "../../../store/types";
 import CustomMultiColumnComboBox from "../../ComboBoxes/CustomMultiColumnComboBox";
 import {
+  convertDateToStr,
+  convertDateToStrWithTime,
+  dateformat2,
+  dateformat3,
   getHeight,
   getWindowDeviceHeight,
   UseParaPc,
+  usersQueryStr,
 } from "../../CommonFunction";
 import { GAP } from "../../CommonString";
 import RichEditor from "../../RichEditor";
@@ -51,6 +58,9 @@ import SwiperCore from "swiper";
 import "swiper/css";
 import { Swiper, SwiperSlide } from "swiper/react";
 import Watermark from "../../Watermark";
+import { Input } from "@progress/kendo-react-inputs";
+import { DatePicker } from "@progress/kendo-react-dateinputs";
+import { dateFormatter } from "globalize";
 // import Watermark from "@uiw/react-watermark";
 
 type IWindow = {
@@ -82,6 +92,8 @@ interface InformationType {
   isOpen: boolean;
   tagnames: Hashtag[];
   type: string;
+  insert_user_id: string;
+  insert_time: Date;
 }
 
 const defaultItemInfo = {
@@ -213,6 +225,8 @@ const PromotionWindow = ({
     isNew: false,
     isOpen: false,
     tagnames: [],
+    insert_user_id: "",
+    insert_time: new Date(),
     type: "",
   });
 
@@ -320,6 +334,8 @@ const PromotionWindow = ({
           isOpen: rows[0].is_open == "Y" ? true : false,
           type: rows[0].category,
           tagnames: fetchedTags,
+          insert_user_id: rows[0].insert_user_id,
+          insert_time: rows[0].insert_time,
         }));
       }
       setLoading(false);
@@ -398,8 +414,36 @@ const PromotionWindow = ({
     }
   };
 
+  const [usersData, setUsersData] = useState<any[]>([]);
+
+  const fetchUsers = async () => {
+    let data: any;
+
+    const bytes = require("utf8-bytes");
+    const convertedQueryStr = bytesToBase64(bytes(usersQueryStr));
+
+    let query = {
+      query: convertedQueryStr,
+    };
+
+    try {
+      data = await processApi<any>("bizgst-query", query);
+    } catch (error) {
+      data = null;
+    }
+
+    if (data !== null && data.isSuccess === true) {
+      const rows = data.tables[0].Rows;
+      setUsersData(rows);
+    } else {
+      console.log("[에러발생]");
+      console.log(data);
+    }
+  };
+  console.log();
   useEffect(() => {
     fetchTypes();
+    fetchUsers();
     if (datas?.document_id) {
       setFilters((prev) => {
         if (prev.documentId !== datas.document_id) {
@@ -418,6 +462,8 @@ const PromotionWindow = ({
         isOpen: false,
         tagnames: [],
         type: "",
+        insert_user_id: "",
+        insert_time: new Date(),
       });
       setHtmlOnEditor("");
     }
@@ -1705,6 +1751,43 @@ const PromotionWindow = ({
               </>
             )}
             <div style={{ flexGrow: 1 }} />
+            <FormBoxWrap style={{ height: "70px", width: "100%" }}>
+              <FormBox>
+                <tbody>
+                  <tr>
+                    <th>작성자</th>
+                    <td>
+                      <Input
+                        name="insert_user_id"
+                        type="text"
+                        value={
+                          datas
+                            ? Object.values(usersData)?.find(
+                                (user) =>
+                                  user.user_id === Information.insert_user_id
+                              )?.user_name
+                            : Object.values(usersData)?.find(
+                                (user) => user.user_id === userId
+                              )?.user_name
+                        }
+                        className={"readonly"}
+                      />
+                    </td>
+                    <th>작성일</th>
+                    <td>
+                      <Input
+                        name="insert_time"
+                        type="text"
+                        value={dateformat2(
+                          convertDateToStr(new Date(Information.insert_time))
+                        )}
+                        className={"readonly"}
+                      />
+                    </td>
+                  </tr>
+                </tbody>
+              </FormBox>
+            </FormBoxWrap>
             {!isAdmin ? (
               <div style={{ width: "100%" }} className="ButtonContainer">
                 <Button
@@ -1850,7 +1933,7 @@ const PromotionWindow = ({
             )}
             <Watermark
               text="© GST Co., Ltd. All rights reserved."
-              fontSize={32}
+              containerStyle={{ paddingBottom: "5px" }}
             >
               <RichEditor id="editor" ref={editorRef} hideTools={!isAdmin} />
             </Watermark>

@@ -1,23 +1,23 @@
 import AddIcon from "@mui/icons-material/Add";
+import CloseIcon from "@mui/icons-material/Close";
+import FilterListIcon from "@mui/icons-material/FilterList";
 import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
+import SearchIcon from "@mui/icons-material/Search";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import {
   Box,
   Card,
   CardContent,
   CardMedia,
-  Chip,
   Container,
   Fab,
   Grid,
   IconButton,
-  InputAdornment,
   Pagination,
   PaginationItem,
   Stack,
-  TextField,
   Tooltip,
-  Typography,
+  Typography
 } from "@mui/material";
 import {
   DataResult,
@@ -25,36 +25,32 @@ import {
   process,
   State,
 } from "@progress/kendo-data-query";
-import { bytesToBase64 } from "byte-base64";
-import { useEffect, useLayoutEffect, useState } from "react";
-import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
-import { getDeviceHeight, getHeight } from "../components/CommonFunction";
-import PromotionWindow from "../components/Windows/CommonWindows/PromotionWindow";
-import { useApi } from "../hooks/api";
-import { isLoading, loginResultState, titles } from "../store/atoms";
-import { Iparameters } from "../store/types";
-import {
-  ButtonContainer,
-  FilterBox,
-  FilterBoxWrap,
-  GridTitle,
-  InfoTitle,
-  Title,
-  TitleContainer,
-} from "../CommonStyled";
-import SearchIcon from "@mui/icons-material/Search";
-import { Input, InputChangeEvent } from "@progress/kendo-react-inputs";
-import FilterListIcon from "@mui/icons-material/FilterList";
-import CloseIcon from "@mui/icons-material/Close";
 import { Button } from "@progress/kendo-react-buttons";
-import CustomMultiColumnComboBox from "../components/ComboBoxes/CustomMultiColumnComboBox";
-import { dataTypeColumns } from "../store/columns/common-columns";
+import { Icon } from "@progress/kendo-react-common";
 import {
   ComboBoxChangeEvent,
   ComboBoxFilterChangeEvent,
 } from "@progress/kendo-react-dropdowns";
+import { Input, InputChangeEvent } from "@progress/kendo-react-inputs";
+import { bytesToBase64 } from "byte-base64";
 import { FilterDescriptor } from "devextreme/data";
-import { Icon } from "@progress/kendo-react-common";
+import { useEffect, useLayoutEffect, useState } from "react";
+import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
+import {
+  ButtonContainer,
+  FilterBox,
+  FilterBoxWrap,
+  InfoTitle,
+  Title,
+  TitleContainer
+} from "../CommonStyled";
+import CustomMultiColumnComboBox from "../components/ComboBoxes/CustomMultiColumnComboBox";
+import { getDeviceHeight, getHeight } from "../components/CommonFunction";
+import PromotionWindow from "../components/Windows/CommonWindows/PromotionWindow";
+import { useApi } from "../hooks/api";
+import { isLoading, loginResultState, titles } from "../store/atoms";
+import { dataTypeColumns } from "../store/columns/common-columns";
+import { Iparameters } from "../store/types";
 
 var height = 0;
 var height2 = 0;
@@ -829,7 +825,7 @@ const Promotion = () => {
             zIndex: 100,
             display: "flex",
             justifyContent: "center",
-            marginTop: "-20px"
+            marginTop: "-20px",
           }}
         >
           <Box display="flex" justifyContent="center" p={2}>
