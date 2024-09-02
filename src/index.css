@@ -19,6 +19,15 @@ code {
     monospace;
 }
 
+.swiper-button-next,
+.swiper-button-prev {
+    right:10px;
+    padding: 30px;
+    color: #706dbe !important;
+    fill: #706dbe !important;
+    stroke: #706dbe !important;
+}
+
 .k-grid .k-table.k-grid-table {
   touch-action: auto !important;
 }

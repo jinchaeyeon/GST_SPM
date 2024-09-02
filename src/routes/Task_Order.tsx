@@ -1091,7 +1091,7 @@ const App = () => {
         ...prevFilters,
         workType: "task_order_all",
         date_type: { sub_code: "A", code_name: "지시일" },
-        fromDate: fromDate2,
+        fromDate: fromDate,
         toDate: new Date(),
         custnm: "",
         value_code3: { sub_code: "", code_name: "" },
@@ -1710,11 +1710,6 @@ const App = () => {
 
   const currentDate = new Date();
   const fromDate = new Date(
-    currentDate.getFullYear(),
-    currentDate.getMonth() - 3,
-    currentDate.getDate()
-  );
-  const fromDate2 = new Date(
     currentDate.getFullYear() - 2,
     currentDate.getMonth(),
     currentDate.getDate()

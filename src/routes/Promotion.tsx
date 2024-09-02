@@ -35,6 +35,7 @@ import { Input, InputChangeEvent } from "@progress/kendo-react-inputs";
 import { bytesToBase64 } from "byte-base64";
 import { FilterDescriptor } from "devextreme/data";
 import { useEffect, useLayoutEffect, useState } from "react";
+import { useHistory, useLocation } from "react-router-dom";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import {
   ButtonContainer,
@@ -165,6 +166,8 @@ const Promotion = () => {
     setCount(calculatedCount);
   }, [filters]);
 
+  const history = useHistory();
+  const location = useLocation();
   useEffect(() => {
     setFilters((prev) => ({
       ...prev,
@@ -207,6 +210,7 @@ const Promotion = () => {
   const fetchMainGrid = async (filters: any) => {
     let data: any;
     setLoading(true);
+    const queryParams = new URLSearchParams(location.search);
     //조회조건 파라미터
     const parameters: Iparameters = {
       procedureName: "pw6_sel_promotion",
@@ -218,7 +222,9 @@ const Promotion = () => {
         "@p_category": filters.category,
         "@p_tagnames_s": filters.tagnames_s,
         "@p_document_id": filters.documentId,
-        "@p_find_row_value": filters.findRowValue,
+        "@p_find_row_value": queryParams.has("go")
+          ? (queryParams.get("go") as string)
+          : filters.findRowValue,
         "@p_id": userId,
         "@p_is_open": isAdmin ? "" : "Y",
       },
@@ -239,6 +245,16 @@ const Promotion = () => {
           : null,
       }));
       if (TotalRowCount > 0) {
+        const queryParams = new URLSearchParams(location.search);
+        if (queryParams.has("go")) {
+          const item = rows.filter(
+            (item: any) => item.document_id == (queryParams.get("go") as string)
+          )[0];
+          history.replace({}, "");
+          setSelectedProduct(item);
+          setPromotionWindowVisible(true);
+          setPage(data.pageNumber);
+        }
         setMainDataResult({
           data: rows,
           total: TotalRowCount == -1 ? 0 : TotalRowCount,
