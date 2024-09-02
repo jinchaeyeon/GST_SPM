@@ -438,7 +438,7 @@ const Promotion = () => {
       <Box
         display="flex"
         flexDirection="column"
-        style={{ userSelect: "none", paddingBottom: "80px" }}
+        style={{ userSelect: "none", paddingBottom: "20px" }}
         width="100%"
       >
         <Box flexGrow={1} overflow="auto" sx={{ paddingBottom: "20px" }}>
@@ -816,15 +816,7 @@ const Promotion = () => {
         {/* 페이지네이션 버튼 */}
         <div
           className="ButtonContainer2"
-          style={{
-            position: "sticky", // 스크롤 시 화면 하단에 고정
-            bottom: 0,
-            left: 0,
-            right: 0,
-            width: "100%",
-            zIndex: 100,
-            display: "flex",
-            justifyContent: "center",
+          style={{          
             marginTop: "-20px",
           }}
         >
