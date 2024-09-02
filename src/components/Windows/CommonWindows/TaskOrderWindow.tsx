@@ -60,6 +60,7 @@ import Window from "../WindowComponent/Window";
 import SwiperCore from "swiper";
 import "swiper/css";
 import { Swiper, SwiperSlide } from "swiper/react";
+import  secureLocalStorage  from  "react-secure-storage";
 
 type IKendoWindow = {
   setVisible(t: boolean): void;
@@ -560,16 +561,16 @@ const KendoWindow = ({
 
   const removeHTML = () => {
     setLoading(true);
-    for (let key of Object.keys(localStorage)) {
+    for (let key of Object.keys(Object.values(secureLocalStorage)[0])) {
       if (
-        key != "passwordExpirationInfo" &&
-        key != "accessToken" &&
-        key != "loginResult" &&
-        key != "refreshToken" &&
-        key != "PopUpNotices" &&
-        key != "recoil-persist"
+        key != "@secure.passwordExpirationInfo" &&
+        key != "@secure.accessToken" &&
+        key != "@secure.loginResult" &&
+        key != "@secure.refreshToken" &&
+        key != "@secure.PopUpNotices" &&
+        key != "@secure.queryState" && key != "@secure.OSState"
       ) {
-        localStorage.removeItem(key);
+        secureLocalStorage.removeItem(key.replace("@secure.", ""));
       }
     }
     setLoading(false);
@@ -792,16 +793,16 @@ const KendoWindow = ({
         if (refEditorRef.current) {
           const document = data.document;
           if (
-            localStorage.getItem(key[DATA_ITEM_KEY]) == undefined ||
-            localStorage.getItem(key[DATA_ITEM_KEY]) == null
+            secureLocalStorage.getItem(key[DATA_ITEM_KEY]) == undefined ||
+            secureLocalStorage.getItem(key[DATA_ITEM_KEY]) == null
           ) {
-            localStorage.setItem(key[DATA_ITEM_KEY], key.contents);
-            localStorage.setItem(key[DATA_ITEM_KEY] + "key", document);
+            secureLocalStorage.setItem(key[DATA_ITEM_KEY], key.contents);
+            secureLocalStorage.setItem(key[DATA_ITEM_KEY] + "key", document);
           } else {
-            localStorage.removeItem(key[DATA_ITEM_KEY]);
-            localStorage.removeItem(key[DATA_ITEM_KEY] + "key");
-            localStorage.setItem(key[DATA_ITEM_KEY], key.contents);
-            localStorage.setItem(key[DATA_ITEM_KEY] + "key", document);
+            secureLocalStorage.removeItem(key[DATA_ITEM_KEY]);
+            secureLocalStorage.removeItem(key[DATA_ITEM_KEY] + "key");
+            secureLocalStorage.setItem(key[DATA_ITEM_KEY], key.contents);
+            secureLocalStorage.setItem(key[DATA_ITEM_KEY] + "key", document);
           }
           refEditorRef.current.setHtml(document);
         } else {
@@ -850,17 +851,17 @@ const KendoWindow = ({
     const textContent = doc.body.textContent || ""; //기존행 문자열
 
     if (
-      localStorage.getItem(currentRow[DATA_ITEM_KEY]) == undefined ||
-      localStorage.getItem(currentRow[DATA_ITEM_KEY]) == null
+      secureLocalStorage.getItem(currentRow[DATA_ITEM_KEY]) == undefined ||
+      secureLocalStorage.getItem(currentRow[DATA_ITEM_KEY]) == null
     ) {
-      localStorage.setItem(currentRow[DATA_ITEM_KEY], textContent);
-      localStorage.setItem(currentRow[DATA_ITEM_KEY] + "key", editorContent2);
+      secureLocalStorage.setItem(currentRow[DATA_ITEM_KEY], textContent);
+      secureLocalStorage.setItem(currentRow[DATA_ITEM_KEY] + "key", editorContent2);
     } else {
       if (currentRow.rowstatus == "U" || currentRow.rowstatus == "N") {
-        localStorage.removeItem(currentRow[DATA_ITEM_KEY]);
-        localStorage.removeItem(currentRow[DATA_ITEM_KEY] + "key");
-        localStorage.setItem(currentRow[DATA_ITEM_KEY], textContent);
-        localStorage.setItem(currentRow[DATA_ITEM_KEY] + "key", editorContent2);
+        secureLocalStorage.removeItem(currentRow[DATA_ITEM_KEY]);
+        secureLocalStorage.removeItem(currentRow[DATA_ITEM_KEY] + "key");
+        secureLocalStorage.setItem(currentRow[DATA_ITEM_KEY], textContent);
+        secureLocalStorage.setItem(currentRow[DATA_ITEM_KEY] + "key", editorContent2);
       }
     }
     setSelectedState(newSelectedState);
@@ -871,7 +872,7 @@ const KendoWindow = ({
         selectedRowData
       );
     } else {
-      editorContent3 = localStorage.getItem(
+      editorContent3 = secureLocalStorage.getItem(
         selectedRowData[DATA_ITEM_KEY] + "key"
       );
       if (refEditorRef.current) {
@@ -1132,10 +1133,10 @@ const KendoWindow = ({
       const parser = new DOMParser();
       const doc = parser.parseFromString(editorContent, "text/html");
       const textContent = doc.body.textContent || ""; //문자열
-      localStorage.removeItem(currentRow[DATA_ITEM_KEY]);
-      localStorage.removeItem(currentRow[DATA_ITEM_KEY] + "key");
-      localStorage.setItem(currentRow[DATA_ITEM_KEY], textContent);
-      localStorage.setItem(currentRow[DATA_ITEM_KEY] + "key", editorContent);
+      secureLocalStorage.removeItem(currentRow[DATA_ITEM_KEY]);
+      secureLocalStorage.removeItem(currentRow[DATA_ITEM_KEY] + "key");
+      secureLocalStorage.setItem(currentRow[DATA_ITEM_KEY], textContent);
+      secureLocalStorage.setItem(currentRow[DATA_ITEM_KEY] + "key", editorContent);
     }
 
     mainDataResult.data.map((item) => {
@@ -1276,12 +1277,12 @@ const KendoWindow = ({
               Object3.push(index);
               if (
                 !(
-                  localStorage.getItem(item[DATA_ITEM_KEY]) == undefined ||
-                  localStorage.getItem(item[DATA_ITEM_KEY]) == null
+                  secureLocalStorage.getItem(item[DATA_ITEM_KEY]) == undefined ||
+                  secureLocalStorage.getItem(item[DATA_ITEM_KEY]) == null
                 )
               ) {
-                localStorage.removeItem(item[DATA_ITEM_KEY]);
-                localStorage.removeItem(item[DATA_ITEM_KEY] + "key");
+                secureLocalStorage.removeItem(item[DATA_ITEM_KEY]);
+                secureLocalStorage.removeItem(item[DATA_ITEM_KEY] + "key");
               }
             }
           });
@@ -1301,13 +1302,13 @@ const KendoWindow = ({
                 : "";
             if (
               !(
-                localStorage.getItem(row[DATA_ITEM_KEY]) == undefined ||
-                localStorage.getItem(row[DATA_ITEM_KEY]) == null
+                secureLocalStorage.getItem(row[DATA_ITEM_KEY]) == undefined ||
+                secureLocalStorage.getItem(row[DATA_ITEM_KEY]) == null
               )
             ) {
               if (refEditorRef.current != null) {
                 refEditorRef.current.setHtml(
-                  localStorage.getItem(row[DATA_ITEM_KEY]) + "key"
+                  secureLocalStorage.getItem(row[DATA_ITEM_KEY]) + "key"
                 );
               }
             } else {
@@ -1396,10 +1397,10 @@ const KendoWindow = ({
           item[DATA_ITEM_KEY] == Object.getOwnPropertyNames(selectedState)[0]
       )[0];
       array = newData;
-      localStorage.removeItem(currentRow[DATA_ITEM_KEY]);
-      localStorage.removeItem(currentRow[DATA_ITEM_KEY] + "key");
-      localStorage.setItem(currentRow[DATA_ITEM_KEY], textContent);
-      localStorage.setItem(currentRow[DATA_ITEM_KEY] + "key", editorContent);
+      secureLocalStorage.removeItem(currentRow[DATA_ITEM_KEY]);
+      secureLocalStorage.removeItem(currentRow[DATA_ITEM_KEY] + "key");
+      secureLocalStorage.setItem(currentRow[DATA_ITEM_KEY], textContent);
+      secureLocalStorage.setItem(currentRow[DATA_ITEM_KEY] + "key", editorContent);
 
       type TRowsArr = {
         row_status: string[];
@@ -1515,8 +1516,8 @@ const KendoWindow = ({
 
           let str = "";
           let textContent = "";
-          const value = localStorage.getItem(num + "key");
-          const text = localStorage.getItem(num);
+          const value = secureLocalStorage.getItem(num + "key");
+          const text = secureLocalStorage.getItem(num);
           if (typeof value == "string") {
             str = value; // ok
           }
@@ -1535,8 +1536,8 @@ const KendoWindow = ({
           }
 
           arrays[guids] = convertedEditorContent;
-          localStorage.removeItem(num);
-          localStorage.removeItem(num + "key");
+          secureLocalStorage.removeItem(num);
+          secureLocalStorage.removeItem(num + "key");
 
           rowsArr.row_status.push(rowstatus);
           rowsArr.guid_s.push(guids);
@@ -1598,8 +1599,8 @@ const KendoWindow = ({
 
           let str = "";
           let textContent = "";
-          const value = localStorage.getItem(num + "key");
-          const text = localStorage.getItem(num);
+          const value = secureLocalStorage.getItem(num + "key");
+          const text = secureLocalStorage.getItem(num);
           if (typeof value == "string") {
             str = value; // ok
           }
@@ -1615,8 +1616,8 @@ const KendoWindow = ({
             guids = guid;
           }
           arrays[guids] = convertedEditorContent;
-          localStorage.removeItem(num);
-          localStorage.removeItem(num + "key");
+          secureLocalStorage.removeItem(num);
+          secureLocalStorage.removeItem(num + "key");
 
           rowsArr.row_status.push(rowstatus);
           rowsArr.guid_s.push(guids);
@@ -1767,16 +1768,16 @@ const KendoWindow = ({
         }
 
         if (!data.hasOwnProperty("message")) {
-          for (let key of Object.keys(localStorage)) {
+          for (let key of Object.keys(Object.values(secureLocalStorage)[0])) {
             if (
-              key != "passwordExpirationInfo" &&
-              key != "accessToken" &&
-              key != "loginResult" &&
-              key != "refreshToken" &&
-              key != "PopUpNotices" &&
-              key != "recoil-persist"
+              key != "@secure.passwordExpirationInfo" &&
+              key != "@secure.accessToken" &&
+              key != "@secure.loginResult" &&
+              key != "@secure.refreshToken" &&
+              key != "@secure.PopUpNotices" &&
+              key != "@secure.queryState" && key != "@secure.OSState"
             ) {
-              localStorage.removeItem(key);
+              secureLocalStorage.removeItem(key.replace("@secure.", ""));
             }
           }
           deletedRows = [];
@@ -1871,7 +1872,7 @@ const KendoWindow = ({
           ref_seq = "",
         } = item;
         let str = "";
-        const value = localStorage.getItem(num + "key");
+        const value = secureLocalStorage.getItem(num + "key");
 
         if (typeof value == "string") {
           str = value; // ok
@@ -1884,8 +1885,8 @@ const KendoWindow = ({
         const convertedEditorContent = bytesToBase64(bytes(str)); //html
 
         arrays[guid] = convertedEditorContent;
-        localStorage.removeItem(num);
-        localStorage.removeItem(num + "key");
+        secureLocalStorage.removeItem(num);
+        secureLocalStorage.removeItem(num + "key");
 
         rowsArr.row_status.push(rowstatus);
         rowsArr.guid_s.push(guid);
@@ -1976,16 +1977,16 @@ const KendoWindow = ({
       }
 
       if (!data.hasOwnProperty("message")) {
-        for (let key of Object.keys(localStorage)) {
+        for (let key of Object.keys(Object.values(secureLocalStorage)[0])) {
           if (
-            key != "passwordExpirationInfo" &&
-            key != "accessToken" &&
-            key != "loginResult" &&
-            key != "refreshToken" &&
-            key != "PopUpNotices" &&
-            key != "recoil-persist"
+            key != "@secure.passwordExpirationInfo" &&
+            key != "@secure.accessToken" &&
+            key != "@secure.loginResult" &&
+            key != "@secure.refreshToken" &&
+            key != "@secure.PopUpNotices" &&
+            key != "@secure.queryState" && key != "@secure.OSState"
           ) {
-            localStorage.removeItem(key);
+            secureLocalStorage.removeItem(key.replace("@secure.", ""));
           }
         }
         deletedRows = [];
@@ -2060,17 +2061,17 @@ const KendoWindow = ({
       const textContent = doc.body.textContent || ""; //문자열
       if (
         !(
-          localStorage.getItem(currentRow[DATA_ITEM_KEY]) == undefined ||
-          localStorage.getItem(currentRow[DATA_ITEM_KEY]) == null
+          secureLocalStorage.getItem(currentRow[DATA_ITEM_KEY]) == undefined ||
+          secureLocalStorage.getItem(currentRow[DATA_ITEM_KEY]) == null
         )
       ) {
-        localStorage.removeItem(currentRow[DATA_ITEM_KEY]);
-        localStorage.removeItem(currentRow[DATA_ITEM_KEY] + "key");
-        localStorage.setItem(currentRow[DATA_ITEM_KEY], textContent);
-        localStorage.setItem(currentRow[DATA_ITEM_KEY] + "key", editorContent);
+        secureLocalStorage.removeItem(currentRow[DATA_ITEM_KEY]);
+        secureLocalStorage.removeItem(currentRow[DATA_ITEM_KEY] + "key");
+        secureLocalStorage.setItem(currentRow[DATA_ITEM_KEY], textContent);
+        secureLocalStorage.setItem(currentRow[DATA_ITEM_KEY] + "key", editorContent);
       } else {
-        localStorage.setItem(currentRow[DATA_ITEM_KEY], textContent);
-        localStorage.setItem(currentRow[DATA_ITEM_KEY] + "key", editorContent);
+        secureLocalStorage.setItem(currentRow[DATA_ITEM_KEY], textContent);
+        secureLocalStorage.setItem(currentRow[DATA_ITEM_KEY] + "key", editorContent);
       }
 
       const newData = mainDataResult.data.map((item) =>

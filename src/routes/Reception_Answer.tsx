@@ -12,6 +12,7 @@ import {
   MultiSelect,
   MultiSelectChangeEvent,
 } from "@progress/kendo-react-dropdowns";
+import  secureLocalStorage  from  "react-secure-storage";
 import {
   Grid,
   GridCellProps,
@@ -429,7 +430,7 @@ const App = () => {
       const role = loginResult ? loginResult.role : "";
       const isAdmin = role === "ADMIN";
 
-      if (!isAdmin && localStorage.getItem("accessToken")) {
+      if (!isAdmin && secureLocalStorage.getItem("accessToken")) {
         alert("접근 권한이 없습니다.");
         history.goBack();
       }
@@ -902,7 +903,7 @@ const App = () => {
     if (
       filterValue.type !== "reception" &&
       filters.isSearch &&
-      localStorage.getItem("accessToken")
+      secureLocalStorage.getItem("accessToken")
     ) {
       const _ = require("lodash");
       const deepCopiedFilters = _.cloneDeep(filters);
@@ -914,7 +915,7 @@ const App = () => {
   useEffect(() => {
     if (
       filterValue.type !== "reception" &&
-      localStorage.getItem("accessToken")
+      secureLocalStorage.getItem("accessToken")
     ) {
       // ComboBox에 사용할 코드 리스트 조회
       fetchValueCode();
@@ -944,7 +945,7 @@ const App = () => {
     // 메인 그리드에서 클릭하여 오픈시 조회조건 재설정하여 조회
     if (
       filterValue.type === "reception" &&
-      localStorage.getItem("accessToken")
+      secureLocalStorage.getItem("accessToken")
     ) {
       fetchValueCode();
       fetchUsers();

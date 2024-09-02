@@ -4,6 +4,7 @@ import { resetLocalStorage } from "../components/CommonFunction";
 import { removeBeforeUnloadListener } from "../components/PanelBarNavContainer";
 import { loginResultState } from "../store/atoms";
 import jwt_decode from "jwt-decode";
+import  secureLocalStorage  from  "react-secure-storage";
 
 interface DecodedToken {
   exp: number;
@@ -218,7 +219,7 @@ const generateUrl = (url: string, params: any) => {
 };
 
 export const useApi = () => {
-  const accessToken = localStorage.getItem("accessToken");
+  const accessToken: any = secureLocalStorage.getItem("accessToken");
   const [loginResult, setLoginResult] = useRecoilState(loginResultState);
 
   // 토큰 만료 시 로그아웃 처리
@@ -372,8 +373,8 @@ axiosInstance.interceptors.response.use(
 
     if (errResponseStatus === 401 && !errResponseURL.includes("auth/login")) {
       if (!isTokenRefreshing) {
-        let token = localStorage.getItem("accessToken");
-        let refreshToken = localStorage.getItem("refreshToken");
+        let token = secureLocalStorage.getItem("accessToken");
+        let refreshToken = secureLocalStorage.getItem("refreshToken");
 
         isTokenRefreshing = true;
 
@@ -389,8 +390,8 @@ axiosInstance.interceptors.response.use(
         p.then((res: any) => {
           const { token, refreshToken } = res.data;
 
-          localStorage.setItem("accessToken", token);
-          localStorage.setItem("refreshToken", refreshToken);
+          secureLocalStorage.setItem("accessToken", token);
+          secureLocalStorage.setItem("refreshToken", refreshToken);
 
           isTokenRefreshing = false;
           originalRequest.headers.Authorization = `Bearer ${token}`;

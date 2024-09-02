@@ -1,10 +1,11 @@
 import { Redirect, Route, RouteProps } from "react-router-dom";
 import { useSetRecoilState } from "recoil";
 import { queryState, isLoading } from "../store/atoms";
+import  secureLocalStorage  from  "react-secure-storage";
 
 function AuthRoute({ component, ...rest }: RouteProps) {
   // const [token] = useRecoilState(tokenState);
-  const token = localStorage.getItem("accessToken");
+  const token = secureLocalStorage.getItem("accessToken");
   const isLoggedIn = !!token;
   const setQueryResult = useSetRecoilState(queryState);
   const para = window.location.href.split("/")[3];

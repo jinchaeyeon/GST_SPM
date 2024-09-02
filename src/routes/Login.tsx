@@ -15,6 +15,7 @@ import {
   queryState,
 } from "../store/atoms";
 // import cookie from "react-cookies";
+import  secureLocalStorage  from  "react-secure-storage";
 
 interface IFormData {
   langCode: string;
@@ -30,7 +31,7 @@ const Login: React.FC = () => {
   const setPwExpInfo = useSetRecoilState(passwordExpirationInfoState);
   const setLoading = useSetRecoilState(isLoading);
   const [isLoaded, setIsLoaded] = useState(false);
-  const accessToken = localStorage.getItem("accessToken");
+  const accessToken = secureLocalStorage.getItem("accessToken");
   const queryResult = useRecoilState(queryState);
   const setQueryResult = useSetRecoilState(queryState);
 
@@ -105,8 +106,8 @@ const Login: React.FC = () => {
         //   // httpOnly : true
         // });
 
-        localStorage.setItem("accessToken", token);
-        localStorage.setItem("refreshToken", refreshToken);
+        secureLocalStorage.setItem("accessToken", token);
+        secureLocalStorage.setItem("refreshToken", refreshToken);
 
         setLoginResult({
           langCode: defaultCulture,

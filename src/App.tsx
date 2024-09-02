@@ -7,7 +7,7 @@ import {
 } from "react-router-dom";
 import { RecoilRoot, useRecoilState, useSetRecoilState } from "recoil";
 // import "./index.scss";
-
+import  secureLocalStorage  from  "react-secure-storage";
 import { createGlobalStyle } from "styled-components";
 import AuthRoute from "./components/AuthRoute";
 import PanelBarNavContainer from "./components/PanelBarNavContainer";
@@ -273,7 +273,7 @@ const AppInner: React.FC = () => {
     isMobileMenuOpendState
   );
   const processApi = useApi();
-  const accessToken = localStorage.getItem("accessToken");
+  const accessToken = secureLocalStorage.getItem("accessToken");
   const { switcher, themes, currentTheme = "" } = useThemeSwitcher();
   const [loginResult] = useRecoilState(loginResultState);
   const userName = loginResult ? loginResult.userName : "";

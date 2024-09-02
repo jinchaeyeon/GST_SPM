@@ -51,6 +51,7 @@ import {
   useState,
 } from "react";
 import { useHistory, useLocation } from "react-router-dom";
+import secureLocalStorage from "react-secure-storage";
 import { useRecoilState, useSetRecoilState } from "recoil";
 import SwiperCore from "swiper";
 import "swiper/css";
@@ -754,7 +755,7 @@ const App = () => {
       const role = loginResult ? loginResult.role : "";
       const isAdmin = role === "ADMIN";
 
-      if (!isAdmin && localStorage.getItem("accessToken")) {
+      if (!isAdmin && secureLocalStorage.getItem("accessToken")) {
         alert("접근 권한이 없습니다.");
         history.goBack();
       }
@@ -818,16 +819,17 @@ const App = () => {
   };
   const pageChange4 = (event: GridPageChangeEvent) => {
     const { page } = event;
-    for (let key of Object.keys(localStorage)) {
+    for (let key of Object.keys(Object.values(secureLocalStorage)[0])) {
       if (
-        key != "passwordExpirationInfo" &&
-        key != "accessToken" &&
-        key != "loginResult" &&
-        key != "refreshToken" &&
-        key != "PopUpNotices" &&
-        key != "recoil-persist"
+        key != "@secure.passwordExpirationInfo" &&
+        key != "@secure.accessToken" &&
+        key != "@secure.loginResult" &&
+        key != "@secure.refreshToken" &&
+        key != "@secure.PopUpNotices" &&
+        key != "@secure.queryState" &&
+        key != "@secure.OSState"
       ) {
-        localStorage.removeItem(key);
+        secureLocalStorage.removeItem(key.replace("@secure.", ""));
       }
     }
 
@@ -961,16 +963,17 @@ const App = () => {
 
   const handleSelectTab = (e: any) => {
     setTabSelected(e.selected);
-    for (let key of Object.keys(localStorage)) {
+    for (let key of Object.keys(Object.values(secureLocalStorage)[0])) {
       if (
-        key != "passwordExpirationInfo" &&
-        key != "accessToken" &&
-        key != "loginResult" &&
-        key != "refreshToken" &&
-        key != "PopUpNotices" &&
-        key != "recoil-persist"
+        key != "@secure.passwordExpirationInfo" &&
+        key != "@secure.accessToken" &&
+        key != "@secure.loginResult" &&
+        key != "@secure.refreshToken" &&
+        key != "@secure.PopUpNotices" &&
+        key != "@secure.queryState" &&
+        key != "@secure.OSState"
       ) {
-        localStorage.removeItem(key);
+        secureLocalStorage.removeItem(key.replace("@secure.", ""));
       }
     }
     deletedRows = [];
@@ -1436,7 +1439,7 @@ const App = () => {
   };
 
   useEffect(() => {
-    if (localStorage.getItem("accessToken")) {
+    if (secureLocalStorage.getItem("accessToken")) {
       // ComboBox에 사용할 코드 리스트 조회
       fetchWorkType();
       fetchValueCode();
@@ -2456,16 +2459,22 @@ const App = () => {
             if (refEditorRef.current) {
               const document = data.document;
               if (
-                localStorage.getItem(key[DATA_ITEM_KEY4]) == undefined ||
-                localStorage.getItem(key[DATA_ITEM_KEY4]) == null
+                secureLocalStorage.getItem(key[DATA_ITEM_KEY4]) == undefined ||
+                secureLocalStorage.getItem(key[DATA_ITEM_KEY4]) == null
               ) {
-                localStorage.setItem(key[DATA_ITEM_KEY4], key.contents);
-                localStorage.setItem(key[DATA_ITEM_KEY4] + "key", document);
+                secureLocalStorage.setItem(key[DATA_ITEM_KEY4], key.contents);
+                secureLocalStorage.setItem(
+                  key[DATA_ITEM_KEY4] + "key",
+                  document
+                );
               } else {
-                localStorage.removeItem(key[DATA_ITEM_KEY4]);
-                localStorage.removeItem(key[DATA_ITEM_KEY4] + "key");
-                localStorage.setItem(key[DATA_ITEM_KEY4], key.contents);
-                localStorage.setItem(key[DATA_ITEM_KEY4] + "key", document);
+                secureLocalStorage.removeItem(key[DATA_ITEM_KEY4]);
+                secureLocalStorage.removeItem(key[DATA_ITEM_KEY4] + "key");
+                secureLocalStorage.setItem(key[DATA_ITEM_KEY4], key.contents);
+                secureLocalStorage.setItem(
+                  key[DATA_ITEM_KEY4] + "key",
+                  document
+                );
               }
               refEditorRef.current.setHtml(document);
             }
@@ -2488,7 +2497,7 @@ const App = () => {
   };
 
   useEffect(() => {
-    if (filters.isSearch && localStorage.getItem("accessToken")) {
+    if (filters.isSearch && secureLocalStorage.getItem("accessToken")) {
       const _ = require("lodash");
       const deepCopiedFilters = _.cloneDeep(filters);
       setFilters((prev) => ({ ...prev, findRowValue: "", isSearch: false })); // 한번만 조회되도록
@@ -2629,17 +2638,20 @@ const App = () => {
     setSelectedState4(newSelectedState);
 
     if (
-      localStorage.getItem(currentRow[DATA_ITEM_KEY4]) == undefined ||
-      localStorage.getItem(currentRow[DATA_ITEM_KEY4]) == null
+      secureLocalStorage.getItem(currentRow[DATA_ITEM_KEY4]) == undefined ||
+      secureLocalStorage.getItem(currentRow[DATA_ITEM_KEY4]) == null
     ) {
-      localStorage.setItem(currentRow[DATA_ITEM_KEY4], textContent);
-      localStorage.setItem(currentRow[DATA_ITEM_KEY4] + "key", editorContent2);
+      secureLocalStorage.setItem(currentRow[DATA_ITEM_KEY4], textContent);
+      secureLocalStorage.setItem(
+        currentRow[DATA_ITEM_KEY4] + "key",
+        editorContent2
+      );
     } else {
       if (currentRow.rowstatus == "U" || currentRow.rowstatus == "N") {
-        localStorage.removeItem(currentRow[DATA_ITEM_KEY4]);
-        localStorage.removeItem(currentRow[DATA_ITEM_KEY4] + "key");
-        localStorage.setItem(currentRow[DATA_ITEM_KEY4], textContent);
-        localStorage.setItem(
+        secureLocalStorage.removeItem(currentRow[DATA_ITEM_KEY4]);
+        secureLocalStorage.removeItem(currentRow[DATA_ITEM_KEY4] + "key");
+        secureLocalStorage.setItem(currentRow[DATA_ITEM_KEY4], textContent);
+        secureLocalStorage.setItem(
           currentRow[DATA_ITEM_KEY4] + "key",
           editorContent2
         );
@@ -2661,7 +2673,7 @@ const App = () => {
           selectedRowData
         );
       } else {
-        editorContent3 = localStorage.getItem(
+        editorContent3 = secureLocalStorage.getItem(
           selectedRowData[DATA_ITEM_KEY4] + "key"
         );
         if (refEditorRef.current) {
@@ -2679,16 +2691,17 @@ const App = () => {
     ) {
       alert("필수항목을 입력해주세요");
     } else {
-      for (let key of Object.keys(localStorage)) {
+      for (let key of Object.keys(Object.values(secureLocalStorage)[0])) {
         if (
-          key != "passwordExpirationInfo" &&
-          key != "accessToken" &&
-          key != "loginResult" &&
-          key != "refreshToken" &&
-          key != "PopUpNotices" &&
-          key != "recoil-persist"
+          key != "@secure.passwordExpirationInfo" &&
+          key != "@secure.accessToken" &&
+          key != "@secure.loginResult" &&
+          key != "@secure.refreshToken" &&
+          key != "@secure.PopUpNotices" &&
+          key != "@secure.queryState" &&
+          key != "@secure.OSState"
         ) {
-          localStorage.removeItem(key);
+          secureLocalStorage.removeItem(key.replace("@secure.", ""));
         }
       }
       setFileList([]);
@@ -3160,25 +3173,6 @@ const App = () => {
   }, [ref_type, custcd, ref_key, ref_seq]);
 
   const onAddClick = () => {
-    if (mainDataResult4.total > 0) {
-      const currentRow = mainDataResult4.data.filter(
-        (item) =>
-          item[DATA_ITEM_KEY4] == Object.getOwnPropertyNames(selectedState4)[0]
-      )[0];
-      let editorContent: any = "";
-      if (refEditorRef.current) {
-        editorContent = refEditorRef.current.getContent();
-      }
-
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(editorContent, "text/html");
-      const textContent = doc.body.textContent || ""; //문자열
-      localStorage.removeItem(currentRow[DATA_ITEM_KEY4]);
-      localStorage.removeItem(currentRow[DATA_ITEM_KEY4] + "key");
-      localStorage.setItem(currentRow[DATA_ITEM_KEY4], textContent);
-      localStorage.setItem(currentRow[DATA_ITEM_KEY4] + "key", editorContent);
-    }
-
     mainDataResult4.data.map((item) => {
       if (item[DATA_ITEM_KEY4] > temp) {
         temp = item[DATA_ITEM_KEY4];
@@ -3231,6 +3225,15 @@ const App = () => {
       };
     });
     setSelectedState4({ [newDataItem[DATA_ITEM_KEY4]]: true });
+
+    secureLocalStorage.setItem(
+      newDataItem[DATA_ITEM_KEY4].toString(),
+      ""
+    );
+    secureLocalStorage.setItem(
+      newDataItem[DATA_ITEM_KEY4] + "key",
+      ""
+    );
   };
 
   const onRemoveClick = async () => {
@@ -3309,12 +3312,13 @@ const App = () => {
               Object1.push(index);
               if (
                 !(
-                  localStorage.getItem(item[DATA_ITEM_KEY4]) == undefined ||
-                  localStorage.getItem(item[DATA_ITEM_KEY4]) == null
+                  secureLocalStorage.getItem(item[DATA_ITEM_KEY4]) ==
+                    undefined ||
+                  secureLocalStorage.getItem(item[DATA_ITEM_KEY4]) == null
                 )
               ) {
-                localStorage.removeItem(item[DATA_ITEM_KEY4]);
-                localStorage.removeItem(item[DATA_ITEM_KEY4] + "key");
+                secureLocalStorage.removeItem(item[DATA_ITEM_KEY4]);
+                secureLocalStorage.removeItem(item[DATA_ITEM_KEY4] + "key");
               }
             }
           });
@@ -3335,13 +3339,13 @@ const App = () => {
 
             if (
               !(
-                localStorage.getItem(row[DATA_ITEM_KEY4]) == undefined ||
-                localStorage.getItem(row[DATA_ITEM_KEY4]) == null
+                secureLocalStorage.getItem(row[DATA_ITEM_KEY4]) == undefined ||
+                secureLocalStorage.getItem(row[DATA_ITEM_KEY4]) == null
               )
             ) {
               if (refEditorRef.current != null) {
                 refEditorRef.current.setHtml(
-                  localStorage.getItem(row[DATA_ITEM_KEY4]) + "key"
+                  secureLocalStorage.getItem(row[DATA_ITEM_KEY4]) + "key"
                 );
               }
             } else {
@@ -3509,10 +3513,13 @@ const App = () => {
           item[DATA_ITEM_KEY4] == Object.getOwnPropertyNames(selectedState4)[0]
       )[0];
       array = newData;
-      localStorage.removeItem(currentRow[DATA_ITEM_KEY4]);
-      localStorage.removeItem(currentRow[DATA_ITEM_KEY4] + "key");
-      localStorage.setItem(currentRow[DATA_ITEM_KEY4], textContent);
-      localStorage.setItem(currentRow[DATA_ITEM_KEY4] + "key", editorContent);
+      secureLocalStorage.removeItem(currentRow[DATA_ITEM_KEY4]);
+      secureLocalStorage.removeItem(currentRow[DATA_ITEM_KEY4] + "key");
+      secureLocalStorage.setItem(currentRow[DATA_ITEM_KEY4], textContent);
+      secureLocalStorage.setItem(
+        currentRow[DATA_ITEM_KEY4] + "key",
+        editorContent
+      );
 
       type TRowsArr = {
         row_status: string[];
@@ -3629,8 +3636,8 @@ const App = () => {
 
           let str = "";
           let textContent = "";
-          const value = localStorage.getItem(num + "key");
-          const text = localStorage.getItem(num);
+          const value = secureLocalStorage.getItem(num + "key");
+          const text = secureLocalStorage.getItem(num);
           if (typeof value == "string") {
             str = value; // ok
           }
@@ -3646,8 +3653,8 @@ const App = () => {
             guids = guid;
           }
           arrays[guids] = convertedEditorContent;
-          localStorage.removeItem(num);
-          localStorage.removeItem(num + "key");
+          secureLocalStorage.removeItem(num);
+          secureLocalStorage.removeItem(num + "key");
 
           rowsArr.row_status.push(rowstatus);
           rowsArr.guid_s.push(guids);
@@ -3709,8 +3716,8 @@ const App = () => {
 
           let str = "";
           let textContent = "";
-          const value = localStorage.getItem(num + "key");
-          const text = localStorage.getItem(num);
+          const value = secureLocalStorage.getItem(num + "key");
+          const text = secureLocalStorage.getItem(num);
           if (typeof value == "string") {
             str = value; // ok
           }
@@ -3726,8 +3733,8 @@ const App = () => {
             guids = guid;
           }
           arrays[guids] = convertedEditorContent;
-          localStorage.removeItem(num);
-          localStorage.removeItem(num + "key");
+          secureLocalStorage.removeItem(num);
+          secureLocalStorage.removeItem(num + "key");
 
           rowsArr.row_status.push(rowstatus);
           rowsArr.guid_s.push(guids);
@@ -3884,16 +3891,17 @@ const App = () => {
         }
 
         if (data != null) {
-          for (let key of Object.keys(localStorage)) {
+          for (let key of Object.keys(Object.values(secureLocalStorage)[0])) {
             if (
-              key != "passwordExpirationInfo" &&
-              key != "accessToken" &&
-              key != "loginResult" &&
-              key != "refreshToken" &&
-              key != "PopUpNotices" &&
-              key != "recoil-persist"
+              key != "@secure.passwordExpirationInfo" &&
+              key != "@secure.accessToken" &&
+              key != "@secure.loginResult" &&
+              key != "@secure.refreshToken" &&
+              key != "@secure.PopUpNotices" &&
+              key != "@secure.queryState" &&
+              key != "@secure.OSState"
             ) {
-              localStorage.removeItem(key);
+              secureLocalStorage.removeItem(key.replace("@secure.", ""));
             }
           }
           setFileList([]);
@@ -4021,7 +4029,7 @@ const App = () => {
           ref_seq = "",
         } = item;
         let str = "";
-        const value = localStorage.getItem(num + "key");
+        const value = secureLocalStorage.getItem(num + "key");
 
         if (typeof value == "string") {
           str = value; // ok
@@ -4034,8 +4042,8 @@ const App = () => {
         const convertedEditorContent = bytesToBase64(bytes(str)); //html
 
         arrays[guid] = convertedEditorContent;
-        localStorage.removeItem(num);
-        localStorage.removeItem(num + "key");
+        secureLocalStorage.removeItem(num);
+        secureLocalStorage.removeItem(num + "key");
 
         rowsArr.row_status.push(rowstatus);
         rowsArr.guid_s.push(guid);
@@ -4128,16 +4136,17 @@ const App = () => {
       }
 
       if (data != null) {
-        for (let key of Object.keys(localStorage)) {
+        for (let key of Object.keys(Object.values(secureLocalStorage)[0])) {
           if (
-            key != "passwordExpirationInfo" &&
-            key != "accessToken" &&
-            key != "loginResult" &&
-            key != "refreshToken" &&
-            key != "PopUpNotices" &&
-            key != "recoil-persist"
+            key != "@secure.passwordExpirationInfo" &&
+            key != "@secure.accessToken" &&
+            key != "@secure.loginResult" &&
+            key != "@secure.refreshToken" &&
+            key != "@secure.PopUpNotices" &&
+            key != "@secure.queryState" &&
+            key != "@secure.OSState"
           ) {
-            localStorage.removeItem(key);
+            secureLocalStorage.removeItem(key.replace("@secure.", ""));
           }
         }
 
@@ -4232,6 +4241,7 @@ const App = () => {
         (item) =>
           item[DATA_ITEM_KEY4] == Object.getOwnPropertyNames(selectedState4)[0]
       )[0];
+
       let editorContent: any = "";
       if (refEditorRef.current) {
         editorContent = refEditorRef.current.getContent();
@@ -4240,19 +4250,20 @@ const App = () => {
       const parser = new DOMParser();
       const doc = parser.parseFromString(editorContent, "text/html");
       const textContent = doc.body.textContent || ""; //문자열
+
       if (
         !(
-          localStorage.getItem(currentRow[DATA_ITEM_KEY4]) == undefined ||
-          localStorage.getItem(currentRow[DATA_ITEM_KEY4]) == null
+          secureLocalStorage.getItem(currentRow[DATA_ITEM_KEY4]) == undefined ||
+          secureLocalStorage.getItem(currentRow[DATA_ITEM_KEY4]) == null
         )
       ) {
-        localStorage.removeItem(currentRow[DATA_ITEM_KEY4]);
-        localStorage.removeItem(currentRow[DATA_ITEM_KEY4] + "key");
-        localStorage.setItem(currentRow[DATA_ITEM_KEY4], textContent);
-        localStorage.setItem(currentRow[DATA_ITEM_KEY4] + "key", editorContent);
-      } else {
-        localStorage.setItem(currentRow[DATA_ITEM_KEY], textContent);
-        localStorage.setItem(currentRow[DATA_ITEM_KEY] + "key", editorContent);
+        secureLocalStorage.removeItem(currentRow[DATA_ITEM_KEY4]);
+        secureLocalStorage.removeItem(currentRow[DATA_ITEM_KEY4] + "key");
+        secureLocalStorage.setItem(currentRow[DATA_ITEM_KEY4], textContent);
+        secureLocalStorage.setItem(
+          currentRow[DATA_ITEM_KEY4] + "key",
+          editorContent
+        );
       }
 
       const newData = mainDataResult4.data.map((item) =>
@@ -4299,8 +4310,8 @@ const App = () => {
 
     let str = "";
     let textContent = "";
-    const value = localStorage.getItem(currentRow.num + "key");
-    const text = localStorage.getItem(currentRow.num);
+    const value = secureLocalStorage.getItem(currentRow.num + "key");
+    const text = secureLocalStorage.getItem(currentRow.num);
     if (typeof value == "string") {
       str = value; // ok
     }
@@ -4394,16 +4405,17 @@ const App = () => {
       data = null;
     }
     if (data != null) {
-      for (let key of Object.keys(localStorage)) {
+      for (let key of Object.keys(Object.values(secureLocalStorage)[0])) {
         if (
           key != "passwordExpirationInfo" &&
           key != "accessToken" &&
           key != "loginResult" &&
           key != "refreshToken" &&
           key != "PopUpNotices" &&
-          key != "recoil-persist"
+          key != "queryState" &&
+          key != "OSState"
         ) {
-          localStorage.removeItem(key);
+          secureLocalStorage.removeItem(key.replace("@secure.", ""));
         }
       }
       setFileList([]);

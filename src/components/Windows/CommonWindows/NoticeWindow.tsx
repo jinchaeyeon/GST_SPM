@@ -13,6 +13,7 @@ import { IWindowPosition } from "../../../hooks/interfaces";
 import { loginResultState } from "../../../store/atoms";
 import { TEditorHandle } from "../../../store/types";
 import RichEditor from "../../RichEditor";
+import  secureLocalStorage  from  "react-secure-storage";
 
 type IWindow = {
   setVisible(t: boolean): void;
@@ -63,12 +64,12 @@ const NoticeWindow = ({
 
   const onClose = () => {
     if (chk == true) {
-      const savedNoticesRaw = localStorage.getItem("PopUpNotices");
+      const savedNoticesRaw: any = secureLocalStorage.getItem("PopUpNotices");
       const savedNotices = savedNoticesRaw ? JSON.parse(savedNoticesRaw) : [];
       const updatedNotices = [...savedNotices, data.data[current].document_id];
       const uniqueNotices = Array.from(new Set(updatedNotices));
 
-      localStorage.setItem("PopUpNotices", JSON.stringify(uniqueNotices));
+      secureLocalStorage.setItem("PopUpNotices", JSON.stringify(uniqueNotices));
     }
     setPara();
     setVisible(false);

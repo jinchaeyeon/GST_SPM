@@ -37,6 +37,7 @@ import RichEditor from "../../RichEditor";
 import Window from "../WindowComponent/Window";
 import PopUpAttachmentsWindow from "./PopUpAttachmentsWindow";
 import TaskOrderDataWindow from "./TaskOrderDataWindow";
+import  secureLocalStorage  from  "react-secure-storage";
 
 type IKendoWindow = {
   workType: string;
@@ -322,7 +323,7 @@ const KendoWindow = ({
 
   useEffect(() => {
     // ComboBox에 사용할 코드 리스트 조회
-    if (localStorage.getItem("accessToken")) {
+    if (secureLocalStorage.getItem("accessToken")) {
       fetchCustomers();
       fetchWorkType();
       fetchValueCode();

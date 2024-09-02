@@ -15,6 +15,7 @@ import {
   setExpandedState,
   setGroupIds,
 } from "@progress/kendo-react-data-tools";
+import  secureLocalStorage  from  "react-secure-storage";
 import { DatePicker } from "@progress/kendo-react-dateinputs";
 import {
   ComboBoxFilterChangeEvent,
@@ -1279,7 +1280,7 @@ const App = () => {
   };
 
   useEffect(() => {
-    if (filters.isSearch && localStorage.getItem("accessToken")) {
+    if (filters.isSearch && secureLocalStorage.getItem("accessToken")) {
       const _ = require("lodash");
       const deepCopiedFilters = _.cloneDeep(filters);
       setFilters((prev) => ({ ...prev, find_row_value: "", isSearch: false })); // 한번만 조회되도록
@@ -1288,7 +1289,7 @@ const App = () => {
   }, [filters]);
 
   useEffect(() => {
-    if (subFilters.isSearch && localStorage.getItem("accessToken")) {
+    if (subFilters.isSearch && secureLocalStorage.getItem("accessToken")) {
       const _ = require("lodash");
       const deepCopiedFilters = _.cloneDeep(subFilters);
       setSubFilters((prev) => ({
@@ -1301,7 +1302,7 @@ const App = () => {
   }, [subFilters]);
 
   useEffect(() => {
-    if (subFilters2.isSearch && localStorage.getItem("accessToken")) {
+    if (subFilters2.isSearch && secureLocalStorage.getItem("accessToken")) {
       const _ = require("lodash");
       const deepCopiedFilters = _.cloneDeep(subFilters2);
       setSubFilters2((prev) => ({
@@ -1525,7 +1526,7 @@ const App = () => {
   };
 
   useEffect(() => {
-    if (localStorage.getItem("accessToken")) {
+    if (secureLocalStorage.getItem("accessToken")) {
       // ComboBox에 사용할 코드 리스트 조회
       fetchDateType();
       fetchProgressstatus();
@@ -2878,7 +2879,7 @@ const App = () => {
   };
 
   useEffect(() => {
-    if (localStorage.getItem("accessToken")) {
+    if (secureLocalStorage.getItem("accessToken")) {
       const pjtmanager: any = usersData.find(
         (item: any) => item.user_id == information.pjtmanager.user_id
       );

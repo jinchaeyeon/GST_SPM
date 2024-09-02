@@ -18,6 +18,7 @@ import { Splitter, SplitterOnChangeEvent } from "@progress/kendo-react-layout";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useHistory, useLocation } from "react-router-dom";
 import { useRecoilState, useSetRecoilState } from "recoil";
+import  secureLocalStorage  from  "react-secure-storage";
 import SwiperCore from "swiper";
 import "swiper/css";
 import { Swiper, SwiperSlide } from "swiper/react";
@@ -427,7 +428,7 @@ const App = () => {
   };
 
   useEffect(() => {
-    if (filters.isFetch && localStorage.getItem("accessToken")) {
+    if (filters.isFetch && secureLocalStorage.getItem("accessToken")) {
       const _ = require("lodash");
       const deepCopiedFilters = _.cloneDeep(filters);
 
@@ -445,7 +446,7 @@ const App = () => {
   }, [filters]);
 
   useEffect(() => {
-    if (localStorage.getItem("accessToken")) {
+    if (secureLocalStorage.getItem("accessToken")) {
       const queryParams = new URLSearchParams(location.search);
       if (queryParams.has("go")) {
         history.replace({}, "");
@@ -462,7 +463,7 @@ const App = () => {
 
   useEffect(() => {
     // 메인 그리드에서 클릭하여 오픈시 조회조건 재설정하여 조회
-    if (filterValue.type === "meeting" && localStorage.getItem("accessToken")) {
+    if (filterValue.type === "meeting" && secureLocalStorage.getItem("accessToken")) {
       const isExceedFromDate =
         convertDateToStr(fromDate) > filterValue.dataItem.recdt;
 
@@ -481,7 +482,7 @@ const App = () => {
   }, [filterValue]);
 
   useEffect(() => {
-    if (meetingnum !== "" && localStorage.getItem("accessToken")) {
+    if (meetingnum !== "" && secureLocalStorage.getItem("accessToken")) {
       fetchDetail();
     }
   }, [meetingnum]);

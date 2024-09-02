@@ -25,6 +25,7 @@ import "swiper/css";
 import "swiper/css/effect-coverflow";
 import "swiper/css/navigation";
 import { Swiper, SwiperSlide } from "swiper/react";
+import  secureLocalStorage  from  "react-secure-storage";
 import {
   ButtonContainer,
   GridContainer,
@@ -202,7 +203,7 @@ const Main: React.FC = () => {
   const fetchPopUp = async () => {
     let data: any;
 
-    const savedNoticesRaw = localStorage.getItem("PopUpNotices");
+    const savedNoticesRaw: any = secureLocalStorage.getItem("PopUpNotices");
     const savedNotices = savedNoticesRaw ? JSON.parse(savedNoticesRaw) : [];
 
     const ref_key = savedNotices.join(",");

@@ -1,5 +1,4 @@
 import { atom, AtomEffect, DefaultValue } from "recoil";
-import { recoilPersist } from "recoil-persist";
 import { DEFAULT_SESSION_ITEM } from "../components/CommonString";
 import {
   TAttachmentType,
@@ -8,27 +7,26 @@ import {
   TPasswordExpirationInfo,
   TSessionItem,
 } from "./types";
-
-const { persistAtom } = recoilPersist();
+import  secureLocalStorage  from  "react-secure-storage";
 
 const localStorageEffect: <T>(key: string) => AtomEffect<T> =
   (key: string) =>
   ({ setSelf, onSet }) => {
-    const savedValue = localStorage.getItem(key);
+    const savedValue: any = secureLocalStorage.getItem(key);
 
     if (savedValue != null) {
       try {
         setSelf(JSON.parse(savedValue));
       } catch (e) {
-        localStorage.removeItem(key);
+        secureLocalStorage.removeItem(key.replace("@secure.", ""));
         setSelf(new DefaultValue());
       }
     }
     onSet((newValue: any) => {
       if (newValue instanceof DefaultValue || newValue == null) {
-        localStorage.removeItem(key);
+        secureLocalStorage.removeItem(key.replace("@secure.", ""));
       } else {
-        localStorage.setItem(key, JSON.stringify(newValue));
+        secureLocalStorage.setItem(key, JSON.stringify(newValue));
       }
     });
   };
@@ -94,7 +92,7 @@ export const fcmTokenState = atom({
 export const queryState = atom({
   key: "queryState",
   default: "",
-  effects_UNSTABLE: [persistAtom],
+  effects_UNSTABLE: [localStorageEffect("queryState")],
 });
 
 // 삭제된 데이터의 첨부파일 번호를 저장하는 용도
@@ -132,7 +130,7 @@ export const filterValueState = atom<{
 export const OSState = atom<boolean>({
   key: "OSState",
   default: false,
-  effects_UNSTABLE: [persistAtom],
+  effects_UNSTABLE: [localStorageEffect("OSState")],
 });
 
 export const isFilterheightstate = atom<number>({
