@@ -9,10 +9,13 @@ import { Popup } from "@progress/kendo-react-popup";
 import { getAnalytics } from "firebase/analytics";
 import { initializeApp } from "firebase/app";
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
+import jwt_decode from "jwt-decode";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useThemeSwitcher } from "react-css-theme-switcher";
 import { useHistory, withRouter } from "react-router-dom";
+import secureLocalStorage from "react-secure-storage";
 import { useRecoilState } from "recoil";
+import styled from "styled-components";
 import {
   AppName,
   Content,
@@ -42,12 +45,9 @@ import { DEFAULT_ATTDATNUMS } from "./CommonString";
 import Loader from "./Loader";
 import Loading from "./Loading";
 import ChangePasswordWindow from "./Windows/CommonWindows/ChangePasswordWindow";
+import ReceptionistWindow from "./Windows/CommonWindows/ReceptionistWindow";
 import SystemOptionWindow from "./Windows/CommonWindows/SystemOptionWindow";
 import UserOptionsWindow from "./Windows/CommonWindows/UserOptionsWindow";
-import jwt_decode from "jwt-decode";
-import ReceptionistWindow from "./Windows/CommonWindows/ReceptionistWindow";
-import { Icon } from "@progress/kendo-react-common";
-import styled from "styled-components";
 
 interface DecodedToken {
   exp: number;
@@ -144,7 +144,7 @@ export const removeBeforeUnloadListener = () => {
 const PanelBarNavContainer = (props: any) => {
   const processApi = useApi();
   const [loginResult] = useRecoilState(loginResultState);
-  const accessToken = localStorage.getItem("accessToken");
+  const accessToken: any = secureLocalStorage.getItem("accessToken");
   const [token] = useState(accessToken);
   const [pwExpInfo, setPwExpInfo] = useRecoilState(passwordExpirationInfoState);
   useEffect(() => {
@@ -365,16 +365,17 @@ const PanelBarNavContainer = (props: any) => {
     if (navigator.onLine) {
       props.history.push(route);
 
-      for (let key of Object.keys(localStorage)) {
+      for (let key of Object.keys(Object.values(secureLocalStorage)[0])) {
         if (
-          key != "passwordExpirationInfo" &&
-          key != "accessToken" &&
-          key != "loginResult" &&
-          key != "refreshToken" &&
-          key != "PopUpNotices" &&
-          key != "recoil-persist"
+          key != "@secure.passwordExpirationInfo" &&
+          key != "@secure.accessToken" &&
+          key != "@secure.loginResult" &&
+          key != "@secure.refreshToken" &&
+          key != "@secure.PopUpNotices" &&
+          key != "@secure.queryState" &&
+          key != "@secure.OSState"
         ) {
-          localStorage.removeItem(key);
+          secureLocalStorage.removeItem(key.replace("@secure.", ""));
         }
       }
 

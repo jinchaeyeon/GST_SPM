@@ -13,6 +13,7 @@ import {
 } from "@progress/kendo-react-grid";
 import { Checkbox, Input, RadioButton } from "@progress/kendo-react-inputs";
 import { Splitter, SplitterOnChangeEvent } from "@progress/kendo-react-layout";
+import  secureLocalStorage  from  "react-secure-storage";
 import {
   ListView,
   ListViewFooter,
@@ -140,7 +141,7 @@ const ProjectMonitoring: React.FC = () => {
       const role = loginResult ? loginResult.role : "";
       const isAdmin = role === "ADMIN";
 
-      if (!isAdmin && localStorage.getItem("accessToken")) {
+      if (!isAdmin && secureLocalStorage.getItem("accessToken")) {
         alert("접근 권한이 없습니다.");
         history.goBack();
       }
@@ -544,7 +545,7 @@ const ProjectMonitoring: React.FC = () => {
   };
 
   useEffect(() => {
-    if (filters.isSearch && localStorage.getItem("accessToken")) {
+    if (filters.isSearch && secureLocalStorage.getItem("accessToken")) {
       const _ = require("lodash");
       const deepCopiedFilters = _.cloneDeep(filters);
       setFilters((prev) => ({ ...prev, find_row_value: "", isSearch: false })); // 한번만 조회되도록
@@ -553,7 +554,7 @@ const ProjectMonitoring: React.FC = () => {
   }, [filters]);
 
   useEffect(() => {
-    if (detailFilters.isSearch && localStorage.getItem("accessToken")) {
+    if (detailFilters.isSearch && secureLocalStorage.getItem("accessToken")) {
       const _ = require("lodash");
       const deepCopiedFilters = _.cloneDeep(detailFilters);
       setDetailFilters((prev) => ({
@@ -566,7 +567,7 @@ const ProjectMonitoring: React.FC = () => {
   }, [detailFilters]);
 
   useEffect(() => {
-    if (localStorage.getItem("accessToken")) {
+    if (secureLocalStorage.getItem("accessToken")) {
       fetchUsers();
       fetchstatus();
       fetchDateType();

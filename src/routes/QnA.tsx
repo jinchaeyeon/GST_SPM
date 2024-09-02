@@ -7,6 +7,7 @@ import {
   MultiSelect,
   MultiSelectChangeEvent,
 } from "@progress/kendo-react-dropdowns";
+import  secureLocalStorage  from  "react-secure-storage";
 import {
   getSelectedState,
   Grid,
@@ -159,7 +160,7 @@ var height8 = 0;
 
 const App = () => {
   const [loginResult] = useRecoilState(loginResultState);
-  const accessToken = localStorage.getItem("accessToken");
+  const accessToken: any = secureLocalStorage.getItem("accessToken");
   const [token] = useState(accessToken);
   const decodedToken: any = token ? jwtDecode(token) : undefined;
   const { customercode = "" } = decodedToken || {};
@@ -868,7 +869,7 @@ const App = () => {
     if (
       filterValue.type !== "qna" &&
       filters.isSearch &&
-      localStorage.getItem("accessToken")
+      secureLocalStorage.getItem("accessToken")
     ) {
       const _ = require("lodash");
       const deepCopiedFilters = _.cloneDeep(filters);
@@ -886,7 +887,7 @@ const App = () => {
 
   useEffect(() => {
     // 메인 그리드에서 클릭하여 오픈시 조회조건 재설정하여 조회
-    if (filterValue.type === "qna" && localStorage.getItem("accessToken")) {
+    if (filterValue.type === "qna" && secureLocalStorage.getItem("accessToken")) {
       const isExceedFromDate =
         convertDateToStr(fromDate) > filterValue.dataItem.request_date;
 
@@ -921,7 +922,7 @@ const App = () => {
     if (
       !detailData.is_lock &&
       detailData.is_public !== "Y" &&
-      localStorage.getItem("accessToken")
+      secureLocalStorage.getItem("accessToken")
     ) {
       setDetailData((prev) => ({ ...prev, is_public: "Y" }));
     }
@@ -932,7 +933,7 @@ const App = () => {
       isDataLocked &&
       detailData.work_type !== "N" &&
       pwInputRef.current &&
-      localStorage.getItem("accessToken")
+      secureLocalStorage.getItem("accessToken")
     ) {
       pwInputRef.current.focus();
     }
@@ -940,7 +941,7 @@ const App = () => {
 
   /* 푸시 알림 클릭시 이동 테스트 코드 */
   useEffect(() => {
-    if (filterValue.type !== "qna" && localStorage.getItem("accessToken")) {
+    if (filterValue.type !== "qna" && secureLocalStorage.getItem("accessToken")) {
       const queryParams = new URLSearchParams(location.search);
       if (queryParams.has("go")) {
         history.replace({}, "");

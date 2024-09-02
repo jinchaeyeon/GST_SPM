@@ -52,6 +52,7 @@ import { useApi } from "../hooks/api";
 import { isLoading, loginResultState, titles } from "../store/atoms";
 import { dataTypeColumns } from "../store/columns/common-columns";
 import { Iparameters } from "../store/types";
+import  secureLocalStorage  from  "react-secure-storage";
 
 var height = 0;
 var height2 = 0;
@@ -118,7 +119,7 @@ const Promotion = () => {
   }, []);
 
   useEffect(() => {
-    if (localStorage.getItem("accessToken")) {
+    if (secureLocalStorage.getItem("accessToken")) {
       setTitle("서비스소개");
       fetchTypes();
       fetchMainGrid(filters);

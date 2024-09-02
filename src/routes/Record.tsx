@@ -12,6 +12,7 @@ import {
   MultiSelect,
   MultiSelectChangeEvent,
 } from "@progress/kendo-react-dropdowns";
+import  secureLocalStorage  from  "react-secure-storage";
 import {
   Grid,
   GridCellProps,
@@ -577,7 +578,7 @@ const App = () => {
       const role = loginResult ? loginResult.role : "";
       const isAdmin = role === "ADMIN";
 
-      if (!isAdmin && localStorage.getItem("accessToken")) {
+      if (!isAdmin && secureLocalStorage.getItem("accessToken")) {
         alert("접근 권한이 없습니다.");
         history.goBack();
       }
@@ -646,7 +647,7 @@ const App = () => {
   };
 
   useEffect(() => {
-    if (localStorage.getItem("accessToken")) {
+    if (secureLocalStorage.getItem("accessToken")) {
       // ComboBox에 사용할 코드 리스트 조회
       fetchstatus();
       fetchWorkType();
@@ -1233,7 +1234,7 @@ const App = () => {
   };
 
   useEffect(() => {
-    if (filters.isSearch && localStorage.getItem("accessToken")) {
+    if (filters.isSearch && secureLocalStorage.getItem("accessToken")) {
       const _ = require("lodash");
       const deepCopiedFilters = _.cloneDeep(filters);
       setFilters((prev) => ({ ...prev, findRowValue: "", isSearch: false })); // 한번만 조회되도록
@@ -1242,7 +1243,7 @@ const App = () => {
   }, [filters]);
 
   useEffect(() => {
-    if (localStorage.getItem("accessToken")) {
+    if (secureLocalStorage.getItem("accessToken")) {
       // ComboBox에 사용할 코드 리스트 조회
       fetchstatus();
       fetchWorkType();
@@ -1263,7 +1264,7 @@ const App = () => {
   }, []);
 
   useEffect(() => {
-    if (subFilters.isSearch && localStorage.getItem("accessToken")) {
+    if (subFilters.isSearch && secureLocalStorage.getItem("accessToken")) {
       const _ = require("lodash");
       const deepCopiedFilters = _.cloneDeep(subFilters);
       setSubFilters((prev) => ({

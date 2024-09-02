@@ -12,6 +12,7 @@ import {
   ComboBoxChangeEvent,
   ComboBoxFilterChangeEvent,
 } from "@progress/kendo-react-dropdowns";
+import  secureLocalStorage  from  "react-secure-storage";
 import {
   getSelectedState,
   Grid,
@@ -253,7 +254,7 @@ const App = () => {
   };
 
   useEffect(() => {
-    if (localStorage.getItem("accessToken")) {
+    if (secureLocalStorage.getItem("accessToken")) {
       // ComboBox에 사용할 코드 리스트 조회
       fetchTypes();
       setTitle("공유문서 열람");
@@ -278,7 +279,7 @@ const App = () => {
   };
 
   useEffect(() => {
-    if (filters.isFetch && localStorage.getItem("accessToken")) {
+    if (filters.isFetch && secureLocalStorage.getItem("accessToken")) {
       const _ = require("lodash");
       const deepCopiedFilters = _.cloneDeep(filters);
 
@@ -296,7 +297,7 @@ const App = () => {
   }, [filters]);
 
   useEffect(() => {
-    if (localStorage.getItem("accessToken")) {
+    if (secureLocalStorage.getItem("accessToken")) {
       const mainDataId = Object.getOwnPropertyNames(selectedState)[0];
       if (mainDataId) fetchDetail();
     }

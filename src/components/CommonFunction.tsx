@@ -4,6 +4,7 @@ import { bytesToBase64 } from "byte-base64";
 import calculateSize from "calculate-size";
 import { detect } from "detect-browser";
 import React, { useCallback, useEffect, useState } from "react";
+import secureLocalStorage from "react-secure-storage";
 import { useRecoilState } from "recoil";
 import { useApi } from "../hooks/api";
 import { loginResultState, sessionItemState } from "../store/atoms";
@@ -991,8 +992,17 @@ export const useSysCaption = (key: TSysCaptionKey) => {
 // 로컬 스토리지 아이템 삭제
 export const resetLocalStorage = () => {
   for (let key of Object.keys(localStorage)) {
-    if (key != "PopUpNotices" && key != "recoil-persist") {
+    if (!key.includes("@secure.s.")) {
       localStorage.removeItem(key);
+    }
+  }
+  for (let key of Object.keys(Object.values(secureLocalStorage)[0])) {
+    if (
+      key != "@secure.PopUpNotices" &&
+      key != "@secure.queryState" &&
+      key != "@secure.OSState"
+    ) {
+      secureLocalStorage.removeItem(key.replace("@secure.", ""));
     }
   }
 };

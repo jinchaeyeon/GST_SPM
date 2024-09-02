@@ -20,6 +20,7 @@ import {
   getSelectedState,
 } from "@progress/kendo-react-grid";
 import { Input, RadioGroup } from "@progress/kendo-react-inputs";
+import  secureLocalStorage  from  "react-secure-storage";
 import { bytesToBase64 } from "byte-base64";
 import "devexpress-gantt/dist/dx-gantt.min.css";
 import Gantt, {
@@ -357,7 +358,7 @@ const App = () => {
   };
 
   useEffect(() => {
-    if (localStorage.getItem("accessToken")) {
+    if (secureLocalStorage.getItem("accessToken")) {
       fetchProjectList();
       fetchProjectItems();
       setTitle("프로젝트 일정계획");
@@ -366,7 +367,7 @@ const App = () => {
 
   useEffect(() => {
     // 메인 그리드에서 클릭하여 오픈시 조회조건 재설정하여 조회
-    if (filterValue.type === "project" && localStorage.getItem("accessToken")) {
+    if (filterValue.type === "project" && secureLocalStorage.getItem("accessToken")) {
       const { project, devmngnum } = filterValue.dataItem;
       setProjectValue({ project, devmngnum });
       setFilterValue({ type: null, dataItem: {} });
@@ -377,10 +378,10 @@ const App = () => {
     if (
       projectValue &&
       projectValue.devmngnum &&
-      localStorage.getItem("accessToken")
+      secureLocalStorage.getItem("accessToken")
     ) {
       fetchProjectDetail(projectValue.devmngnum);
-    } else if (localStorage.getItem("accessToken")) {
+    } else if (secureLocalStorage.getItem("accessToken")) {
       // 초기화
       setGridData(process([], gridDataState));
       setTask([]);

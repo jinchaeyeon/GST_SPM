@@ -13,6 +13,7 @@ import {
 } from "@progress/kendo-react-grid";
 import { Input } from "@progress/kendo-react-inputs";
 import { bytesToBase64 } from "byte-base64";
+import  secureLocalStorage  from  "react-secure-storage";
 import Cookies from "js-cookie";
 import React, {
   useCallback,
@@ -316,13 +317,13 @@ const App = () => {
   };
 
   useEffect(() => {
-    if (localStorage.getItem("accessToken")) {
+    if (secureLocalStorage.getItem("accessToken")) {
       fetchAllCust();
     }
   }, [refCustData]);
 
   useEffect(() => {
-    if (filters.isFetch && localStorage.getItem("accessToken")) {
+    if (filters.isFetch && secureLocalStorage.getItem("accessToken")) {
       const _ = require("lodash");
       const deepCopiedFilters = _.cloneDeep(filters);
 
@@ -340,7 +341,7 @@ const App = () => {
   }, [filters]);
 
   useEffect(() => {
-    if (localStorage.getItem("accessToken")) {
+    if (secureLocalStorage.getItem("accessToken")) {
       const mainDataId = Object.getOwnPropertyNames(selectedState)[0];
       if (mainDataId) fetchDetail();
     }
@@ -383,7 +384,7 @@ const App = () => {
 
   /* 푸시 알림 클릭시 이동 테스트 코드 */
   useEffect(() => {
-    if (localStorage.getItem("accessToken")) {
+    if (secureLocalStorage.getItem("accessToken")) {
       const queryParams = new URLSearchParams(location.search);
       if (queryParams.has("go")) {
         history.replace({}, "");
