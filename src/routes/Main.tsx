@@ -9,25 +9,22 @@ import {
   GridSelectionChangeEvent,
   getSelectedState,
 } from "@progress/kendo-react-grid";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useLayoutEffect, useState } from "react";
 // ES2015 module syntax
+import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
+import { Box, Card, CardContent, CardMedia, Typography } from "@mui/material";
 import { Button } from "@progress/kendo-react-buttons";
-import {
-  Chart,
-  ChartCategoryAxis,
-  ChartCategoryAxisItem,
-  ChartLegend,
-  ChartSeries,
-  ChartSeriesItem,
-  ChartTitle,
-  ChartValueAxis,
-  ChartValueAxisItem,
-} from "@progress/kendo-react-charts";
+import { bytesToBase64 } from "byte-base64";
 import "hammerjs";
 import Cookies from "js-cookie";
 import { useThemeSwitcher } from "react-css-theme-switcher";
 import { useHistory } from "react-router-dom";
 import { useRecoilState, useSetRecoilState } from "recoil";
+import { Autoplay, EffectCoverflow, Navigation } from "swiper";
+import "swiper/css";
+import "swiper/css/effect-coverflow";
+import "swiper/css/navigation";
+import { Swiper, SwiperSlide } from "swiper/react";
 import {
   ButtonContainer,
   GridContainer,
@@ -42,7 +39,7 @@ import CenterCell from "../components/Cells/CenterCell";
 import DateCell from "../components/Cells/DateCell";
 import QnAStateCell from "../components/Cells/QnAStateCell";
 import { convertDateToStr } from "../components/CommonFunction";
-import { SELECTED_FIELD } from "../components/CommonString";
+import { GAP, SELECTED_FIELD } from "../components/CommonString";
 import CurrentTime from "../components/CurrentTime";
 import Loader from "../components/Loader";
 import NoticeWindow from "../components/Windows/CommonWindows/NoticeWindow";
@@ -53,26 +50,14 @@ import {
   loginResultState,
   titles,
 } from "../store/atoms";
+import { Iparameters } from "../store/types";
 
 const QUESTION_ITEM_KEY = "document_id";
 const MEETING_ITEM_KEY = "meetingnum";
 const PROJECT_ITEM_KEY = "project";
 
-const currentDate = new Date();
-const currentYear = currentDate.getFullYear();
-
-const labelContent = (props: any) => {
-  return `${props.dataItem.name} : ${props.dataItem.data}건`;
-};
-
-const categories = ["월", "화", "수", "목", "금"];
-
-const chartTitleFont = "600 16px 'Noto Sans KR', 'Source Sans Pro', sans-serif";
-const chartLegendFont = "15px 'Noto Sans KR', 'Source Sans Pro',sans-serif";
-const chartAxisFont = "14px 'Noto Sans KR', 'Source Sans Pro',sans-serif";
-const chartSeriesFont = "400 13px 'Noto Sans KR', 'Source Sans Pro',sans-serif";
-
 const Main: React.FC = () => {
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 1200);
   const history = useHistory();
   const questionIdGetter = getter(QUESTION_ITEM_KEY);
   const meetingIdGetter = getter(MEETING_ITEM_KEY);
@@ -94,6 +79,17 @@ const Main: React.FC = () => {
     }, 1000);
 
     return () => clearTimeout(timer); // 컴포넌트가 언마운트될 때 타이머를 제거
+  }, []);
+
+  useLayoutEffect(() => {
+    const handleWindowResize = () => {
+      setIsMobile(window.innerWidth <= 1200);
+    };
+
+    window.addEventListener("resize", handleWindowResize);
+    return () => {
+      window.removeEventListener("resize", handleWindowResize);
+    };
   }, []);
 
   const [questionDataState, setQuestionDataState] = useState<State>({
@@ -131,10 +127,6 @@ const Main: React.FC = () => {
     over_date: 0,
     avg_reception_days: 0,
   });
-  const [userSummaryResult, setUserSummaryResult] = useState({
-    total: [],
-    weekly: [],
-  });
 
   const [questionSelectedState, setQuestionSelectedState] = useState<{
     [id: string]: boolean | number[];
@@ -159,14 +151,7 @@ const Main: React.FC = () => {
     setLoading(false);
 
     if (data !== null) {
-      const {
-        graphTotal,
-        graphWeekday,
-        meeting,
-        project,
-        question,
-        questionSummary,
-      } = data;
+      const { meeting, project, question, questionSummary } = data;
 
       setProjectDataResult({
         data: project.Rows,
@@ -198,8 +183,6 @@ const Main: React.FC = () => {
         over_date,
         avg_reception_days,
       });
-
-      setUserSummaryResult({ total: graphTotal, weekly: graphWeekday });
     }
   };
 
@@ -207,7 +190,9 @@ const Main: React.FC = () => {
     // switcher({ theme: "dark" });
     search();
     fetchPopUp();
+    fetchMainGrid();
     setTitle("");
+    fetchTypes();
   }, []);
 
   const [currentPopup, setCurrentPopup] = useState(0);
@@ -257,6 +242,8 @@ const Main: React.FC = () => {
   const search = () => {
     fetchHome();
     fetchNotice();
+    fetchMainGrid();
+    fetchTypes();
   };
 
   const onQuestionSelectionChange = (event: GridSelectionChangeEvent) => {
@@ -392,6 +379,93 @@ const Main: React.FC = () => {
     }
   };
 
+  const userId = loginResult ? loginResult.userId : "";
+  const [typesData, setTypesData] = useState<any[]>([]);
+  const [mainDataState, setMainDataState] = useState<State>({
+    sort: [],
+  });
+  const [mainDataResult, setMainDataResult] = useState<DataResult>(
+    process([], mainDataState)
+  );
+  const fetchTypes = async () => {
+    let data: any;
+    const bytes = require("utf8-bytes");
+    const convertedQueryStr = bytesToBase64(
+      bytes(
+        "SELECT sub_code, code_name FROM comCodeMaster WHERE group_code = 'SP010'"
+      )
+    );
+
+    let query = {
+      query: convertedQueryStr,
+    };
+
+    try {
+      data = await processApi<any>("bizgst-query", query);
+    } catch (error) {
+      data = null;
+    }
+
+    if (data !== null && data.isSuccess === true) {
+      const rows = data.tables[0].Rows;
+      setTypesData(rows);
+    } else {
+      console.log("[에러발생]");
+      console.log(data);
+    }
+  };
+
+  const fetchMainGrid = async () => {
+    let data: any;
+    setLoading(true);
+    //조회조건 파라미터
+    const parameters: Iparameters = {
+      procedureName: "pw6_sel_promotion",
+      pageNumber: 1,
+      pageSize: 5,
+      parameters: {
+        "@p_work_type": "main",
+        "@p_title": "",
+        "@p_category": "",
+        "@p_tagnames_s": "",
+        "@p_document_id": "",
+        "@p_find_row_value": "",
+        "@p_id": userId,
+        "@p_is_open": "Y",
+      },
+    };
+
+    try {
+      data = await processApi<any>("procedure", parameters);
+    } catch (error) {
+      data = null;
+    }
+
+    if (data.isSuccess == true) {
+      const TotalRowCount = data.tables[0].TotalRowCount;
+      const rows = data.tables[0].Rows.map((row: any) => ({
+        ...row,
+        thumbnail: row.thumbnail
+          ? `data:image/png;base64,${row.thumbnail}`
+          : null,
+      }));
+      if (TotalRowCount > 0) {
+        setMainDataResult({
+          data: rows,
+          total: TotalRowCount == -1 ? 0 : TotalRowCount,
+        });
+      } else {
+        setMainDataResult(process([], mainDataState));
+      }
+      setLoading(false);
+    }
+  };
+
+  const handleCardClick = (item: any) => {
+    const origin = window.location.origin;
+    window.location.href = origin + `/Promotion?go=` + item.document_id;
+  };
+
   if (!isLoaded) {
     return <Loader />;
   }
@@ -421,11 +495,7 @@ const Main: React.FC = () => {
           </ButtonContainer>
         </TitleContainer>
         <GridContainerWrap height="calc(100% - 80px)">
-          <GridContainer
-            width="15%"
-            style={{ gap: "15px", overflow: "overlay" }}
-            type="mainLeft"
-          >
+          <GridContainer width="15%" style={{ gap: "15px" }} type="mainLeft">
             <TextBox
               style={{
                 minHeight: "120px",
@@ -477,78 +547,138 @@ const Main: React.FC = () => {
             </TextBox>
           </GridContainer>
 
-          <GridContainer width="85%" style={{ gap: "15px" }}>
+          <GridContainer width={`calc(85% - ${GAP * 7}px)`}>
             <GridContainerWrap height={"50%"}>
-              <GridContainer width="40%">
-                <Chart
-                  style={{ height: "100%", border: "solid 1px #e6e6e6" }}
-                  transitions={false}
-                >
-                  <ChartTitle
-                    text={currentYear + "년 담당자별 문의"}
-                    font={chartTitleFont}
-                  />
-                  <ChartLegend
-                    position="bottom"
-                    labels={{ font: chartLegendFont }}
-                  />
-                  <ChartSeries>
-                    <ChartSeriesItem
-                      type="pie"
-                      data={userSummaryResult.total}
-                      field="data"
-                      categoryField="name"
-                      labels={{
-                        visible: true,
-                        content: labelContent,
-                        font: chartSeriesFont,
-                      }}
-                    />
-                  </ChartSeries>
-                </Chart>
-              </GridContainer>
-              <GridContainer width="60%">
-                <Chart
-                  style={{ height: "100%", border: "solid 1px #e6e6e6" }}
-                  transitions={false}
-                >
-                  <ChartTitle text="요일별 담당자 문의" font={chartTitleFont} />
-                  <ChartLegend
-                    position="bottom"
-                    labels={{ font: chartLegendFont }}
-                  />
-
-                  <ChartCategoryAxis>
-                    <ChartCategoryAxisItem
-                      categories={categories}
-                      labels={{ font: chartAxisFont }}
-                    ></ChartCategoryAxisItem>
-                  </ChartCategoryAxis>
-
-                  <ChartValueAxis>
-                    <ChartValueAxisItem
-                      majorUnit={1}
-                      labels={{ font: chartAxisFont }}
-                    />
-                  </ChartValueAxis>
-                  <ChartSeries>
-                    {userSummaryResult.weekly.map(
-                      (item: { data: []; name: string }, idx) => (
-                        <ChartSeriesItem
-                          key={idx}
-                          type="column"
-                          tooltip={{
-                            visible: true,
-                            format: item.name + " : {0}건",
+              <Swiper
+                className="HomeSwiper"
+                effect={"coverflow"}
+                centeredSlides={true}
+                slidesPerView={2}
+                coverflowEffect={{
+                  rotate: 0,
+                  stretch: 100,
+                  depth: 100,
+                  modifier: 3,
+                  slideShadows: true,
+                }}
+                speed={500}
+                navigation={true}
+                modules={[Autoplay, EffectCoverflow, Navigation]}
+                autoplay={{
+                  delay: 3500,
+                  disableOnInteraction: false,
+                }}
+                style={{
+                  height: isMobile ? "300px" : "100%",
+                  width: "100%",
+                }}
+                loop={true}
+              >
+                {mainDataResult.data.map((item, index) => (
+                  <SwiperSlide key={index}>
+                    <GridContainer>
+                      <Card
+                        onClick={() => handleCardClick(item)}
+                        sx={{
+                          borderRadius: 2,
+                          padding: "10px 10px 0 10px",
+                          boxShadow: "0 4px 10px rgba(0, 0, 0, 0.15)",
+                          transition: "0.7s",
+                          "&:hover": {
+                            boxShadow: "0 8px 20px rgba(0, 0, 0, 0.3)",
+                            cursor: "pointer",
+                            transform: "translateY(-3px)",
+                          },
+                          height: "calc(100% - 10px)",
+                        }}
+                      >
+                        <Box
+                          position="relative"
+                          style={{
+                            height: isMobile ? "200px" : `calc(100% - 100px)`,
                           }}
-                          data={item.data}
-                          name={item.name}
-                        />
-                      )
-                    )}
-                  </ChartSeries>
-                </Chart>
-              </GridContainer>
+                        >
+                          {item.thumbnail ? (
+                            <CardMedia
+                              component="img"
+                              image={item.thumbnail}
+                              alt={item.title}
+                              height={`100%`}
+                              sx={{
+                                borderRadius: 1,
+                                //objectFit: "fill",
+                              }}
+                            />
+                          ) : (
+                            <Box
+                              display="flex"
+                              alignItems="center"
+                              justifyContent="center"
+                              bgcolor="lightgray"
+                              borderRadius={1}
+                              width="100%"
+                            >
+                              <ImageOutlinedIcon
+                                style={{ marginRight: "8px", color: "gray" }}
+                              />
+                              <Typography variant="body2" color="gray">
+                                이미지 준비 중
+                              </Typography>
+                            </Box>
+                          )}
+                        </Box>
+                        <CardContent>
+                          <Box display="flex" flexDirection="column">
+                            <Box
+                              display="flex"
+                              flexDirection="row"
+                              alignItems="flex_start"
+                              flexWrap="nowrap"
+                              justifyContent="space-between"
+                              width={"100%"}
+                            >
+                              <Typography
+                                component="div"
+                                fontWeight={600}
+                                sx={{
+                                  fontSize: "13px",
+                                  color: "#6a68ba",
+                                }}
+                              >
+                                {
+                                  typesData.find(
+                                    (type) => type.sub_code === item.category
+                                  )?.code_name
+                                }
+                              </Typography>
+                            </Box>
+                            <Box
+                              display="flex"
+                              alignItems="center"
+                              flexShrink={0}
+                            >
+                              <Typography
+                                component="div"
+                                fontWeight={600}
+                                sx={{
+                                  fontSize: "17px",
+                                  display: "block",
+                                  maxWidth: "100%",
+                                  whiteSpace: "nowrap",
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis", // 잘린 부분에 줄임표 표시
+                                }}
+                              >
+                                {item.title}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </CardContent>
+                      </Card>
+                    </GridContainer>
+                  </SwiperSlide>
+                ))}
+              </Swiper>
             </GridContainerWrap>
             <GridContainerWrap height={"50%"}>
               <GridContainer>
