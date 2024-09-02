@@ -90,6 +90,7 @@ const defaultDetailData: {
   remark: string;
   files: string;
   attdatnum: string;
+  insert_userid: string;
 } = {
   work_type: "N",
   document_id: "",
@@ -104,6 +105,7 @@ const defaultDetailData: {
   remark: "",
   files: "",
   attdatnum: "",
+  insert_userid: "",
 };
 
 const DATA_ITEM_KEY = "document_id";
@@ -177,14 +179,12 @@ const App = () => {
       setIsMobile(deviceWidth <= 1200);
       setMobileHeight(getDeviceHeight(true) - height - height6);
       setMobileHeight2(getDeviceHeight(true) - height2 - height6);
-      setMobileHeight3(
-        getDeviceHeight(true) - height3 - height5 - height6
-      );
+      setMobileHeight3(getDeviceHeight(true) - height3 - height5 - height6);
 
       setWebHeight(getDeviceHeight(true) - height - height2 - height6);
       setWebHeight2(getDeviceHeight(true) - height - height6);
       setWebHeight3(
-        getDeviceHeight(true) - height - height6 - height4 - height5 
+        getDeviceHeight(true) - height - height6 - height4 - height5
       );
     };
     handleWindowResize();
@@ -1138,7 +1138,12 @@ const App = () => {
                             <Input
                               name="user_id"
                               type="text"
-                              value={detailData.user_id}
+                              value={
+                                usersData.find(
+                                  (item: any) =>
+                                    item.user_id == detailData.insert_userid
+                                )?.user_name
+                              }
                               onChange={detailDataInputChange}
                               className={"readonly"}
                               readOnly={true}
@@ -1370,7 +1375,7 @@ const App = () => {
                               value={
                                 usersData.find(
                                   (item: any) =>
-                                    item.user_id == detailData.user_id
+                                    item.user_id == detailData.insert_userid
                                 )?.user_name
                               }
                               onChange={detailDataInputChange}

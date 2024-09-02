@@ -52,6 +52,7 @@ import {
   titles,
 } from "../store/atoms";
 import { Iparameters } from "../store/types";
+import { removeBeforeUnloadListener } from "../components/PanelBarNavContainer";
 
 const QUESTION_ITEM_KEY = "document_id";
 const MEETING_ITEM_KEY = "meetingnum";
@@ -463,8 +464,15 @@ const Main: React.FC = () => {
   };
 
   const handleCardClick = (item: any) => {
+    removeBeforeUnloadListener();
     const origin = window.location.origin;
     window.location.href = origin + `/Promotion?go=` + item.document_id;
+  };
+
+  const onLinkClick = () => {
+    removeBeforeUnloadListener();
+    const origin = window.location.origin;
+    window.location.href = origin + "/Promotion";
   };
 
   if (!isLoaded) {
@@ -486,14 +494,35 @@ const Main: React.FC = () => {
             되세요
           </p>
           <Title></Title>
-          <ButtonContainer>
-            <Button
-              icon="refresh"
-              themeColor={"primary"}
-              fillMode={"flat"}
-              onClick={search}
-            ></Button>
-          </ButtonContainer>
+          <GridTitleContainer
+            style={{ paddingLeft: `calc(15% + ${GAP * 8}px)` }}
+          >
+            <GridTitle>
+              서비스소개&emsp;
+              <span style={{ fontWeight: 400 }}>
+                지에스티는 다양한 분야에서 최적의 솔루션을 제공합니다.
+              </span>
+            </GridTitle>
+            <ButtonContainer>
+              <Button
+                themeColor={"primary"}
+                fillMode={"link"}
+                onClick={onLinkClick}
+              >
+                <span className="k-button-text">더보기</span>
+                <span
+                  className="k-icon k-i-chevron-right"
+                  style={{ marginLeft: "8px" }}
+                ></span>
+              </Button>
+              <Button
+                icon="refresh"
+                themeColor={"primary"}
+                fillMode={"flat"}
+                onClick={search}
+              ></Button>
+            </ButtonContainer>
+          </GridTitleContainer>
         </TitleContainer>
         <GridContainerWrap height="calc(100% - 80px)">
           <GridContainer width="15%" style={{ gap: "15px" }} type="mainLeft">
@@ -548,19 +577,25 @@ const Main: React.FC = () => {
             </TextBox>
           </GridContainer>
 
-          <GridContainer width={`calc(85% - ${GAP * 7}px)`}>
-            <GridContainerWrap height={"50%"}>
+          <GridContainer
+            width={`calc(85% - ${GAP * 7}px)`}
+            style={{ paddingRight: GAP }}
+          >
+            <GridContainerWrap
+              height={"50%"}
+              style={{ flexDirection: "column" }}
+            >
               <Swiper
                 className="HomeSwiper"
                 effect={"coverflow"}
                 centeredSlides={true}
-                slidesPerView={2}
+                slidesPerView={2.5}
                 coverflowEffect={{
                   rotate: 0,
-                  stretch: 100,
-                  depth: 100,
-                  modifier: 3,
-                  slideShadows: true,
+                  stretch: -10, // 슬라이드 간의 간격 없음
+                  depth: 0,
+                  modifier: 1, // 슬라이드 크기와 관련된 수정자 기본값
+                  slideShadows: false,
                 }}
                 speed={500}
                 navigation={true}
@@ -586,11 +621,12 @@ const Main: React.FC = () => {
                           boxShadow: "0 4px 10px rgba(0, 0, 0, 0.15)",
                           transition: "0.7s",
                           "&:hover": {
-                            boxShadow: "0 8px 20px rgba(0, 0, 0, 0.3)",
+                            boxShadow: "0 8px 10px rgba(0, 0, 0, 0.3)",
                             cursor: "pointer",
                             transform: "translateY(-3px)",
                           },
                           height: "calc(100% - 10px)",
+                          border: "1px solid rgba(0, 0, 0, 0.05)",
                         }}
                       >
                         <Box

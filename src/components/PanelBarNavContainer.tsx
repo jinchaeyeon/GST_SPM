@@ -740,6 +740,26 @@ const PanelBarNavContainer = (props: any) => {
     );
   };
 
+  const BlinkingIcon = styled("div")({
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "16px",
+    height: "16px",
+    borderRadius: "50%",
+    backgroundColor: "#FF4500",
+    color: "#ffffff",
+    fontWeight: "bold",
+    fontSize: "10px",
+    marginLeft: "8px",
+    animation: "colorShift 1s infinite", // 애니메이션 설정
+    "@keyframes colorShift": {
+      "0%": { backgroundColor: "#FF4500" },
+      "50%": { backgroundColor: "#FF8C00" },
+      "100%": { backgroundColor: "#FF4500" },
+    },
+  });
+
   return (
     <>
       <Wrapper
@@ -791,7 +811,22 @@ const PanelBarNavContainer = (props: any) => {
                   title={"프로젝트 모니터링"}
                   route="/ProjectMonitoring"
                 />
-                <PanelBarItem title={"제품홍보"} route="/Promotion" />
+                <PanelBarItem
+                  title={
+                    <span
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        width: "100%",
+                      }}
+                    >
+                      서비스소개
+                      <BlinkingIcon>N</BlinkingIcon>
+                    </span>
+                  }
+                  route="/Promotion"
+                />
               </PanelBar>
             ) : (
               <PanelBar
@@ -813,7 +848,22 @@ const PanelBarNavContainer = (props: any) => {
                 />
                 <PanelBarItem title={"FAQ 자주묻는질문"} route="/FAQ" />
                 {userId == "10192" && (
-                  <PanelBarItem title={"제품홍보"} route="/Promotion" />
+                  <PanelBarItem
+                    title={
+                      <span
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          width: "100%",
+                        }}
+                      >
+                        서비스소개
+                        <BlinkingIcon>N</BlinkingIcon>
+                      </span>
+                    }
+                    route="/Promotion"
+                  />
                 )}
               </PanelBar>
             )}
@@ -1067,7 +1117,7 @@ const PanelBarNavContainer = (props: any) => {
               lineHeight: "1.6",
               fontSize: "12px",
             }}
-          >          
+          >
             <address
               style={{
                 fontStyle: "normal",
