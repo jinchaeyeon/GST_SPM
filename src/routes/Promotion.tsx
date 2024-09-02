@@ -17,7 +17,7 @@ import {
   PaginationItem,
   Stack,
   Tooltip,
-  Typography,
+  Typography
 } from "@mui/material";
 import {
   DataResult,
@@ -43,7 +43,7 @@ import {
   FilterBoxWrap,
   InfoTitle,
   Title,
-  TitleContainer,
+  TitleContainer
 } from "../CommonStyled";
 import CustomMultiColumnComboBox from "../components/ComboBoxes/CustomMultiColumnComboBox";
 import { getDeviceHeight, getHeight } from "../components/CommonFunction";
