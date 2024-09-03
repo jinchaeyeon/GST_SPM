@@ -7,7 +7,7 @@ import {
   MultiSelect,
   MultiSelectChangeEvent,
 } from "@progress/kendo-react-dropdowns";
-import  secureLocalStorage  from  "react-secure-storage";
+import secureLocalStorage from "react-secure-storage";
 import {
   getSelectedState,
   Grid,
@@ -196,12 +196,8 @@ const App = () => {
       setIsMobile(deviceWidth <= 1200);
       setMobileHeight(getDeviceHeight(true) - height - height8);
       setMobileHeight2(getDeviceHeight(true) - height2 - height8);
-      setMobileHeight3(
-        getDeviceHeight(true) - height8 - height4 - height7
-      );
-      setMobileHeight4(
-        getDeviceHeight(true) - height8 - height3 - height5
-      );
+      setMobileHeight3(getDeviceHeight(true) - height8 - height4 - height7);
+      setMobileHeight4(getDeviceHeight(true) - height8 - height3 - height5);
       setMobileHeight5(getDeviceHeight(true) - height8);
       setWebHeight(getDeviceHeight(true) - height - height - height8);
       setWebHeight2(
@@ -470,6 +466,17 @@ const App = () => {
         if (qnaTitle && isTitleSet) {
           addData();
           const title = "[제품문의] " + qnaTitle;
+          setHtmlOnEditor({
+            questionDocument: `
+            <html>    
+              <body>
+                <p>서비스 소개에 있는 <strong>[${qnaTitle}]</strong> 프로그램 도입 문의 연락 드립니다.</p>
+                <p>당사의 ______________________ 업무에 적용하고 싶습니다.</p>
+             </body>
+            </html>
+            `,
+            answerDocument: "",
+          });
           setDetailData((prev) => ({
             ...prev,
             title: title,
@@ -521,6 +528,17 @@ const App = () => {
       if (qnaTitle && isTitleSet) {
         addData();
         const title = "[제품문의] " + qnaTitle;
+        setHtmlOnEditor({
+          questionDocument: `   
+          <html>    
+            <body>
+              <p>서비스 소개에 있는 <strong>[${qnaTitle}]</strong> 프로그램 도입 문의 연락 드립니다.</p>
+              <p>당사의 ______________________ 업무에 적용하고 싶습니다.</p>
+             </body>
+          </html>
+          `,
+          answerDocument: "",
+        });
         setDetailData((prev) => ({
           ...prev,
           title: title,
@@ -887,7 +905,10 @@ const App = () => {
 
   useEffect(() => {
     // 메인 그리드에서 클릭하여 오픈시 조회조건 재설정하여 조회
-    if (filterValue.type === "qna" && secureLocalStorage.getItem("accessToken")) {
+    if (
+      filterValue.type === "qna" &&
+      secureLocalStorage.getItem("accessToken")
+    ) {
       const isExceedFromDate =
         convertDateToStr(fromDate) > filterValue.dataItem.request_date;
 
@@ -941,7 +962,10 @@ const App = () => {
 
   /* 푸시 알림 클릭시 이동 테스트 코드 */
   useEffect(() => {
-    if (filterValue.type !== "qna" && secureLocalStorage.getItem("accessToken")) {
+    if (
+      filterValue.type !== "qna" &&
+      secureLocalStorage.getItem("accessToken")
+    ) {
       const queryParams = new URLSearchParams(location.search);
       if (queryParams.has("go")) {
         history.replace({}, "");
