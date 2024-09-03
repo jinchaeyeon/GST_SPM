@@ -626,7 +626,7 @@ const App = () => {
     }
   };
 
-  const saveData = useCallback(async () => {
+  const saveData = async () => {
     let data: any;
     setLoading(true);
 
@@ -782,7 +782,7 @@ const App = () => {
     }
 
     setLoading(false);
-  }, [setLoading, detailData, setSelectedState]);
+  };
 
   const deleteData = useCallback(async () => {
     const mainDataId = Object.getOwnPropertyNames(selectedState)[0];
