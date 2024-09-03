@@ -7,6 +7,7 @@ import {
   MultiSelect,
   MultiSelectChangeEvent,
 } from "@progress/kendo-react-dropdowns";
+import  secureLocalStorage  from  "react-secure-storage";
 import {
   getSelectedState,
   Grid,
@@ -27,7 +28,6 @@ import React, {
   useState,
 } from "react";
 import { useHistory, useLocation } from "react-router-dom";
-import secureLocalStorage from "react-secure-storage";
 import { useRecoilState, useSetRecoilState } from "recoil";
 import SwiperCore from "swiper";
 import "swiper/css";
@@ -469,6 +469,17 @@ const App = () => {
         if (qnaTitle && isTitleSet) {
           addData();
           const title = "[제품문의] " + qnaTitle;
+          setHtmlOnEditor({
+            questionDocument: `
+            <html>    
+              <body>
+                <p>서비스 소개에 있는 <strong>[${qnaTitle}]</strong> 프로그램 도입 문의 연락 드립니다.</p>
+                <p>당사의 ______________________ 업무에 적용하고 싶습니다.</p>
+             </body>
+            </html>
+            `,
+            answerDocument: "",
+          });
           setDetailData((prev) => ({
             ...prev,
             title: title,
@@ -520,6 +531,17 @@ const App = () => {
       if (qnaTitle && isTitleSet) {
         addData();
         const title = "[제품문의] " + qnaTitle;
+        setHtmlOnEditor({
+          questionDocument: `   
+          <html>    
+            <body>
+              <p>서비스 소개에 있는 <strong>[${qnaTitle}]</strong> 프로그램 도입 문의 연락 드립니다.</p>
+              <p>당사의 ______________________ 업무에 적용하고 싶습니다.</p>
+             </body>
+          </html>
+          `,
+          answerDocument: "",
+        });
         setDetailData((prev) => ({
           ...prev,
           title: title,
