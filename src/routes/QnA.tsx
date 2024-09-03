@@ -7,7 +7,7 @@ import {
   MultiSelect,
   MultiSelectChangeEvent,
 } from "@progress/kendo-react-dropdowns";
-import secureLocalStorage from "react-secure-storage";
+import  secureLocalStorage  from  "react-secure-storage";
 import {
   getSelectedState,
   Grid,
@@ -61,6 +61,7 @@ import { PAGE_SIZE, SELECTED_FIELD } from "../components/CommonString";
 import FilterContainer from "../components/FilterContainer";
 import RichEditor from "../components/RichEditor";
 import AttachmentsWindow from "../components/Windows/CommonWindows/AttachmentsWindow";
+import QnAPopUpWindow from "../components/Windows/CommonWindows/QnAPopUpWindow";
 import { useApi } from "../hooks/api";
 import {
   filterValueState,
@@ -330,6 +331,8 @@ const App = () => {
   const [selectedState, setSelectedState] = useState<{
     [id: string]: boolean | number[];
   }>({});
+  const [DetailWindowVisible, setDetailWindowVisible] =
+    useState<boolean>(false);
 
   const [attachmentsWindowVisibleQ, setAttachmentsWindowVisibleQ] =
     useState<boolean>(false);
@@ -1127,6 +1130,10 @@ const App = () => {
 
   const filterRef = useRef<HTMLDivElement>(null);
 
+  const onPopUp = () => {
+    setDetailWindowVisible(true);
+  };
+
   return (
     <>
       <TitleContainer className="TitleContainer">
@@ -1702,14 +1709,24 @@ const App = () => {
                     </GridTitle>
                     <ButtonContainer>
                       {!isAdmin && (
-                        <Button
-                          themeColor={"primary"}
-                          fillMode={"flat"}
-                          icon={isChecked ? "x" : "check"}
-                          onClick={checkAnswer}
-                        >
-                          {isChecked ? "답변 확인 취소" : "답변 확인"}
-                        </Button>
+                        <>
+                          <Button
+                            themeColor={"primary"}
+                            fillMode={"flat"}
+                            icon={isChecked ? "x" : "check"}
+                            onClick={checkAnswer}
+                          >
+                            {isChecked ? "답변 확인 취소" : "답변 확인"}
+                          </Button>
+                          <Button
+                            themeColor={"primary"}
+                            fillMode={"flat"}
+                            icon={"search"}
+                            onClick={onPopUp}
+                          >
+                            답변 확대보기
+                          </Button>
+                        </>
                       )}
                     </ButtonContainer>
                   </GridTitleContainer>
@@ -2188,14 +2205,24 @@ const App = () => {
                   <GridTitle>답변</GridTitle>
                   <ButtonContainer>
                     {!isAdmin && (
-                      <Button
-                        themeColor={"primary"}
-                        fillMode={"flat"}
-                        icon={isChecked ? "x" : "check"}
-                        onClick={checkAnswer}
-                      >
-                        {isChecked ? "답변 확인 취소" : "답변 확인"}
-                      </Button>
+                      <>
+                        <Button
+                          themeColor={"primary"}
+                          fillMode={"flat"}
+                          icon={isChecked ? "x" : "check"}
+                          onClick={checkAnswer}
+                        >
+                          {isChecked ? "답변 확인 취소" : "답변 확인"}
+                        </Button>
+                        <Button
+                          themeColor={"primary"}
+                          fillMode={"flat"}
+                          icon={"search"}
+                          onClick={onPopUp}
+                        >
+                          답변 확대보기
+                        </Button>
+                      </>
                     )}
                   </ButtonContainer>
                 </GridTitleContainer>
@@ -2279,6 +2306,13 @@ const App = () => {
           setData={getAttachmentsDataA}
           para={detailData.answer_attdatnum}
           permission={{ upload: false, download: true, delete: false }}
+          modal={true}
+        />
+      )}
+      {DetailWindowVisible && (
+        <QnAPopUpWindow
+          setVisible={setDetailWindowVisible}
+          para={aEditorRef.current?.getContent()}
           modal={true}
         />
       )}
