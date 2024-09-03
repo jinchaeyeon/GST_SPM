@@ -17,7 +17,7 @@ import {
   PaginationItem,
   Stack,
   Tooltip,
-  Typography
+  Typography,
 } from "@mui/material";
 import {
   DataResult,
@@ -43,7 +43,7 @@ import {
   FilterBoxWrap,
   InfoTitle,
   Title,
-  TitleContainer
+  TitleContainer,
 } from "../CommonStyled";
 import CustomMultiColumnComboBox from "../components/ComboBoxes/CustomMultiColumnComboBox";
 import { getDeviceHeight, getHeight } from "../components/CommonFunction";
@@ -102,7 +102,7 @@ const Promotion = () => {
       height5 = getHeight(".ButtonContainer");
       height2 = getHeight(".ButtonContainer2");
       setWebHeight(getDeviceHeight(false) - height5 - 30);
-      height3 = (getDeviceHeight(false) - 440 - height5) / 3;
+      height3 = (getDeviceHeight(false) - 400 - height5) / 3;
       height4 = (getDeviceHeight(false) - 290 - height - height5) / 2;
     };
 
@@ -120,7 +120,7 @@ const Promotion = () => {
 
   useEffect(() => {
     if (secureLocalStorage.getItem("accessToken")) {
-      setTitle("제품 홍보");
+      setTitle("서비스소개");
       fetchTypes();
       fetchMainGrid(filters);
     }
@@ -449,7 +449,7 @@ const Promotion = () => {
     <>
       {isMobile && (
         <TitleContainer className="TitleContainer">
-          <Title>제품홍보</Title>
+          <Title>서비스소개</Title>
         </TitleContainer>
       )}
       <Box
@@ -475,6 +475,7 @@ const Promotion = () => {
                   boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.15)",
                   maxWidth: "600px",
                   width: "100%",
+                  maxHeight: "40px",
                 }}
               >
                 <SearchIcon style={{ marginRight: "10px", color: "#7a76ce" }} />
@@ -632,7 +633,7 @@ const Promotion = () => {
                 spacing={isMobile ? 1 : 2.5}
                 minHeight={webHeight}
                 style={{
-                  padding: "20px 20px 0 20px",
+                  padding: "10px 10px 0 10px",
                 }}
               >
                 {mainDataResult.data.map((item) => (
@@ -642,7 +643,7 @@ const Promotion = () => {
                     sm={12}
                     md={12}
                     lg={3}
-                    mt={0.5}
+                    // mt={0.5}
                     key={item.document_id}
                   >
                     <Card
@@ -833,7 +834,7 @@ const Promotion = () => {
         {/* 페이지네이션 버튼 */}
         <div
           className="ButtonContainer2"
-          style={{          
+          style={{
             marginTop: "-20px",
           }}
         >

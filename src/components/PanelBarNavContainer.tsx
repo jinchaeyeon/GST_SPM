@@ -849,24 +849,22 @@ const PanelBarNavContainer = (props: any) => {
                   route="/ProjectSchedule"
                 />
                 <PanelBarItem title={"FAQ 자주묻는질문"} route="/FAQ" />
-                {userId == "10192" && (
-                  <PanelBarItem
-                    title={
-                      <span
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          width: "100%",
-                        }}
-                      >
-                        서비스소개
-                        <BlinkingIcon>N</BlinkingIcon>
-                      </span>
-                    }
-                    route="/Promotion"
-                  />
-                )}
+                <PanelBarItem
+                  title={
+                    <span
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        width: "100%",
+                      }}
+                    >
+                      서비스소개
+                      <BlinkingIcon>N</BlinkingIcon>
+                    </span>
+                  }
+                  route="/Promotion"
+                />
               </PanelBar>
             )}
           </Gnv>

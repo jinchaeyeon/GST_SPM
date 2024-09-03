@@ -25,7 +25,6 @@ import "swiper/css";
 import "swiper/css/effect-coverflow";
 import "swiper/css/navigation";
 import { Swiper, SwiperSlide } from "swiper/react";
-import  secureLocalStorage  from  "react-secure-storage";
 import {
   ButtonContainer,
   GridContainer,
@@ -204,7 +203,7 @@ const Main: React.FC = () => {
   const fetchPopUp = async () => {
     let data: any;
 
-    const savedNoticesRaw: any = secureLocalStorage.getItem("PopUpNotices");
+    const savedNoticesRaw = localStorage.getItem("PopUpNotices");
     const savedNotices = savedNoticesRaw ? JSON.parse(savedNoticesRaw) : [];
 
     const ref_key = savedNotices.join(",");
@@ -494,9 +493,7 @@ const Main: React.FC = () => {
             되세요
           </p>
           <Title></Title>
-          <GridTitleContainer
-            style={{ paddingLeft: `calc(15% + ${GAP * 8}px)` }}
-          >
+          <GridTitleContainer style={{ paddingLeft: "375px" }}>
             <GridTitle>
               서비스소개&emsp;
               <span style={{ fontWeight: 400 }}>
@@ -525,7 +522,11 @@ const Main: React.FC = () => {
           </GridTitleContainer>
         </TitleContainer>
         <GridContainerWrap height="calc(100% - 80px)">
-          <GridContainer width="15%" style={{ gap: "15px" }} type="mainLeft">
+          <GridContainer
+            width="15%"
+            style={{ gap: "15px" }}
+            type="mainLeft"
+          >
             <TextBox
               style={{
                 minHeight: "120px",
@@ -579,7 +580,7 @@ const Main: React.FC = () => {
 
           <GridContainer
             width={`calc(85% - ${GAP * 7}px)`}
-            style={{ paddingRight: GAP }}
+            style={{ paddingRight: GAP, overflowX: "auto" }}
           >
             <GridContainerWrap
               height={"50%"}
@@ -663,6 +664,41 @@ const Main: React.FC = () => {
                               </Typography>
                             </Box>
                           )}
+                          <Box
+                            position="absolute"
+                            top={0}
+                            left={0}
+                            display="flex"
+                            p={1}
+                          >
+                            {item.is_hot == "Y" && (
+                              <Box
+                                bgcolor="#ef5350"
+                                color="white"
+                                p={1}
+                                borderRadius="8px"
+                                mr={1}
+                                fontWeight={"bold"}
+                                fontSize="12px"
+                                lineHeight="14px"
+                              >
+                                HOT
+                              </Box>
+                            )}
+                            {item.is_new == "Y" && (
+                              <Box
+                                bgcolor="#fbc02d"
+                                color="white"
+                                p={1}
+                                borderRadius="8px"
+                                fontWeight={"bold"}
+                                fontSize="12px"
+                                lineHeight="14px"
+                              >
+                                NEW
+                              </Box>
+                            )}
+                          </Box>
                         </Box>
                         <CardContent>
                           <Box display="flex" flexDirection="column">
