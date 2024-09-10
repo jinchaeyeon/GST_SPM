@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
 import { useRecoilState, useSetRecoilState } from "recoil";
 import { LoginAppName, LoginBox, LoginImg } from "../CommonStyled";
-import { LoginFormInput } from "../components/Editors";
+import { FormCheckBox2, LoginFormInput } from "../components/Editors";
 import Loader from "../components/Loader";
 import Loading from "../components/Loading";
 import { useApi } from "../hooks/api";
@@ -15,7 +15,7 @@ import {
   queryState,
 } from "../store/atoms";
 // import cookie from "react-cookies";
-import  secureLocalStorage  from  "react-secure-storage";
+import secureLocalStorage from "react-secure-storage";
 
 interface IFormData {
   langCode: string;
@@ -34,6 +34,13 @@ const Login: React.FC = () => {
   const accessToken = secureLocalStorage.getItem("accessToken");
   const queryResult = useRecoilState(queryState);
   const setQueryResult = useSetRecoilState(queryState);
+  const [information, setInformation] = useState({
+    userId: secureLocalStorage.getItem("userId")
+      ? secureLocalStorage.getItem("userId")
+      : "",
+    password: "",
+    chk: "Y",
+  });
 
   useEffect(() => {
     // token 저장되어있으면 홈화면으로 리다이렉션
@@ -97,6 +104,13 @@ const Login: React.FC = () => {
           passwordExpirationInfo,
         } = response;
 
+        if (formData.chk == "Y") {
+          secureLocalStorage.setItem("userId", userId);
+        } else {
+          if (secureLocalStorage.getItem("userId")) {
+            secureLocalStorage.removeItem("userId");
+          }
+        }
         const expires = new Date();
         expires.setMinutes(expires.getMinutes() + 60);
         // cookie.save("refreshToken", refreshToken, {
@@ -121,7 +135,7 @@ const Login: React.FC = () => {
         });
 
         setPwExpInfo(passwordExpirationInfo);
-    
+
         if (queryResult[0] != "") {
           history.replace(`/${queryResult[0]}`);
           setQueryResult("");
@@ -147,6 +161,7 @@ const Login: React.FC = () => {
     <div style={{ backgroundColor: "#2e87b7" }}>
       <LoginBox>
         <Form
+          initialValues={information}
           onSubmit={handleSubmit}
           render={() => (
             <FormElement>
@@ -161,6 +176,11 @@ const Login: React.FC = () => {
                   label={"Password"}
                   type={"password"}
                   component={LoginFormInput}
+                />
+                <Field
+                  name={"chk"}
+                  label={"아이디 저장"}
+                  component={FormCheckBox2}
                 />
               </fieldset>
               <Button className="login-btn" themeColor={"primary"} size="large">

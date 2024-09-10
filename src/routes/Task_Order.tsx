@@ -827,7 +827,8 @@ const App = () => {
         key != "@secure.refreshToken" &&
         key != "@secure.PopUpNotices" &&
         key != "@secure.queryState" &&
-        key != "@secure.OSState"
+        key != "@secure.OSState" &&
+        key != "@secure.userId"
       ) {
         secureLocalStorage.removeItem(key.replace("@secure.", ""));
       }
@@ -971,7 +972,8 @@ const App = () => {
         key != "@secure.refreshToken" &&
         key != "@secure.PopUpNotices" &&
         key != "@secure.queryState" &&
-        key != "@secure.OSState"
+        key != "@secure.OSState" &&
+        key != "@secure.userId"
       ) {
         secureLocalStorage.removeItem(key.replace("@secure.", ""));
       }
@@ -2699,7 +2701,8 @@ const App = () => {
           key != "@secure.refreshToken" &&
           key != "@secure.PopUpNotices" &&
           key != "@secure.queryState" &&
-          key != "@secure.OSState"
+          key != "@secure.OSState" &&
+          key != "@secure.userId"
         ) {
           secureLocalStorage.removeItem(key.replace("@secure.", ""));
         }
@@ -3226,14 +3229,8 @@ const App = () => {
     });
     setSelectedState4({ [newDataItem[DATA_ITEM_KEY4]]: true });
 
-    secureLocalStorage.setItem(
-      newDataItem[DATA_ITEM_KEY4].toString(),
-      ""
-    );
-    secureLocalStorage.setItem(
-      newDataItem[DATA_ITEM_KEY4] + "key",
-      ""
-    );
+    secureLocalStorage.setItem(newDataItem[DATA_ITEM_KEY4].toString(), "");
+    secureLocalStorage.setItem(newDataItem[DATA_ITEM_KEY4] + "key", "");
   };
 
   const onRemoveClick = async () => {
@@ -3899,7 +3896,8 @@ const App = () => {
               key != "@secure.refreshToken" &&
               key != "@secure.PopUpNotices" &&
               key != "@secure.queryState" &&
-              key != "@secure.OSState"
+              key != "@secure.OSState" &&
+              key != "@secure.userId"
             ) {
               secureLocalStorage.removeItem(key.replace("@secure.", ""));
             }
@@ -4144,7 +4142,8 @@ const App = () => {
             key != "@secure.refreshToken" &&
             key != "@secure.PopUpNotices" &&
             key != "@secure.queryState" &&
-            key != "@secure.OSState"
+            key != "@secure.OSState" &&
+            key != "@secure.userId"
           ) {
             secureLocalStorage.removeItem(key.replace("@secure.", ""));
           }
@@ -4413,7 +4412,8 @@ const App = () => {
           key != "refreshToken" &&
           key != "PopUpNotices" &&
           key != "queryState" &&
-          key != "OSState"
+          key != "OSState" &&
+          key != "@secure.userId"
         ) {
           secureLocalStorage.removeItem(key.replace("@secure.", ""));
         }

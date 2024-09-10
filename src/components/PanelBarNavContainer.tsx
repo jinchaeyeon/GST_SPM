@@ -373,7 +373,8 @@ const PanelBarNavContainer = (props: any) => {
           key != "@secure.refreshToken" &&
           key != "@secure.PopUpNotices" &&
           key != "@secure.queryState" &&
-          key != "@secure.OSState"
+          key != "@secure.OSState" &&
+          key != "@secure.userId"
         ) {
           secureLocalStorage.removeItem(key.replace("@secure.", ""));
         }

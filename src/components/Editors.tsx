@@ -442,6 +442,26 @@ export const LoginFormInput = (fieldRenderProps: FieldRenderProps) => {
   );
 };
 
+
+export const FormCheckBox2 = (fieldRenderProps: FieldRenderProps) => {
+  const { value, label, id, valid, className } = fieldRenderProps;
+
+  const required = className?.includes("required");
+  let DDLvalid = valid;
+  if (required) DDLvalid = checkIsDDLValid(value);
+
+  return (
+    <FieldWrapper style={{ display: "flex", justifyContent: "flex-end" }}>
+      <div className={"k-form-field-wrap"} style={{ marginRight: "2%" }}>
+        <FieldCheckBox fieldRenderProps={fieldRenderProps} />
+      </div>
+      <Label editorId={id} editorValid={DDLvalid}>
+        {label}
+      </Label>
+    </FieldWrapper>
+  );
+};
+
 export const FormTextArea = (fieldRenderProps: FieldRenderProps) => {
   const { validationMessage, label, id, valid, max, ...others } =
     fieldRenderProps;

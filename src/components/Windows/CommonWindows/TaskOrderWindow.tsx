@@ -19,13 +19,16 @@ import {
   useState,
 } from "react";
 import { useLocation } from "react-router-dom";
+import secureLocalStorage from "react-secure-storage";
 import { useRecoilState, useSetRecoilState } from "recoil";
+import SwiperCore from "swiper";
+import "swiper/css";
+import { Swiper, SwiperSlide } from "swiper/react";
 import { v4 as uuidv4 } from "uuid";
 import {
   BottomContainer,
   ButtonContainer,
   ButtonInGridInput,
-  GridContainer,
   GridTitle,
   GridTitleContainer,
 } from "../../../CommonStyled";
@@ -54,13 +57,9 @@ import { EDIT_FIELD, SELECTED_FIELD } from "../../CommonString";
 import { CellRender, RowRender } from "../../Renderers/Renderers";
 import RequiredHeader from "../../RequiredHeader";
 import RichEditor from "../../RichEditor";
+import Window from "../WindowComponent/Window";
 import ErrorWindow from "./ErrorWindow";
 import PopUpAttachmentsWindow from "./PopUpAttachmentsWindow";
-import Window from "../WindowComponent/Window";
-import SwiperCore from "swiper";
-import "swiper/css";
-import { Swiper, SwiperSlide } from "swiper/react";
-import  secureLocalStorage  from  "react-secure-storage";
 
 type IKendoWindow = {
   setVisible(t: boolean): void;
@@ -568,7 +567,9 @@ const KendoWindow = ({
         key != "@secure.loginResult" &&
         key != "@secure.refreshToken" &&
         key != "@secure.PopUpNotices" &&
-        key != "@secure.queryState" && key != "@secure.OSState"
+        key != "@secure.queryState" &&
+        key != "@secure.OSState" &&
+        key != "@secure.userId"
       ) {
         secureLocalStorage.removeItem(key.replace("@secure.", ""));
       }
@@ -855,13 +856,19 @@ const KendoWindow = ({
       secureLocalStorage.getItem(currentRow[DATA_ITEM_KEY]) == null
     ) {
       secureLocalStorage.setItem(currentRow[DATA_ITEM_KEY], textContent);
-      secureLocalStorage.setItem(currentRow[DATA_ITEM_KEY] + "key", editorContent2);
+      secureLocalStorage.setItem(
+        currentRow[DATA_ITEM_KEY] + "key",
+        editorContent2
+      );
     } else {
       if (currentRow.rowstatus == "U" || currentRow.rowstatus == "N") {
         secureLocalStorage.removeItem(currentRow[DATA_ITEM_KEY]);
         secureLocalStorage.removeItem(currentRow[DATA_ITEM_KEY] + "key");
         secureLocalStorage.setItem(currentRow[DATA_ITEM_KEY], textContent);
-        secureLocalStorage.setItem(currentRow[DATA_ITEM_KEY] + "key", editorContent2);
+        secureLocalStorage.setItem(
+          currentRow[DATA_ITEM_KEY] + "key",
+          editorContent2
+        );
       }
     }
     setSelectedState(newSelectedState);
@@ -1136,7 +1143,10 @@ const KendoWindow = ({
       secureLocalStorage.removeItem(currentRow[DATA_ITEM_KEY]);
       secureLocalStorage.removeItem(currentRow[DATA_ITEM_KEY] + "key");
       secureLocalStorage.setItem(currentRow[DATA_ITEM_KEY], textContent);
-      secureLocalStorage.setItem(currentRow[DATA_ITEM_KEY] + "key", editorContent);
+      secureLocalStorage.setItem(
+        currentRow[DATA_ITEM_KEY] + "key",
+        editorContent
+      );
     }
 
     mainDataResult.data.map((item) => {
@@ -1277,7 +1287,8 @@ const KendoWindow = ({
               Object3.push(index);
               if (
                 !(
-                  secureLocalStorage.getItem(item[DATA_ITEM_KEY]) == undefined ||
+                  secureLocalStorage.getItem(item[DATA_ITEM_KEY]) ==
+                    undefined ||
                   secureLocalStorage.getItem(item[DATA_ITEM_KEY]) == null
                 )
               ) {
@@ -1400,7 +1411,10 @@ const KendoWindow = ({
       secureLocalStorage.removeItem(currentRow[DATA_ITEM_KEY]);
       secureLocalStorage.removeItem(currentRow[DATA_ITEM_KEY] + "key");
       secureLocalStorage.setItem(currentRow[DATA_ITEM_KEY], textContent);
-      secureLocalStorage.setItem(currentRow[DATA_ITEM_KEY] + "key", editorContent);
+      secureLocalStorage.setItem(
+        currentRow[DATA_ITEM_KEY] + "key",
+        editorContent
+      );
 
       type TRowsArr = {
         row_status: string[];
@@ -1775,7 +1789,9 @@ const KendoWindow = ({
               key != "@secure.loginResult" &&
               key != "@secure.refreshToken" &&
               key != "@secure.PopUpNotices" &&
-              key != "@secure.queryState" && key != "@secure.OSState"
+              key != "@secure.queryState" &&
+              key != "@secure.OSState" &&
+              key != "@secure.userId"
             ) {
               secureLocalStorage.removeItem(key.replace("@secure.", ""));
             }
@@ -1984,7 +2000,9 @@ const KendoWindow = ({
             key != "@secure.loginResult" &&
             key != "@secure.refreshToken" &&
             key != "@secure.PopUpNotices" &&
-            key != "@secure.queryState" && key != "@secure.OSState"
+            key != "@secure.queryState" &&
+            key != "@secure.OSState" &&
+            key != "@secure.userId"
           ) {
             secureLocalStorage.removeItem(key.replace("@secure.", ""));
           }
@@ -2068,10 +2086,16 @@ const KendoWindow = ({
         secureLocalStorage.removeItem(currentRow[DATA_ITEM_KEY]);
         secureLocalStorage.removeItem(currentRow[DATA_ITEM_KEY] + "key");
         secureLocalStorage.setItem(currentRow[DATA_ITEM_KEY], textContent);
-        secureLocalStorage.setItem(currentRow[DATA_ITEM_KEY] + "key", editorContent);
+        secureLocalStorage.setItem(
+          currentRow[DATA_ITEM_KEY] + "key",
+          editorContent
+        );
       } else {
         secureLocalStorage.setItem(currentRow[DATA_ITEM_KEY], textContent);
-        secureLocalStorage.setItem(currentRow[DATA_ITEM_KEY] + "key", editorContent);
+        secureLocalStorage.setItem(
+          currentRow[DATA_ITEM_KEY] + "key",
+          editorContent
+        );
       }
 
       const newData = mainDataResult.data.map((item) =>

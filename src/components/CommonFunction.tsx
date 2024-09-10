@@ -1000,7 +1000,8 @@ export const resetLocalStorage = () => {
     if (
       key != "@secure.PopUpNotices" &&
       key != "@secure.queryState" &&
-      key != "@secure.OSState"
+      key != "@secure.OSState" &&
+      key != "@secure.userId"
     ) {
       secureLocalStorage.removeItem(key.replace("@secure.", ""));
     }
