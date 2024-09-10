@@ -823,7 +823,7 @@ export const Content = styled.div<ContentType>`
   );
   background-color: #fff;
   /* 컨테이너 고정 추가 */
-  left: calc(${(props) => (props.isMenuOpen ? GNV_WIDTH : "25")}px);
+  left: calc(${(props) => (props.isMenuOpen ? GNV_WIDTH : CLOSED_GNV_WIDTH)}px);
   height: 91vh;
   position: fixed;
   overflow: scroll;
